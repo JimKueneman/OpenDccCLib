@@ -1,0 +1,46 @@
+# Doxyfile 1.12.0
+# Minimal configuration for OpenDccCLib
+
+#---------------------------------------------------------------------------
+# Project related configuration options
+#---------------------------------------------------------------------------
+
+PROJECT_NAME           = OpenDccCLib
+PROJECT_NUMBER         = "0.1 Alpha"
+PROJECT_BRIEF          = "OpenSource C Library for DCC (Digital Command Control)"
+OUTPUT_DIRECTORY       = /Users/jimkueneman/Documents/OpenDccCLib/documentation/help
+
+#---------------------------------------------------------------------------
+# Build related configuration options
+#---------------------------------------------------------------------------
+
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+
+#---------------------------------------------------------------------------
+# Input related configuration options
+#---------------------------------------------------------------------------
+
+INPUT                  = /Users/jimkueneman/Documents/OpenDccCLib/src/dcc \
+                         /Users/jimkueneman/Documents/OpenDccCLib/src/utilities \
+                         /Users/jimkueneman/Documents/OpenDccCLib/src/utilities_pc \
+                         /Users/jimkueneman/Documents/OpenDccCLib/src/drivers \
+                         /Users/jimkueneman/Documents/OpenDccCLib/src/mainpage.h
+RECURSIVE              = YES
+FILE_PATTERNS          = *.c *.h *.hxx *.cxx
+
+#---------------------------------------------------------------------------
+# Output related configuration options
+#---------------------------------------------------------------------------
+
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+
+#---------------------------------------------------------------------------
+# Graph related configuration options
+#---------------------------------------------------------------------------
+
+HAVE_DOT               = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
