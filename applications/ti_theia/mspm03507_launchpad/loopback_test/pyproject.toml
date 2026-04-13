@@ -1,0 +1,12 @@
+[tool.pytest.ini_options]
+markers = [
+    "multifunction: Multifunction (locomotive) decoder tests",
+    "accessory_basic: Basic accessory decoder tests",
+    "accessory_extended: Extended accessory (signal) decoder tests",
+    "service_mode: Service mode / programming track tests",
+    "protocol: Track-level protocol infrastructure tests",
+    "speed: Speed and direction command tests",
+    "functions: Function output command tests",
+    "cv: Configuration variable access tests",
+    "compliance: NMRA compliance-specific tests",
+]
