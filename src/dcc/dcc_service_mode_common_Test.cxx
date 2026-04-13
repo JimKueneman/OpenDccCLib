@@ -15,7 +15,7 @@
 // Mock / tracking state
 // ============================================================================
 
-static dcc_service_mode_common_context_t test_ctx;
+static dcc_service_mode_common_context_t test_context;
 
 static dcc_packet_t last_loaded_packet;
 static uint32_t load_packet_count;
@@ -27,7 +27,7 @@ static void mock_load_packet(const dcc_packet_t *packet) {
     load_packet_count++;
 
     /* Simulate ISR: packet transmission completes instantly in tests. */
-    DccServiceModeCommon_on_packet_complete(&test_ctx);
+    DccServiceModeCommon_on_packet_complete(&test_context);
 
 }
 
@@ -39,7 +39,7 @@ static bool mock_is_encoder_idle(void) {
 
 static void reset_mocks(void) {
 
-    memset(&test_ctx, 0, sizeof(test_ctx));
+    memset(&test_context, 0, sizeof(test_context));
     memset(&last_loaded_packet, 0, sizeof(last_loaded_packet));
     load_packet_count = 0;
     encoder_idle_value = true;
@@ -113,12 +113,12 @@ static void feed_ack_samples(uint16_t count) {
 
     for (sample_index = 0; sample_index < count; sample_index++) {
 
-        DccServiceModeCommon_ack_sample(&test_ctx, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+        DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
 
     }
 
     /* End of pulse — one below-threshold sample */
-    DccServiceModeCommon_ack_sample(&test_ctx, 0);
+    DccServiceModeCommon_ack_sample(&test_context, 0);
 
 }
 
@@ -134,18 +134,18 @@ static void drive_full_cycle_with_ack(bool provide_ack) {
     /* Pre-reset phase: 3 reset packets */
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_PRE_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* One more run to transition to COMMAND state */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     /* Command phase */
     if (provide_ack) {
 
         /* Send first command packet */
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
         /* Simulate ACK pulse: ~6ms at 58us per sample ≈ 104 samples.
          * We need at least ACK_MIN_DURATION / 58 samples. Using a
@@ -154,30 +154,30 @@ static void drive_full_cycle_with_ack(bool provide_ack) {
 
         /* Next run detects ACK and transitions directly to RESET_POST
          * (early termination — remaining command packets are skipped). */
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     } else {
 
         for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-            DccServiceModeCommon_run(&test_ctx);
+            DccServiceModeCommon_run(&test_context);
 
         }
 
         /* One more run to evaluate (no ACK → retry or fail) */
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Post-reset phase: 6 reset packets */
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_POST_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Final run to transition to IDLE and fire callback */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
 }
 
@@ -189,7 +189,7 @@ TEST(DccServiceModeCommon, initialize_does_not_crash) {
 
     reset_mocks();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
+    DccServiceModeCommon_initialize(&test_context, &interface);
 
 }
 
@@ -197,10 +197,10 @@ TEST(DccServiceModeCommon, initialize_sets_idle) {
 
     reset_mocks();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
+    DccServiceModeCommon_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_ctx));
-    EXPECT_FALSE(DccServiceModeCommon_is_active(&test_ctx));
+    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_context));
+    EXPECT_FALSE(DccServiceModeCommon_is_active(&test_context));
 
 }
 
@@ -212,10 +212,10 @@ TEST(DccServiceModeCommon, enter_activates_service_mode) {
 
     reset_mocks();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
+    DccServiceModeCommon_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeCommon_enter(&test_ctx));
-    EXPECT_TRUE(DccServiceModeCommon_is_active(&test_ctx));
+    EXPECT_TRUE(DccServiceModeCommon_enter(&test_context));
+    EXPECT_TRUE(DccServiceModeCommon_is_active(&test_context));
 
 }
 
@@ -223,12 +223,12 @@ TEST(DccServiceModeCommon, exit_deactivates_service_mode) {
 
     reset_mocks();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
+    DccServiceModeCommon_initialize(&test_context, &interface);
 
-    DccServiceModeCommon_enter(&test_ctx);
-    DccServiceModeCommon_exit(&test_ctx);
+    DccServiceModeCommon_enter(&test_context);
+    DccServiceModeCommon_exit(&test_context);
 
-    EXPECT_FALSE(DccServiceModeCommon_is_active(&test_ctx));
+    EXPECT_FALSE(DccServiceModeCommon_is_active(&test_context));
 
 }
 
@@ -241,10 +241,10 @@ TEST(DccServiceModeCommon, begin_operation_fails_not_in_service_mode) {
     reset_mocks();
     reset_step_callback();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
+    DccServiceModeCommon_initialize(&test_context, &interface);
 
     dcc_packet_t packet = make_command_packet();
-    EXPECT_FALSE(DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0));
+    EXPECT_FALSE(DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0));
 
 }
 
@@ -253,12 +253,12 @@ TEST(DccServiceModeCommon, begin_operation_succeeds_when_ready) {
     reset_mocks();
     reset_step_callback();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    EXPECT_TRUE(DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0));
-    EXPECT_FALSE(DccServiceModeCommon_is_idle(&test_ctx));
+    EXPECT_TRUE(DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0));
+    EXPECT_FALSE(DccServiceModeCommon_is_idle(&test_context));
 
 }
 
@@ -271,14 +271,14 @@ TEST(DccServiceModeCommon, pre_reset_sends_reset_packets) {
     reset_mocks();
     reset_step_callback();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
 
     /* First run should send a reset packet */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     EXPECT_EQ(load_packet_count, (uint32_t)1);
     EXPECT_EQ(last_loaded_packet.data[0], DCC_RESET_BYTE);
@@ -293,16 +293,16 @@ TEST(DccServiceModeCommon, pre_reset_sends_correct_count) {
     reset_mocks();
     reset_step_callback();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
 
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_PRE_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
@@ -319,26 +319,26 @@ TEST(DccServiceModeCommon, command_phase_sends_command_packets) {
     reset_mocks();
     reset_step_callback();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
 
     /* Drive through pre-reset */
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_PRE_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Transition to COMMAND state */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
     load_packet_count = 0;
 
     /* First command packet */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     EXPECT_EQ(load_packet_count, (uint32_t)1);
     EXPECT_EQ(last_loaded_packet.data[0], packet.data[0]);
@@ -356,11 +356,11 @@ TEST(DccServiceModeCommon, ack_detected_returns_success) {
     reset_mocks();
     reset_step_callback();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
 
     drive_full_cycle_with_ack(true);
 
@@ -374,26 +374,26 @@ TEST(DccServiceModeCommon, ack_detected_terminates_command_phase_early) {
     reset_mocks();
     reset_step_callback();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
 
     /* Drive through pre-reset */
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_PRE_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Transition to COMMAND state */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
     load_packet_count = 0;
 
     /* Send first command packet */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
     EXPECT_EQ(load_packet_count, (uint32_t)1);
 
     /* Simulate ACK pulse after first packet */
@@ -401,7 +401,7 @@ TEST(DccServiceModeCommon, ack_detected_terminates_command_phase_early) {
 
     /* Next run should detect ACK and skip to RESET_POST — no more
      * command packets loaded. */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     /* Only 1 command packet should have been loaded (not 5) */
     EXPECT_EQ(load_packet_count, (uint32_t)1);
@@ -409,15 +409,15 @@ TEST(DccServiceModeCommon, ack_detected_terminates_command_phase_early) {
     /* Drive through post-reset to completion */
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_POST_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
-    DccServiceModeCommon_run(&test_ctx);  /* transition to IDLE */
+    DccServiceModeCommon_run(&test_context);  /* transition to IDLE */
 
     EXPECT_EQ(step_callback_count, (uint32_t)1);
     EXPECT_EQ(step_result, DCC_SERVICE_MODE_SUCCESS);
-    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_ctx));
+    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_context));
 
 }
 
@@ -426,11 +426,11 @@ TEST(DccServiceModeCommon, no_ack_retries_then_fails) {
     reset_mocks();
     reset_step_callback();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
 
     /* Drive through initial attempt + retries, all without ACK */
     uint8_t attempt;
@@ -449,10 +449,10 @@ TEST(DccServiceModeCommon, ack_sample_ignored_when_idle) {
 
     reset_mocks();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
+    DccServiceModeCommon_initialize(&test_context, &interface);
 
     /* Should not crash or change state when called outside service mode */
-    DccServiceModeCommon_ack_sample(&test_ctx, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+    DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
 
 }
 
@@ -461,36 +461,36 @@ TEST(DccServiceModeCommon, ack_too_short_not_detected) {
     reset_mocks();
     reset_step_callback();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
 
     /* Drive through pre-reset to command phase */
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_PRE_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
-    DccServiceModeCommon_run(&test_ctx);  /* transition to COMMAND */
-    DccServiceModeCommon_run(&test_ctx);  /* first command packet */
+    DccServiceModeCommon_run(&test_context);  /* transition to COMMAND */
+    DccServiceModeCommon_run(&test_context);  /* first command packet */
 
     /* Feed only 2 above-threshold samples — way too short for ACK */
-    DccServiceModeCommon_ack_sample(&test_ctx, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
-    DccServiceModeCommon_ack_sample(&test_ctx, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
-    DccServiceModeCommon_ack_sample(&test_ctx, 0);  /* end of pulse */
+    DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+    DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+    DccServiceModeCommon_ack_sample(&test_context, 0);  /* end of pulse */
 
     /* Drive remaining command packets and post-reset to completion */
     for (packet_index = 1; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
-    DccServiceModeCommon_run(&test_ctx);  /* transition to post-reset or retry */
+    DccServiceModeCommon_run(&test_context);  /* transition to post-reset or retry */
 
     /* Should retry, not succeed — drive through all retries */
     uint8_t retry;
@@ -514,15 +514,15 @@ TEST(DccServiceModeCommon, idle_after_successful_operation) {
     reset_mocks();
     reset_step_callback();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
 
     drive_full_cycle_with_ack(true);
 
-    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_ctx));
+    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_context));
 
 }
 
@@ -534,9 +534,9 @@ TEST(DccServiceModeCommon, run_does_nothing_when_not_in_service_mode) {
 
     reset_mocks();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
+    DccServiceModeCommon_initialize(&test_context, &interface);
 
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     EXPECT_EQ(load_packet_count, (uint32_t)0);
 
@@ -551,24 +551,24 @@ TEST(DccServiceModeCommon, encoder_not_idle_blocks_progress) {
     reset_mocks();
     reset_step_callback();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
 
     /* First run sends reset packet */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
     EXPECT_EQ(load_packet_count, (uint32_t)1);
 
     /* Encoder busy -- should not advance */
     encoder_idle_value = false;
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
     EXPECT_EQ(load_packet_count, (uint32_t)1);
 
     /* Encoder idle again -- should advance */
     encoder_idle_value = true;
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
     EXPECT_EQ(load_packet_count, (uint32_t)2);
 
 }
@@ -582,14 +582,14 @@ TEST(DccServiceModeCommon, exit_blocked_while_busy) {
     reset_mocks();
     reset_step_callback();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
 
-    DccServiceModeCommon_exit(&test_ctx);
-    EXPECT_TRUE(DccServiceModeCommon_is_active(&test_ctx));
+    DccServiceModeCommon_exit(&test_context);
+    EXPECT_TRUE(DccServiceModeCommon_is_active(&test_context));
 
 }
 
@@ -602,14 +602,14 @@ TEST(DccServiceModeCommon, begin_operation_fails_when_busy) {
     reset_mocks();
     reset_step_callback();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    EXPECT_TRUE(DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0));
+    EXPECT_TRUE(DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0));
 
     /* Second call while first operation is in progress */
-    EXPECT_FALSE(DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0));
+    EXPECT_FALSE(DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0));
 
 }
 
@@ -622,15 +622,15 @@ TEST(DccServiceModeCommon, null_step_callback_completes_without_crash) {
     reset_mocks();
     reset_step_callback();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, NULL, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, NULL, false, 0);
 
     drive_full_cycle_with_ack(true);
 
-    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_ctx));
+    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_context));
     EXPECT_EQ(step_callback_count, (uint32_t)0);
 
 }
@@ -643,13 +643,13 @@ TEST(DccServiceModeCommon, run_in_idle_state_is_noop) {
 
     reset_mocks();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
 
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     EXPECT_EQ(load_packet_count, (uint32_t)0);
-    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_ctx));
+    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_context));
 
 }
 
@@ -663,12 +663,12 @@ static void drive_to_command_phase(void) {
 
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_PRE_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* One more run to transition from RESET_PRE to COMMAND */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
 }
 
@@ -682,12 +682,12 @@ static void drive_post_reset_to_idle(void) {
 
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_POST_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Final run transitions to IDLE and fires callback */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
 }
 
@@ -702,11 +702,11 @@ static void setup_and_begin(void) {
     reset_mocks();
     reset_step_callback();
     _test_interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &_test_interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &_test_interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
 
 }
 
@@ -723,22 +723,22 @@ static void drive_one_no_ack_attempt(void) {
     /* Pre-reset */
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_PRE_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Transition to COMMAND */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     /* Command packets */
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Evaluation run: no ACK → retry or fail */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
 }
 
@@ -752,13 +752,13 @@ TEST(DccServiceModeCommon, ack_exact_min_samples_detected) {
     drive_to_command_phase();
 
     /* Send first command packet */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     /* Feed exactly ACK_MIN_SAMPLES (87) above-threshold samples */
     feed_ack_samples(87);
 
     /* Next run detects ACK → RESET_POST */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
     drive_post_reset_to_idle();
 
     EXPECT_EQ(step_callback_count, (uint32_t)1);
@@ -776,28 +776,28 @@ TEST(DccServiceModeCommon, ack_one_below_min_samples_not_detected) {
     drive_to_command_phase();
 
     /* Send first command packet */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     /* Feed 84 samples — one short of ACK_MIN_SAMPLES (85) */
     uint16_t sample_index;
     for (sample_index = 0; sample_index < 84; sample_index++) {
 
-        DccServiceModeCommon_ack_sample(&test_ctx, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+        DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
 
     }
 
-    DccServiceModeCommon_ack_sample(&test_ctx, 0);  /* end of pulse */
+    DccServiceModeCommon_ack_sample(&test_context, 0);  /* end of pulse */
 
     /* Drive remaining command packets (4 more) */
     uint8_t packet_index;
     for (packet_index = 1; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Evaluate — no ACK → retry */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     /* Drive through all retries without ACK */
     uint8_t retry;
@@ -821,19 +821,19 @@ TEST(DccServiceModeCommon, ack_at_exact_threshold_detected) {
     setup_and_begin();
     drive_to_command_phase();
 
-    DccServiceModeCommon_run(&test_ctx);  /* first command packet */
+    DccServiceModeCommon_run(&test_context);  /* first command packet */
 
     /* Feed samples at exactly the threshold value */
     uint16_t sample_index;
     for (sample_index = 0; sample_index < 104; sample_index++) {
 
-        DccServiceModeCommon_ack_sample(&test_ctx, USER_DEFINED_DCC_ACK_THRESHOLD_MA);
+        DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA);
 
     }
 
-    DccServiceModeCommon_ack_sample(&test_ctx, 0);
+    DccServiceModeCommon_ack_sample(&test_context, 0);
 
-    DccServiceModeCommon_run(&test_ctx);  /* detect ACK → RESET_POST */
+    DccServiceModeCommon_run(&test_context);  /* detect ACK → RESET_POST */
     drive_post_reset_to_idle();
 
     EXPECT_EQ(step_callback_count, (uint32_t)1);
@@ -850,13 +850,13 @@ TEST(DccServiceModeCommon, ack_one_below_threshold_not_detected) {
     setup_and_begin();
     drive_to_command_phase();
 
-    DccServiceModeCommon_run(&test_ctx);  /* first command packet */
+    DccServiceModeCommon_run(&test_context);  /* first command packet */
 
     /* Feed many samples at threshold - 1: should never trigger ACK */
     uint16_t sample_index;
     for (sample_index = 0; sample_index < 200; sample_index++) {
 
-        DccServiceModeCommon_ack_sample(&test_ctx, USER_DEFINED_DCC_ACK_THRESHOLD_MA - 1);
+        DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA - 1);
 
     }
 
@@ -864,11 +864,11 @@ TEST(DccServiceModeCommon, ack_one_below_threshold_not_detected) {
     uint8_t packet_index;
     for (packet_index = 1; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
-    DccServiceModeCommon_run(&test_ctx);  /* evaluate → retry */
+    DccServiceModeCommon_run(&test_context);  /* evaluate → retry */
 
     /* Drive through all retries */
     uint8_t retry;
@@ -898,9 +898,9 @@ TEST(DccServiceModeCommon, ack_during_retry_returns_success) {
     drive_to_command_phase();
 
     /* ACK on first command packet of retry */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
     feed_ack_samples(104);
-    DccServiceModeCommon_run(&test_ctx);  /* detect ACK → RESET_POST */
+    DccServiceModeCommon_run(&test_context);  /* detect ACK → RESET_POST */
 
     drive_post_reset_to_idle();
 
@@ -928,9 +928,9 @@ TEST(DccServiceModeCommon, ack_on_last_retry_returns_success) {
 
     /* Last retry: provide ACK */
     drive_to_command_phase();
-    DccServiceModeCommon_run(&test_ctx);  /* first command packet */
+    DccServiceModeCommon_run(&test_context);  /* first command packet */
     feed_ack_samples(104);
-    DccServiceModeCommon_run(&test_ctx);  /* detect ACK → RESET_POST */
+    DccServiceModeCommon_run(&test_context);  /* detect ACK → RESET_POST */
     drive_post_reset_to_idle();
 
     EXPECT_EQ(step_callback_count, (uint32_t)1);
@@ -949,15 +949,15 @@ TEST(DccServiceModeCommon, ack_after_second_command_packet_loads_two) {
     load_packet_count = 0;
 
     /* Send 2 command packets */
-    DccServiceModeCommon_run(&test_ctx);
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
+    DccServiceModeCommon_run(&test_context);
     EXPECT_EQ(load_packet_count, (uint32_t)2);
 
     /* ACK detected after 2nd packet */
     feed_ack_samples(104);
 
     /* Next run detects ACK → RESET_POST */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
     EXPECT_EQ(load_packet_count, (uint32_t)2);
 
     drive_post_reset_to_idle();
@@ -981,14 +981,14 @@ TEST(DccServiceModeCommon, ack_after_third_command_packet_loads_three) {
     uint8_t packet_index;
     for (packet_index = 0; packet_index < 3; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     EXPECT_EQ(load_packet_count, (uint32_t)3);
 
     feed_ack_samples(104);
-    DccServiceModeCommon_run(&test_ctx);  /* detect ACK → RESET_POST */
+    DccServiceModeCommon_run(&test_context);  /* detect ACK → RESET_POST */
     EXPECT_EQ(load_packet_count, (uint32_t)3);
 
     drive_post_reset_to_idle();
@@ -1012,7 +1012,7 @@ TEST(DccServiceModeCommon, ack_after_last_command_packet_loads_all) {
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
@@ -1022,7 +1022,7 @@ TEST(DccServiceModeCommon, ack_after_last_command_packet_loads_all) {
     feed_ack_samples(104);
 
     /* Evaluation run: ACK detected → RESET_POST (not retry) */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
     EXPECT_EQ(load_packet_count, (uint32_t)DCC_SERVICE_MODE_COMMAND_REPEAT);
 
     drive_post_reset_to_idle();
@@ -1051,11 +1051,11 @@ TEST(DccServiceModeCommon, ack_during_pre_reset_ignored) {
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
-    DccServiceModeCommon_run(&test_ctx);  /* evaluate → retry */
+    DccServiceModeCommon_run(&test_context);  /* evaluate → retry */
 
     /* Drive through all retries with no ACK */
     uint8_t retry;
@@ -1087,11 +1087,11 @@ TEST(DccServiceModeCommon, ack_during_post_reset_does_not_change_result) {
         uint8_t packet_index;
         for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-            DccServiceModeCommon_run(&test_ctx);
+            DccServiceModeCommon_run(&test_context);
 
         }
 
-        DccServiceModeCommon_run(&test_ctx);  /* evaluate → retry or RESET_POST */
+        DccServiceModeCommon_run(&test_context);  /* evaluate → retry or RESET_POST */
 
     }
 
@@ -1115,37 +1115,37 @@ TEST(DccServiceModeCommon, interrupted_pulse_resets_counter) {
     setup_and_begin();
     drive_to_command_phase();
 
-    DccServiceModeCommon_run(&test_ctx);  /* first command packet */
+    DccServiceModeCommon_run(&test_context);  /* first command packet */
 
     /* Feed 80 samples (just under 87 min), then drop, then 80 more.
      * Neither burst should trigger ACK because the gap resets the counter. */
     uint16_t sample_index;
     for (sample_index = 0; sample_index < 80; sample_index++) {
 
-        DccServiceModeCommon_ack_sample(&test_ctx, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+        DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
 
     }
 
     /* Gap — resets _ack_high_count to 0 */
-    DccServiceModeCommon_ack_sample(&test_ctx, 0);
+    DccServiceModeCommon_ack_sample(&test_context, 0);
 
     for (sample_index = 0; sample_index < 80; sample_index++) {
 
-        DccServiceModeCommon_ack_sample(&test_ctx, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+        DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
 
     }
 
-    DccServiceModeCommon_ack_sample(&test_ctx, 0);
+    DccServiceModeCommon_ack_sample(&test_context, 0);
 
     /* Drive remaining command packets */
     uint8_t packet_index;
     for (packet_index = 1; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
-    DccServiceModeCommon_run(&test_ctx);  /* evaluate → retry */
+    DccServiceModeCommon_run(&test_context);  /* evaluate → retry */
 
     /* Drive through all retries with no ACK */
     uint8_t retry;
@@ -1173,19 +1173,19 @@ TEST(DccServiceModeCommon, second_operation_after_completion_succeeds) {
 
     EXPECT_EQ(step_callback_count, (uint32_t)1);
     EXPECT_EQ(step_result, DCC_SERVICE_MODE_SUCCESS);
-    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_ctx));
+    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_context));
 
     /* Start second operation */
     reset_step_callback();
     dcc_packet_t packet = make_command_packet();
-    EXPECT_TRUE(DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0));
+    EXPECT_TRUE(DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0));
 
     /* Complete second operation with ACK */
     drive_full_cycle_with_ack(true);
 
     EXPECT_EQ(step_callback_count, (uint32_t)1);
     EXPECT_EQ(step_result, DCC_SERVICE_MODE_SUCCESS);
-    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_ctx));
+    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_context));
 
 }
 
@@ -1204,7 +1204,7 @@ TEST(DccServiceModeCommon, second_operation_no_ack_after_first_succeeded) {
     /* Second operation: no ACK → NO_ACK */
     reset_step_callback();
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
 
     uint8_t attempt;
     for (attempt = 0; attempt <= USER_DEFINED_DCC_SERVICE_MODE_RETRIES; attempt++) {
@@ -1227,11 +1227,11 @@ TEST(DccServiceModeCommon, null_callback_no_ack_completes_without_crash) {
     reset_mocks();
     reset_step_callback();
     interface_dcc_service_mode_common_t interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, NULL, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, NULL, false, 0);
 
     /* Drive all attempts with no ACK */
     uint8_t attempt;
@@ -1241,7 +1241,7 @@ TEST(DccServiceModeCommon, null_callback_no_ack_completes_without_crash) {
 
     }
 
-    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_ctx));
+    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_context));
     EXPECT_EQ(step_callback_count, (uint32_t)0);
 
 }
@@ -1255,7 +1255,7 @@ TEST(DccServiceModeCommon, duplicate_ack_samples_after_detection_ignored) {
     setup_and_begin();
     drive_to_command_phase();
 
-    DccServiceModeCommon_run(&test_ctx);  /* first command packet */
+    DccServiceModeCommon_run(&test_context);  /* first command packet */
 
     /* Trigger ACK */
     feed_ack_samples(104);
@@ -1265,7 +1265,7 @@ TEST(DccServiceModeCommon, duplicate_ack_samples_after_detection_ignored) {
     feed_ack_samples(200);
     feed_ack_samples(200);
 
-    DccServiceModeCommon_run(&test_ctx);  /* detect ACK → RESET_POST */
+    DccServiceModeCommon_run(&test_context);  /* detect ACK → RESET_POST */
     drive_post_reset_to_idle();
 
     EXPECT_EQ(step_callback_count, (uint32_t)1);
@@ -1283,12 +1283,12 @@ TEST(DccServiceModeCommon, encoder_stall_mid_command_ack_still_detected) {
     drive_to_command_phase();
 
     /* Send first command packet */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     /* Encoder stalls — run() should not advance */
     encoder_idle_value = false;
-    DccServiceModeCommon_run(&test_ctx);
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
+    DccServiceModeCommon_run(&test_context);
 
     /* Meanwhile, ACK arrives from decoder (ack_sample is ISR-driven,
      * independent of encoder state). */
@@ -1296,7 +1296,7 @@ TEST(DccServiceModeCommon, encoder_stall_mid_command_ack_still_detected) {
 
     /* Encoder resumes — state machine should see ACK and go to RESET_POST */
     encoder_idle_value = true;
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     drive_post_reset_to_idle();
 
@@ -1315,9 +1315,9 @@ TEST(DccServiceModeCommon, post_reset_sends_correct_packet_count) {
     drive_to_command_phase();
 
     /* ACK on first command */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
     feed_ack_samples(104);
-    DccServiceModeCommon_run(&test_ctx);  /* → RESET_POST */
+    DccServiceModeCommon_run(&test_context);  /* → RESET_POST */
 
     load_packet_count = 0;
 
@@ -1325,7 +1325,7 @@ TEST(DccServiceModeCommon, post_reset_sends_correct_packet_count) {
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_POST_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
@@ -1337,8 +1337,8 @@ TEST(DccServiceModeCommon, post_reset_sends_correct_packet_count) {
     EXPECT_EQ(last_loaded_packet.preamble_bits, DCC_PREAMBLE_BITS_SERVICE);
 
     /* Final run → IDLE */
-    DccServiceModeCommon_run(&test_ctx);
-    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_ctx));
+    DccServiceModeCommon_run(&test_context);
+    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_context));
 
 }
 
@@ -1379,30 +1379,30 @@ TEST(DccServiceModeCommon, ack_spanning_command_packets_detected) {
     drive_to_command_phase();
 
     /* Send first command packet */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     /* Start ACK pulse — 50 samples (not enough yet) */
     uint16_t sample_index;
     for (sample_index = 0; sample_index < 50; sample_index++) {
 
-        DccServiceModeCommon_ack_sample(&test_ctx, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+        DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
 
     }
 
     /* Second command packet loads while ACK pulse continues */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     /* Continue ACK pulse — 50 more samples (total 100, above 87 min) */
     for (sample_index = 0; sample_index < 50; sample_index++) {
 
-        DccServiceModeCommon_ack_sample(&test_ctx, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+        DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
 
     }
 
-    DccServiceModeCommon_ack_sample(&test_ctx, 0);
+    DccServiceModeCommon_ack_sample(&test_context, 0);
 
     /* Next run detects ACK → RESET_POST */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
     drive_post_reset_to_idle();
 
     EXPECT_EQ(step_callback_count, (uint32_t)1);
@@ -1419,11 +1419,11 @@ static void setup_and_begin_write(void) {
     reset_mocks();
     reset_step_callback();
     _test_interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &_test_interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &_test_interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback,
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback,
                                          true, DCC_SERVICE_MODE_RECOVERY_COUNT);
 
 }
@@ -1435,32 +1435,32 @@ static void drive_one_write_no_ack_attempt(void) {
     /* Pre-reset */
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_PRE_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Transition to COMMAND */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     /* Command packets */
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Transition to RECOVERY (write operation) */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     /* Recovery packets */
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RECOVERY_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Evaluation run: no ACK → retry or fail */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
 }
 
@@ -1471,49 +1471,49 @@ static void drive_write_full_cycle_with_ack(bool provide_ack) {
     /* Pre-reset */
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_PRE_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Transition to COMMAND */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     if (provide_ack) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
         feed_ack_samples(104);
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     } else {
 
         for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-            DccServiceModeCommon_run(&test_ctx);
+            DccServiceModeCommon_run(&test_context);
 
         }
 
         /* Transition to RECOVERY */
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
         for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RECOVERY_COUNT; packet_index++) {
 
-            DccServiceModeCommon_run(&test_ctx);
+            DccServiceModeCommon_run(&test_context);
 
         }
 
         /* Evaluation: no ACK → retry or fail */
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Post-reset */
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_POST_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
 }
 
@@ -1529,7 +1529,7 @@ TEST(DccServiceModeCommon, write_ack_during_command_returns_success) {
 
     EXPECT_EQ(step_callback_count, (uint32_t)1);
     EXPECT_EQ(step_result, DCC_SERVICE_MODE_SUCCESS);
-    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_ctx));
+    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_context));
 
 }
 
@@ -1545,21 +1545,21 @@ TEST(DccServiceModeCommon, write_ack_on_first_recovery_packet) {
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Transition to RECOVERY */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     /* First recovery packet */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     /* ACK arrives during first recovery packet */
     feed_ack_samples(104);
 
     /* Detect ACK → RESET_POST */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     drive_post_reset_to_idle();
 
@@ -1580,21 +1580,21 @@ TEST(DccServiceModeCommon, write_ack_on_third_recovery_packet) {
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Transition to RECOVERY */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     for (packet_index = 0; packet_index < 3; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     feed_ack_samples(104);
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     drive_post_reset_to_idle();
 
@@ -1615,22 +1615,22 @@ TEST(DccServiceModeCommon, write_ack_on_last_recovery_packet) {
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Transition to RECOVERY */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RECOVERY_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* ACK after last recovery packet */
     feed_ack_samples(104);
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     drive_post_reset_to_idle();
 
@@ -1656,7 +1656,7 @@ TEST(DccServiceModeCommon, write_no_ack_through_recovery_retries_then_fails) {
 
     EXPECT_EQ(step_callback_count, (uint32_t)1);
     EXPECT_EQ(step_result, DCC_SERVICE_MODE_NO_ACK);
-    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_ctx));
+    EXPECT_TRUE(DccServiceModeCommon_is_idle(&test_context));
 
 }
 
@@ -1672,9 +1672,9 @@ TEST(DccServiceModeCommon, write_ack_on_retry_command_phase) {
 
     /* Retry #1: ACK during command phase */
     drive_to_command_phase();
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
     feed_ack_samples(104);
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     drive_post_reset_to_idle();
 
@@ -1699,19 +1699,19 @@ TEST(DccServiceModeCommon, write_ack_on_retry_recovery_phase) {
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     /* Transition to RECOVERY */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     /* 2 recovery packets, then ACK */
-    DccServiceModeCommon_run(&test_ctx);
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
+    DccServiceModeCommon_run(&test_context);
     feed_ack_samples(104);
 
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     drive_post_reset_to_idle();
 
@@ -1741,20 +1741,20 @@ TEST(DccServiceModeCommon, write_ack_on_last_retry_recovery_phase) {
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
-    DccServiceModeCommon_run(&test_ctx);  /* → RECOVERY */
+    DccServiceModeCommon_run(&test_context);  /* → RECOVERY */
 
     for (packet_index = 0; packet_index < 4; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     feed_ack_samples(104);
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     drive_post_reset_to_idle();
 
@@ -1775,16 +1775,16 @@ TEST(DccServiceModeCommon, write_recovery_sends_correct_packet_count) {
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
-    DccServiceModeCommon_run(&test_ctx);  /* → RECOVERY */
+    DccServiceModeCommon_run(&test_context);  /* → RECOVERY */
     load_packet_count = 0;
 
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RECOVERY_COUNT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
@@ -1807,7 +1807,7 @@ TEST(DccServiceModeCommon, write_ack_spanning_command_into_recovery) {
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
@@ -1815,24 +1815,24 @@ TEST(DccServiceModeCommon, write_ack_spanning_command_into_recovery) {
     uint16_t sample_index;
     for (sample_index = 0; sample_index < 50; sample_index++) {
 
-        DccServiceModeCommon_ack_sample(&test_ctx, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+        DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
 
     }
 
     /* Transition to RECOVERY */
-    DccServiceModeCommon_run(&test_ctx);
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
+    DccServiceModeCommon_run(&test_context);
 
     /* Continue ACK pulse in recovery — total > 87 */
     for (sample_index = 0; sample_index < 50; sample_index++) {
 
-        DccServiceModeCommon_ack_sample(&test_ctx, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+        DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
 
     }
 
-    DccServiceModeCommon_ack_sample(&test_ctx, 0);
+    DccServiceModeCommon_ack_sample(&test_context, 0);
 
-    DccServiceModeCommon_run(&test_ctx);  /* detect ACK → RESET_POST */
+    DccServiceModeCommon_run(&test_context);  /* detect ACK → RESET_POST */
     drive_post_reset_to_idle();
 
     EXPECT_EQ(step_callback_count, (uint32_t)1);
@@ -1853,7 +1853,7 @@ TEST(DccServiceModeCommon, verify_no_recovery_phase) {
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
@@ -1861,10 +1861,10 @@ TEST(DccServiceModeCommon, verify_no_recovery_phase) {
 
     /* Next run: should go to retry (RESET_PRE), NOT recovery */
     uint32_t packets_before = load_packet_count;
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     /* Should be at RESET_PRE — next run sends a reset packet */
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
     EXPECT_EQ(load_packet_count, packets_before + 1);
     EXPECT_EQ(last_loaded_packet.data[0], DCC_RESET_BYTE);
 
@@ -1879,11 +1879,11 @@ TEST(DccServiceModeCommon, write_custom_recovery_count) {
     reset_mocks();
     reset_step_callback();
     _test_interface = make_interface();
-    DccServiceModeCommon_initialize(&test_ctx, &_test_interface);
-    DccServiceModeCommon_enter(&test_ctx);
+    DccServiceModeCommon_initialize(&test_context, &_test_interface);
+    DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_ctx, &packet, mock_step_callback,
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback,
                                          true, 10);
 
     drive_to_command_phase();
@@ -1891,23 +1891,23 @@ TEST(DccServiceModeCommon, write_custom_recovery_count) {
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
-    DccServiceModeCommon_run(&test_ctx);  /* → RECOVERY */
+    DccServiceModeCommon_run(&test_context);  /* → RECOVERY */
     load_packet_count = 0;
 
     for (packet_index = 0; packet_index < 10; packet_index++) {
 
-        DccServiceModeCommon_run(&test_ctx);
+        DccServiceModeCommon_run(&test_context);
 
     }
 
     EXPECT_EQ(load_packet_count, (uint32_t)10);
 
     feed_ack_samples(104);
-    DccServiceModeCommon_run(&test_ctx);
+    DccServiceModeCommon_run(&test_context);
 
     drive_post_reset_to_idle();
 

@@ -56,13 +56,13 @@ static void _on_step_complete(dcc_service_mode_result_t result);
 /* We need the context to reach interface->on_complete in the callback, but the callback
  * signature is fixed (takes only result). Store a module-level pointer to the
  * active context. This is safe because only one operation runs at a time. */
-static dcc_service_mode_direct_context_t *_active_ctx = (void *)0;
+static dcc_service_mode_direct_context_t *_active_context = (void *)0;
 
 static void _on_step_complete(dcc_service_mode_result_t result) {
 
-    if (_active_ctx && _active_ctx->interface->on_complete) {
+    if (_active_context && _active_context->interface->on_complete) {
 
-        _active_ctx->interface->on_complete(result);
+        _active_context->interface->on_complete(result);
 
     }
 
@@ -95,7 +95,7 @@ bool DccServiceModeDirect_write_byte(dcc_service_mode_direct_context_t *context,
     packet.preamble_bits = DCC_PREAMBLE_BITS_SERVICE;
     packet.repeat_count = 0;
 
-    _active_ctx = context;
+    _active_context = context;
     return context->interface->begin_operation(&packet, &_on_step_complete, true, DCC_SERVICE_MODE_RECOVERY_COUNT);
 
 }
@@ -121,7 +121,7 @@ bool DccServiceModeDirect_verify_byte(dcc_service_mode_direct_context_t *context
     packet.preamble_bits = DCC_PREAMBLE_BITS_SERVICE;
     packet.repeat_count = 0;
 
-    _active_ctx = context;
+    _active_context = context;
     return context->interface->begin_operation(&packet, &_on_step_complete, false, 0);
 
 }
@@ -150,7 +150,7 @@ bool DccServiceModeDirect_write_bit(dcc_service_mode_direct_context_t *context, 
     packet.preamble_bits = DCC_PREAMBLE_BITS_SERVICE;
     packet.repeat_count = 0;
 
-    _active_ctx = context;
+    _active_context = context;
     return context->interface->begin_operation(&packet, &_on_step_complete, true, DCC_SERVICE_MODE_RECOVERY_COUNT);
 
 }
@@ -179,7 +179,7 @@ bool DccServiceModeDirect_verify_bit(dcc_service_mode_direct_context_t *context,
     packet.preamble_bits = DCC_PREAMBLE_BITS_SERVICE;
     packet.repeat_count = 0;
 
-    _active_ctx = context;
+    _active_context = context;
     return context->interface->begin_operation(&packet, &_on_step_complete, false, 0);
 
 }

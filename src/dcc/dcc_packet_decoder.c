@@ -119,8 +119,8 @@ static void _update_primary_address(void) {
 static void _update_accessory_address(void) {
 
     uint8_t cv541_value;
-    uint8_t lsb;
-    uint8_t msb;
+    uint8_t address_low_byte;
+    uint8_t address_high_byte;
 
     if (_interface->cv_read(DCC_CV_ACC_CONFIG, &cv541_value)) {
 
@@ -133,17 +133,17 @@ static void _update_accessory_address(void) {
 
     }
 
-    if (_interface->cv_read(DCC_CV_ACC_ADDRESS_LSB, &lsb) &&
-        _interface->cv_read(DCC_CV_ACC_ADDRESS_MSB, &msb)) {
+    if (_interface->cv_read(DCC_CV_ACC_ADDRESS_LSB, &address_low_byte) &&
+        _interface->cv_read(DCC_CV_ACC_ADDRESS_MSB, &address_high_byte)) {
 
         if (_use_output_address) {
 
-            uint16_t raw = ((uint16_t)msb << 8) | lsb;
+            uint16_t raw = ((uint16_t)address_high_byte << 8) | address_low_byte;
             _my_address = (raw > 0) ? (raw - 1) : 0;
 
         } else {
 
-            _my_address = ((uint16_t)(msb & 0x07) << 6) | (lsb & 0x3F);
+            _my_address = ((uint16_t)(address_high_byte & 0x07) << 6) | (address_low_byte & 0x3F);
 
         }
 
@@ -489,11 +489,11 @@ static bool _cv_write_and_notify(uint16_t cv_number, uint8_t data_byte, bool is_
     /**
      * @brief Read-modify-write a single CV bit.
      * @param cv_number 1-based CV number.
-     * @param bit_pos Bit position (0-7).
-     * @param bit_val Desired bit value.
+     * @param bit_position Bit position (0-7).
+     * @param bit_value Desired bit value.
      * @param is_service_mode true to fire ACK pulse on success.
      */
-static void _cv_bit_manipulate(uint16_t cv_number, uint8_t bit_pos, bool bit_val, bool is_service_mode) {
+static void _cv_bit_manipulate(uint16_t cv_number, uint8_t bit_position, bool bit_value, bool is_service_mode) {
 
     uint8_t current_value;
 
@@ -509,13 +509,13 @@ static void _cv_bit_manipulate(uint16_t cv_number, uint8_t bit_pos, bool bit_val
 
     }
 
-    if (bit_val) {
+    if (bit_value) {
 
-        current_value |= (1 << bit_pos);
+        current_value |= (1 << bit_position);
 
     } else {
 
-        current_value &= ~(1 << bit_pos);
+        current_value &= ~(1 << bit_position);
 
     }
 
@@ -526,25 +526,25 @@ static void _cv_bit_manipulate(uint16_t cv_number, uint8_t bit_pos, bool bit_val
     /**
      * @brief Dispatch CV access long form instruction.
      * @param address DCC address (for callback).
-     * @param inst Instruction bytes pointer.
-     * @param inst_count Number of instruction bytes.
+     * @param instruction_bytesInstruction bytes pointer.
+     * @param instruction_byte_count Number of instruction bytes.
      */
-static void _dispatch_cv_access(uint16_t address, const uint8_t *inst, uint8_t inst_count) {
+static void _dispatch_cv_access(uint16_t address, const uint8_t *instruction_bytes, uint8_t instruction_byte_count) {
 
     uint8_t cv_command;
     uint16_t cv_number;
     uint8_t data_byte;
 
-    if (inst_count < 3) {
+    if (instruction_byte_count < 3) {
 
         return;
 
     }
 
-    cv_command = inst[0] & 0x0C;
-    cv_number = (uint16_t)((inst[0] & 0x03) << 8) | inst[1];
+    cv_command = instruction_bytes[0] & 0x0C;
+    cv_number = (uint16_t)((instruction_bytes[0] & 0x03) << 8) | instruction_bytes[1];
     cv_number += 1;  /* Convert 0-based wire encoding to 1-based CV number */
-    data_byte = inst[2];
+    data_byte = instruction_bytes[2];
 
     if (cv_command == 0x0C) {
 
@@ -554,19 +554,19 @@ static void _dispatch_cv_access(uint16_t address, const uint8_t *inst, uint8_t i
     } else if (cv_command == 0x08) {
 
         /* Bit manipulation: 111010AA, data = 111KDBBB */
-        uint8_t bit_pos = data_byte & 0x07;
-        bool bit_val = (data_byte & 0x08) ? true : false;
+        uint8_t bit_position = data_byte & 0x07;
+        bool bit_value = (data_byte & 0x08) ? true : false;
         bool is_write = (data_byte & 0x10) ? true : false;
 
         if (is_write) {
 
-            _cv_bit_manipulate(cv_number, bit_pos, bit_val, false);
+            _cv_bit_manipulate(cv_number, bit_position, bit_value, false);
 
         }
 
         if (_interface->on_cv_bit) {
 
-            _interface->on_cv_bit(cv_number, bit_pos, bit_val, false);
+            _interface->on_cv_bit(cv_number, bit_position, bit_value, false);
 
         }
 
@@ -628,10 +628,10 @@ static bool _cv_write_and_notify_acc(uint16_t cv_number, uint8_t data_byte) {
     /**
      * @brief Read-modify-write a single CV bit (accessory path).
      * @param cv_number 1-based CV number.
-     * @param bit_pos Bit position (0-7).
-     * @param bit_val Desired bit value.
+     * @param bit_position Bit position (0-7).
+     * @param bit_value Desired bit value.
      */
-static void _cv_bit_manipulate_acc(uint16_t cv_number, uint8_t bit_pos, bool bit_val) {
+static void _cv_bit_manipulate_acc(uint16_t cv_number, uint8_t bit_position, bool bit_value) {
 
     uint8_t current_value;
 
@@ -647,13 +647,13 @@ static void _cv_bit_manipulate_acc(uint16_t cv_number, uint8_t bit_pos, bool bit
 
     }
 
-    if (bit_val) {
+    if (bit_value) {
 
-        current_value |= (1 << bit_pos);
+        current_value |= (1 << bit_position);
 
     } else {
 
-        current_value &= ~(1 << bit_pos);
+        current_value &= ~(1 << bit_position);
 
     }
 
@@ -663,25 +663,25 @@ static void _cv_bit_manipulate_acc(uint16_t cv_number, uint8_t bit_pos, bool bit
 
     /**
      * @brief Dispatch accessory CV access long form instruction.
-     * @param inst Instruction bytes pointer (starting at CV instruction).
-     * @param inst_count Number of instruction bytes.
+     * @param instruction_bytesInstruction bytes pointer (starting at CV instruction).
+     * @param instruction_byte_count Number of instruction bytes.
      */
-static void _dispatch_acc_cv_access(const uint8_t *inst, uint8_t inst_count) {
+static void _dispatch_acc_cv_access(const uint8_t *instruction_bytes, uint8_t instruction_byte_count) {
 
     uint8_t cv_command;
     uint16_t cv_number;
     uint8_t data_byte;
 
-    if (inst_count < 3) {
+    if (instruction_byte_count < 3) {
 
         return;
 
     }
 
-    cv_command = inst[0] & 0x0C;
-    cv_number = (uint16_t)((inst[0] & 0x03) << 8) | inst[1];
+    cv_command = instruction_bytes[0] & 0x0C;
+    cv_number = (uint16_t)((instruction_bytes[0] & 0x03) << 8) | instruction_bytes[1];
     cv_number += 1;  /* Convert 0-based wire encoding to 1-based CV number */
-    data_byte = inst[2];
+    data_byte = instruction_bytes[2];
 
     if (cv_command == 0x0C) {
 
@@ -691,19 +691,19 @@ static void _dispatch_acc_cv_access(const uint8_t *inst, uint8_t inst_count) {
     } else if (cv_command == 0x08) {
 
         /* Bit manipulation: 111010AA, data = 111KDBBB */
-        uint8_t bit_pos = data_byte & 0x07;
-        bool bit_val = (data_byte & 0x08) ? true : false;
+        uint8_t bit_position = data_byte & 0x07;
+        bool bit_value = (data_byte & 0x08) ? true : false;
         bool is_write = (data_byte & 0x10) ? true : false;
 
         if (is_write) {
 
-            _cv_bit_manipulate_acc(cv_number, bit_pos, bit_val);
+            _cv_bit_manipulate_acc(cv_number, bit_position, bit_value);
 
         }
 
         if (_interface->on_acc_cv_bit) {
 
-            _interface->on_acc_cv_bit(cv_number, bit_pos, bit_val);
+            _interface->on_acc_cv_bit(cv_number, bit_position, bit_value);
 
         }
 
@@ -872,29 +872,29 @@ static void _dispatch_accessory_extended(const uint8_t *data, uint8_t byte_count
     /**
      * @brief Dispatch advanced operations (001xxxxx).
      * @param address DCC address.
-     * @param inst Instruction bytes pointer.
-     * @param inst_count Number of instruction bytes.
+     * @param instruction_bytesInstruction bytes pointer.
+     * @param instruction_byte_count Number of instruction bytes.
      */
-static void _dispatch_advanced_ops(uint16_t address, const uint8_t *inst, uint8_t inst_count) {
+static void _dispatch_advanced_ops(uint16_t address, const uint8_t *instruction_bytes, uint8_t instruction_byte_count) {
 
-    uint8_t first = inst[0];
+    uint8_t first = instruction_bytes[0];
 
-    if (first == DCC_ADV_OPS_128_SPEED && inst_count >= 2) {
+    if (first == DCC_ADV_OPS_128_SPEED && instruction_byte_count >= 2) {
 
-        _dispatch_speed_128(address, inst[1]);
+        _dispatch_speed_128(address, instruction_bytes[1]);
 
-    } else if (first == DCC_ADV_OPS_ANALOG_FUNCTION && inst_count >= 3) {
+    } else if (first == DCC_ADV_OPS_ANALOG_FUNCTION && instruction_byte_count >= 3) {
 
         if (_interface->on_analog_function) {
 
-            _interface->on_analog_function(address, inst[1], inst[2]);
+            _interface->on_analog_function(address, instruction_bytes[1], instruction_bytes[2]);
 
         }
 
-    } else if (first == DCC_ADV_OPS_SPEED_RESTRICTION && inst_count >= 2) {
+    } else if (first == DCC_ADV_OPS_SPEED_RESTRICTION && instruction_byte_count >= 2) {
 
-        bool enabled = (inst[1] & 0x80) ? true : false;
-        uint8_t limit = inst[1] & 0x7F;
+        bool enabled = (instruction_bytes[1] & 0x80) ? true : false;
+        uint8_t limit = instruction_bytes[1] & 0x7F;
 
         if (_interface->on_speed_restriction) {
 
@@ -909,42 +909,42 @@ static void _dispatch_advanced_ops(uint16_t address, const uint8_t *inst, uint8_
     /**
      * @brief Dispatch feature expansion instructions (110xxxxx).
      * @param address DCC address.
-     * @param inst Instruction bytes pointer.
-     * @param inst_count Number of instruction bytes.
+     * @param instruction_bytesInstruction bytes pointer.
+     * @param instruction_byte_count Number of instruction bytes.
      */
-static void _dispatch_feature_expansion(uint16_t address, const uint8_t *inst, uint8_t inst_count) {
+static void _dispatch_feature_expansion(uint16_t address, const uint8_t *instruction_bytes, uint8_t instruction_byte_count) {
 
-    uint8_t first = inst[0];
+    uint8_t first = instruction_bytes[0];
 
     if (first == DCC_FEAT_F13_F20) {
 
-        _dispatch_functions(address, 13, 8, inst[1]);
+        _dispatch_functions(address, 13, 8, instruction_bytes[1]);
 
     } else if (first == DCC_FEAT_F21_F28) {
 
-        _dispatch_functions(address, 21, 8, inst[1]);
+        _dispatch_functions(address, 21, 8, instruction_bytes[1]);
 
     } else if (first == DCC_FEAT_F29_F36) {
 
-        _dispatch_functions(address, 29, 8, inst[1]);
+        _dispatch_functions(address, 29, 8, instruction_bytes[1]);
 
     } else if (first == DCC_FEAT_F37_F44) {
 
-        _dispatch_functions(address, 37, 8, inst[1]);
+        _dispatch_functions(address, 37, 8, instruction_bytes[1]);
 
     } else if (first == DCC_FEAT_F45_F52) {
 
-        _dispatch_functions(address, 45, 8, inst[1]);
+        _dispatch_functions(address, 45, 8, instruction_bytes[1]);
 
     } else if (first == DCC_FEAT_F53_F60) {
 
-        _dispatch_functions(address, 53, 8, inst[1]);
+        _dispatch_functions(address, 53, 8, instruction_bytes[1]);
 
     } else if (first == DCC_FEAT_BINARY_STATE_SHORT) {
 
         /* Binary state short: 0xDD + DLLLLLLL (state 1-127) */
-        uint8_t state_num = inst[1] & 0x7F;
-        bool active = (inst[1] & 0x80) ? true : false;
+        uint8_t state_num = instruction_bytes[1] & 0x7F;
+        bool active = (instruction_bytes[1] & 0x80) ? true : false;
 
         if (_interface->on_binary_state_short) {
 
@@ -952,11 +952,11 @@ static void _dispatch_feature_expansion(uint16_t address, const uint8_t *inst, u
 
         }
 
-    } else if (first == DCC_FEAT_BINARY_STATE_LONG && inst_count >= 3) {
+    } else if (first == DCC_FEAT_BINARY_STATE_LONG && instruction_byte_count >= 3) {
 
         /* Binary state long: 0xDC + DLLLLLLL + HHHHHHHH (3 bytes) */
-        uint16_t state_num = (uint16_t)(inst[2] << 7) | (inst[1] & 0x7F);
-        bool active = (inst[1] & 0x80) ? true : false;
+        uint16_t state_num = (uint16_t)(instruction_bytes[2] << 7) | (instruction_bytes[1] & 0x7F);
+        bool active = (instruction_bytes[1] & 0x80) ? true : false;
 
         if (_interface->on_binary_state_long) {
 
@@ -967,7 +967,7 @@ static void _dispatch_feature_expansion(uint16_t address, const uint8_t *inst, u
     } else if (first == DCC_FEAT_F61_F68) {
 
         /* F61-F68: 0xDC + data (2 bytes only — same opcode as BSL) */
-        _dispatch_functions(address, 61, 8, inst[1]);
+        _dispatch_functions(address, 61, 8, instruction_bytes[1]);
 
     }
 
@@ -976,30 +976,30 @@ static void _dispatch_feature_expansion(uint16_t address, const uint8_t *inst, u
     /**
      * @brief Dispatch instruction bytes for a multi-function decoder.
      * @param address DCC address.
-     * @param inst Pointer to first instruction byte.
-     * @param inst_count Number of instruction bytes.
+     * @param instruction_bytesPointer to first instruction byte.
+     * @param instruction_byte_count Number of instruction bytes.
      */
-static void _dispatch_instruction(uint16_t address, const uint8_t *inst, uint8_t inst_count) {
+static void _dispatch_instruction(uint16_t address, const uint8_t *instruction_bytes, uint8_t instruction_byte_count) {
 
     uint8_t first;
 
-    if (inst_count < 1) {
+    if (instruction_byte_count < 1) {
 
         return;
 
     }
 
-    first = inst[0];
+    first = instruction_bytes[0];
 
-    if ((first & 0xF0) == 0x10 && inst_count >= 2) {
+    if ((first & 0xF0) == 0x10 && instruction_byte_count >= 2) {
 
         /* Consist control: 0001xxxx */
-        bool dir_normal = (first == DCC_CONSIST_SET_NORMAL);
-        uint8_t consist_addr = inst[1] & 0x7F;
+        bool direction_normal = (first == DCC_CONSIST_SET_NORMAL);
+        uint8_t consist_address = instruction_bytes[1] & 0x7F;
 
         if (_interface->on_consist_command) {
 
-            _interface->on_consist_command(address, consist_addr, dir_normal);
+            _interface->on_consist_command(address, consist_address, direction_normal);
 
         }
 
@@ -1011,7 +1011,7 @@ static void _dispatch_instruction(uint16_t address, const uint8_t *inst, uint8_t
     } else if ((first & 0xE0) == 0x20) {
 
         /* Advanced operations: 001xxxxx */
-        _dispatch_advanced_ops(address, inst, inst_count);
+        _dispatch_advanced_ops(address, instruction_bytes, instruction_byte_count);
 
     } else if ((first & 0xE0) == 0x80) {
 
@@ -1028,15 +1028,15 @@ static void _dispatch_instruction(uint16_t address, const uint8_t *inst, uint8_t
         /* Function group 2b (F9-F12): 1010xxxx */
         _dispatch_functions(address, 9, 4, first & 0x0F);
 
-    } else if ((first & 0xE0) == 0xC0 && inst_count >= 2) {
+    } else if ((first & 0xE0) == 0xC0 && instruction_byte_count >= 2) {
 
         /* Feature expansion: 110xxxxx */
-        _dispatch_feature_expansion(address, inst, inst_count);
+        _dispatch_feature_expansion(address, instruction_bytes, instruction_byte_count);
 
     } else if ((first & 0xE0) == 0xE0) {
 
         /* CV access long form: 111xxxxx */
-        _dispatch_cv_access(address, inst, inst_count);
+        _dispatch_cv_access(address, instruction_bytes, instruction_byte_count);
 
     }
 
@@ -1072,10 +1072,10 @@ static void _cv_verify_byte(uint16_t cv_number, uint8_t expected) {
     /**
      * @brief Verify a single CV bit and fire ACK if it matches.
      * @param cv_number 1-based CV number.
-     * @param bit_pos Bit position (0-7).
-     * @param bit_val Expected bit value.
+     * @param bit_position Bit position (0-7).
+     * @param bit_value Expected bit value.
      */
-static void _cv_verify_bit(uint16_t cv_number, uint8_t bit_pos, bool bit_val) {
+static void _cv_verify_bit(uint16_t cv_number, uint8_t bit_position, bool bit_value) {
 
     uint8_t current_value;
 
@@ -1091,7 +1091,7 @@ static void _cv_verify_bit(uint16_t cv_number, uint8_t bit_pos, bool bit_val) {
 
     }
 
-    if (((current_value >> bit_pos) & 0x01) == bit_val) {
+    if (((current_value >> bit_position) & 0x01) == bit_value) {
 
         _fire_ack();
 
@@ -1106,23 +1106,23 @@ static void _cv_verify_bit(uint16_t cv_number, uint8_t bit_pos, bool bit_val) {
      */
 static void _dispatch_service_mode_bit_manipulate(uint16_t cv_number, uint8_t data_byte) {
 
-    uint8_t bit_pos = data_byte & 0x07;
-    bool bit_val = (data_byte & 0x08) ? true : false;
+    uint8_t bit_position = data_byte & 0x07;
+    bool bit_value = (data_byte & 0x08) ? true : false;
     bool is_write = (data_byte & 0x10) ? true : false;
 
     if (is_write) {
 
-        _cv_bit_manipulate(cv_number, bit_pos, bit_val, true);
+        _cv_bit_manipulate(cv_number, bit_position, bit_value, true);
 
     } else {
 
-        _cv_verify_bit(cv_number, bit_pos, bit_val);
+        _cv_verify_bit(cv_number, bit_position, bit_value);
 
     }
 
     if (_interface->on_cv_bit) {
 
-        _interface->on_cv_bit(cv_number, bit_pos, bit_val, true);
+        _interface->on_cv_bit(cv_number, bit_position, bit_value, true);
 
     }
 

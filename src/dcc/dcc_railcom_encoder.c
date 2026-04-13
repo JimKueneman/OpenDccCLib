@@ -96,8 +96,8 @@ uint8_t DccRailcomEncoder_encode_byte(uint8_t value) {
 void DccRailcomEncoder_send_ch1(uint8_t datagram_id, uint8_t data) {
 
     uint16_t combined;
-    uint8_t high6;
-    uint8_t low6;
+    uint8_t high_six_bits;
+    uint8_t low_six_bits;
 
     if (!_interface->uart_write) {
 
@@ -106,19 +106,19 @@ void DccRailcomEncoder_send_ch1(uint8_t datagram_id, uint8_t data) {
     }
 
     combined = ((uint16_t)(datagram_id & 0x0F) << 8) | data;
-    high6 = (uint8_t)((combined >> 6) & 0x3F);
-    low6 = (uint8_t)(combined & 0x3F);
+    high_six_bits = (uint8_t)((combined >> 6) & 0x3F);
+    low_six_bits = (uint8_t)(combined & 0x3F);
 
-    _interface->uart_write(_encode_table[high6]);
-    _interface->uart_write(_encode_table[low6]);
+    _interface->uart_write(_encode_table[high_six_bits]);
+    _interface->uart_write(_encode_table[low_six_bits]);
 
 }
 
 void DccRailcomEncoder_send_ch2(const dcc_railcom_response_t *response) {
 
     uint16_t combined;
-    uint8_t high6;
-    uint8_t low6;
+    uint8_t high_six_bits;
+    uint8_t low_six_bits;
     uint8_t byte_index;
 
     if (!_interface->uart_write) {
@@ -135,11 +135,11 @@ void DccRailcomEncoder_send_ch2(const dcc_railcom_response_t *response) {
 
     /* First two encoded bytes: 4-bit ID + 8-bit data[0] = 12-bit combined */
     combined = ((uint16_t)(response->datagram_id & 0x0F) << 8) | response->data[0];
-    high6 = (uint8_t)((combined >> 6) & 0x3F);
-    low6 = (uint8_t)(combined & 0x3F);
+    high_six_bits = (uint8_t)((combined >> 6) & 0x3F);
+    low_six_bits = (uint8_t)(combined & 0x3F);
 
-    _interface->uart_write(_encode_table[high6]);
-    _interface->uart_write(_encode_table[low6]);
+    _interface->uart_write(_encode_table[high_six_bits]);
+    _interface->uart_write(_encode_table[low_six_bits]);
 
     /* Additional data bytes encoded individually as 6-bit values */
     for (byte_index = 1; byte_index < response->count; byte_index++) {

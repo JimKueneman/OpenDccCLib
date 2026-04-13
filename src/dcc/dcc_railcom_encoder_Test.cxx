@@ -118,11 +118,11 @@ TEST(DccRailcomEncoder, round_trip_all_values) {
     DccRailcomEncoder_initialize(&enc_interface);
 
     /* Also initialize decoder to use its decode function */
-    dcc_railcom_decoder_context_t dec_ctx;
+    dcc_railcom_decoder_context_t decoder_context;
     interface_dcc_railcom_decoder_t dec_interface;
-    memset(&dec_ctx, 0, sizeof(dec_ctx));
+    memset(&decoder_context, 0, sizeof(decoder_context));
     memset(&dec_interface, 0, sizeof(dec_interface));
-    DccRailcomDecoder_initialize(&dec_ctx, &dec_interface);
+    DccRailcomDecoder_initialize(&decoder_context, &dec_interface);
 
     uint8_t value;
 
@@ -146,7 +146,7 @@ TEST(DccRailcomEncoder, send_ch1_basic) {
     interface_dcc_railcom_encoder_t interface = make_interface();
     DccRailcomEncoder_initialize(&interface);
 
-    /* datagram_id=0, data=0x01 → combined=0x001 → high6=0x00, low6=0x01 */
+    /* datagram_id=0, data=0x01 → combined=0x001 → high_six_bits=0x00, low_six_bits=0x01 */
     DccRailcomEncoder_send_ch1(0, 0x01);
 
     EXPECT_EQ(uart_byte_count, (uint8_t)2);
@@ -162,7 +162,7 @@ TEST(DccRailcomEncoder, send_ch1_with_datagram_id) {
     interface_dcc_railcom_encoder_t interface = make_interface();
     DccRailcomEncoder_initialize(&interface);
 
-    /* datagram_id=15, data=0x00 → combined=0xF00 → high6=0x3C, low6=0x00 */
+    /* datagram_id=15, data=0x00 → combined=0xF00 → high_six_bits=0x3C, low_six_bits=0x00 */
     DccRailcomEncoder_send_ch1(15, 0x00);
 
     EXPECT_EQ(uart_byte_count, (uint8_t)2);

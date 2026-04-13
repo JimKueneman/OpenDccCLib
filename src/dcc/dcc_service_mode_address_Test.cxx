@@ -15,7 +15,7 @@
 // Mock / tracking state
 // ============================================================================
 
-static dcc_service_mode_address_context_t test_ctx;
+static dcc_service_mode_address_context_t test_context;
 
 static dcc_packet_t last_begin_packet;
 static dcc_service_mode_step_callback_t last_begin_callback;
@@ -59,7 +59,7 @@ static void mock_on_complete(dcc_service_mode_result_t result) {
 
 static void reset_mocks(void) {
 
-    memset(&test_ctx, 0, sizeof(test_ctx));
+    memset(&test_context, 0, sizeof(test_context));
     memset(&last_begin_packet, 0, sizeof(last_begin_packet));
     last_begin_callback = NULL;
     begin_operation_count = 0;
@@ -113,7 +113,7 @@ TEST(DccServiceModeAddress, initialize_does_not_crash) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
 }
 
@@ -125,9 +125,9 @@ TEST(DccServiceModeAddress, write_address_1) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeAddress_write(&test_ctx, 1));
+    EXPECT_TRUE(DccServiceModeAddress_write(&test_context, 1));
     EXPECT_EQ(begin_operation_count, (uint32_t)1);
 
     /* Write register 1 (index 0): 0111 1 000 = 0x78 */
@@ -143,9 +143,9 @@ TEST(DccServiceModeAddress, write_address_127) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeAddress_write(&test_ctx, 127));
+    EXPECT_TRUE(DccServiceModeAddress_write(&test_context, 127));
 
     EXPECT_EQ(last_begin_packet.data[0], (uint8_t)(DCC_SERVICE_REGISTER_WRITE_PREFIX | 0x00));
     EXPECT_EQ(last_begin_packet.data[1], (uint8_t)127);
@@ -157,9 +157,9 @@ TEST(DccServiceModeAddress, write_address_42) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeAddress_write(&test_ctx, 42));
+    EXPECT_TRUE(DccServiceModeAddress_write(&test_context, 42));
 
     EXPECT_EQ(last_begin_packet.data[1], (uint8_t)42);
     verify_xor(&last_begin_packet);
@@ -174,9 +174,9 @@ TEST(DccServiceModeAddress, write_address_0_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModeAddress_write(&test_ctx, 0));
+    EXPECT_FALSE(DccServiceModeAddress_write(&test_context, 0));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -185,9 +185,9 @@ TEST(DccServiceModeAddress, write_address_128_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModeAddress_write(&test_ctx, 128));
+    EXPECT_FALSE(DccServiceModeAddress_write(&test_context, 128));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -196,10 +196,10 @@ TEST(DccServiceModeAddress, write_busy_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
     common_idle_value = false;
-    EXPECT_FALSE(DccServiceModeAddress_write(&test_ctx, 1));
+    EXPECT_FALSE(DccServiceModeAddress_write(&test_context, 1));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -212,9 +212,9 @@ TEST(DccServiceModeAddress, callback_forwards_success) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    DccServiceModeAddress_write(&test_ctx, 1);
+    DccServiceModeAddress_write(&test_context, 1);
 
     ASSERT_NE(last_begin_callback, (dcc_service_mode_step_callback_t)NULL);
     last_begin_callback(DCC_SERVICE_MODE_SUCCESS);
@@ -228,9 +228,9 @@ TEST(DccServiceModeAddress, callback_forwards_no_ack) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    DccServiceModeAddress_write(&test_ctx, 1);
+    DccServiceModeAddress_write(&test_context, 1);
 
     last_begin_callback(DCC_SERVICE_MODE_NO_ACK);
 
@@ -244,9 +244,9 @@ TEST(DccServiceModeAddress, callback_with_null_on_complete_does_not_crash) {
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
     interface.on_complete = NULL;
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    DccServiceModeAddress_write(&test_ctx, 1);
+    DccServiceModeAddress_write(&test_context, 1);
 
     ASSERT_NE(last_begin_callback, (dcc_service_mode_step_callback_t)NULL);
     last_begin_callback(DCC_SERVICE_MODE_SUCCESS);
@@ -263,9 +263,9 @@ TEST(DccServiceModeAddress, write_passes_write_flag_and_10_recovery) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    DccServiceModeAddress_write(&test_ctx, 3);
+    DccServiceModeAddress_write(&test_context, 3);
 
     EXPECT_TRUE(last_is_write_operation);
     EXPECT_EQ(last_recovery_count, (uint8_t)10);
@@ -280,9 +280,9 @@ TEST(DccServiceModeAddress, verify_address_1) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeAddress_verify(&test_ctx, 1));
+    EXPECT_TRUE(DccServiceModeAddress_verify(&test_context, 1));
     EXPECT_EQ(begin_operation_count, (uint32_t)1);
 
     /* Verify register 1 (index 0): 0111 0 000 = 0x70 */
@@ -298,9 +298,9 @@ TEST(DccServiceModeAddress, verify_address_127) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeAddress_verify(&test_ctx, 127));
+    EXPECT_TRUE(DccServiceModeAddress_verify(&test_context, 127));
 
     EXPECT_EQ(last_begin_packet.data[0], (uint8_t)(DCC_SERVICE_REGISTER_VERIFY_PREFIX | 0x00));
     EXPECT_EQ(last_begin_packet.data[1], (uint8_t)127);
@@ -312,9 +312,9 @@ TEST(DccServiceModeAddress, verify_address_42) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeAddress_verify(&test_ctx, 42));
+    EXPECT_TRUE(DccServiceModeAddress_verify(&test_context, 42));
 
     EXPECT_EQ(last_begin_packet.data[1], (uint8_t)42);
     verify_xor(&last_begin_packet);
@@ -329,9 +329,9 @@ TEST(DccServiceModeAddress, verify_address_0_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModeAddress_verify(&test_ctx, 0));
+    EXPECT_FALSE(DccServiceModeAddress_verify(&test_context, 0));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -340,9 +340,9 @@ TEST(DccServiceModeAddress, verify_address_128_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModeAddress_verify(&test_ctx, 128));
+    EXPECT_FALSE(DccServiceModeAddress_verify(&test_context, 128));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -351,10 +351,10 @@ TEST(DccServiceModeAddress, verify_busy_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
     common_idle_value = false;
-    EXPECT_FALSE(DccServiceModeAddress_verify(&test_ctx, 1));
+    EXPECT_FALSE(DccServiceModeAddress_verify(&test_context, 1));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -367,9 +367,9 @@ TEST(DccServiceModeAddress, verify_callback_forwards_success) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    DccServiceModeAddress_verify(&test_ctx, 1);
+    DccServiceModeAddress_verify(&test_context, 1);
 
     ASSERT_NE(last_begin_callback, (dcc_service_mode_step_callback_t)NULL);
     last_begin_callback(DCC_SERVICE_MODE_SUCCESS);
@@ -383,9 +383,9 @@ TEST(DccServiceModeAddress, verify_callback_forwards_no_ack) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    DccServiceModeAddress_verify(&test_ctx, 1);
+    DccServiceModeAddress_verify(&test_context, 1);
 
     last_begin_callback(DCC_SERVICE_MODE_NO_ACK);
 
@@ -402,9 +402,9 @@ TEST(DccServiceModeAddress, verify_passes_verify_flag_and_0_recovery) {
 
     reset_mocks();
     interface_dcc_service_mode_address_t interface = make_interface();
-    DccServiceModeAddress_initialize(&test_ctx, &interface);
+    DccServiceModeAddress_initialize(&test_context, &interface);
 
-    DccServiceModeAddress_verify(&test_ctx, 3);
+    DccServiceModeAddress_verify(&test_context, 3);
 
     EXPECT_FALSE(last_is_write_operation);
     EXPECT_EQ(last_recovery_count, (uint8_t)0);

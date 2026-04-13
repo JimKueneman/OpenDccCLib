@@ -556,8 +556,8 @@ TEST(DccPacketDecoder, matching_address_dispatched) {
     set_decoder_short_address(&interface, 3);
 
     /* 28-step speed forward, SSSS=0010, C=1 → encoded=(2<<1)|1=5, speed=5-3=2 */
-    uint8_t inst = 0x60 | (0x02 | 0x10);  /* 0111 0010 = forward, C=1, SSSS=0010 */
-    uint8_t data[] = {0x03, inst, 0x00};
+    uint8_t instruction = 0x60 | (0x02 | 0x10);  /* 0111 0010 = forward, C=1, SSSS=0010 */
+    uint8_t data[] = {0x03, instruction, 0x00};
     data[2] = xor_bytes(data, 2);
     DccPacketDecoder_process_packet(data, 3);
 

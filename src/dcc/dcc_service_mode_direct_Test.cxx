@@ -15,7 +15,7 @@
 // Mock / tracking state
 // ============================================================================
 
-static dcc_service_mode_direct_context_t test_ctx;
+static dcc_service_mode_direct_context_t test_context;
 
 static dcc_packet_t last_begin_packet;
 static dcc_service_mode_step_callback_t last_begin_callback;
@@ -59,7 +59,7 @@ static void mock_on_complete(dcc_service_mode_result_t result) {
 
 static void reset_mocks(void) {
 
-    memset(&test_ctx, 0, sizeof(test_ctx));
+    memset(&test_context, 0, sizeof(test_context));
     memset(&last_begin_packet, 0, sizeof(last_begin_packet));
     last_begin_callback = NULL;
     last_is_write_operation = false;
@@ -113,7 +113,7 @@ TEST(DccServiceModeDirect, initialize_does_not_crash) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
 }
 
@@ -125,9 +125,9 @@ TEST(DccServiceModeDirect, write_byte_cv1_value_0x55) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeDirect_write_byte(&test_ctx,1, 0x55));
+    EXPECT_TRUE(DccServiceModeDirect_write_byte(&test_context,1, 0x55));
     EXPECT_EQ(begin_operation_count, (uint32_t)1);
 
     /* CV 1 -> wire CV 0 -> high bits = 0x00 */
@@ -145,9 +145,9 @@ TEST(DccServiceModeDirect, write_byte_cv1024_value_0xAA) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeDirect_write_byte(&test_ctx,1024, 0xAA));
+    EXPECT_TRUE(DccServiceModeDirect_write_byte(&test_context,1024, 0xAA));
 
     /* CV 1024 -> wire CV 1023 = 0x03FF -> high bits = 0x03 */
     EXPECT_EQ(last_begin_packet.data[0], (uint8_t)(0x7C | 0x03));
@@ -161,9 +161,9 @@ TEST(DccServiceModeDirect, write_byte_cv0_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModeDirect_write_byte(&test_ctx,0, 0x55));
+    EXPECT_FALSE(DccServiceModeDirect_write_byte(&test_context,0, 0x55));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -172,9 +172,9 @@ TEST(DccServiceModeDirect, write_byte_cv1025_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModeDirect_write_byte(&test_ctx,1025, 0x55));
+    EXPECT_FALSE(DccServiceModeDirect_write_byte(&test_context,1025, 0x55));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -183,10 +183,10 @@ TEST(DccServiceModeDirect, write_byte_busy_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
     common_idle_value = false;
-    EXPECT_FALSE(DccServiceModeDirect_write_byte(&test_ctx,1, 0x55));
+    EXPECT_FALSE(DccServiceModeDirect_write_byte(&test_context,1, 0x55));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -199,9 +199,9 @@ TEST(DccServiceModeDirect, verify_byte_cv1_value_0x55) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeDirect_verify_byte(&test_ctx,1, 0x55));
+    EXPECT_TRUE(DccServiceModeDirect_verify_byte(&test_context,1, 0x55));
     EXPECT_EQ(begin_operation_count, (uint32_t)1);
 
     /* 0111 0100 = 0x74 | 0x00 */
@@ -217,9 +217,9 @@ TEST(DccServiceModeDirect, verify_byte_cv256) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeDirect_verify_byte(&test_ctx,256, 0x00));
+    EXPECT_TRUE(DccServiceModeDirect_verify_byte(&test_context,256, 0x00));
 
     /* CV 256 -> wire CV 255 = 0x00FF -> high bits = 0x00 */
     EXPECT_EQ(last_begin_packet.data[0], (uint8_t)0x74);
@@ -232,9 +232,9 @@ TEST(DccServiceModeDirect, verify_byte_cv0_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModeDirect_verify_byte(&test_ctx,0, 0x55));
+    EXPECT_FALSE(DccServiceModeDirect_verify_byte(&test_context,0, 0x55));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -243,9 +243,9 @@ TEST(DccServiceModeDirect, verify_byte_cv1025_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModeDirect_verify_byte(&test_ctx,1025, 0x55));
+    EXPECT_FALSE(DccServiceModeDirect_verify_byte(&test_context,1025, 0x55));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -254,10 +254,10 @@ TEST(DccServiceModeDirect, verify_byte_busy_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
     common_idle_value = false;
-    EXPECT_FALSE(DccServiceModeDirect_verify_byte(&test_ctx,1, 0x55));
+    EXPECT_FALSE(DccServiceModeDirect_verify_byte(&test_context,1, 0x55));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -270,9 +270,9 @@ TEST(DccServiceModeDirect, write_bit_cv1_bit3_high) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeDirect_write_bit(&test_ctx,1, 3, true));
+    EXPECT_TRUE(DccServiceModeDirect_write_bit(&test_context,1, 3, true));
     EXPECT_EQ(begin_operation_count, (uint32_t)1);
 
     /* 0111 1000 = 0x78 | 0x00 */
@@ -289,9 +289,9 @@ TEST(DccServiceModeDirect, write_bit_cv1_bit0_low) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeDirect_write_bit(&test_ctx,1, 0, false));
+    EXPECT_TRUE(DccServiceModeDirect_write_bit(&test_context,1, 0, false));
 
     /* 111 K=1 D=0 BBB=000 = 1111 0000 = 0xF0 */
     EXPECT_EQ(last_begin_packet.data[2], (uint8_t)0xF0);
@@ -303,9 +303,9 @@ TEST(DccServiceModeDirect, write_bit_rejects_position_8) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModeDirect_write_bit(&test_ctx,1, 8, true));
+    EXPECT_FALSE(DccServiceModeDirect_write_bit(&test_context,1, 8, true));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -314,9 +314,9 @@ TEST(DccServiceModeDirect, write_bit_cv0_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModeDirect_write_bit(&test_ctx,0, 3, true));
+    EXPECT_FALSE(DccServiceModeDirect_write_bit(&test_context,0, 3, true));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -325,9 +325,9 @@ TEST(DccServiceModeDirect, write_bit_cv1025_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModeDirect_write_bit(&test_ctx,1025, 3, true));
+    EXPECT_FALSE(DccServiceModeDirect_write_bit(&test_context,1025, 3, true));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -336,10 +336,10 @@ TEST(DccServiceModeDirect, write_bit_busy_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
     common_idle_value = false;
-    EXPECT_FALSE(DccServiceModeDirect_write_bit(&test_ctx,1, 3, true));
+    EXPECT_FALSE(DccServiceModeDirect_write_bit(&test_context,1, 3, true));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -352,9 +352,9 @@ TEST(DccServiceModeDirect, verify_bit_cv1_bit5_high) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeDirect_verify_bit(&test_ctx,1, 5, true));
+    EXPECT_TRUE(DccServiceModeDirect_verify_bit(&test_context,1, 5, true));
     EXPECT_EQ(begin_operation_count, (uint32_t)1);
 
     EXPECT_EQ(last_begin_packet.data[0], (uint8_t)0x78);
@@ -368,9 +368,9 @@ TEST(DccServiceModeDirect, verify_bit_cv1_bit7_low) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModeDirect_verify_bit(&test_ctx,1, 7, false));
+    EXPECT_TRUE(DccServiceModeDirect_verify_bit(&test_context,1, 7, false));
 
     /* 111 K=0 D=0 BBB=111 = 1110 0111 = 0xE7 */
     EXPECT_EQ(last_begin_packet.data[2], (uint8_t)0xE7);
@@ -382,9 +382,9 @@ TEST(DccServiceModeDirect, verify_bit_cv0_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModeDirect_verify_bit(&test_ctx,0, 5, true));
+    EXPECT_FALSE(DccServiceModeDirect_verify_bit(&test_context,0, 5, true));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -393,9 +393,9 @@ TEST(DccServiceModeDirect, verify_bit_cv1025_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModeDirect_verify_bit(&test_ctx,1025, 5, true));
+    EXPECT_FALSE(DccServiceModeDirect_verify_bit(&test_context,1025, 5, true));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -404,9 +404,9 @@ TEST(DccServiceModeDirect, verify_bit_rejects_position_8) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModeDirect_verify_bit(&test_ctx,1, 8, true));
+    EXPECT_FALSE(DccServiceModeDirect_verify_bit(&test_context,1, 8, true));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -415,10 +415,10 @@ TEST(DccServiceModeDirect, verify_bit_busy_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
     common_idle_value = false;
-    EXPECT_FALSE(DccServiceModeDirect_verify_bit(&test_ctx,1, 5, true));
+    EXPECT_FALSE(DccServiceModeDirect_verify_bit(&test_context,1, 5, true));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -432,9 +432,9 @@ TEST(DccServiceModeDirect, null_on_complete_no_crash) {
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
     interface.on_complete = NULL;
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    DccServiceModeDirect_write_byte(&test_ctx,1, 0x55);
+    DccServiceModeDirect_write_byte(&test_context,1, 0x55);
 
     ASSERT_NE(last_begin_callback, (dcc_service_mode_step_callback_t)NULL);
     last_begin_callback(DCC_SERVICE_MODE_SUCCESS);
@@ -451,9 +451,9 @@ TEST(DccServiceModeDirect, callback_forwards_success) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    DccServiceModeDirect_write_byte(&test_ctx,1, 0x55);
+    DccServiceModeDirect_write_byte(&test_context,1, 0x55);
 
     /* Simulate common module completing with success */
     ASSERT_NE(last_begin_callback, (dcc_service_mode_step_callback_t)NULL);
@@ -468,9 +468,9 @@ TEST(DccServiceModeDirect, callback_forwards_no_ack) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    DccServiceModeDirect_write_byte(&test_ctx,1, 0x55);
+    DccServiceModeDirect_write_byte(&test_context,1, 0x55);
 
     last_begin_callback(DCC_SERVICE_MODE_NO_ACK);
 
@@ -487,9 +487,9 @@ TEST(DccServiceModeDirect, write_byte_passes_write_flag_and_recovery_count) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    DccServiceModeDirect_write_byte(&test_ctx, 1, 0x55);
+    DccServiceModeDirect_write_byte(&test_context, 1, 0x55);
 
     EXPECT_TRUE(last_is_write_operation);
     EXPECT_EQ(last_recovery_count, (uint8_t)DCC_SERVICE_MODE_RECOVERY_COUNT);
@@ -500,9 +500,9 @@ TEST(DccServiceModeDirect, write_bit_passes_write_flag_and_recovery_count) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    DccServiceModeDirect_write_bit(&test_ctx, 1, 3, true);
+    DccServiceModeDirect_write_bit(&test_context, 1, 3, true);
 
     EXPECT_TRUE(last_is_write_operation);
     EXPECT_EQ(last_recovery_count, (uint8_t)DCC_SERVICE_MODE_RECOVERY_COUNT);
@@ -517,9 +517,9 @@ TEST(DccServiceModeDirect, verify_byte_passes_verify_flag_and_zero_recovery) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    DccServiceModeDirect_verify_byte(&test_ctx, 1, 0x55);
+    DccServiceModeDirect_verify_byte(&test_context, 1, 0x55);
 
     EXPECT_FALSE(last_is_write_operation);
     EXPECT_EQ(last_recovery_count, (uint8_t)0);
@@ -530,9 +530,9 @@ TEST(DccServiceModeDirect, verify_bit_passes_verify_flag_and_zero_recovery) {
 
     reset_mocks();
     interface_dcc_service_mode_direct_t interface = make_interface();
-    DccServiceModeDirect_initialize(&test_ctx, &interface);
+    DccServiceModeDirect_initialize(&test_context, &interface);
 
-    DccServiceModeDirect_verify_bit(&test_ctx, 1, 5, true);
+    DccServiceModeDirect_verify_bit(&test_context, 1, 5, true);
 
     EXPECT_FALSE(last_is_write_operation);
     EXPECT_EQ(last_recovery_count, (uint8_t)0);

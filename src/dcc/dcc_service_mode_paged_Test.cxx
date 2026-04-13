@@ -15,7 +15,7 @@
 // Instance context
 // ============================================================================
 
-static dcc_service_mode_paged_context_t test_ctx;
+static dcc_service_mode_paged_context_t test_context;
 
 // ============================================================================
 // Mock / tracking state
@@ -68,7 +68,7 @@ static void mock_on_complete(dcc_service_mode_result_t result) {
 
 static void reset_mocks(void) {
 
-    memset(&test_ctx, 0, sizeof(test_ctx));
+    memset(&test_context, 0, sizeof(test_context));
     memset(captured_packets, 0, sizeof(captured_packets));
     memset(captured_callbacks, 0, sizeof(captured_callbacks));
     begin_operation_count = 0;
@@ -122,7 +122,7 @@ TEST(DccServiceModePaged, initialize_does_not_crash) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
 }
 
@@ -134,10 +134,10 @@ TEST(DccServiceModePaged, write_cv1_page_select_packet) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
     /* CV 1: page = ((1-1)/4)+1 = 1, register = ((1-1)%4)+1 = 1 */
-    EXPECT_TRUE(DccServiceModePaged_write(&test_ctx, 1, 0x55));
+    EXPECT_TRUE(DccServiceModePaged_write(&test_context, 1, 0x55));
     EXPECT_EQ(begin_operation_count, (uint32_t)1);
 
     /* Page select: write register 6 with page 1 */
@@ -155,9 +155,9 @@ TEST(DccServiceModePaged, write_cv1_data_access_after_page_select_success) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
-    DccServiceModePaged_write(&test_ctx, 1, 0x55);
+    DccServiceModePaged_write(&test_context, 1, 0x55);
 
     /* Simulate page select completing successfully */
     ASSERT_NE(captured_callbacks[0], (dcc_service_mode_step_callback_t)NULL);
@@ -179,9 +179,9 @@ TEST(DccServiceModePaged, write_cv1_complete_callback_fires) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
-    DccServiceModePaged_write(&test_ctx, 1, 0x55);
+    DccServiceModePaged_write(&test_context, 1, 0x55);
 
     /* Page select success */
     captured_callbacks[0](DCC_SERVICE_MODE_SUCCESS);
@@ -199,9 +199,9 @@ TEST(DccServiceModePaged, write_page_select_failure_aborts) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
-    DccServiceModePaged_write(&test_ctx, 1, 0x55);
+    DccServiceModePaged_write(&test_context, 1, 0x55);
 
     /* Page select fails */
     captured_callbacks[0](DCC_SERVICE_MODE_NO_ACK);
@@ -217,10 +217,10 @@ TEST(DccServiceModePaged, write_cv5_correct_page_and_register) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
     /* CV 5: page = ((5-1)/4)+1 = 2, register = ((5-1)%4)+1 = 1 */
-    EXPECT_TRUE(DccServiceModePaged_write(&test_ctx, 5, 0xAA));
+    EXPECT_TRUE(DccServiceModePaged_write(&test_context, 5, 0xAA));
 
     /* Page select: write register 6 with page 2 */
     EXPECT_EQ(captured_packets[0].data[0], (uint8_t)(DCC_SERVICE_REGISTER_WRITE_PREFIX | 5));
@@ -238,10 +238,10 @@ TEST(DccServiceModePaged, write_cv8_correct_page_and_register) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
     /* CV 8: page = ((8-1)/4)+1 = 2, register = ((8-1)%4)+1 = 4 */
-    EXPECT_TRUE(DccServiceModePaged_write(&test_ctx, 8, 0x08));
+    EXPECT_TRUE(DccServiceModePaged_write(&test_context, 8, 0x08));
 
     EXPECT_EQ(captured_packets[0].data[1], (uint8_t)2);  /* page 2 */
 
@@ -261,9 +261,9 @@ TEST(DccServiceModePaged, verify_cv1_uses_verify_prefix_for_data) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
-    EXPECT_TRUE(DccServiceModePaged_verify(&test_ctx, 1, 0x55));
+    EXPECT_TRUE(DccServiceModePaged_verify(&test_context, 1, 0x55));
 
     /* Page select is always a write */
     EXPECT_EQ(captured_packets[0].data[0], (uint8_t)(DCC_SERVICE_REGISTER_WRITE_PREFIX | 5));
@@ -285,9 +285,9 @@ TEST(DccServiceModePaged, write_cv0_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModePaged_write(&test_ctx, 0, 0x55));
+    EXPECT_FALSE(DccServiceModePaged_write(&test_context, 0, 0x55));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -296,9 +296,9 @@ TEST(DccServiceModePaged, write_cv1025_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModePaged_write(&test_ctx, 1025, 0x55));
+    EXPECT_FALSE(DccServiceModePaged_write(&test_context, 1025, 0x55));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -307,10 +307,10 @@ TEST(DccServiceModePaged, write_busy_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
     common_idle_value = false;
-    EXPECT_FALSE(DccServiceModePaged_write(&test_ctx, 1, 0x55));
+    EXPECT_FALSE(DccServiceModePaged_write(&test_context, 1, 0x55));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -319,9 +319,9 @@ TEST(DccServiceModePaged, verify_cv0_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModePaged_verify(&test_ctx, 0, 0x55));
+    EXPECT_FALSE(DccServiceModePaged_verify(&test_context, 0, 0x55));
 
 }
 
@@ -329,9 +329,9 @@ TEST(DccServiceModePaged, verify_cv1025_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
-    EXPECT_FALSE(DccServiceModePaged_verify(&test_ctx, 1025, 0x55));
+    EXPECT_FALSE(DccServiceModePaged_verify(&test_context, 1025, 0x55));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -340,10 +340,10 @@ TEST(DccServiceModePaged, verify_busy_rejected) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
     common_idle_value = false;
-    EXPECT_FALSE(DccServiceModePaged_verify(&test_ctx, 1, 0x55));
+    EXPECT_FALSE(DccServiceModePaged_verify(&test_context, 1, 0x55));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
 
 }
@@ -352,13 +352,13 @@ TEST(DccServiceModePaged, write_rejected_when_not_idle) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
     /* Start a write — state moves to PAGE_SELECT */
-    EXPECT_TRUE(DccServiceModePaged_write(&test_ctx, 1, 0x55));
+    EXPECT_TRUE(DccServiceModePaged_write(&test_context, 1, 0x55));
 
     /* Second write while first is in-flight should be rejected */
-    EXPECT_FALSE(DccServiceModePaged_write(&test_ctx, 2, 0xAA));
+    EXPECT_FALSE(DccServiceModePaged_write(&test_context, 2, 0xAA));
     EXPECT_EQ(begin_operation_count, (uint32_t)1);
 
 }
@@ -367,13 +367,13 @@ TEST(DccServiceModePaged, verify_rejected_when_not_idle) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
     /* Start a write — state moves to PAGE_SELECT */
-    EXPECT_TRUE(DccServiceModePaged_write(&test_ctx, 1, 0x55));
+    EXPECT_TRUE(DccServiceModePaged_write(&test_context, 1, 0x55));
 
     /* Verify while write is in-flight should be rejected */
-    EXPECT_FALSE(DccServiceModePaged_verify(&test_ctx, 2, 0xAA));
+    EXPECT_FALSE(DccServiceModePaged_verify(&test_context, 2, 0xAA));
 
 }
 
@@ -382,9 +382,9 @@ TEST(DccServiceModePaged, page_select_failure_null_on_complete) {
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
     interface.on_complete = NULL;
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
-    DccServiceModePaged_write(&test_ctx, 1, 0x55);
+    DccServiceModePaged_write(&test_context, 1, 0x55);
 
     /* Page select fails with on_complete = NULL — should not crash */
     captured_callbacks[0](DCC_SERVICE_MODE_NO_ACK);
@@ -399,9 +399,9 @@ TEST(DccServiceModePaged, data_access_complete_null_on_complete) {
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
     interface.on_complete = NULL;
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
-    DccServiceModePaged_write(&test_ctx, 1, 0x55);
+    DccServiceModePaged_write(&test_context, 1, 0x55);
 
     /* Page select succeeds */
     captured_callbacks[0](DCC_SERVICE_MODE_SUCCESS);
@@ -422,9 +422,9 @@ TEST(DccServiceModePaged, write_page_select_passes_write_flag) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
-    DccServiceModePaged_write(&test_ctx, 5, 0x55);
+    DccServiceModePaged_write(&test_context, 5, 0x55);
 
     /* Step 0: page select — always a write */
     EXPECT_TRUE(captured_is_write[0]);
@@ -436,9 +436,9 @@ TEST(DccServiceModePaged, write_data_access_passes_write_flag) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
-    DccServiceModePaged_write(&test_ctx, 5, 0x55);
+    DccServiceModePaged_write(&test_context, 5, 0x55);
 
     /* Complete page select → triggers data access */
     captured_callbacks[0](DCC_SERVICE_MODE_SUCCESS);
@@ -457,9 +457,9 @@ TEST(DccServiceModePaged, verify_page_select_passes_write_flag) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
-    DccServiceModePaged_verify(&test_ctx, 5, 0x55);
+    DccServiceModePaged_verify(&test_context, 5, 0x55);
 
     /* Step 0: page select — always a write */
     EXPECT_TRUE(captured_is_write[0]);
@@ -471,9 +471,9 @@ TEST(DccServiceModePaged, verify_data_access_passes_verify_flag) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
-    DccServiceModePaged_initialize(&test_ctx, &interface);
+    DccServiceModePaged_initialize(&test_context, &interface);
 
-    DccServiceModePaged_verify(&test_ctx, 5, 0x55);
+    DccServiceModePaged_verify(&test_context, 5, 0x55);
 
     /* Complete page select → triggers data access */
     captured_callbacks[0](DCC_SERVICE_MODE_SUCCESS);

@@ -128,18 +128,18 @@ static bool mock_direct_verify_byte(uint16_t cv, uint8_t val) {
     return direct_verify_byte_return;
 }
 
-static bool mock_direct_write_bit(uint16_t cv, uint8_t bit_pos, bool bit_val) {
+static bool mock_direct_write_bit(uint16_t cv, uint8_t bit_position, bool bit_value) {
     direct_cv_number = cv;
-    direct_bit_position = bit_pos;
-    direct_bit_value = bit_val;
+    direct_bit_position = bit_position;
+    direct_bit_value = bit_value;
     direct_write_bit_count++;
     return direct_write_bit_return;
 }
 
-static bool mock_direct_verify_bit(uint16_t cv, uint8_t bit_pos, bool bit_val) {
+static bool mock_direct_verify_bit(uint16_t cv, uint8_t bit_position, bool bit_value) {
     direct_cv_number = cv;
-    direct_bit_position = bit_pos;
-    direct_bit_value = bit_val;
+    direct_bit_position = bit_position;
+    direct_bit_value = bit_value;
     direct_verify_bit_count++;
     return direct_verify_bit_return;
 }

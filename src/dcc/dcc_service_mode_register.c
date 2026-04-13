@@ -35,7 +35,7 @@
 
 #ifdef DCC_COMPILE_SERVICE_MODE_REGISTER
 
-static dcc_service_mode_register_context_t *_active_ctx = (void *)0;
+static dcc_service_mode_register_context_t *_active_context = (void *)0;
 
 static void _append_xor(dcc_packet_t *packet) {
 
@@ -55,9 +55,9 @@ static void _append_xor(dcc_packet_t *packet) {
 
 static void _on_step_complete(dcc_service_mode_result_t result) {
 
-    if (_active_ctx && _active_ctx->interface->on_complete) {
+    if (_active_context && _active_context->interface->on_complete) {
 
-        _active_ctx->interface->on_complete(result);
+        _active_context->interface->on_complete(result);
 
     }
 
@@ -92,7 +92,7 @@ bool DccServiceModeRegister_write(dcc_service_mode_register_context_t *context, 
     packet.preamble_bits = DCC_PREAMBLE_BITS_SERVICE;
     packet.repeat_count = 0;
 
-    _active_ctx = context;
+    _active_context = context;
     return context->interface->begin_operation(&packet, &_on_step_complete, true, DCC_SERVICE_MODE_RECOVERY_COUNT);
 
 }
@@ -120,7 +120,7 @@ bool DccServiceModeRegister_verify(dcc_service_mode_register_context_t *context,
     packet.preamble_bits = DCC_PREAMBLE_BITS_SERVICE;
     packet.repeat_count = 0;
 
-    _active_ctx = context;
+    _active_context = context;
     return context->interface->begin_operation(&packet, &_on_step_complete, false, 0);
 
 }
