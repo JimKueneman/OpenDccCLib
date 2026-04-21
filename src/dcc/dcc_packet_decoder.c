@@ -29,7 +29,7 @@
  * dispatch for decoders.
  *
  * @author Jim Kueneman
- * @date 11 Apr 2026
+ * @date 13 Apr 2026
  */
 
 #include "dcc_packet_decoder.h"
@@ -252,9 +252,9 @@ static void _dispatch_speed_128(uint16_t address, uint8_t speed_byte) {
 
     if (speed == DCC_SPEED_128_ESTOP) {
 
-        if (_interface->on_emergency_stop) {
+        if (_interface->on_emergency_stop_command) {
 
-            _interface->on_emergency_stop(address);
+            _interface->on_emergency_stop_command(address);
 
         }
 
@@ -306,9 +306,9 @@ static void _dispatch_speed_28(uint16_t address, uint8_t instruction) {
 
     if (speed == DCC_SPEED_28_ESTOP) {
 
-        if (_interface->on_emergency_stop) {
+        if (_interface->on_emergency_stop_command) {
 
-            _interface->on_emergency_stop(address);
+            _interface->on_emergency_stop_command(address);
 
         }
 
@@ -338,9 +338,9 @@ static void _dispatch_speed_14(uint16_t address, uint8_t instruction) {
     if (speed == 1) {
 
         /* E-Stop */
-        if (_interface->on_emergency_stop) {
+        if (_interface->on_emergency_stop_command) {
 
-            _interface->on_emergency_stop(address);
+            _interface->on_emergency_stop_command(address);
 
         }
 
@@ -429,9 +429,9 @@ static void _dispatch_func_group1(uint16_t address, uint8_t instruction) {
      */
 static void _fire_ack(void) {
 
-    if (_interface->fire_ack_pulse) {
+    if (_interface->start_ack_pulse) {
 
-        _interface->fire_ack_pulse();
+        _interface->start_ack_pulse();
 
     }
 
@@ -476,9 +476,9 @@ static bool _cv_write_and_notify(uint16_t cv_number, uint8_t data_byte, bool is_
 
     }
 
-    if (_interface->on_cv_write) {
+    if (_interface->on_cv_write_command) {
 
-        _interface->on_cv_write(cv_number, data_byte, is_service_mode);
+        _interface->on_cv_write_command(cv_number, data_byte, is_service_mode);
 
     }
 
@@ -564,18 +564,18 @@ static void _dispatch_cv_access(uint16_t address, const uint8_t *instruction_byt
 
         }
 
-        if (_interface->on_cv_bit) {
+        if (_interface->on_cv_bit_command) {
 
-            _interface->on_cv_bit(cv_number, bit_position, bit_value, false);
+            _interface->on_cv_bit_command(cv_number, bit_position, bit_value, false);
 
         }
 
     } else if (cv_command == 0x04) {
 
         /* Verify: 111001AA — notify application, ACK is hardware-specific */
-        if (_interface->on_cv_verify) {
+        if (_interface->on_cv_verify_command) {
 
-            _interface->on_cv_verify(cv_number, data_byte, false);
+            _interface->on_cv_verify_command(cv_number, data_byte, false);
 
         }
 
@@ -885,9 +885,9 @@ static void _dispatch_advanced_ops(uint16_t address, const uint8_t *instruction_
 
     } else if (first == DCC_ADV_OPS_ANALOG_FUNCTION && instruction_byte_count >= 3) {
 
-        if (_interface->on_analog_function) {
+        if (_interface->on_analog_function_command) {
 
-            _interface->on_analog_function(address, instruction_bytes[1], instruction_bytes[2]);
+            _interface->on_analog_function_command(address, instruction_bytes[1], instruction_bytes[2]);
 
         }
 
@@ -896,9 +896,9 @@ static void _dispatch_advanced_ops(uint16_t address, const uint8_t *instruction_
         bool enabled = (instruction_bytes[1] & 0x80) ? true : false;
         uint8_t limit = instruction_bytes[1] & 0x7F;
 
-        if (_interface->on_speed_restriction) {
+        if (_interface->on_speed_restriction_command) {
 
-            _interface->on_speed_restriction(address, enabled, limit);
+            _interface->on_speed_restriction_command(address, enabled, limit);
 
         }
 
@@ -946,9 +946,9 @@ static void _dispatch_feature_expansion(uint16_t address, const uint8_t *instruc
         uint8_t state_num = instruction_bytes[1] & 0x7F;
         bool active = (instruction_bytes[1] & 0x80) ? true : false;
 
-        if (_interface->on_binary_state_short) {
+        if (_interface->on_binary_state_short_command) {
 
-            _interface->on_binary_state_short(address, state_num, active);
+            _interface->on_binary_state_short_command(address, state_num, active);
 
         }
 
@@ -958,9 +958,9 @@ static void _dispatch_feature_expansion(uint16_t address, const uint8_t *instruc
         uint16_t state_num = (uint16_t)(instruction_bytes[2] << 7) | (instruction_bytes[1] & 0x7F);
         bool active = (instruction_bytes[1] & 0x80) ? true : false;
 
-        if (_interface->on_binary_state_long) {
+        if (_interface->on_binary_state_long_command) {
 
-            _interface->on_binary_state_long(address, state_num, active);
+            _interface->on_binary_state_long_command(address, state_num, active);
 
         }
 
@@ -1061,9 +1061,9 @@ static void _cv_verify_byte(uint16_t cv_number, uint8_t expected) {
 
     }
 
-    if (_interface->on_cv_verify) {
+    if (_interface->on_cv_verify_command) {
 
-        _interface->on_cv_verify(cv_number, expected, true);
+        _interface->on_cv_verify_command(cv_number, expected, true);
 
     }
 
@@ -1120,9 +1120,9 @@ static void _dispatch_service_mode_bit_manipulate(uint16_t cv_number, uint8_t da
 
     }
 
-    if (_interface->on_cv_bit) {
+    if (_interface->on_cv_bit_command) {
 
-        _interface->on_cv_bit(cv_number, bit_position, bit_value, true);
+        _interface->on_cv_bit_command(cv_number, bit_position, bit_value, true);
 
     }
 

@@ -34,7 +34,7 @@
  * - Round-robin through refresh slots
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 13 Apr 2026
  */
 
 #ifndef __DCC_SCHEDULER__
@@ -63,9 +63,6 @@ typedef struct {
 
         /** @brief Build an idle packet into the provided packet struct. */
     void (*build_idle_packet)(dcc_packet_t *packet);
-
-        /** @brief User callback: scheduler has no real packets. NULL = no notification. */
-    void (*on_idle)(void);
 
 } interface_dcc_scheduler_t;
 

@@ -7,7 +7,7 @@
 
 #include "test/main_Test.hxx"
 
-#include "dcc/dcc_packet_encoder.h"
+#include "dcc/dcc_application_command_station_packet.h"
 #include "dcc/dcc_types.h"
 #include "dcc/dcc_defines.h"
 
@@ -36,7 +36,7 @@ static void verify_xor(const dcc_packet_t *pkt) {
 
 TEST(DccPacketEncoder, idle_packet_bytes) {
     dcc_packet_t pkt;
-    DccPacketEncoder_idle(&pkt);
+    DccApplicationCommandStationPacket_load_idle(&pkt);
 
     EXPECT_EQ(pkt.data[0], 0xFF);
     EXPECT_EQ(pkt.data[1], 0x00);
@@ -46,14 +46,14 @@ TEST(DccPacketEncoder, idle_packet_bytes) {
 
 TEST(DccPacketEncoder, idle_packet_preamble) {
     dcc_packet_t pkt;
-    DccPacketEncoder_idle(&pkt);
+    DccApplicationCommandStationPacket_load_idle(&pkt);
 
     EXPECT_EQ(pkt.preamble_bits, DCC_PREAMBLE_BITS_OPS);
 }
 
 TEST(DccPacketEncoder, idle_packet_xor_valid) {
     dcc_packet_t pkt;
-    DccPacketEncoder_idle(&pkt);
+    DccApplicationCommandStationPacket_load_idle(&pkt);
     verify_xor(&pkt);
 }
 
@@ -63,7 +63,7 @@ TEST(DccPacketEncoder, idle_packet_xor_valid) {
 
 TEST(DccPacketEncoder, reset_packet_bytes) {
     dcc_packet_t pkt;
-    DccPacketEncoder_reset(&pkt);
+    DccApplicationCommandStationPacket_load_reset(&pkt);
 
     EXPECT_EQ(pkt.data[0], 0x00);
     EXPECT_EQ(pkt.data[1], 0x00);
@@ -73,7 +73,7 @@ TEST(DccPacketEncoder, reset_packet_bytes) {
 
 TEST(DccPacketEncoder, reset_packet_preamble) {
     dcc_packet_t pkt;
-    DccPacketEncoder_reset(&pkt);
+    DccApplicationCommandStationPacket_load_reset(&pkt);
 
     EXPECT_EQ(pkt.preamble_bits, DCC_PREAMBLE_BITS_OPS);
 }
@@ -84,7 +84,7 @@ TEST(DccPacketEncoder, reset_packet_preamble) {
 
 TEST(DccPacketEncoder, speed128_short_addr_forward) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 3);           /* short address */
@@ -96,7 +96,7 @@ TEST(DccPacketEncoder, speed128_short_addr_forward) {
 
 TEST(DccPacketEncoder, speed128_short_addr_reverse) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, false);
+    bool ok = DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, false);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[2], 50);  /* direction=reverse (bit 7 = 0), speed=50 */
@@ -104,7 +104,7 @@ TEST(DccPacketEncoder, speed128_short_addr_reverse) {
 
 TEST(DccPacketEncoder, speed128_long_addr) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_128(&pkt, 1234, DCC_ADDRESS_LONG, 100, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_128(&pkt, 1234, DCC_ADDRESS_LONG, 100, true);
 
     EXPECT_TRUE(ok);
     /* Long address: 1234 = 0x04D2 -> byte0 = 0xC0 | 0x04 = 0xC4, byte1 = 0xD2 */
@@ -118,7 +118,7 @@ TEST(DccPacketEncoder, speed128_long_addr) {
 
 TEST(DccPacketEncoder, speed128_broadcast_addr) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_128(&pkt, 0, DCC_ADDRESS_BROADCAST, 0, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_128(&pkt, 0, DCC_ADDRESS_BROADCAST, 0, true);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 0);    /* broadcast address */
@@ -128,7 +128,7 @@ TEST(DccPacketEncoder, speed128_broadcast_addr) {
 
 TEST(DccPacketEncoder, speed128_estop_value) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 1, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 1, true);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[2], 0x80 | 1);  /* forward, speed=1 (e-stop) */
@@ -136,7 +136,7 @@ TEST(DccPacketEncoder, speed128_estop_value) {
 
 TEST(DccPacketEncoder, speed128_max_speed) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 127, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 127, true);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[2], 0x80 | 127);
@@ -144,28 +144,28 @@ TEST(DccPacketEncoder, speed128_max_speed) {
 
 TEST(DccPacketEncoder, speed128_rejects_invalid_speed) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 128, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 128, true);
 
     EXPECT_FALSE(ok);
 }
 
 TEST(DccPacketEncoder, speed128_rejects_invalid_address_type) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_128(&pkt, 3, DCC_ADDRESS_IDLE, 50, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_IDLE, 50, true);
 
     EXPECT_FALSE(ok);
 }
 
 TEST(DccPacketEncoder, speed128_rejects_accessory_address_type) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_128(&pkt, 3, DCC_ADDRESS_ACCESSORY, 50, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_ACCESSORY, 50, true);
 
     EXPECT_FALSE(ok);
 }
 
 TEST(DccPacketEncoder, speed128_preamble_is_ops_mode) {
     dcc_packet_t pkt;
-    DccPacketEncoder_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
 
     EXPECT_EQ(pkt.preamble_bits, DCC_PREAMBLE_BITS_OPS);
 }
@@ -176,7 +176,7 @@ TEST(DccPacketEncoder, speed128_preamble_is_ops_mode) {
 
 TEST(DccPacketEncoder, estop_all_packet) {
     dcc_packet_t pkt;
-    DccPacketEncoder_estop_all(&pkt);
+    DccApplicationCommandStationPacket_load_estop_all(&pkt);
 
     EXPECT_EQ(pkt.data[0], 0x00);  /* broadcast address */
     EXPECT_EQ(pkt.data[1], 0x3F);  /* advanced ops 128-step */
@@ -187,7 +187,7 @@ TEST(DccPacketEncoder, estop_all_packet) {
 
 TEST(DccPacketEncoder, estop_all_preamble) {
     dcc_packet_t pkt;
-    DccPacketEncoder_estop_all(&pkt);
+    DccApplicationCommandStationPacket_load_estop_all(&pkt);
 
     EXPECT_EQ(pkt.preamble_bits, DCC_PREAMBLE_BITS_OPS);
 }
@@ -198,7 +198,7 @@ TEST(DccPacketEncoder, estop_all_preamble) {
 
 TEST(DccPacketEncoder, speed28_stop) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 0, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 0, true);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 3);
@@ -210,7 +210,7 @@ TEST(DccPacketEncoder, speed28_stop) {
 
 TEST(DccPacketEncoder, speed28_estop) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 1, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 1, true);
 
     EXPECT_TRUE(ok);
     /* Forward + e-stop: 011 00001 = 0x61 (C=0, SSSS=0001) */
@@ -220,7 +220,7 @@ TEST(DccPacketEncoder, speed28_estop) {
 
 TEST(DccPacketEncoder, speed28_step1_forward) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 2, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 2, true);
 
     EXPECT_TRUE(ok);
     /* Speed step 1: encoded = 2+2 = 4 = 00100, C=0, SSSS=0010 */
@@ -231,7 +231,7 @@ TEST(DccPacketEncoder, speed28_step1_forward) {
 
 TEST(DccPacketEncoder, speed28_step2_forward) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 3, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 3, true);
 
     EXPECT_TRUE(ok);
     /* Speed step 2: encoded = 3+2 = 5 = 00101, C=1, SSSS=0010 */
@@ -242,7 +242,7 @@ TEST(DccPacketEncoder, speed28_step2_forward) {
 
 TEST(DccPacketEncoder, speed28_max_speed) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 29, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 29, true);
 
     EXPECT_TRUE(ok);
     /* Speed step 28: encoded = 29+2 = 31 = 11111, C=1, SSSS=1111 */
@@ -253,7 +253,7 @@ TEST(DccPacketEncoder, speed28_max_speed) {
 
 TEST(DccPacketEncoder, speed28_reverse) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 2, false);
+    bool ok = DccApplicationCommandStationPacket_load_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 2, false);
 
     EXPECT_TRUE(ok);
     /* Reverse: 010 00010 = 0x42 */
@@ -263,7 +263,7 @@ TEST(DccPacketEncoder, speed28_reverse) {
 
 TEST(DccPacketEncoder, speed28_long_addr) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_28(&pkt, 1234, DCC_ADDRESS_LONG, 10, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_28(&pkt, 1234, DCC_ADDRESS_LONG, 10, true);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 0xC4);
@@ -277,14 +277,14 @@ TEST(DccPacketEncoder, speed28_long_addr) {
 
 TEST(DccPacketEncoder, speed28_rejects_invalid_speed) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 30, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 30, true);
 
     EXPECT_FALSE(ok);
 }
 
 TEST(DccPacketEncoder, speed28_rejects_accessory_type) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_28(&pkt, 3, DCC_ADDRESS_ACCESSORY, 10, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_28(&pkt, 3, DCC_ADDRESS_ACCESSORY, 10, true);
 
     EXPECT_FALSE(ok);
 }
@@ -295,7 +295,7 @@ TEST(DccPacketEncoder, speed28_rejects_accessory_type) {
 
 TEST(DccPacketEncoder, speed14_stop_forward_headlight_on) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_14(&pkt, 3, DCC_ADDRESS_SHORT, 0, true, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_14(&pkt, 3, DCC_ADDRESS_SHORT, 0, true, true);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 3);
@@ -307,7 +307,7 @@ TEST(DccPacketEncoder, speed14_stop_forward_headlight_on) {
 
 TEST(DccPacketEncoder, speed14_stop_forward_headlight_off) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_14(&pkt, 3, DCC_ADDRESS_SHORT, 0, true, false);
+    bool ok = DccApplicationCommandStationPacket_load_speed_14(&pkt, 3, DCC_ADDRESS_SHORT, 0, true, false);
 
     EXPECT_TRUE(ok);
     /* Forward + FL off + stop: 011 0 0000 = 0x60 */
@@ -316,7 +316,7 @@ TEST(DccPacketEncoder, speed14_stop_forward_headlight_off) {
 
 TEST(DccPacketEncoder, speed14_speed5_reverse_headlight_on) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_14(&pkt, 3, DCC_ADDRESS_SHORT, 5, false, true);
+    bool ok = DccApplicationCommandStationPacket_load_speed_14(&pkt, 3, DCC_ADDRESS_SHORT, 5, false, true);
 
     EXPECT_TRUE(ok);
     /* Reverse + FL on + speed 5: 010 1 0101 = 0x55 */
@@ -326,7 +326,7 @@ TEST(DccPacketEncoder, speed14_speed5_reverse_headlight_on) {
 
 TEST(DccPacketEncoder, speed14_max_speed) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_14(&pkt, 3, DCC_ADDRESS_SHORT, 15, true, false);
+    bool ok = DccApplicationCommandStationPacket_load_speed_14(&pkt, 3, DCC_ADDRESS_SHORT, 15, true, false);
 
     EXPECT_TRUE(ok);
     /* Forward + FL off + speed 15: 011 0 1111 = 0x6F */
@@ -336,7 +336,7 @@ TEST(DccPacketEncoder, speed14_max_speed) {
 
 TEST(DccPacketEncoder, speed14_rejects_invalid_speed) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_14(&pkt, 3, DCC_ADDRESS_SHORT, 16, true, false);
+    bool ok = DccApplicationCommandStationPacket_load_speed_14(&pkt, 3, DCC_ADDRESS_SHORT, 16, true, false);
 
     EXPECT_FALSE(ok);
 }
@@ -347,7 +347,7 @@ TEST(DccPacketEncoder, speed14_rejects_invalid_speed) {
 
 TEST(DccPacketEncoder, func_group1_all_off) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_func_group_1(&pkt, 3, DCC_ADDRESS_SHORT, 0x00);
+    bool ok = DccApplicationCommandStationPacket_load_func_group_1(&pkt, 3, DCC_ADDRESS_SHORT, 0x00);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 3);
@@ -360,7 +360,7 @@ TEST(DccPacketEncoder, func_group1_all_off) {
 TEST(DccPacketEncoder, func_group1_all_on) {
     dcc_packet_t pkt;
     /* FL=1, F4=1, F3=1, F2=1, F1=1 → bits = 11111 = 0x1F */
-    bool ok = DccPacketEncoder_func_group_1(&pkt, 3, DCC_ADDRESS_SHORT, 0x1F);
+    bool ok = DccApplicationCommandStationPacket_load_func_group_1(&pkt, 3, DCC_ADDRESS_SHORT, 0x1F);
 
     EXPECT_TRUE(ok);
     /* 100 11111 = 0x9F */
@@ -371,7 +371,7 @@ TEST(DccPacketEncoder, func_group1_all_on) {
 TEST(DccPacketEncoder, func_group1_fl_only) {
     dcc_packet_t pkt;
     /* FL=1 only → bit4 = 0x10 */
-    bool ok = DccPacketEncoder_func_group_1(&pkt, 3, DCC_ADDRESS_SHORT, 0x10);
+    bool ok = DccApplicationCommandStationPacket_load_func_group_1(&pkt, 3, DCC_ADDRESS_SHORT, 0x10);
 
     EXPECT_TRUE(ok);
     /* 100 10000 = 0x90 */
@@ -380,7 +380,7 @@ TEST(DccPacketEncoder, func_group1_fl_only) {
 
 TEST(DccPacketEncoder, func_group1_long_addr) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_func_group_1(&pkt, 1234, DCC_ADDRESS_LONG, 0x05);
+    bool ok = DccApplicationCommandStationPacket_load_func_group_1(&pkt, 1234, DCC_ADDRESS_LONG, 0x05);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 0xC4);
@@ -393,7 +393,7 @@ TEST(DccPacketEncoder, func_group1_long_addr) {
 
 TEST(DccPacketEncoder, func_group1_rejects_accessory) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_func_group_1(&pkt, 3, DCC_ADDRESS_ACCESSORY, 0x00);
+    bool ok = DccApplicationCommandStationPacket_load_func_group_1(&pkt, 3, DCC_ADDRESS_ACCESSORY, 0x00);
 
     EXPECT_FALSE(ok);
 }
@@ -404,7 +404,7 @@ TEST(DccPacketEncoder, func_group1_rejects_accessory) {
 
 TEST(DccPacketEncoder, func_group2a_all_off) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_func_group_2a(&pkt, 3, DCC_ADDRESS_SHORT, 0x00);
+    bool ok = DccApplicationCommandStationPacket_load_func_group_2a(&pkt, 3, DCC_ADDRESS_SHORT, 0x00);
 
     EXPECT_TRUE(ok);
     /* 1011 0000 = 0xB0 */
@@ -414,7 +414,7 @@ TEST(DccPacketEncoder, func_group2a_all_off) {
 
 TEST(DccPacketEncoder, func_group2a_all_on) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_func_group_2a(&pkt, 3, DCC_ADDRESS_SHORT, 0x0F);
+    bool ok = DccApplicationCommandStationPacket_load_func_group_2a(&pkt, 3, DCC_ADDRESS_SHORT, 0x0F);
 
     EXPECT_TRUE(ok);
     /* 1011 1111 = 0xBF */
@@ -428,7 +428,7 @@ TEST(DccPacketEncoder, func_group2a_all_on) {
 
 TEST(DccPacketEncoder, func_group2b_all_off) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_func_group_2b(&pkt, 3, DCC_ADDRESS_SHORT, 0x00);
+    bool ok = DccApplicationCommandStationPacket_load_func_group_2b(&pkt, 3, DCC_ADDRESS_SHORT, 0x00);
 
     EXPECT_TRUE(ok);
     /* 1010 0000 = 0xA0 */
@@ -438,7 +438,7 @@ TEST(DccPacketEncoder, func_group2b_all_off) {
 
 TEST(DccPacketEncoder, func_group2b_all_on) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_func_group_2b(&pkt, 3, DCC_ADDRESS_SHORT, 0x0F);
+    bool ok = DccApplicationCommandStationPacket_load_func_group_2b(&pkt, 3, DCC_ADDRESS_SHORT, 0x0F);
 
     EXPECT_TRUE(ok);
     /* 1010 1111 = 0xAF */
@@ -452,7 +452,7 @@ TEST(DccPacketEncoder, func_group2b_all_on) {
 
 TEST(DccPacketEncoder, func_f13_f20_short_addr) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_func_f13_f20(&pkt, 3, DCC_ADDRESS_SHORT, 0xA5);
+    bool ok = DccApplicationCommandStationPacket_load_func_f13_f20(&pkt, 3, DCC_ADDRESS_SHORT, 0xA5);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 3);
@@ -464,7 +464,7 @@ TEST(DccPacketEncoder, func_f13_f20_short_addr) {
 
 TEST(DccPacketEncoder, func_f21_f28_long_addr) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_func_f21_f28(&pkt, 1234, DCC_ADDRESS_LONG, 0xFF);
+    bool ok = DccApplicationCommandStationPacket_load_func_f21_f28(&pkt, 1234, DCC_ADDRESS_LONG, 0xFF);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 0xC4);
@@ -477,7 +477,7 @@ TEST(DccPacketEncoder, func_f21_f28_long_addr) {
 
 TEST(DccPacketEncoder, func_f29_f36_instruction_byte) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_func_f29_f36(&pkt, 3, DCC_ADDRESS_SHORT, 0x01);
+    bool ok = DccApplicationCommandStationPacket_load_func_f29_f36(&pkt, 3, DCC_ADDRESS_SHORT, 0x01);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[1], DCC_FEAT_F29_F36);  /* 0xD8 */
@@ -487,7 +487,7 @@ TEST(DccPacketEncoder, func_f29_f36_instruction_byte) {
 
 TEST(DccPacketEncoder, func_f37_f44_instruction_byte) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_func_f37_f44(&pkt, 3, DCC_ADDRESS_SHORT, 0x00);
+    bool ok = DccApplicationCommandStationPacket_load_func_f37_f44(&pkt, 3, DCC_ADDRESS_SHORT, 0x00);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[1], DCC_FEAT_F37_F44);  /* 0xD9 */
@@ -496,7 +496,7 @@ TEST(DccPacketEncoder, func_f37_f44_instruction_byte) {
 
 TEST(DccPacketEncoder, func_f45_f52_instruction_byte) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_func_f45_f52(&pkt, 3, DCC_ADDRESS_SHORT, 0x80);
+    bool ok = DccApplicationCommandStationPacket_load_func_f45_f52(&pkt, 3, DCC_ADDRESS_SHORT, 0x80);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[1], DCC_FEAT_F45_F52);  /* 0xDA */
@@ -505,7 +505,7 @@ TEST(DccPacketEncoder, func_f45_f52_instruction_byte) {
 
 TEST(DccPacketEncoder, func_f53_f60_instruction_byte) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_func_f53_f60(&pkt, 3, DCC_ADDRESS_SHORT, 0x55);
+    bool ok = DccApplicationCommandStationPacket_load_func_f53_f60(&pkt, 3, DCC_ADDRESS_SHORT, 0x55);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[1], DCC_FEAT_F53_F60);  /* 0xDB */
@@ -515,7 +515,7 @@ TEST(DccPacketEncoder, func_f53_f60_instruction_byte) {
 
 TEST(DccPacketEncoder, func_f61_f68_instruction_byte) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_func_f61_f68(&pkt, 3, DCC_ADDRESS_SHORT, 0xAA);
+    bool ok = DccApplicationCommandStationPacket_load_func_f61_f68(&pkt, 3, DCC_ADDRESS_SHORT, 0xAA);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[1], DCC_FEAT_F61_F68);  /* 0xDC */
@@ -525,7 +525,7 @@ TEST(DccPacketEncoder, func_f61_f68_instruction_byte) {
 
 TEST(DccPacketEncoder, func_expansion_rejects_accessory) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_func_f13_f20(&pkt, 3, DCC_ADDRESS_ACCESSORY, 0x00);
+    bool ok = DccApplicationCommandStationPacket_load_func_f13_f20(&pkt, 3, DCC_ADDRESS_ACCESSORY, 0x00);
 
     EXPECT_FALSE(ok);
 }
@@ -536,7 +536,7 @@ TEST(DccPacketEncoder, func_expansion_rejects_accessory) {
 
 TEST(DccPacketEncoder, accessory_basic_addr5_output2_activate) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_basic(&pkt, 5, 2, true);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_basic(&pkt, 5, 2, true);
 
     EXPECT_TRUE(ok);
     /* Byte 1: 10 000101 = 0x85 (address low 6 = 5) */
@@ -549,7 +549,7 @@ TEST(DccPacketEncoder, accessory_basic_addr5_output2_activate) {
 
 TEST(DccPacketEncoder, accessory_basic_addr5_output2_deactivate) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_basic(&pkt, 5, 2, false);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_basic(&pkt, 5, 2, false);
 
     EXPECT_TRUE(ok);
     /* Byte 2: 1 111 0 010 = 0xF2 (deactivate) */
@@ -560,7 +560,7 @@ TEST(DccPacketEncoder, accessory_basic_addr5_output2_deactivate) {
 TEST(DccPacketEncoder, accessory_basic_high_address) {
     dcc_packet_t pkt;
     /* Address 100: low 6 = 100 & 0x3F = 36 = 0x24, high 3 = 100 >> 6 = 1 */
-    bool ok = DccPacketEncoder_accessory_basic(&pkt, 100, 0, true);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_basic(&pkt, 100, 0, true);
 
     EXPECT_TRUE(ok);
     /* Byte 1: 10 100100 = 0xA4 */
@@ -572,7 +572,7 @@ TEST(DccPacketEncoder, accessory_basic_high_address) {
 
 TEST(DccPacketEncoder, accessory_basic_max_address) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_basic(&pkt, 511, 7, true);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_basic(&pkt, 511, 7, true);
 
     EXPECT_TRUE(ok);
     /* Address 511: low 6 = 0x3F, high 3 = 7 */
@@ -584,14 +584,14 @@ TEST(DccPacketEncoder, accessory_basic_max_address) {
 
 TEST(DccPacketEncoder, accessory_basic_rejects_invalid_address) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_basic(&pkt, 512, 0, true);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_basic(&pkt, 512, 0, true);
 
     EXPECT_FALSE(ok);
 }
 
 TEST(DccPacketEncoder, accessory_basic_rejects_invalid_output) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_basic(&pkt, 5, 8, true);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_basic(&pkt, 5, 8, true);
 
     EXPECT_FALSE(ok);
 }
@@ -602,7 +602,7 @@ TEST(DccPacketEncoder, accessory_basic_rejects_invalid_output) {
 
 TEST(DccPacketEncoder, accessory_extended_addr0_aspect5) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_extended(&pkt, 0, 5);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_extended(&pkt, 0, 5);
 
     EXPECT_TRUE(ok);
     /* Byte 1: 10 000000 = 0x80 */
@@ -618,7 +618,7 @@ TEST(DccPacketEncoder, accessory_extended_addr0_aspect5) {
 TEST(DccPacketEncoder, accessory_extended_addr100_aspect0) {
     dcc_packet_t pkt;
     /* Address 100: low 6 = 0x24, bits 6-8 = 1, bits 9-10 = 0 */
-    bool ok = DccPacketEncoder_accessory_extended(&pkt, 100, 0);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_extended(&pkt, 100, 0);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 0xA4);
@@ -630,7 +630,74 @@ TEST(DccPacketEncoder, accessory_extended_addr100_aspect0) {
 
 TEST(DccPacketEncoder, accessory_extended_rejects_invalid_address) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_extended(&pkt, 2048, 0);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_extended(&pkt, 2048, 0);
+
+    EXPECT_FALSE(ok);
+}
+
+// ============================================================================
+// Basic accessory stop tests
+// ============================================================================
+
+TEST(DccPacketEncoder, accessory_basic_stop_valid) {
+    dcc_packet_t pkt;
+    bool ok = DccApplicationCommandStationPacket_load_accessory_basic_stop(&pkt, 5, 2);
+
+    EXPECT_TRUE(ok);
+    /* Byte 1: 10 000101 = 0x85 */
+    EXPECT_EQ(pkt.data[0], 0x85);
+    /* Byte 2: 1 111 0 010 = 0xF2 (high inv ~0=7, C=0 deactivate, output=2) */
+    EXPECT_EQ(pkt.data[1], 0xF2);
+    EXPECT_EQ(pkt.byte_count, 3);
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, accessory_basic_stop_max_address) {
+    dcc_packet_t pkt;
+    bool ok = DccApplicationCommandStationPacket_load_accessory_basic_stop(&pkt, 511, 7);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[0], 0x80 | 0x3F);   /* 0xBF */
+    /* High inverted = ~7 & 7 = 0, C=0, output 7 */
+    EXPECT_EQ(pkt.data[1], 0x80 | 0x07);  /* 0x87 */
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, accessory_basic_stop_rejects_invalid_address) {
+    dcc_packet_t pkt;
+    bool ok = DccApplicationCommandStationPacket_load_accessory_basic_stop(&pkt, 512, 0);
+
+    EXPECT_FALSE(ok);
+}
+
+TEST(DccPacketEncoder, accessory_basic_stop_rejects_invalid_output) {
+    dcc_packet_t pkt;
+    bool ok = DccApplicationCommandStationPacket_load_accessory_basic_stop(&pkt, 5, 8);
+
+    EXPECT_FALSE(ok);
+}
+
+// ============================================================================
+// Extended accessory stop tests
+// ============================================================================
+
+TEST(DccPacketEncoder, accessory_extended_stop_valid) {
+    dcc_packet_t pkt;
+    bool ok = DccApplicationCommandStationPacket_load_accessory_extended_stop(&pkt, 100);
+
+    EXPECT_TRUE(ok);
+    /* Same address encoding as extended accessory */
+    EXPECT_EQ(pkt.data[0], 0xA4);
+    EXPECT_EQ(pkt.data[1], 0x61);
+    /* Aspect = 0x00 (all stop) */
+    EXPECT_EQ(pkt.data[2], 0x00);
+    EXPECT_EQ(pkt.byte_count, 4);
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, accessory_extended_stop_rejects_invalid_address) {
+    dcc_packet_t pkt;
+    bool ok = DccApplicationCommandStationPacket_load_accessory_extended_stop(&pkt, 2048);
 
     EXPECT_FALSE(ok);
 }
@@ -642,7 +709,7 @@ TEST(DccPacketEncoder, accessory_extended_rejects_invalid_address) {
 TEST(DccPacketEncoder, cv_write_ops_short_addr) {
     dcc_packet_t pkt;
     /* Write value 200 to CV 1 of decoder at short address 3 */
-    bool ok = DccPacketEncoder_cv_write_ops(&pkt, 3, DCC_ADDRESS_SHORT, 1, 200);
+    bool ok = DccApplicationCommandStationPacket_load_cv_write_pom(&pkt, 3, DCC_ADDRESS_SHORT, 1, 200);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 3);
@@ -659,7 +726,7 @@ TEST(DccPacketEncoder, cv_write_ops_short_addr) {
 TEST(DccPacketEncoder, cv_write_ops_cv1024_long_addr) {
     dcc_packet_t pkt;
     /* Write value 0xFF to CV 1024 of long address 5000 */
-    bool ok = DccPacketEncoder_cv_write_ops(&pkt, 5000, DCC_ADDRESS_LONG, 1024, 0xFF);
+    bool ok = DccApplicationCommandStationPacket_load_cv_write_pom(&pkt, 5000, DCC_ADDRESS_LONG, 1024, 0xFF);
 
     EXPECT_TRUE(ok);
     /* Long addr 5000 = 0x1388 → byte0 = 0xC0 | 0x13 = 0xD3, byte1 = 0x88 */
@@ -677,21 +744,21 @@ TEST(DccPacketEncoder, cv_write_ops_cv1024_long_addr) {
 
 TEST(DccPacketEncoder, cv_write_ops_rejects_cv0) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_cv_write_ops(&pkt, 3, DCC_ADDRESS_SHORT, 0, 100);
+    bool ok = DccApplicationCommandStationPacket_load_cv_write_pom(&pkt, 3, DCC_ADDRESS_SHORT, 0, 100);
 
     EXPECT_FALSE(ok);
 }
 
 TEST(DccPacketEncoder, cv_write_ops_rejects_cv1025) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_cv_write_ops(&pkt, 3, DCC_ADDRESS_SHORT, 1025, 100);
+    bool ok = DccApplicationCommandStationPacket_load_cv_write_pom(&pkt, 3, DCC_ADDRESS_SHORT, 1025, 100);
 
     EXPECT_FALSE(ok);
 }
 
 TEST(DccPacketEncoder, cv_write_ops_rejects_accessory) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_cv_write_ops(&pkt, 3, DCC_ADDRESS_ACCESSORY, 1, 100);
+    bool ok = DccApplicationCommandStationPacket_load_cv_write_pom(&pkt, 3, DCC_ADDRESS_ACCESSORY, 1, 100);
 
     EXPECT_FALSE(ok);
 }
@@ -702,7 +769,7 @@ TEST(DccPacketEncoder, cv_write_ops_rejects_accessory) {
 
 TEST(DccPacketEncoder, cv_verify_ops_short_addr) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_cv_verify_ops(&pkt, 3, DCC_ADDRESS_SHORT, 29, 0x25);
+    bool ok = DccApplicationCommandStationPacket_load_cv_verify_pom(&pkt, 3, DCC_ADDRESS_SHORT, 29, 0x25);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 3);
@@ -721,7 +788,7 @@ TEST(DccPacketEncoder, cv_verify_ops_short_addr) {
 
 TEST(DccPacketEncoder, cv_bit_ops_write_bit3_high) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_cv_bit_ops(&pkt, 3, DCC_ADDRESS_SHORT, 29, 3, true, true);
+    bool ok = DccApplicationCommandStationPacket_load_cv_bit_pom(&pkt, 3, DCC_ADDRESS_SHORT, 29, 3, true, true);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 3);
@@ -737,7 +804,7 @@ TEST(DccPacketEncoder, cv_bit_ops_write_bit3_high) {
 
 TEST(DccPacketEncoder, cv_bit_ops_verify_bit0_low) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_cv_bit_ops(&pkt, 3, DCC_ADDRESS_SHORT, 1, 0, false, false);
+    bool ok = DccApplicationCommandStationPacket_load_cv_bit_pom(&pkt, 3, DCC_ADDRESS_SHORT, 1, 0, false, false);
 
     EXPECT_TRUE(ok);
     /* Bit byte: 111 0 0 000 = 0xE0 (verify, value=0, position=0) */
@@ -747,14 +814,14 @@ TEST(DccPacketEncoder, cv_bit_ops_verify_bit0_low) {
 
 TEST(DccPacketEncoder, cv_bit_ops_rejects_bit_position_8) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_cv_bit_ops(&pkt, 3, DCC_ADDRESS_SHORT, 1, 8, true, true);
+    bool ok = DccApplicationCommandStationPacket_load_cv_bit_pom(&pkt, 3, DCC_ADDRESS_SHORT, 1, 8, true, true);
 
     EXPECT_FALSE(ok);
 }
 
 TEST(DccPacketEncoder, cv_bit_ops_long_addr) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_cv_bit_ops(&pkt, 1234, DCC_ADDRESS_LONG, 512, 7, true, true);
+    bool ok = DccApplicationCommandStationPacket_load_cv_bit_pom(&pkt, 1234, DCC_ADDRESS_LONG, 512, 7, true, true);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 0xC4);
@@ -775,7 +842,7 @@ TEST(DccPacketEncoder, cv_bit_ops_long_addr) {
 
 TEST(DccPacketEncoder, consist_set_normal) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_consist_set(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    bool ok = DccApplicationCommandStationPacket_load_consist_set(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 3);
@@ -787,7 +854,7 @@ TEST(DccPacketEncoder, consist_set_normal) {
 
 TEST(DccPacketEncoder, consist_set_reversed) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_consist_set(&pkt, 3, DCC_ADDRESS_SHORT, 50, false);
+    bool ok = DccApplicationCommandStationPacket_load_consist_set(&pkt, 3, DCC_ADDRESS_SHORT, 50, false);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[1], DCC_CONSIST_SET_REVERSED);  /* 0x13 */
@@ -797,7 +864,7 @@ TEST(DccPacketEncoder, consist_set_reversed) {
 
 TEST(DccPacketEncoder, consist_set_max_address) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_consist_set(&pkt, 3, DCC_ADDRESS_SHORT, 127, true);
+    bool ok = DccApplicationCommandStationPacket_load_consist_set(&pkt, 3, DCC_ADDRESS_SHORT, 127, true);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[2], 127);
@@ -806,14 +873,14 @@ TEST(DccPacketEncoder, consist_set_max_address) {
 
 TEST(DccPacketEncoder, consist_set_rejects_invalid_consist_addr) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_consist_set(&pkt, 3, DCC_ADDRESS_SHORT, 128, true);
+    bool ok = DccApplicationCommandStationPacket_load_consist_set(&pkt, 3, DCC_ADDRESS_SHORT, 128, true);
 
     EXPECT_FALSE(ok);
 }
 
 TEST(DccPacketEncoder, consist_clear) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_consist_clear(&pkt, 3, DCC_ADDRESS_SHORT);
+    bool ok = DccApplicationCommandStationPacket_load_consist_clear(&pkt, 3, DCC_ADDRESS_SHORT);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[1], DCC_CONSIST_SET_NORMAL);  /* 0x12 */
@@ -823,7 +890,7 @@ TEST(DccPacketEncoder, consist_clear) {
 
 TEST(DccPacketEncoder, consist_set_long_addr) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_consist_set(&pkt, 1234, DCC_ADDRESS_LONG, 10, true);
+    bool ok = DccApplicationCommandStationPacket_load_consist_set(&pkt, 1234, DCC_ADDRESS_LONG, 10, true);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 0xC4);
@@ -840,7 +907,7 @@ TEST(DccPacketEncoder, consist_set_long_addr) {
 
 TEST(DccPacketEncoder, binary_state_short_activate) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_binary_state_short(&pkt, 3, DCC_ADDRESS_SHORT, 42, true);
+    bool ok = DccApplicationCommandStationPacket_load_binary_state_short(&pkt, 3, DCC_ADDRESS_SHORT, 42, true);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 3);
@@ -853,7 +920,7 @@ TEST(DccPacketEncoder, binary_state_short_activate) {
 
 TEST(DccPacketEncoder, binary_state_short_deactivate) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_binary_state_short(&pkt, 3, DCC_ADDRESS_SHORT, 42, false);
+    bool ok = DccApplicationCommandStationPacket_load_binary_state_short(&pkt, 3, DCC_ADDRESS_SHORT, 42, false);
 
     EXPECT_TRUE(ok);
     /* Data: 0 0101010 = 42 (inactive + state 42) */
@@ -863,7 +930,7 @@ TEST(DccPacketEncoder, binary_state_short_deactivate) {
 
 TEST(DccPacketEncoder, binary_state_short_rejects_invalid_state) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_binary_state_short(&pkt, 3, DCC_ADDRESS_SHORT, 128, true);
+    bool ok = DccApplicationCommandStationPacket_load_binary_state_short(&pkt, 3, DCC_ADDRESS_SHORT, 128, true);
 
     EXPECT_FALSE(ok);
 }
@@ -875,7 +942,7 @@ TEST(DccPacketEncoder, binary_state_short_rejects_invalid_state) {
 TEST(DccPacketEncoder, binary_state_long_activate) {
     dcc_packet_t pkt;
     /* State 1000: low 7 = 1000 & 0x7F = 104, high 8 = 1000 >> 7 = 7 */
-    bool ok = DccPacketEncoder_binary_state_long(&pkt, 3, DCC_ADDRESS_SHORT, 1000, true);
+    bool ok = DccApplicationCommandStationPacket_load_binary_state_long(&pkt, 3, DCC_ADDRESS_SHORT, 1000, true);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 3);
@@ -890,7 +957,7 @@ TEST(DccPacketEncoder, binary_state_long_activate) {
 
 TEST(DccPacketEncoder, binary_state_long_max_state) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_binary_state_long(&pkt, 3, DCC_ADDRESS_SHORT, 32767, true);
+    bool ok = DccApplicationCommandStationPacket_load_binary_state_long(&pkt, 3, DCC_ADDRESS_SHORT, 32767, true);
 
     EXPECT_TRUE(ok);
     /* 32767 = 0x7FFF: low 7 = 0x7F, high 8 = 0xFF */
@@ -901,7 +968,7 @@ TEST(DccPacketEncoder, binary_state_long_max_state) {
 
 TEST(DccPacketEncoder, binary_state_long_deactivate) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_binary_state_long(&pkt, 3, DCC_ADDRESS_SHORT, 0, false);
+    bool ok = DccApplicationCommandStationPacket_load_binary_state_long(&pkt, 3, DCC_ADDRESS_SHORT, 0, false);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[2], 0x00);  /* inactive, state 0 */
@@ -916,7 +983,7 @@ TEST(DccPacketEncoder, binary_state_long_deactivate) {
 TEST(DccPacketEncoder, analog_function_volume) {
     dcc_packet_t pkt;
     /* Output 1 = volume, value = 128 */
-    bool ok = DccPacketEncoder_analog_function(&pkt, 3, DCC_ADDRESS_SHORT, 1, 128);
+    bool ok = DccApplicationCommandStationPacket_load_analog_function(&pkt, 3, DCC_ADDRESS_SHORT, 1, 128);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 3);
@@ -929,7 +996,7 @@ TEST(DccPacketEncoder, analog_function_volume) {
 
 TEST(DccPacketEncoder, analog_function_long_addr) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_analog_function(&pkt, 1234, DCC_ADDRESS_LONG, 0, 255);
+    bool ok = DccApplicationCommandStationPacket_load_analog_function(&pkt, 1234, DCC_ADDRESS_LONG, 0, 255);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 0xC4);
@@ -947,7 +1014,7 @@ TEST(DccPacketEncoder, analog_function_long_addr) {
 
 TEST(DccPacketEncoder, speed_restriction_enabled) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_restriction(&pkt, 3, DCC_ADDRESS_SHORT, true, 64);
+    bool ok = DccApplicationCommandStationPacket_load_speed_restriction(&pkt, 3, DCC_ADDRESS_SHORT, true, 64);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 3);
@@ -960,7 +1027,7 @@ TEST(DccPacketEncoder, speed_restriction_enabled) {
 
 TEST(DccPacketEncoder, speed_restriction_disabled) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_restriction(&pkt, 3, DCC_ADDRESS_SHORT, false, 0);
+    bool ok = DccApplicationCommandStationPacket_load_speed_restriction(&pkt, 3, DCC_ADDRESS_SHORT, false, 0);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[2], 0x00);  /* disabled + limit 0 */
@@ -969,7 +1036,7 @@ TEST(DccPacketEncoder, speed_restriction_disabled) {
 
 TEST(DccPacketEncoder, speed_restriction_rejects_invalid_limit) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_speed_restriction(&pkt, 3, DCC_ADDRESS_SHORT, true, 128);
+    bool ok = DccApplicationCommandStationPacket_load_speed_restriction(&pkt, 3, DCC_ADDRESS_SHORT, true, 128);
 
     EXPECT_FALSE(ok);
 }
@@ -980,47 +1047,47 @@ TEST(DccPacketEncoder, speed_restriction_rejects_invalid_limit) {
 
 TEST(DccPacketEncoder, speed14_rejects_accessory) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_speed_14(&pkt, 1, DCC_ADDRESS_ACCESSORY, 5, true, false));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_speed_14(&pkt, 1, DCC_ADDRESS_ACCESSORY, 5, true, false));
 }
 
 TEST(DccPacketEncoder, func_group2a_rejects_accessory) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_func_group_2a(&pkt, 1, DCC_ADDRESS_ACCESSORY, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_func_group_2a(&pkt, 1, DCC_ADDRESS_ACCESSORY, 0));
 }
 
 TEST(DccPacketEncoder, func_group2b_rejects_accessory) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_func_group_2b(&pkt, 1, DCC_ADDRESS_ACCESSORY, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_func_group_2b(&pkt, 1, DCC_ADDRESS_ACCESSORY, 0));
 }
 
 TEST(DccPacketEncoder, cv_bit_ops_rejects_accessory) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_cv_bit_ops(&pkt, 1, DCC_ADDRESS_ACCESSORY, 1, 0, true, true));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_cv_bit_pom(&pkt, 1, DCC_ADDRESS_ACCESSORY, 1, 0, true, true));
 }
 
 TEST(DccPacketEncoder, cv_verify_ops_rejects_accessory) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_cv_verify_ops(&pkt, 1, DCC_ADDRESS_ACCESSORY, 1, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_cv_verify_pom(&pkt, 1, DCC_ADDRESS_ACCESSORY, 1, 0));
 }
 
 TEST(DccPacketEncoder, consist_rejects_accessory) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_consist_set(&pkt, 1, DCC_ADDRESS_ACCESSORY, 10, true));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_consist_set(&pkt, 1, DCC_ADDRESS_ACCESSORY, 10, true));
 }
 
 TEST(DccPacketEncoder, binary_state_long_rejects_accessory) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_binary_state_long(&pkt, 1, DCC_ADDRESS_ACCESSORY, 1, true));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_binary_state_long(&pkt, 1, DCC_ADDRESS_ACCESSORY, 1, true));
 }
 
 TEST(DccPacketEncoder, analog_function_rejects_accessory) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_analog_function(&pkt, 1, DCC_ADDRESS_ACCESSORY, 0, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_analog_function(&pkt, 1, DCC_ADDRESS_ACCESSORY, 0, 0));
 }
 
 TEST(DccPacketEncoder, speed_restriction_rejects_accessory) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_speed_restriction(&pkt, 1, DCC_ADDRESS_ACCESSORY, true, 60));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_speed_restriction(&pkt, 1, DCC_ADDRESS_ACCESSORY, true, 60));
 }
 
 // ============================================================================
@@ -1029,17 +1096,17 @@ TEST(DccPacketEncoder, speed_restriction_rejects_accessory) {
 
 TEST(DccPacketEncoder, binary_state_short_rejects_accessory) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_binary_state_short(&pkt, 1, DCC_ADDRESS_ACCESSORY, 1, true));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_binary_state_short(&pkt, 1, DCC_ADDRESS_ACCESSORY, 1, true));
 }
 
 TEST(DccPacketEncoder, cv_bit_ops_rejects_cv0) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_cv_bit_ops(&pkt, 3, DCC_ADDRESS_SHORT, 0, 0, true, true));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_cv_bit_pom(&pkt, 3, DCC_ADDRESS_SHORT, 0, 0, true, true));
 }
 
 TEST(DccPacketEncoder, cv_bit_ops_rejects_cv1025) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_cv_bit_ops(&pkt, 3, DCC_ADDRESS_SHORT, 1025, 0, true, true));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_cv_bit_pom(&pkt, 3, DCC_ADDRESS_SHORT, 1025, 0, true, true));
 }
 
 // ============================================================================
@@ -1048,7 +1115,7 @@ TEST(DccPacketEncoder, cv_bit_ops_rejects_cv1025) {
 
 TEST(DccPacketEncoder, binary_state_long_rejects_state_too_large) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_binary_state_long(&pkt, 3, DCC_ADDRESS_SHORT, 32768, true));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_binary_state_long(&pkt, 3, DCC_ADDRESS_SHORT, 32768, true));
 }
 
 // ============================================================================
@@ -1057,7 +1124,7 @@ TEST(DccPacketEncoder, binary_state_long_rejects_state_too_large) {
 
 TEST(DccPacketEncoder, acc_basic_cv_write_addr5_pair2_cv1) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_basic_cv_write(&pkt, 5, 2, 1, 200);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_basic_cv_write(&pkt, 5, 2, 1, 200);
 
     EXPECT_TRUE(ok);
     /* Byte 0: 10 000101 = 0x85 (address low 6 = 5) */
@@ -1076,7 +1143,7 @@ TEST(DccPacketEncoder, acc_basic_cv_write_addr5_pair2_cv1) {
 
 TEST(DccPacketEncoder, acc_basic_cv_write_cv1024) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_basic_cv_write(&pkt, 100, 0, 1024, 0xFF);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_basic_cv_write(&pkt, 100, 0, 1024, 0xFF);
 
     EXPECT_TRUE(ok);
     /* CV 1024 → wire 1023 = 0x3FF → high = 0x03, low = 0xFF */
@@ -1088,22 +1155,22 @@ TEST(DccPacketEncoder, acc_basic_cv_write_cv1024) {
 
 TEST(DccPacketEncoder, acc_basic_cv_write_rejects_bad_address) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_accessory_basic_cv_write(&pkt, 512, 0, 1, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_basic_cv_write(&pkt, 512, 0, 1, 0));
 }
 
 TEST(DccPacketEncoder, acc_basic_cv_write_rejects_bad_pair) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_accessory_basic_cv_write(&pkt, 5, 4, 1, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_basic_cv_write(&pkt, 5, 4, 1, 0));
 }
 
 TEST(DccPacketEncoder, acc_basic_cv_write_rejects_cv0) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_accessory_basic_cv_write(&pkt, 5, 0, 0, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_basic_cv_write(&pkt, 5, 0, 0, 0));
 }
 
 TEST(DccPacketEncoder, acc_basic_cv_write_rejects_cv1025) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_accessory_basic_cv_write(&pkt, 5, 0, 1025, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_basic_cv_write(&pkt, 5, 0, 1025, 0));
 }
 
 // ============================================================================
@@ -1112,7 +1179,7 @@ TEST(DccPacketEncoder, acc_basic_cv_write_rejects_cv1025) {
 
 TEST(DccPacketEncoder, acc_basic_cv_verify_cv29) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_basic_cv_verify(&pkt, 5, 0, 29, 0x25);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_basic_cv_verify(&pkt, 5, 0, 29, 0x25);
 
     EXPECT_TRUE(ok);
     /* Byte 2: 0xE4 (CV long verify) */
@@ -1129,7 +1196,7 @@ TEST(DccPacketEncoder, acc_basic_cv_verify_cv29) {
 
 TEST(DccPacketEncoder, acc_basic_cv_bit_write_bit3_high) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_basic_cv_bit(&pkt, 5, 1, 29, 3, true, true);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_basic_cv_bit(&pkt, 5, 1, 29, 3, true, true);
 
     EXPECT_TRUE(ok);
     /* Byte 2: 0xE8 (CV long bit) */
@@ -1143,7 +1210,7 @@ TEST(DccPacketEncoder, acc_basic_cv_bit_write_bit3_high) {
 
 TEST(DccPacketEncoder, acc_basic_cv_bit_verify_bit0_low) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_basic_cv_bit(&pkt, 5, 0, 1, 0, false, false);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_basic_cv_bit(&pkt, 5, 0, 1, 0, false, false);
 
     EXPECT_TRUE(ok);
     /* Bit byte: 111 0 0 000 = 0xE0 (verify, value=0, position=0) */
@@ -1153,7 +1220,7 @@ TEST(DccPacketEncoder, acc_basic_cv_bit_verify_bit0_low) {
 
 TEST(DccPacketEncoder, acc_basic_cv_bit_rejects_bit8) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_accessory_basic_cv_bit(&pkt, 5, 0, 1, 8, true, true));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_basic_cv_bit(&pkt, 5, 0, 1, 8, true, true));
 }
 
 // ============================================================================
@@ -1162,7 +1229,7 @@ TEST(DccPacketEncoder, acc_basic_cv_bit_rejects_bit8) {
 
 TEST(DccPacketEncoder, acc_extended_cv_write_addr0_cv1) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_extended_cv_write(&pkt, 0, 1, 200);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_extended_cv_write(&pkt, 0, 1, 200);
 
     EXPECT_TRUE(ok);
     /* Byte 0: 10 000000 = 0x80 */
@@ -1181,7 +1248,7 @@ TEST(DccPacketEncoder, acc_extended_cv_write_addr0_cv1) {
 
 TEST(DccPacketEncoder, acc_extended_cv_write_addr100_cv1024) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_extended_cv_write(&pkt, 100, 1024, 0xFF);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_extended_cv_write(&pkt, 100, 1024, 0xFF);
 
     EXPECT_TRUE(ok);
     /* Address 100: low 6 = 0x24, bits 6-8 = 1 */
@@ -1197,17 +1264,17 @@ TEST(DccPacketEncoder, acc_extended_cv_write_addr100_cv1024) {
 
 TEST(DccPacketEncoder, acc_extended_cv_write_rejects_bad_address) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_accessory_extended_cv_write(&pkt, 2048, 1, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_extended_cv_write(&pkt, 2048, 1, 0));
 }
 
 TEST(DccPacketEncoder, acc_extended_cv_write_rejects_cv0) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_accessory_extended_cv_write(&pkt, 0, 0, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_extended_cv_write(&pkt, 0, 0, 0));
 }
 
 TEST(DccPacketEncoder, acc_extended_cv_write_rejects_cv1025) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_accessory_extended_cv_write(&pkt, 0, 1025, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_extended_cv_write(&pkt, 0, 1025, 0));
 }
 
 // ============================================================================
@@ -1216,7 +1283,7 @@ TEST(DccPacketEncoder, acc_extended_cv_write_rejects_cv1025) {
 
 TEST(DccPacketEncoder, acc_extended_cv_verify_cv29) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_extended_cv_verify(&pkt, 0, 29, 0x25);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_extended_cv_verify(&pkt, 0, 29, 0x25);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[2], 0xE4);
@@ -1231,7 +1298,7 @@ TEST(DccPacketEncoder, acc_extended_cv_verify_cv29) {
 
 TEST(DccPacketEncoder, acc_extended_cv_bit_write_bit7_high) {
     dcc_packet_t pkt;
-    bool ok = DccPacketEncoder_accessory_extended_cv_bit(&pkt, 0, 1, 7, true, true);
+    bool ok = DccApplicationCommandStationPacket_load_accessory_extended_cv_bit(&pkt, 0, 1, 7, true, true);
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[2], 0xE8);
@@ -1243,5 +1310,79 @@ TEST(DccPacketEncoder, acc_extended_cv_bit_write_bit7_high) {
 
 TEST(DccPacketEncoder, acc_extended_cv_bit_rejects_bit8) {
     dcc_packet_t pkt;
-    EXPECT_FALSE(DccPacketEncoder_accessory_extended_cv_bit(&pkt, 0, 1, 8, true, true));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_extended_cv_bit(&pkt, 0, 1, 8, true, true));
+}
+
+// ============================================================================
+// Accessory CV compound validation — individual rejection branches
+// ============================================================================
+
+TEST(DccPacketEncoder, acc_basic_cv_verify_rejects_bad_address) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_basic_cv_verify(&pkt, 512, 0, 1, 0x00));
+}
+
+TEST(DccPacketEncoder, acc_basic_cv_verify_rejects_bad_output) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_basic_cv_verify(&pkt, 0, 4, 1, 0x00));
+}
+
+TEST(DccPacketEncoder, acc_basic_cv_verify_rejects_cv0) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_basic_cv_verify(&pkt, 0, 0, 0, 0x00));
+}
+
+TEST(DccPacketEncoder, acc_basic_cv_verify_rejects_cv1025) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_basic_cv_verify(&pkt, 0, 0, 1025, 0x00));
+}
+
+TEST(DccPacketEncoder, acc_basic_cv_bit_rejects_bad_address) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_basic_cv_bit(&pkt, 512, 0, 1, 0, true, true));
+}
+
+TEST(DccPacketEncoder, acc_basic_cv_bit_rejects_bad_output) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_basic_cv_bit(&pkt, 0, 4, 1, 0, true, true));
+}
+
+TEST(DccPacketEncoder, acc_basic_cv_bit_rejects_cv0) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_basic_cv_bit(&pkt, 0, 0, 0, 0, true, true));
+}
+
+TEST(DccPacketEncoder, acc_basic_cv_bit_rejects_cv1025) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_basic_cv_bit(&pkt, 0, 0, 1025, 0, true, true));
+}
+
+TEST(DccPacketEncoder, acc_extended_cv_verify_rejects_bad_address) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_extended_cv_verify(&pkt, 2048, 1, 0x00));
+}
+
+TEST(DccPacketEncoder, acc_extended_cv_verify_rejects_cv0) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_extended_cv_verify(&pkt, 0, 0, 0x00));
+}
+
+TEST(DccPacketEncoder, acc_extended_cv_verify_rejects_cv1025) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_extended_cv_verify(&pkt, 0, 1025, 0x00));
+}
+
+TEST(DccPacketEncoder, acc_extended_cv_bit_rejects_bad_address) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_extended_cv_bit(&pkt, 2048, 1, 0, true, true));
+}
+
+TEST(DccPacketEncoder, acc_extended_cv_bit_rejects_cv0) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_extended_cv_bit(&pkt, 0, 0, 0, true, true));
+}
+
+TEST(DccPacketEncoder, acc_extended_cv_bit_rejects_cv1025) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_extended_cv_bit(&pkt, 0, 1025, 0, true, true));
 }

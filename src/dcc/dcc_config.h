@@ -32,7 +32,7 @@
  * to bring up the entire stack. This is the only header users need to include.
  *
  * @author Jim Kueneman
- * @date 11 Apr 2026
+ * @date 13 Apr 2026
  */
 
 #ifndef __DCC_CONFIG__
@@ -86,40 +86,27 @@ extern "C" {
      */
 typedef struct {
 
-        /** @brief Tristate H-bridge to create the RailCom cutout window.
-         *  Used by the old variable-period bit encoder (half_bit_isr). */
-    void (*cutout_begin)(void);
+        /** @brief Tristate the H-bridge output stage for the RailCom cutout window.
+         *  Called by the library at T_CS. Required if using RailCom. */
+    void (*begin_railcom_cutout)(void);
 
-        /** @brief Resume H-bridge drive after cutout window.
-         *  Used by the old variable-period bit encoder (half_bit_isr). */
-    void (*cutout_end)(void);
+        /** @brief Restore H-bridge to normal drive mode after the cutout window.
+         *  Called by the library at T_CE. Required if using RailCom. */
+    void (*end_railcom_cutout)(void);
 
-        /** @brief Disable (tristate) H-bridge for the cutout window.
-         *  Used by the one-shot timer cutout module (dcc_railcom_cutout). */
-    void (*hbridge_disable)(void);
+        /** @brief Enable UART Rx for RailCom data reception.
+         *  Called by the library at T_TS1 and T_TS2. Required if using RailCom. */
+    void (*uart_rx_enable)(void);
 
-        /** @brief Re-enable H-bridge after the cutout window.
-         *  Used by the one-shot timer cutout module (dcc_railcom_cutout). */
-    void (*hbridge_enable)(void);
-
-        /** @brief Enable UART receive for RailCom Ch1.
-         *  Used by the one-shot timer cutout module. */
-    void (*uart_ch1_enable)(void);
-
-        /** @brief Disable UART receive for RailCom Ch1. */
-    void (*uart_ch1_disable)(void);
-
-        /** @brief Enable UART receive for RailCom Ch2. */
-    void (*uart_ch2_enable)(void);
-
-        /** @brief Disable UART receive for RailCom Ch2. */
-    void (*uart_ch2_disable)(void);
+        /** @brief Disable UART Rx after RailCom data reception.
+         *  Called by the library at T_TC1 and T_CE. Required if using RailCom. */
+    void (*uart_rx_disable)(void);
 
         /** @brief Read one byte from the RailCom 250 kbaud UART. Returns true if byte available. */
     bool (*uart_read)(uint8_t *byte);
 
         /** @brief RailCom datagram decoded. Fired from DccConfig_run(), NOT ISR. NULL = no notification. */
-    void (*on_datagram)(uint16_t address, uint8_t channel, const dcc_railcom_datagram_t *datagram);
+    void (*on_railcom_datagram_result)(uint16_t address, uint8_t channel, const dcc_railcom_datagram_t *datagram);
 
 } dcc_railcom_hw_t;
 
@@ -135,23 +122,15 @@ typedef struct {
         /**
          * @brief Start DCC bit timer. User configures their timer in output compare
          *  toggle mode so the track signal pin toggles automatically on compare match
-         *  with zero jitter. Timer ISR must call the corresponding
-         *  DccConfig_main_track_isr() or DccConfig_service_track_isr(). REQUIRED.
+         *  with zero jitter. Timer ISR must call DccConfig_58us_timer_isr(). REQUIRED.
          */
     void (*timer_start)(uint16_t half_bit_period_usec);
-
-        /**
-         * @brief Change timer compare value for the next half-bit period. Called from
-         *  ISR context, must be fast (single register write). REQUIRED.
-         */
-    void (*timer_set_period)(uint16_t half_bit_period_usec);
 
         /** @brief Stop DCC bit timer. REQUIRED. */
     void (*timer_stop)(void);
 
         /** @brief Toggle DCC output GPIO pin (ISR context). Used by the
-         *  fixed-period shared timer architecture (tick_isr). NULL = use
-         *  variable-period timer_set_period instead. */
+         *  fixed-period shared timer architecture (tick_isr). REQUIRED. */
     void (*pin_toggle)(void);
 
         /** @brief Enable or disable track power for this channel. REQUIRED. */
@@ -189,14 +168,12 @@ typedef struct {
      *
      * @code
      * static const dcc_railcom_hw_t my_railcom = {
-     *     .hbridge_disable = &MyDriver_hbridge_disable,
-     *     .hbridge_enable  = &MyDriver_hbridge_enable,
-     *     .uart_ch1_enable = &MyDriver_ch1_enable,
-     *     .uart_ch1_disable = &MyDriver_ch1_disable,
-     *     .uart_ch2_enable = &MyDriver_ch2_enable,
-     *     .uart_ch2_disable = &MyDriver_ch2_disable,
-     *     .uart_read    = &MyDriver_railcom_uart_read,
-     *     .on_datagram  = &MyApp_on_railcom,
+     *     .begin_railcom_cutout = &MyDriver_hbridge_disable,
+     *     .end_railcom_cutout   = &MyDriver_hbridge_enable,
+     *     .uart_rx_enable       = &MyDriver_uart_rx_enable,
+     *     .uart_rx_disable      = &MyDriver_uart_rx_disable,
+     *     .uart_read            = &MyDriver_railcom_uart_read,
+     *     .on_railcom_datagram_result = &MyApp_on_railcom,
      * };
      * static const dcc_config_t my_config = {
      *     .lock_shared_resources   = &MyDriver_lock,
@@ -243,8 +220,7 @@ typedef struct {
 
         /** @brief Start the shared fixed-period DCC timer. Both main track and
          *  service track are clocked from this single timer via tick_isr.
-         *  Called with DCC_ONE_BIT_HALF_PERIOD_US (58us). NULL = use per-channel
-         *  variable-period timers instead. */
+         *  Called with DCC_ONE_BIT_HALF_PERIOD_US (58us). REQUIRED. */
     void (*shared_timer_start)(uint16_t period_usec);
 
         /** @brief Stop the shared fixed-period DCC timer. */
@@ -267,14 +243,17 @@ typedef struct {
     // Command Station: OPTIONAL application callbacks (NULL = no notification)
     // =========================================================================
 
-        /** @brief Scheduler has no packets to send (idle packets still generated). */
-    void (*on_idle)(void);
-
         /** @brief Packet fully transmitted on the wire. */
     void (*on_packet_sent)(const dcc_packet_t *packet);
 
         /** @brief Service mode programming operation finished. */
-    void (*on_service_mode_complete)(dcc_service_mode_result_t result);
+    void (*on_service_mode_result)(dcc_service_mode_result_t result);
+
+        /** @brief Accessory decoder SRQ detected in RailCom Ch1.
+         *  The user should respond by sending a stop command
+         *  (load_accessory_basic_stop or load_accessory_extended_stop)
+         *  to collect the decoder's update. NULL = SRQ ignored. */
+    void (*on_accessory_srq)(uint16_t address, bool is_extended);
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
@@ -294,11 +273,29 @@ typedef struct {
     // Decoder: NULL-optional hardware drivers
     // =========================================================================
 
-        /**
-         * @brief Transmit 4/8-encoded RailCom response byte.
-         *  NULL = no RailCom responses.
-         */
-    void (*railcom_uart_write)(uint8_t byte);
+        /** @brief Set the RailCom Tx GPIO high or low. Library bit-bangs 4/8 encoded
+         *  bytes at 4us intervals from ISR context. No UART hardware needed.
+         *  NULL = no RailCom responses. */
+    void (*railcom_tx_pin_set)(bool high);
+
+        /** @brief Enable or disable the DCC edge-detect interrupt during RailCom cutout.
+         *  Called with false at end bit before cutout, true after cutout ends. User may
+         *  disable hardware interrupt or set a flag to skip. NULL = no blanking.
+         *  Required if using RailCom. */
+    void (*decoder_edge_irq_enable)(bool enabled);
+
+    // =========================================================================
+    // Decoder: Service mode hardware drivers
+    // =========================================================================
+
+        /** @brief Turn on the ACK current load. Library handles 6ms timing and
+         *  calls stop_ack_pulse automatically from DccConfig_run().
+         *  NULL = no ACK hardware. */
+    void (*start_ack_pulse)(void);
+
+        /** @brief Turn off the ACK current load. Called by the library after 6ms.
+         *  NULL = no ACK hardware. */
+    void (*stop_ack_pulse)(void);
 
     // =========================================================================
     // Decoder: OPTIONAL application callbacks (NULL = no notification)
@@ -308,7 +305,7 @@ typedef struct {
     void (*on_speed_command)(uint16_t address, uint8_t speed, bool direction, dcc_speed_mode_enum mode);
 
         /** @brief Emergency stop received for specific address. */
-    void (*on_emergency_stop)(uint16_t address);
+    void (*on_emergency_stop_command)(uint16_t address);
 
         /** @brief Function command received. */
     void (*on_function_command)(uint16_t address, uint8_t function_number, bool state);
@@ -323,38 +320,35 @@ typedef struct {
         /** @brief Extended accessory (signal aspect) command received. */
     void (*on_accessory_extended_command)(uint16_t address, uint8_t aspect);
 
-        /** @brief CV write completed on this decoder. */
-    void (*on_cv_write)(uint16_t cv_number, uint8_t value, bool service_mode);
+        /** @brief CV write command received on this decoder. */
+    void (*on_cv_write_command)(uint16_t cv_number, uint8_t value, bool service_mode);
 
-        /** @brief CV verify received on this decoder. */
-    void (*on_cv_verify)(uint16_t cv_number, uint8_t value, bool service_mode);
+        /** @brief CV verify command received on this decoder. */
+    void (*on_cv_verify_command)(uint16_t cv_number, uint8_t value, bool service_mode);
 
-        /** @brief CV bit manipulation received on this decoder. */
-    void (*on_cv_bit)(uint16_t cv_number, uint8_t bit_position, bool bit_value, bool service_mode);
+        /** @brief CV bit manipulation command received on this decoder. */
+    void (*on_cv_bit_command)(uint16_t cv_number, uint8_t bit_position, bool bit_value, bool service_mode);
 
         /** @brief Consist control command received. */
     void (*on_consist_command)(uint16_t address, uint8_t consist_address, bool direction_normal);
 
-        /** @brief Binary state short (1-127) received. */
-    void (*on_binary_state_short)(uint16_t address, uint8_t state_number, bool active);
+        /** @brief Binary state short (1-127) command received. */
+    void (*on_binary_state_short_command)(uint16_t address, uint8_t state_number, bool active);
 
-        /** @brief Binary state long (1-32767) received. */
-    void (*on_binary_state_long)(uint16_t address, uint16_t state_number, bool active);
+        /** @brief Binary state long (1-32767) command received. */
+    void (*on_binary_state_long_command)(uint16_t address, uint16_t state_number, bool active);
 
-        /** @brief Analog function output received. */
-    void (*on_analog_function)(uint16_t address, uint8_t output_number, uint8_t value);
+        /** @brief Analog function output command received. */
+    void (*on_analog_function_command)(uint16_t address, uint8_t output_number, uint8_t value);
 
         /** @brief Speed restriction command received. */
-    void (*on_speed_restriction)(uint16_t address, bool enabled, uint8_t speed_limit);
+    void (*on_speed_restriction_command)(uint16_t address, bool enabled, uint8_t speed_limit);
 
         /** @brief Decoder entered fail-safe mode (no valid packet timeout). */
     void (*on_failsafe_entered)(void);
 
         /** @brief Decoder exited fail-safe mode (valid packet received). */
     void (*on_failsafe_exited)(void);
-
-        /** @brief Fire a service mode ACK pulse. NULL = no ACK hardware. */
-    void (*fire_ack_pulse)(void);
 
 #endif /* DCC_COMPILE_DECODER */
 
@@ -375,29 +369,15 @@ extern void DccConfig_initialize(const dcc_config_t *config);
      *
      * @details Runs the scheduler, drains RailCom buffers, processes decoded
      * packets, fires application callbacks. All callbacks fire from this context.
+     * Also handles 6ms ACK pulse timing when an ACK is in progress.
      */
 extern void DccConfig_run(void);
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
     // =========================================================================
-    // Main track ISR and power control
+    // Command Station ISR Entry Points
     // =========================================================================
-
-    /**
-     * @brief Main track timer ISR entry point.
-     * @details Call from the main track timer compare-match ISR. Drives the
-     *  bit encoder for the main track output. Must complete in < 30 us.
-     */
-extern void DccConfig_main_track_isr(void);
-
-    /**
-     * @brief Service track timer ISR entry point.
-     * @details Call from the service track timer compare-match ISR. Drives the
-     *  bit encoder for the service track output and samples current sense for
-     *  ACK detection. Must complete in < 30 us.
-     */
-extern void DccConfig_service_track_isr(void);
 
     /**
      * @brief Shared fixed-period timer ISR entry point.
@@ -405,14 +385,14 @@ extern void DccConfig_service_track_isr(void);
      *  both main track and service track bit encoders. Also samples current
      *  sense on the service track for ACK detection.
      */
-extern void DccConfig_shared_timer_isr(void);
+extern void DccConfig_58us_timer_isr(void);
 
     /**
      * @brief RailCom cutout one-shot timer ISR entry point.
-     * @details Call from the RailCom cutout timer ISR. Drives the cutout
-     *  state machine through DELAY -> CH1 -> CH2 -> IDLE.
+     * @details Call from the RailCom one-shot timer ISR. Drives the cutout
+     *  state machine through DELAY -> SETTLING -> CH1 -> GAP -> CH2 -> IDLE.
      */
-extern void DccConfig_railcom_cutout_timer_isr(void);
+extern void DccConfig_railcom_oneshot_timer_isr(void);
 
     /**
      * @brief 100ms timer tick. Call from a 100ms periodic timer or main loop.
@@ -431,7 +411,7 @@ extern void DccConfig_100ms_timer_tick(void);
      * @details The library classifies one/zero bits from edge timing internally.
      * User ISR only needs to read the timer and call this function on each edge.
      */
-extern void DccConfig_decoder_edge(uint32_t timestamp_usec);
+extern void DccConfig_decoder_edge_isr(uint32_t timestamp_usec);
 
 #endif /* DCC_COMPILE_DECODER */
 

@@ -59,7 +59,22 @@ extern void AckPulseDriver_set_enabled(bool enabled);
 extern bool AckPulseDriver_is_enabled(void);
 
     /**
-     * @brief Fire an ACK pulse.  ISR-safe.
+     * @brief Start ACK pulse — sets the ACK pin HIGH.
+     *
+     * @details The DCC library handles 6ms timing and calls stop() automatically.
+     * No-op if ACK generation is disabled.
+     */
+extern void AckPulseDriver_start(void);
+
+    /**
+     * @brief Stop ACK pulse — clears the ACK pin LOW.
+     *
+     * @details Called by the DCC library after 6ms has elapsed.
+     */
+extern void AckPulseDriver_stop(void);
+
+    /**
+     * @brief Fire an ACK pulse using hardware timer (legacy).
      *
      * @details Sets the ACK pin HIGH and starts the one-shot timer.  The timer
      * ISR clears the pin when it expires.

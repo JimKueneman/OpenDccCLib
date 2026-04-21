@@ -8,8 +8,8 @@
 #include "test/main_Test.hxx"
 
 #include "dcc/dcc_config.h"
-#include "dcc/dcc_application_main_track.h"
-#include "dcc/dcc_application_service_track.h"
+#include "dcc/dcc_application_command_station_main_track.h"
+#include "dcc/dcc_application_command_station_service_track.h"
 #include "dcc/dcc_types.h"
 #include "dcc/dcc_defines.h"
 
@@ -24,12 +24,10 @@ static uint32_t mock_timestamp(void) { return 0; }
 #ifdef DCC_COMPILE_COMMAND_STATION
 
 static void mock_main_timer_start(uint16_t period) { (void)period; }
-static void mock_main_timer_set_period(uint16_t period) { (void)period; }
 static void mock_main_timer_stop(void) {}
 static void mock_main_power_set(bool enabled) { (void)enabled; }
 
 static void mock_svc_timer_start(uint16_t period) { (void)period; }
-static void mock_svc_timer_set_period(uint16_t period) { (void)period; }
 static void mock_svc_timer_stop(void) {}
 static void mock_svc_power_set(bool enabled) { (void)enabled; }
 
@@ -49,27 +47,19 @@ static void mock_on_packet_sent(const dcc_packet_t *packet) { (void)packet; on_p
 static void mock_railcom_timer_start(uint16_t period) { (void)period; }
 static void mock_railcom_timer_stop(void) {}
 
-static void mock_cutout_begin(void) {}
-static void mock_cutout_end(void) {}
-static void mock_hbridge_disable(void) {}
-static void mock_hbridge_enable(void) {}
-static void mock_uart_ch1_enable(void) {}
-static void mock_uart_ch1_disable(void) {}
-static void mock_uart_ch2_enable(void) {}
-static void mock_uart_ch2_disable(void) {}
+static void mock_begin_railcom_cutout(void) {}
+static void mock_end_railcom_cutout(void) {}
+static void mock_uart_rx_enable(void) {}
+static void mock_uart_rx_disable(void) {}
 static bool mock_uart_read(uint8_t *byte) { (void)byte; return false; }
 
 static dcc_railcom_hw_t make_railcom_hw(void) {
     dcc_railcom_hw_t rc;
     memset(&rc, 0, sizeof(rc));
-    rc.cutout_begin = mock_cutout_begin;
-    rc.cutout_end = mock_cutout_end;
-    rc.hbridge_disable = mock_hbridge_disable;
-    rc.hbridge_enable = mock_hbridge_enable;
-    rc.uart_ch1_enable = mock_uart_ch1_enable;
-    rc.uart_ch1_disable = mock_uart_ch1_disable;
-    rc.uart_ch2_enable = mock_uart_ch2_enable;
-    rc.uart_ch2_disable = mock_uart_ch2_disable;
+    rc.begin_railcom_cutout = mock_begin_railcom_cutout;
+    rc.end_railcom_cutout = mock_end_railcom_cutout;
+    rc.uart_rx_enable = mock_uart_rx_enable;
+    rc.uart_rx_disable = mock_uart_rx_disable;
     rc.uart_read = mock_uart_read;
     return rc;
 }
@@ -108,12 +98,10 @@ static dcc_config_t make_test_config(void) {
 
 #ifdef DCC_COMPILE_COMMAND_STATION
     cfg.main_track.timer_start = mock_main_timer_start;
-    cfg.main_track.timer_set_period = mock_main_timer_set_period;
     cfg.main_track.timer_stop = mock_main_timer_stop;
     cfg.main_track.track_power_set = mock_main_power_set;
 
     cfg.service_track.timer_start = mock_svc_timer_start;
-    cfg.service_track.timer_set_period = mock_svc_timer_set_period;
     cfg.service_track.timer_stop = mock_svc_timer_stop;
     cfg.service_track.track_power_set = mock_svc_power_set;
 #endif
@@ -153,32 +141,6 @@ TEST(DccConfig, run_null_guard_returns) {
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
-// ============================================================================
-// Main track ISR tests
-// ============================================================================
-
-TEST(DccConfig, main_track_isr_does_not_crash) {
-    dcc_config_t cfg = make_test_config();
-    DccConfig_initialize(&cfg);
-    DccConfig_main_track_isr();
-}
-
-// ============================================================================
-// Service track ISR tests
-// ============================================================================
-
-TEST(DccConfig, service_track_isr_does_not_crash) {
-    dcc_config_t cfg = make_test_config();
-    DccConfig_initialize(&cfg);
-    DccConfig_service_track_isr();
-}
-
-TEST(DccConfig, service_track_isr_samples_current_sense) {
-    dcc_config_t cfg = make_test_config();
-    cfg.service_track.current_sense_read = mock_current_sense_read;
-    DccConfig_initialize(&cfg);
-    DccConfig_service_track_isr();
-}
 
 // ============================================================================
 // 100ms tick
@@ -208,7 +170,7 @@ TEST(DccConfig, main_track_power_on_calls_driver) {
     DccConfig_initialize(&cfg);
 
     main_power_set_called = false;
-    DccApplicationMainTrack_power_on();
+    DccApplicationCommandStationMainTrack_power_on();
     EXPECT_TRUE(main_power_set_called);
     EXPECT_TRUE(main_power_set_value);
 }
@@ -219,19 +181,19 @@ TEST(DccConfig, main_track_power_off_calls_driver) {
     DccConfig_initialize(&cfg);
 
     main_power_set_called = false;
-    DccApplicationMainTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_off();
     EXPECT_TRUE(main_power_set_called);
     EXPECT_FALSE(main_power_set_value);
 }
 
 TEST(DccConfig, main_track_power_on_null_guard) {
     DccConfig_initialize(NULL);
-    DccApplicationMainTrack_power_on();
+    DccApplicationCommandStationMainTrack_power_on();
 }
 
 TEST(DccConfig, main_track_power_off_null_guard) {
     DccConfig_initialize(NULL);
-    DccApplicationMainTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_off();
 }
 
 // ============================================================================
@@ -252,7 +214,7 @@ TEST(DccConfig, service_track_power_on_calls_driver) {
     DccConfig_initialize(&cfg);
 
     svc_power_set_called = false;
-    DccApplicationServiceTrack_power_on();
+    DccApplicationCommandStationServiceTrack_power_on();
     EXPECT_TRUE(svc_power_set_called);
     EXPECT_TRUE(svc_power_set_value);
 }
@@ -263,19 +225,19 @@ TEST(DccConfig, service_track_power_off_calls_driver) {
     DccConfig_initialize(&cfg);
 
     svc_power_set_called = false;
-    DccApplicationServiceTrack_power_off();
+    DccApplicationCommandStationServiceTrack_power_off();
     EXPECT_TRUE(svc_power_set_called);
     EXPECT_FALSE(svc_power_set_value);
 }
 
 TEST(DccConfig, service_track_power_on_null_guard) {
     DccConfig_initialize(NULL);
-    DccApplicationServiceTrack_power_on();
+    DccApplicationCommandStationServiceTrack_power_on();
 }
 
 TEST(DccConfig, service_track_power_off_null_guard) {
     DccConfig_initialize(NULL);
-    DccApplicationServiceTrack_power_off();
+    DccApplicationCommandStationServiceTrack_power_off();
 }
 
 // ============================================================================
@@ -285,38 +247,27 @@ TEST(DccConfig, service_track_power_off_null_guard) {
 TEST(DccConfig, enter_service_mode_returns_true) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    EXPECT_TRUE(DccApplicationServiceTrack_enter());
+    EXPECT_TRUE(DccApplicationCommandStationServiceTrack_enter_service_mode());
 }
 
 TEST(DccConfig, exit_service_mode_does_not_crash) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccApplicationServiceTrack_enter();
-    DccApplicationServiceTrack_exit();
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
 TEST(DccConfig, run_calls_service_mode_when_active) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccApplicationServiceTrack_enter();
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
     DccConfig_run();
-    DccApplicationServiceTrack_exit();
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
 // ============================================================================
 // Dual-channel independence: both ISRs callable in same test
 // ============================================================================
-
-TEST(DccConfig, both_isrs_run_independently) {
-    dcc_config_t cfg = make_test_config();
-    DccConfig_initialize(&cfg);
-
-    /* Both ISRs can be called without interfering */
-    DccConfig_main_track_isr();
-    DccConfig_service_track_isr();
-    DccConfig_main_track_isr();
-    DccConfig_service_track_isr();
-}
 
 TEST(DccConfig, both_tracks_power_independently) {
     dcc_config_t cfg = make_test_config();
@@ -327,14 +278,14 @@ TEST(DccConfig, both_tracks_power_independently) {
     /* Power on main, service stays off */
     main_power_set_called = false;
     svc_power_set_called = false;
-    DccApplicationMainTrack_power_on();
+    DccApplicationCommandStationMainTrack_power_on();
     EXPECT_TRUE(main_power_set_called);
     EXPECT_FALSE(svc_power_set_called);
 
     /* Power on service independently */
     main_power_set_called = false;
     svc_power_set_called = false;
-    DccApplicationServiceTrack_power_on();
+    DccApplicationCommandStationServiceTrack_power_on();
     EXPECT_FALSE(main_power_set_called);
     EXPECT_TRUE(svc_power_set_called);
 }
@@ -346,10 +297,10 @@ TEST(DccConfig, both_tracks_power_independently) {
 TEST(DccConfig, main_track_insert_packet) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccApplicationMainTrack_power_on();
+    DccApplicationCommandStationMainTrack_power_on();
 
     dcc_packet_t pkt = make_idle_packet();
-    bool result = DccApplicationMainTrack_insert(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
+    bool result = DccApplicationCommandStationMainTrack_add_to_auto_refresh(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
     EXPECT_TRUE(result);
 }
 
@@ -358,8 +309,8 @@ TEST(DccConfig, main_track_remove_address) {
     DccConfig_initialize(&cfg);
 
     dcc_packet_t pkt = make_idle_packet();
-    DccApplicationMainTrack_insert(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
-    DccApplicationMainTrack_remove_address(3);
+    DccApplicationCommandStationMainTrack_add_to_auto_refresh(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
+    DccApplicationCommandStationMainTrack_remove_from_auto_refresh(3);
 }
 
 TEST(DccConfig, main_track_clear) {
@@ -367,8 +318,8 @@ TEST(DccConfig, main_track_clear) {
     DccConfig_initialize(&cfg);
 
     dcc_packet_t pkt = make_idle_packet();
-    DccApplicationMainTrack_insert(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
-    DccApplicationMainTrack_clear();
+    DccApplicationCommandStationMainTrack_add_to_auto_refresh(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
+    DccApplicationCommandStationMainTrack_remove_all_auto_refresh();
 }
 
 // ============================================================================
@@ -378,15 +329,15 @@ TEST(DccConfig, main_track_clear) {
 TEST(DccConfig, service_track_is_active_false) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    EXPECT_FALSE(DccApplicationServiceTrack_is_active());
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_is_service_mode_active());
 }
 
 TEST(DccConfig, service_track_is_active_true) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccApplicationServiceTrack_enter();
-    EXPECT_TRUE(DccApplicationServiceTrack_is_active());
-    DccApplicationServiceTrack_exit();
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    EXPECT_TRUE(DccApplicationCommandStationServiceTrack_is_service_mode_active());
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
 // ============================================================================
@@ -398,33 +349,33 @@ TEST(DccConfig, service_track_is_active_true) {
 TEST(DccConfig, direct_write_byte) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccApplicationServiceTrack_enter();
-    DccApplicationServiceTrack_direct_write_byte(17, 0x42);
-    DccApplicationServiceTrack_exit();
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    DccApplicationCommandStationServiceTrack_direct_write_byte(17, 0x42);
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
 TEST(DccConfig, direct_verify_byte) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccApplicationServiceTrack_enter();
-    DccApplicationServiceTrack_direct_verify_byte(17, 0x42);
-    DccApplicationServiceTrack_exit();
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    DccApplicationCommandStationServiceTrack_direct_verify_byte(17, 0x42);
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
 TEST(DccConfig, direct_write_bit) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccApplicationServiceTrack_enter();
-    DccApplicationServiceTrack_direct_write_bit(17, 3, true);
-    DccApplicationServiceTrack_exit();
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    DccApplicationCommandStationServiceTrack_direct_write_bit(17, 3, true);
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
 TEST(DccConfig, direct_verify_bit) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccApplicationServiceTrack_enter();
-    DccApplicationServiceTrack_direct_verify_bit(17, 3, true);
-    DccApplicationServiceTrack_exit();
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    DccApplicationCommandStationServiceTrack_direct_verify_bit(17, 3, true);
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
 #endif /* DCC_COMPILE_SERVICE_MODE_DIRECT */
@@ -434,17 +385,17 @@ TEST(DccConfig, direct_verify_bit) {
 TEST(DccConfig, paged_write) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccApplicationServiceTrack_enter();
-    DccApplicationServiceTrack_paged_write(29, 0x50);
-    DccApplicationServiceTrack_exit();
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    DccApplicationCommandStationServiceTrack_paged_write(29, 0x50);
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
 TEST(DccConfig, paged_verify) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccApplicationServiceTrack_enter();
-    DccApplicationServiceTrack_paged_verify(29, 0x50);
-    DccApplicationServiceTrack_exit();
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    DccApplicationCommandStationServiceTrack_paged_verify(29, 0x50);
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
 #endif /* DCC_COMPILE_SERVICE_MODE_PAGED */
@@ -454,17 +405,17 @@ TEST(DccConfig, paged_verify) {
 TEST(DccConfig, register_write) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccApplicationServiceTrack_enter();
-    DccApplicationServiceTrack_register_write(1, 0x35);
-    DccApplicationServiceTrack_exit();
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    DccApplicationCommandStationServiceTrack_register_write(1, 0x35);
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
 TEST(DccConfig, register_verify) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccApplicationServiceTrack_enter();
-    DccApplicationServiceTrack_register_verify(1, 0x35);
-    DccApplicationServiceTrack_exit();
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    DccApplicationCommandStationServiceTrack_register_verify(1, 0x35);
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
 #endif /* DCC_COMPILE_SERVICE_MODE_REGISTER */
@@ -474,17 +425,17 @@ TEST(DccConfig, register_verify) {
 TEST(DccConfig, address_write) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccApplicationServiceTrack_enter();
-    DccApplicationServiceTrack_address_write(42);
-    DccApplicationServiceTrack_exit();
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    DccApplicationCommandStationServiceTrack_address_write(42);
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
 TEST(DccConfig, address_verify) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccApplicationServiceTrack_enter();
-    DccApplicationServiceTrack_address_verify(42);
-    DccApplicationServiceTrack_exit();
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    DccApplicationCommandStationServiceTrack_address_verify(42);
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
 #endif /* DCC_COMPILE_SERVICE_MODE_ADDRESS */
@@ -500,9 +451,9 @@ TEST(DccConfig, shared_timer_acquire_first) {
     DccConfig_initialize(&cfg);
 
     shared_timer_start_count = 0;
-    DccApplicationMainTrack_power_on();
+    DccApplicationCommandStationMainTrack_power_on();
     EXPECT_EQ(shared_timer_start_count, (uint32_t)1);
-    DccApplicationMainTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_off();
 }
 
 TEST(DccConfig, shared_timer_acquire_second_no_extra_start) {
@@ -512,11 +463,11 @@ TEST(DccConfig, shared_timer_acquire_second_no_extra_start) {
     DccConfig_initialize(&cfg);
 
     shared_timer_start_count = 0;
-    DccApplicationMainTrack_power_on();
-    DccApplicationServiceTrack_power_on();
+    DccApplicationCommandStationMainTrack_power_on();
+    DccApplicationCommandStationServiceTrack_power_on();
     EXPECT_EQ(shared_timer_start_count, (uint32_t)1);
-    DccApplicationServiceTrack_power_off();
-    DccApplicationMainTrack_power_off();
+    DccApplicationCommandStationServiceTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_off();
 }
 
 TEST(DccConfig, shared_timer_release_to_zero) {
@@ -526,8 +477,8 @@ TEST(DccConfig, shared_timer_release_to_zero) {
     DccConfig_initialize(&cfg);
 
     shared_timer_stop_count = 0;
-    DccApplicationMainTrack_power_on();
-    DccApplicationMainTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_on();
+    DccApplicationCommandStationMainTrack_power_off();
     EXPECT_EQ(shared_timer_stop_count, (uint32_t)1);
 }
 
@@ -538,11 +489,11 @@ TEST(DccConfig, shared_timer_release_not_zero) {
     DccConfig_initialize(&cfg);
 
     shared_timer_stop_count = 0;
-    DccApplicationMainTrack_power_on();
-    DccApplicationServiceTrack_power_on();
-    DccApplicationMainTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_on();
+    DccApplicationCommandStationServiceTrack_power_on();
+    DccApplicationCommandStationMainTrack_power_off();
     EXPECT_EQ(shared_timer_stop_count, (uint32_t)0);
-    DccApplicationServiceTrack_power_off();
+    DccApplicationCommandStationServiceTrack_power_off();
     EXPECT_EQ(shared_timer_stop_count, (uint32_t)1);
 }
 
@@ -554,7 +505,7 @@ TEST(DccConfig, shared_timer_release_underflow_guard) {
 
     shared_timer_stop_count = 0;
     /* power_off without power_on: ref_count is 0, should not underflow */
-    DccApplicationMainTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_off();
     EXPECT_EQ(shared_timer_stop_count, (uint32_t)1);
 }
 
@@ -567,8 +518,8 @@ TEST(DccConfig, shared_timer_acquire_null_start_callback) {
     /* Null out the callback after wiring — _shared_timer_acquire is
      * already installed as timer_start but now the guard sees NULL. */
     cfg.shared_timer_start = NULL;
-    DccApplicationMainTrack_power_on();
-    DccApplicationMainTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_on();
+    DccApplicationCommandStationMainTrack_power_off();
 }
 
 TEST(DccConfig, shared_timer_release_null_stop_callback) {
@@ -577,10 +528,10 @@ TEST(DccConfig, shared_timer_release_null_stop_callback) {
     cfg.shared_timer_stop = mock_shared_timer_stop;
     DccConfig_initialize(&cfg);
 
-    DccApplicationMainTrack_power_on();
+    DccApplicationCommandStationMainTrack_power_on();
     /* Null out the callback after wiring */
     cfg.shared_timer_stop = NULL;
-    DccApplicationMainTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_off();
 }
 
 // ============================================================================
@@ -592,7 +543,7 @@ TEST(DccConfig, shared_timer_release_null_stop_callback) {
 static void pump_main_track_until_idle(uint16_t max_cycles) {
     uint16_t i;
     for (i = 0; i < max_cycles; i++) {
-        DccConfig_main_track_isr();
+        DccConfig_58us_timer_isr();
     }
 }
 
@@ -602,7 +553,7 @@ static void pump_service_mode_cycle(uint16_t outer_cycles) {
     for (uint16_t c = 0; c < outer_cycles; c++) {
         DccConfig_run();
         for (uint16_t i = 0; i < 200; i++) {
-            DccConfig_service_track_isr();
+            DccConfig_58us_timer_isr();
         }
     }
 }
@@ -618,12 +569,12 @@ TEST(DccConfig, shared_timer_isr_basic) {
     cfg.main_track.pin_toggle = mock_main_pin_toggle;
     cfg.service_track.pin_toggle = mock_svc_pin_toggle;
     DccConfig_initialize(&cfg);
-    DccApplicationMainTrack_power_on();
-    DccApplicationServiceTrack_power_on();
-    DccConfig_shared_timer_isr();
-    DccConfig_shared_timer_isr();
-    DccApplicationServiceTrack_power_off();
-    DccApplicationMainTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_on();
+    DccApplicationCommandStationServiceTrack_power_on();
+    DccConfig_58us_timer_isr();
+    DccConfig_58us_timer_isr();
+    DccApplicationCommandStationServiceTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_off();
 }
 
 TEST(DccConfig, shared_timer_isr_toggle_next_false) {
@@ -634,7 +585,7 @@ TEST(DccConfig, shared_timer_isr_toggle_next_false) {
     cfg.service_track.pin_toggle = mock_svc_pin_toggle;
     DccConfig_initialize(&cfg);
     /* Call ISR without starting encoders — toggle_next is false */
-    DccConfig_shared_timer_isr();
+    DccConfig_58us_timer_isr();
 }
 
 TEST(DccConfig, shared_timer_isr_null_pin_toggle) {
@@ -644,12 +595,12 @@ TEST(DccConfig, shared_timer_isr_null_pin_toggle) {
     /* pin_toggle left as NULL — toggle_next will be true after start
      * but pin_toggle is NULL so the branch should short-circuit. */
     DccConfig_initialize(&cfg);
-    DccApplicationMainTrack_power_on();
-    DccApplicationServiceTrack_power_on();
-    DccConfig_shared_timer_isr();
-    DccConfig_shared_timer_isr();
-    DccApplicationServiceTrack_power_off();
-    DccApplicationMainTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_on();
+    DccApplicationCommandStationServiceTrack_power_on();
+    DccConfig_58us_timer_isr();
+    DccConfig_58us_timer_isr();
+    DccApplicationCommandStationServiceTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_off();
 }
 
 TEST(DccConfig, shared_timer_isr_with_current_sense) {
@@ -660,9 +611,9 @@ TEST(DccConfig, shared_timer_isr_with_current_sense) {
     cfg.service_track.pin_toggle = mock_svc_pin_toggle;
     cfg.service_track.current_sense_read = mock_current_sense_read;
     DccConfig_initialize(&cfg);
-    DccApplicationMainTrack_power_on();
-    DccConfig_shared_timer_isr();
-    DccApplicationMainTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_on();
+    DccConfig_58us_timer_isr();
+    DccApplicationCommandStationMainTrack_power_off();
 }
 
 TEST(DccConfig, railcom_cutout_timer_isr_does_not_crash) {
@@ -672,7 +623,7 @@ TEST(DccConfig, railcom_cutout_timer_isr_does_not_crash) {
     cfg.railcom_timer_start = mock_railcom_timer_start;
     cfg.railcom_timer_stop = mock_railcom_timer_stop;
     DccConfig_initialize(&cfg);
-    DccConfig_railcom_cutout_timer_isr();
+    DccConfig_railcom_oneshot_timer_isr();
 }
 
 TEST(DccConfig, railcom_cutout_full_cycle_via_isr) {
@@ -682,11 +633,11 @@ TEST(DccConfig, railcom_cutout_full_cycle_via_isr) {
     cfg.railcom_timer_start = mock_railcom_timer_start;
     cfg.railcom_timer_stop = mock_railcom_timer_stop;
     DccConfig_initialize(&cfg);
-    DccApplicationMainTrack_power_on();
+    DccApplicationCommandStationMainTrack_power_on();
 
     /* Insert a packet and let scheduler load it */
     dcc_packet_t pkt = make_idle_packet();
-    DccApplicationMainTrack_insert(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
+    DccApplicationCommandStationMainTrack_send_packet(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
     DccConfig_run();
 
     /* Pump ISR to transmit the full packet including end bit.
@@ -696,11 +647,11 @@ TEST(DccConfig, railcom_cutout_full_cycle_via_isr) {
 
     /* Drive the cutout state machine: DELAY → CH1 → CH2 → IDLE.
      * On CH2→IDLE, _railcom_on_cutout_complete fires. */
-    DccConfig_railcom_cutout_timer_isr();
-    DccConfig_railcom_cutout_timer_isr();
-    DccConfig_railcom_cutout_timer_isr();
+    DccConfig_railcom_oneshot_timer_isr();
+    DccConfig_railcom_oneshot_timer_isr();
+    DccConfig_railcom_oneshot_timer_isr();
 
-    DccApplicationMainTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_off();
 }
 
 // ============================================================================
@@ -744,11 +695,11 @@ TEST(DccConfig, init_with_on_packet_sent) {
 TEST(DccConfig, main_on_packet_complete_via_isr) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccApplicationMainTrack_power_on();
+    DccApplicationCommandStationMainTrack_power_on();
 
     /* Insert a packet so the scheduler has something to transmit */
     dcc_packet_t pkt = make_idle_packet();
-    DccApplicationMainTrack_insert(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
+    DccApplicationCommandStationMainTrack_send_packet(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
 
     /* Scheduler_run picks up the packet and loads it into the encoder */
     DccConfig_run();
@@ -761,20 +712,20 @@ TEST(DccConfig, main_on_packet_complete_via_isr) {
      * packet_complete_flag in the scheduler. A second run() picks it up. */
     DccConfig_run();
 
-    DccApplicationMainTrack_power_off();
+    DccApplicationCommandStationMainTrack_power_off();
 }
 
 TEST(DccConfig, service_load_packet_via_isr) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
 
-    DccApplicationServiceTrack_enter();
-    DccApplicationServiceTrack_direct_write_byte(1, 0x55);
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    DccApplicationCommandStationServiceTrack_direct_write_byte(1, 0x55);
 
     /* Drive state machine: run() loads packets, ISR transmits them */
     pump_service_mode_cycle(10);
 
-    DccApplicationServiceTrack_exit();
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
 
@@ -784,14 +735,100 @@ TEST(DccConfig, service_load_packet_with_on_packet_sent) {
     DccConfig_initialize(&cfg);
 
     on_packet_sent_count = 0;
-    DccApplicationServiceTrack_enter();
-    DccApplicationServiceTrack_direct_write_byte(1, 0x55);
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    DccApplicationCommandStationServiceTrack_direct_write_byte(1, 0x55);
 
     /* Drive state machine: run() loads packets, ISR transmits them */
     pump_service_mode_cycle(10);
 
     EXPECT_GT(on_packet_sent_count, (uint32_t)0);
-    DccApplicationServiceTrack_exit();
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
+}
+
+// ============================================================================
+// Group 8: ISR branch coverage — current_sense_read NULL
+// ============================================================================
+
+TEST(DccConfig, isr_null_current_sense_read) {
+    dcc_config_t cfg = make_test_config();
+    cfg.shared_timer_start = mock_shared_timer_start;
+    cfg.shared_timer_stop = mock_shared_timer_stop;
+    cfg.main_track.pin_toggle = mock_main_pin_toggle;
+    cfg.service_track.pin_toggle = mock_svc_pin_toggle;
+    /* service_track.current_sense_read is NULL (default) */
+    DccConfig_initialize(&cfg);
+    DccApplicationCommandStationMainTrack_power_on();
+    DccConfig_58us_timer_isr();
+    DccConfig_58us_timer_isr();
+    DccApplicationCommandStationMainTrack_power_off();
+}
+
+// ============================================================================
+// Group 9: 100ms tick NOP scheduling branch coverage
+// ============================================================================
+
+static uint32_t mock_srq_callback_count = 0;
+static void mock_on_accessory_srq(uint16_t address, bool is_extended) {
+    (void)address; (void)is_extended; mock_srq_callback_count++;
+}
+
+TEST(DccConfig, nop_tick_fires_at_50) {
+    dcc_config_t cfg = make_test_config();
+    cfg.shared_timer_start = mock_shared_timer_start;
+    cfg.shared_timer_stop = mock_shared_timer_stop;
+    cfg.main_track.pin_toggle = mock_main_pin_toggle;
+    cfg.service_track.pin_toggle = mock_svc_pin_toggle;
+    dcc_railcom_hw_t rc = make_railcom_hw();
+    cfg.main_track.railcom = &rc;
+    cfg.railcom_timer_start = mock_railcom_timer_start;
+    cfg.railcom_timer_stop = mock_railcom_timer_stop;
+    cfg.on_accessory_srq = mock_on_accessory_srq;
+    DccConfig_initialize(&cfg);
+    DccApplicationCommandStationMainTrack_power_on();
+
+    /* Pump 49 ticks — no NOP yet (counter < 50) */
+    for (int i = 0; i < 49; i++) {
+        DccConfig_100ms_timer_tick();
+    }
+
+    /* 50th tick should fire the NOP packet scheduling */
+    DccConfig_100ms_timer_tick();
+
+    DccApplicationCommandStationMainTrack_power_off();
+}
+
+TEST(DccConfig, nop_tick_no_railcom_skips) {
+    dcc_config_t cfg = make_test_config();
+    cfg.shared_timer_start = mock_shared_timer_start;
+    cfg.shared_timer_stop = mock_shared_timer_stop;
+    cfg.main_track.pin_toggle = mock_main_pin_toggle;
+    /* main_track.railcom = NULL — first part of compound && is false */
+    cfg.on_accessory_srq = mock_on_accessory_srq;
+    DccConfig_initialize(&cfg);
+
+    mock_srq_callback_count = 0;
+    for (int i = 0; i < 60; i++) {
+        DccConfig_100ms_timer_tick();
+    }
+    /* No crash, no NOP scheduled because railcom is NULL */
+}
+
+TEST(DccConfig, nop_tick_no_srq_callback_skips) {
+    dcc_config_t cfg = make_test_config();
+    cfg.shared_timer_start = mock_shared_timer_start;
+    cfg.shared_timer_stop = mock_shared_timer_stop;
+    cfg.main_track.pin_toggle = mock_main_pin_toggle;
+    dcc_railcom_hw_t rc = make_railcom_hw();
+    cfg.main_track.railcom = &rc;
+    cfg.railcom_timer_start = mock_railcom_timer_start;
+    cfg.railcom_timer_stop = mock_railcom_timer_stop;
+    /* on_accessory_srq = NULL — second part of compound && is false */
+    DccConfig_initialize(&cfg);
+
+    for (int i = 0; i < 60; i++) {
+        DccConfig_100ms_timer_tick();
+    }
+    /* No crash, no NOP scheduled because on_accessory_srq is NULL */
 }
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
@@ -801,7 +838,7 @@ TEST(DccConfig, service_load_packet_with_on_packet_sent) {
 TEST(DccConfig, decoder_edge_does_not_crash) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
-    DccConfig_decoder_edge(1000);
+    DccConfig_decoder_edge_isr(1000);
 }
 
 #endif /* DCC_COMPILE_DECODER */

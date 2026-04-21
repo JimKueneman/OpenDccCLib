@@ -31,11 +31,12 @@
  * creates two independent DCC output channels — main track (scheduler) and
  * service track (service mode) — each with its own bit encoder instance.
  * Both channels run concurrently in DccConfig_run(). Application-layer
- * modules (dcc_application_main_track, dcc_application_service_track) are
- * wired here and own the user-facing API.
+ * modules (dcc_application_command_station_main_track,
+ * dcc_application_command_station_service_track) are wired here and own the
+ * user-facing API.
  *
  * @author Jim Kueneman
- * @date 11 Apr 2026
+ * @date 13 Apr 2026
  */
 
 #include "dcc_config.h"
@@ -43,13 +44,13 @@
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 #include "dcc_bit_encoder.h"
-#include "dcc_packet_encoder.h"
+#include "dcc_application_command_station_packet.h"
 #include "dcc_scheduler.h"
 #include "dcc_service_mode_common.h"
 #include "dcc_railcom_decoder.h"
 #include "dcc_railcom_cutout.h"
-#include "dcc_application_main_track.h"
-#include "dcc_application_service_track.h"
+#include "dcc_application_command_station_main_track.h"
+#include "dcc_application_command_station_service_track.h"
 #endif
 
 #ifdef DCC_COMPILE_SERVICE_MODE_DIRECT
@@ -103,7 +104,7 @@ static dcc_railcom_decoder_context_t _main_railcom_context;
 static interface_dcc_railcom_decoder_t _main_railcom_interface;
 
     /** @brief Main track application layer interface */
-static interface_dcc_application_main_track_t _main_application_interface;
+static interface_dcc_application_command_station_main_track_t _main_application_interface;
 
 /* =========================================================================
  * Service track channel: encoder + service mode common + sub-modules
@@ -122,7 +123,7 @@ static dcc_service_mode_common_context_t _service_common_context;
 static interface_dcc_service_mode_common_t _service_common_interface;
 
     /** @brief Service track application layer interface */
-static interface_dcc_application_service_track_t _service_application_interface;
+static interface_dcc_application_command_station_service_track_t _service_application_interface;
 
 /* =========================================================================
  * RailCom cutout: one-shot timer state machine
@@ -141,6 +142,18 @@ static interface_dcc_railcom_cutout_t _railcom_cutout_interface;
     /** @brief Number of channels currently using the shared timer.
      *  Timer starts when count goes 0 -> 1, stops when 1 -> 0. */
 static uint8_t _shared_timer_ref_count = 0;
+
+/* =========================================================================
+ * NOP auto-scheduling state (accessory RailCom SRQ polling)
+ * ========================================================================= */
+
+    /** @brief 100ms tick counter for NOP auto-scheduling.
+     *  NOP inserted every 50 ticks (5 seconds) per S-9.3.2 Section 6.3.3. */
+static uint8_t _nop_tick_counter = 0;
+
+    /** @brief NOP threshold address for SRQ collision arbitration.
+     *  Starts at max (all decoders respond). Lowered on collision. */
+static uint16_t _nop_threshold_address = 0x07FF;
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
@@ -197,6 +210,12 @@ static interface_dcc_cv_storage_t _cv_storage_interface;
 
     /** @brief Interface struct for the RailCom encoder module */
 static interface_dcc_railcom_encoder_t _railcom_encoder_interface;
+
+    /** @brief ACK pulse currently in progress */
+static bool _ack_pulse_active = false;
+
+    /** @brief Timestamp when ACK pulse started (microseconds) */
+static uint32_t _ack_pulse_start_usec = 0;
 
 #endif /* DCC_COMPILE_DECODER */
 
@@ -337,6 +356,12 @@ static bool _service_is_service_mode_active(void) {
 
 static void _shared_timer_acquire(uint16_t period_usec) {
 
+    if (!_configuration_pointer) {
+
+        return;
+
+    }
+
     _shared_timer_ref_count++;
 
     if (_shared_timer_ref_count == 1) {
@@ -352,6 +377,12 @@ static void _shared_timer_acquire(uint16_t period_usec) {
 }
 
 static void _shared_timer_release(void) {
+
+    if (!_configuration_pointer) {
+
+        return;
+
+    }
 
     if (_shared_timer_ref_count > 0) {
 
@@ -482,9 +513,10 @@ void DccConfig_initialize(const dcc_config_t *config) {
      * ================================================================= */
 
     _shared_timer_ref_count = 0;
+    _nop_tick_counter = 0;
+    _nop_threshold_address = 0x07FF;
 
     /* Wire main track bit encoder */
-    _main_encoder_interface.timer_set_period = config->main_track.timer_set_period;
     _main_encoder_interface.pin_toggle = config->main_track.pin_toggle;
     _main_encoder_interface.railcom_cutout_begin = (void *)0;
     _main_encoder_interface.railcom_cutout_end = (void *)0;
@@ -494,18 +526,12 @@ void DccConfig_initialize(const dcc_config_t *config) {
 
         if (config->railcom_timer_start) {
 
-            /* New architecture: one-shot timer cutout module.
+            /* One-shot timer cutout module.
              * The tick ISR enters RAILCOM_CUTOUT state and calls begin().
              * The cutout module signals completion via cutout_complete flag.
              * railcom_cutout_end is not used — the cutout module handles it. */
             _main_encoder_interface.railcom_cutout_begin = &_railcom_cutout_begin_wrapper;
             _main_encoder_interface.railcom_cutout_end = (void *)0;
-
-        } else {
-
-            /* Old architecture: variable-period ISR with simplified cutout. */
-            _main_encoder_interface.railcom_cutout_begin = config->main_track.railcom->cutout_begin;
-            _main_encoder_interface.railcom_cutout_end = config->main_track.railcom->cutout_end;
 
         }
 
@@ -516,9 +542,8 @@ void DccConfig_initialize(const dcc_config_t *config) {
     /* Wire main track scheduler */
     _main_scheduler_interface.load_packet = &_main_load_packet;
     _main_scheduler_interface.is_encoder_idle = &_main_is_encoder_idle;
-    _main_scheduler_interface.build_idle_packet = &DccPacketEncoder_idle;
+    _main_scheduler_interface.build_idle_packet = &DccApplicationCommandStationPacket_load_idle;
     _main_scheduler_interface.on_packet_sent = config->on_packet_sent;
-    _main_scheduler_interface.on_idle = config->on_idle;
 
     DccScheduler_initialize(&_main_scheduler_context, &_main_scheduler_interface);
 
@@ -529,7 +554,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     if (config->main_track.railcom) {
 
         _main_railcom_interface.uart_read = config->main_track.railcom->uart_read;
-        _main_railcom_interface.on_datagram = config->main_track.railcom->on_datagram;
+        _main_railcom_interface.on_datagram = config->main_track.railcom->on_railcom_datagram_result;
 
     }
 
@@ -538,41 +563,27 @@ void DccConfig_initialize(const dcc_config_t *config) {
     /* Wire RailCom cutout module (one-shot timer state machine) */
     _railcom_cutout_interface.timer_one_shot_start = config->railcom_timer_start;
     _railcom_cutout_interface.timer_one_shot_stop = config->railcom_timer_stop;
-    _railcom_cutout_interface.hbridge_disable = (void *)0;
-    _railcom_cutout_interface.hbridge_enable = (void *)0;
-    _railcom_cutout_interface.uart_ch1_enable = (void *)0;
-    _railcom_cutout_interface.uart_ch1_disable = (void *)0;
-    _railcom_cutout_interface.uart_ch2_enable = (void *)0;
-    _railcom_cutout_interface.uart_ch2_disable = (void *)0;
+    _railcom_cutout_interface.begin_railcom_cutout = (void *)0;
+    _railcom_cutout_interface.end_railcom_cutout = (void *)0;
+    _railcom_cutout_interface.uart_rx_enable = (void *)0;
+    _railcom_cutout_interface.uart_rx_disable = (void *)0;
     _railcom_cutout_interface.on_cutout_complete = &_railcom_on_cutout_complete;
 
     if (config->main_track.railcom) {
 
-        _railcom_cutout_interface.hbridge_disable = config->main_track.railcom->hbridge_disable;
-        _railcom_cutout_interface.hbridge_enable = config->main_track.railcom->hbridge_enable;
-        _railcom_cutout_interface.uart_ch1_enable = config->main_track.railcom->uart_ch1_enable;
-        _railcom_cutout_interface.uart_ch1_disable = config->main_track.railcom->uart_ch1_disable;
-        _railcom_cutout_interface.uart_ch2_enable = config->main_track.railcom->uart_ch2_enable;
-        _railcom_cutout_interface.uart_ch2_disable = config->main_track.railcom->uart_ch2_disable;
+        _railcom_cutout_interface.begin_railcom_cutout = config->main_track.railcom->begin_railcom_cutout;
+        _railcom_cutout_interface.end_railcom_cutout = config->main_track.railcom->end_railcom_cutout;
+        _railcom_cutout_interface.uart_rx_enable = config->main_track.railcom->uart_rx_enable;
+        _railcom_cutout_interface.uart_rx_disable = config->main_track.railcom->uart_rx_disable;
 
     }
 
     DccRailcomCutout_initialize(&_railcom_cutout_context, &_railcom_cutout_interface);
 
     /* Wire main track application layer.
-     * If shared timer is configured, use ref-counted wrappers.
-     * Otherwise fall back to per-channel timers. */
-    if (config->shared_timer_start) {
-
-        _main_application_interface.timer_start = &_shared_timer_acquire;
-        _main_application_interface.timer_stop = &_shared_timer_release;
-
-    } else {
-
-        _main_application_interface.timer_start = config->main_track.timer_start;
-        _main_application_interface.timer_stop = config->main_track.timer_stop;
-
-    }
+     * Uses ref-counted shared timer wrappers. */
+    _main_application_interface.timer_start = &_shared_timer_acquire;
+    _main_application_interface.timer_stop = &_shared_timer_release;
     _main_application_interface.track_power_set = config->main_track.track_power_set;
     _main_application_interface.encoder_start = &_main_encoder_start;
     _main_application_interface.encoder_stop = &_main_encoder_stop;
@@ -580,14 +591,13 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _main_application_interface.scheduler_remove_address = &_main_scheduler_remove_address;
     _main_application_interface.scheduler_clear = &_main_scheduler_clear;
 
-    DccApplicationMainTrack_initialize(&_main_application_interface);
+    DccApplicationCommandStationMainTrack_initialize(&_main_application_interface);
 
     /* =================================================================
      * Service track channel: encoder + service mode
      * ================================================================= */
 
     /* Wire service track bit encoder */
-    _service_encoder_interface.timer_set_period = config->service_track.timer_set_period;
     _service_encoder_interface.pin_toggle = config->service_track.pin_toggle;
     _service_encoder_interface.railcom_cutout_begin = (void *)0;
     _service_encoder_interface.railcom_cutout_end = (void *)0;
@@ -602,19 +612,9 @@ void DccConfig_initialize(const dcc_config_t *config) {
     DccServiceModeCommon_initialize(&_service_common_context, &_service_common_interface);
 
     /* Wire service track application layer.
-     * If shared timer is configured, use ref-counted wrappers.
-     * Otherwise fall back to per-channel timers. */
-    if (config->shared_timer_start) {
-
-        _service_application_interface.timer_start = &_shared_timer_acquire;
-        _service_application_interface.timer_stop = &_shared_timer_release;
-
-    } else {
-
-        _service_application_interface.timer_start = config->service_track.timer_start;
-        _service_application_interface.timer_stop = config->service_track.timer_stop;
-
-    }
+     * Uses ref-counted shared timer wrappers. */
+    _service_application_interface.timer_start = &_shared_timer_acquire;
+    _service_application_interface.timer_stop = &_shared_timer_release;
     _service_application_interface.track_power_set = config->service_track.track_power_set;
     _service_application_interface.encoder_start = &_service_encoder_start;
     _service_application_interface.encoder_stop = &_service_encoder_stop;
@@ -644,7 +644,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _service_application_interface.address_verify = &_service_address_verify;
 #endif
 
-    DccApplicationServiceTrack_initialize(&_service_application_interface);
+    DccApplicationCommandStationServiceTrack_initialize(&_service_application_interface);
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
@@ -653,7 +653,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     /* Wire direct service mode */
     _service_direct_interface.begin_operation = &_service_begin_operation;
     _service_direct_interface.is_common_idle = &_service_is_common_idle;
-    _service_direct_interface.on_complete = config->on_service_mode_complete;
+    _service_direct_interface.on_complete = config->on_service_mode_result;
 
     DccServiceModeDirect_initialize(&_service_direct_context, &_service_direct_interface);
 
@@ -664,7 +664,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     /* Wire paged service mode */
     _service_paged_interface.begin_operation = &_service_begin_operation;
     _service_paged_interface.is_common_idle = &_service_is_common_idle;
-    _service_paged_interface.on_complete = config->on_service_mode_complete;
+    _service_paged_interface.on_complete = config->on_service_mode_result;
 
     DccServiceModePaged_initialize(&_service_paged_context, &_service_paged_interface);
 
@@ -675,7 +675,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     /* Wire register service mode */
     _service_register_interface.begin_operation = &_service_begin_operation;
     _service_register_interface.is_common_idle = &_service_is_common_idle;
-    _service_register_interface.on_complete = config->on_service_mode_complete;
+    _service_register_interface.on_complete = config->on_service_mode_result;
 
     DccServiceModeRegister_initialize(&_service_register_context, &_service_register_interface);
 
@@ -686,7 +686,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     /* Wire address-only service mode */
     _service_address_interface.begin_operation = &_service_begin_operation;
     _service_address_interface.is_common_idle = &_service_is_common_idle;
-    _service_address_interface.on_complete = config->on_service_mode_complete;
+    _service_address_interface.on_complete = config->on_service_mode_result;
 
     DccServiceModeAddress_initialize(&_service_address_context, &_service_address_interface);
 
@@ -704,19 +704,19 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _packet_decoder_interface.cv_read = &DccCvStorage_read;
     _packet_decoder_interface.cv_write = &DccCvStorage_write;
     _packet_decoder_interface.on_speed_command = config->on_speed_command;
-    _packet_decoder_interface.on_emergency_stop = config->on_emergency_stop;
+    _packet_decoder_interface.on_emergency_stop_command = config->on_emergency_stop_command;
     _packet_decoder_interface.on_function_command = config->on_function_command;
     _packet_decoder_interface.on_accessory_basic_command = config->on_accessory_basic_command;
     _packet_decoder_interface.on_accessory_extended_command = config->on_accessory_extended_command;
-    _packet_decoder_interface.on_cv_write = config->on_cv_write;
-    _packet_decoder_interface.on_cv_verify = config->on_cv_verify;
-    _packet_decoder_interface.on_cv_bit = config->on_cv_bit;
+    _packet_decoder_interface.on_cv_write_command = config->on_cv_write_command;
+    _packet_decoder_interface.on_cv_verify_command = config->on_cv_verify_command;
+    _packet_decoder_interface.on_cv_bit_command = config->on_cv_bit_command;
     _packet_decoder_interface.on_consist_command = config->on_consist_command;
-    _packet_decoder_interface.on_binary_state_short = config->on_binary_state_short;
-    _packet_decoder_interface.on_binary_state_long = config->on_binary_state_long;
-    _packet_decoder_interface.on_analog_function = config->on_analog_function;
-    _packet_decoder_interface.on_speed_restriction = config->on_speed_restriction;
-    _packet_decoder_interface.fire_ack_pulse = config->fire_ack_pulse;
+    _packet_decoder_interface.on_binary_state_short_command = config->on_binary_state_short_command;
+    _packet_decoder_interface.on_binary_state_long_command = config->on_binary_state_long_command;
+    _packet_decoder_interface.on_analog_function_command = config->on_analog_function_command;
+    _packet_decoder_interface.on_speed_restriction_command = config->on_speed_restriction_command;
+    _packet_decoder_interface.start_ack_pulse = config->start_ack_pulse;
     DccPacketDecoder_initialize(&_packet_decoder_interface);
 
     /* Wire bit decoder interface — complete packets go to packet decoder */
@@ -725,9 +725,20 @@ void DccConfig_initialize(const dcc_config_t *config) {
     DccBitDecoder_initialize(&_bit_decoder_interface);
 
     /* Wire RailCom encoder interface */
-    _railcom_encoder_interface.uart_write = config->railcom_uart_write;
+    _railcom_encoder_interface.uart_write = (void *)0;
+
+    if (config->railcom_tx_pin_set) {
+
+        /* RailCom Tx is available — wire the bit-bang pin setter */
+        _railcom_encoder_interface.uart_write = (void *)0;
+
+    }
 
     DccRailcomEncoder_initialize(&_railcom_encoder_interface);
+
+    /* Initialize ACK pulse state */
+    _ack_pulse_active = false;
+    _ack_pulse_start_usec = 0;
 
 #endif /* DCC_COMPILE_DECODER */
 
@@ -758,6 +769,29 @@ void DccConfig_run(void) {
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
+#ifdef DCC_COMPILE_DECODER
+
+    /* ACK pulse 6ms timing: poll timestamp and stop after 6ms elapsed */
+    if (_ack_pulse_active) {
+
+        uint32_t elapsed = _configuration_pointer->get_timestamp_usec() - _ack_pulse_start_usec;
+
+        if (elapsed >= DCC_ACK_PULSE_DURATION_US) {
+
+            _ack_pulse_active = false;
+
+            if (_configuration_pointer->stop_ack_pulse) {
+
+                _configuration_pointer->stop_ack_pulse();
+
+            }
+
+        }
+
+    }
+
+#endif /* DCC_COMPILE_DECODER */
+
 }
 
 #ifdef DCC_COMPILE_COMMAND_STATION
@@ -766,28 +800,7 @@ void DccConfig_run(void) {
  * ISR entry points (remain in dcc_config — called from hardware ISR)
  * ========================================================================= */
 
-void DccConfig_main_track_isr(void) {
-
-    DccBitEncoder_half_bit_isr(&_main_encoder_context);
-
-}
-
-void DccConfig_service_track_isr(void) {
-
-    DccBitEncoder_half_bit_isr(&_service_encoder_context);
-
-    /* Sample current sense every half-bit period for ACK detection.
-     * Works with ADC (returns milliamps) or comparator (returns 0/non-zero).
-     * The threshold comparison happens inside service mode common. */
-    if (_configuration_pointer->service_track.current_sense_read) {
-
-        DccServiceModeCommon_ack_sample(&_service_common_context, _configuration_pointer->service_track.current_sense_read());
-
-    }
-
-}
-
-void DccConfig_shared_timer_isr(void) {
+void DccConfig_58us_timer_isr(void) {
 
     /* Deterministic pin toggles — fire both channels immediately on
      * ISR entry using the look-ahead flags computed on the previous tick.
@@ -818,7 +831,7 @@ void DccConfig_shared_timer_isr(void) {
 
 }
 
-void DccConfig_railcom_cutout_timer_isr(void) {
+void DccConfig_railcom_oneshot_timer_isr(void) {
 
     DccRailcomCutout_timer_isr(&_railcom_cutout_context);
 
@@ -826,7 +839,34 @@ void DccConfig_railcom_cutout_timer_isr(void) {
 
 void DccConfig_100ms_timer_tick(void) {
 
-    /* Timeout checking and periodic housekeeping. */
+    /* NOP auto-scheduling: insert accessory NOP every 5 seconds when main
+     * track is powered on and RailCom is enabled (S-9.3.2 Section 6.3.3).
+     * The NOP triggers accessory decoders to send SRQ in Ch1 if they have
+     * pending updates. */
+    if (_configuration_pointer->main_track.railcom &&
+        _configuration_pointer->on_accessory_srq) {
+
+        _nop_tick_counter++;
+
+        if (_nop_tick_counter >= 50) {
+
+            _nop_tick_counter = 0;
+
+            /* Build and schedule a NOP packet with the current threshold
+             * address. The threshold starts at max and is lowered on SRQ
+             * collision (garbled Ch1 data) to narrow the responder pool. */
+            dcc_packet_t nop_packet;
+            DccApplicationCommandStationPacket_load_accessory_basic_stop(
+                &nop_packet, _nop_threshold_address, 0);
+            nop_packet.repeat_count = 1;
+
+            DccApplicationCommandStationMainTrack_send_packet(
+                &nop_packet, _nop_threshold_address,
+                DCC_TAG_ACCESSORY, DCC_PRIORITY_ACCESSORY);
+
+        }
+
+    }
 
 }
 
@@ -834,7 +874,7 @@ void DccConfig_100ms_timer_tick(void) {
 
 #ifdef DCC_COMPILE_DECODER
 
-void DccConfig_decoder_edge(uint32_t timestamp_usec) {
+void DccConfig_decoder_edge_isr(uint32_t timestamp_usec) {
 
     DccBitDecoder_edge(timestamp_usec);
 

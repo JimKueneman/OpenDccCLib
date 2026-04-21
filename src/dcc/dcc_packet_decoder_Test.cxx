@@ -429,21 +429,21 @@ static interface_dcc_packet_decoder_t make_interface(void) {
     interface.cv_read = mock_cv_read;
     interface.cv_write = mock_cv_write;
     interface.on_speed_command = mock_on_speed;
-    interface.on_emergency_stop = mock_on_estop;
+    interface.on_emergency_stop_command = mock_on_estop;
     interface.on_function_command = mock_on_function;
     interface.on_accessory_basic_command = mock_on_acc_basic;
     interface.on_accessory_extended_command = mock_on_acc_ext;
     interface.on_acc_cv_write = mock_on_acc_cv_write;
     interface.on_acc_cv_verify = mock_on_acc_cv_verify;
     interface.on_acc_cv_bit = mock_on_acc_cv_bit;
-    interface.on_cv_write = mock_on_cv_write;
-    interface.on_cv_verify = mock_on_cv_verify;
-    interface.on_cv_bit = mock_on_cv_bit;
+    interface.on_cv_write_command = mock_on_cv_write;
+    interface.on_cv_verify_command = mock_on_cv_verify;
+    interface.on_cv_bit_command = mock_on_cv_bit;
     interface.on_consist_command = mock_on_consist;
-    interface.on_binary_state_short = mock_on_bss;
-    interface.on_binary_state_long = mock_on_bsl;
-    interface.on_analog_function = mock_on_analog;
-    interface.on_speed_restriction = mock_on_restrict;
+    interface.on_binary_state_short_command = mock_on_bss;
+    interface.on_binary_state_long_command = mock_on_bsl;
+    interface.on_analog_function_command = mock_on_analog;
+    interface.on_speed_restriction_command = mock_on_restrict;
 
     return interface;
 
@@ -1132,7 +1132,7 @@ TEST(DccPacketDecoder, speed_14_estop_null_callback) {
     mock_cv_values[DCC_CV_CONFIG - 1] = 0x00;
 
     interface_dcc_packet_decoder_t interface = make_interface();
-    interface.on_emergency_stop = NULL;
+    interface.on_emergency_stop_command = NULL;
     set_decoder_short_address(&interface, 3);
 
     uint8_t data[] = {0x03, 0x61, 0x00};
@@ -1191,7 +1191,7 @@ TEST(DccPacketDecoder, cv_verify) {
 }
 
 // ============================================================================
-// CV bit manipulation: clear bit + on_cv_bit callback
+// CV bit manipulation: clear bit + on_cv_bit_command callback
 // ============================================================================
 
 TEST(DccPacketDecoder, cv_bit_clear) {
@@ -1327,7 +1327,7 @@ TEST(DccPacketDecoder, analog_function_null_callback) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    interface.on_analog_function = NULL;
+    interface.on_analog_function_command = NULL;
     set_decoder_short_address(&interface, 3);
 
     uint8_t data[] = {0x03, DCC_ADV_OPS_ANALOG_FUNCTION, 0x01, 0x80, 0x00};
@@ -1363,7 +1363,7 @@ TEST(DccPacketDecoder, speed_restriction_null_callback) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    interface.on_speed_restriction = NULL;
+    interface.on_speed_restriction_command = NULL;
     set_decoder_short_address(&interface, 3);
 
     uint8_t data[] = {0x03, DCC_ADV_OPS_SPEED_RESTRICTION, 0x80 | 60, 0x00};
@@ -1499,7 +1499,7 @@ TEST(DccPacketDecoder, binary_state_short_null_callback) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    interface.on_binary_state_short = NULL;
+    interface.on_binary_state_short_command = NULL;
     set_decoder_short_address(&interface, 3);
 
     uint8_t data[] = {0x03, DCC_FEAT_BINARY_STATE_SHORT, 0x80 | 42, 0x00};
@@ -1537,7 +1537,7 @@ TEST(DccPacketDecoder, binary_state_long_null_callback) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    interface.on_binary_state_long = NULL;
+    interface.on_binary_state_long_command = NULL;
     set_decoder_short_address(&interface, 3);
 
     uint8_t data[] = {0x03, DCC_FEAT_BINARY_STATE_LONG, 0x05, 0x02, 0x00};
@@ -1637,7 +1637,7 @@ TEST(DccPacketDecoder, cv_verify_null_callback) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    interface.on_cv_verify = NULL;
+    interface.on_cv_verify_command = NULL;
     set_decoder_short_address(&interface, 3);
 
     uint8_t data[] = {0x03, 0xE4, 0x00, 0x55, 0x00};
@@ -1728,10 +1728,10 @@ TEST(DccPacketDecoder, speed_128_estop_null_callback) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    interface.on_emergency_stop = NULL;
+    interface.on_emergency_stop_command = NULL;
     set_decoder_short_address(&interface, 3);
 
-    /* 128-step e-stop with null on_emergency_stop */
+    /* 128-step e-stop with null on_emergency_stop_command */
     uint8_t data[] = {0x03, 0x3F, 0x81, 0x00};
     data[3] = xor_bytes(data, 3);
     DccPacketDecoder_process_packet(data, 4);
@@ -1745,7 +1745,7 @@ TEST(DccPacketDecoder, speed_28_estop_null_callback) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    interface.on_emergency_stop = NULL;
+    interface.on_emergency_stop_command = NULL;
     set_decoder_short_address(&interface, 3);
 
     /* 28-step e-stop: encoded 2 → CSSSS=00001 → 0x61 */
@@ -1807,14 +1807,14 @@ TEST(DccPacketDecoder, cv_write_returns_false) {
 
 }
 
-TEST(DccPacketDecoder, cv_write_null_on_cv_write_callback) {
+TEST(DccPacketDecoder, cv_write_null_on_cv_write_command_callback) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    interface.on_cv_write = NULL;
+    interface.on_cv_write_command = NULL;
     set_decoder_short_address(&interface, 3);
 
-    /* CV write succeeds but on_cv_write is NULL */
+    /* CV write succeeds but on_cv_write_command is NULL */
     uint8_t data[] = {0x03, 0xEC, 0x00, 0x42, 0x00};
     data[4] = xor_bytes(data, 4);
     DccPacketDecoder_process_packet(data, 5);
@@ -1838,7 +1838,7 @@ TEST(DccPacketDecoder, cv_bit_verify_only) {
     data[4] = xor_bytes(data, 4);
     DccPacketDecoder_process_packet(data, 5);
 
-    /* Verify-only: no write should happen, but on_cv_bit is still called */
+    /* Verify-only: no write should happen, but on_cv_bit_command is still called */
     EXPECT_EQ(cv_write_callback_count, (uint32_t)0);
     EXPECT_EQ(mock_cv_values[0], (uint8_t)0xFF);
     EXPECT_EQ(cv_bit_callback_count, (uint32_t)1);
@@ -1920,16 +1920,16 @@ TEST(DccPacketDecoder, cv_bit_write_cv_write_fails) {
 
 }
 
-TEST(DccPacketDecoder, cv_bit_write_null_on_cv_write) {
+TEST(DccPacketDecoder, cv_bit_write_null_on_cv_write_command) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    interface.on_cv_write = NULL;
+    interface.on_cv_write_command = NULL;
     set_decoder_short_address(&interface, 3);
 
     mock_cv_values[0] = 0x00;
 
-    /* Bit write succeeds but on_cv_write is NULL */
+    /* Bit write succeeds but on_cv_write_command is NULL */
     uint8_t data[] = {0x03, 0xE8, 0x00, 0xFB, 0x00};
     data[4] = xor_bytes(data, 4);
     DccPacketDecoder_process_packet(data, 5);
@@ -1940,16 +1940,16 @@ TEST(DccPacketDecoder, cv_bit_write_null_on_cv_write) {
 
 }
 
-TEST(DccPacketDecoder, cv_bit_null_on_cv_bit) {
+TEST(DccPacketDecoder, cv_bit_null_on_cv_bit_command) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    interface.on_cv_bit = NULL;
+    interface.on_cv_bit_command = NULL;
     set_decoder_short_address(&interface, 3);
 
     mock_cv_values[0] = 0x00;
 
-    /* Bit write with NULL on_cv_bit */
+    /* Bit write with NULL on_cv_bit_command */
     uint8_t data[] = {0x03, 0xE8, 0x00, 0xFB, 0x00};
     data[4] = xor_bytes(data, 4);
     DccPacketDecoder_process_packet(data, 5);
@@ -2282,7 +2282,7 @@ TEST(DccPacketDecoder, svc_direct_bit_write) {
     EXPECT_EQ(cv_write_callback_count, (uint32_t)1);
     EXPECT_EQ(last_cv_write_number, (uint16_t)5);
     EXPECT_EQ(mock_cv_values[4], (uint8_t)0x08);
-    /* on_cv_bit should also fire */
+    /* on_cv_bit_command should also fire */
     EXPECT_EQ(cv_bit_callback_count, (uint32_t)1);
     EXPECT_EQ(last_cv_bit_number, (uint16_t)5);
     EXPECT_EQ(last_cv_bit_position, (uint8_t)3);
@@ -2310,7 +2310,7 @@ TEST(DccPacketDecoder, svc_direct_bit_verify) {
 
     /* Verify bit must NOT write */
     EXPECT_EQ(cv_write_callback_count, (uint32_t)0);
-    /* on_cv_bit fires for the bit operation */
+    /* on_cv_bit_command fires for the bit operation */
     EXPECT_EQ(cv_bit_callback_count, (uint32_t)1);
     EXPECT_EQ(last_cv_bit_number, (uint16_t)5);
     EXPECT_EQ(last_cv_bit_position, (uint8_t)3);
@@ -2662,7 +2662,7 @@ TEST(DccPacketDecoder, svc_direct_write_cv29_updates_speed_mode) {
 }
 
 // ============================================================================
-// Service mode — cv_write failure prevents on_cv_write callback
+// Service mode — cv_write failure prevents on_cv_write_command callback
 // ============================================================================
 
 TEST(DccPacketDecoder, svc_write_failure_no_callback) {
@@ -2702,7 +2702,7 @@ TEST(DccPacketDecoder, svc_bit_write_cv_read_failure) {
 
     /* cv_read failed so no write should happen */
     EXPECT_EQ(cv_write_callback_count, (uint32_t)0);
-    /* on_cv_bit still fires regardless */
+    /* on_cv_bit_command still fires regardless */
     EXPECT_EQ(cv_bit_callback_count, (uint32_t)1);
 
 }
@@ -3083,5 +3083,861 @@ TEST(DccPacketDecoder, acc_cv_null_callbacks_no_crash) {
     /* CV was still written to storage even though callback is NULL */
     EXPECT_EQ(mock_cv_values[0], (uint8_t)0x42);
     EXPECT_EQ(acc_cv_write_callback_count, (uint32_t)0);
+
+}
+
+// ============================================================================
+// Direction reversal via CV29 bit 0
+// ============================================================================
+
+static uint32_t ack_pulse_count;
+
+static void mock_start_ack_pulse(void) {
+
+    ack_pulse_count++;
+
+}
+
+TEST(DccPacketDecoder, speed_128_direction_reversed) {
+
+    reset_mocks();
+    /* CV29 bit 0 set = direction reversed, bit 1 = 28-step */
+    mock_cv_values[DCC_CV_CONFIG - 1] = DCC_CV29_SPEED_STEPS_BIT | DCC_CV29_DIRECTION_BIT;
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    /* 128-step speed forward (direction bit=1), speed=50 */
+    uint8_t data[] = {0x03, 0x3F, 0x80 | 50, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(speed_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_speed_value, (uint8_t)50);
+    /* Direction bit is 1 (forward) but reversed by CV29 → false */
+    EXPECT_FALSE(last_speed_direction);
+
+}
+
+TEST(DccPacketDecoder, speed_28_direction_reversed) {
+
+    reset_mocks();
+    mock_cv_values[DCC_CV_CONFIG - 1] = DCC_CV29_SPEED_STEPS_BIT | DCC_CV29_DIRECTION_BIT;
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    /* 28-step forward (D=1): 0110 0010 | 0001 0000 = 0x72
+     * encoded=(2<<1)|1=5, speed = _speed_28_decode[5] = 5 */
+    uint8_t data[] = {0x03, 0x72, 0x00};
+    data[2] = xor_bytes(data, 2);
+    DccPacketDecoder_process_packet(data, 3);
+
+    EXPECT_EQ(speed_callback_count, (uint32_t)1);
+    /* Direction reversed: forward (D=1) XOR reversed → false */
+    EXPECT_FALSE(last_speed_direction);
+
+}
+
+TEST(DccPacketDecoder, speed_14_direction_reversed) {
+
+    reset_mocks();
+    /* CV29: bit 0 direction reversed, bit 1 NOT set → 14-step mode */
+    mock_cv_values[DCC_CV_CONFIG - 1] = DCC_CV29_DIRECTION_BIT;
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    /* 14-step forward (D=1), speed=5: 0110 0101 = 0x65 */
+    uint8_t data[] = {0x03, 0x65, 0x00};
+    data[2] = xor_bytes(data, 2);
+    DccPacketDecoder_process_packet(data, 3);
+
+    EXPECT_EQ(speed_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_speed_mode, DCC_SPEED_MODE_14);
+    /* Direction reversed */
+    EXPECT_FALSE(last_speed_direction);
+
+}
+
+// ============================================================================
+// Speed restriction enabled=false
+// ============================================================================
+
+TEST(DccPacketDecoder, speed_restriction_disabled) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    /* Advanced ops: 001 11110 = 0x3E (speed restriction)
+     * Second byte: 0SSSSSSS = 0x3C → enabled=0, limit=60 */
+    uint8_t data[] = {0x03, 0x3E, 0x3C, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(restrict_callback_count, (uint32_t)1);
+    EXPECT_FALSE(last_restrict_enabled);
+    EXPECT_EQ(last_restrict_limit, (uint8_t)60);
+
+}
+
+// ============================================================================
+// Service mode verify — value mismatch (no ACK)
+// ============================================================================
+
+TEST(DccPacketDecoder, svc_verify_byte_mismatch_no_ack) {
+
+    reset_mocks();
+    ack_pulse_count = 0;
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.start_ack_pulse = mock_start_ack_pulse;
+    DccPacketDecoder_initialize(&interface);
+
+    /* Store value 0x55 in CV5 */
+    mock_cv_values[4] = 0x55;
+
+    send_reset_packets(3);
+
+    /* Direct verify CV5 with expected value 0xAA (mismatch) */
+    uint8_t data[] = {0x74, 0x04, 0xAA, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    /* Callback fires regardless of match/mismatch */
+    EXPECT_EQ(cv_verify_callback_count, (uint32_t)1);
+    /* But no ACK pulse because stored != expected */
+    EXPECT_EQ(ack_pulse_count, (uint32_t)0);
+
+}
+
+TEST(DccPacketDecoder, svc_verify_byte_match_fires_ack) {
+
+    reset_mocks();
+    ack_pulse_count = 0;
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.start_ack_pulse = mock_start_ack_pulse;
+    DccPacketDecoder_initialize(&interface);
+
+    /* Store value 0x55 in CV5 */
+    mock_cv_values[4] = 0x55;
+
+    send_reset_packets(3);
+
+    /* Direct verify CV5 with expected value 0x55 (match) */
+    uint8_t data[] = {0x74, 0x04, 0x55, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(cv_verify_callback_count, (uint32_t)1);
+    EXPECT_EQ(ack_pulse_count, (uint32_t)1);
+
+}
+
+// ============================================================================
+// Service mode verify bit — mismatch (no ACK)
+// ============================================================================
+
+TEST(DccPacketDecoder, svc_verify_bit_mismatch_no_ack) {
+
+    reset_mocks();
+    ack_pulse_count = 0;
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.start_ack_pulse = mock_start_ack_pulse;
+    DccPacketDecoder_initialize(&interface);
+
+    /* Store 0x00 in CV5 — all bits are 0 */
+    mock_cv_values[4] = 0x00;
+
+    send_reset_packets(3);
+
+    /* Direct bit verify: CC=10, CV5
+     * Byte 0: 0111 10 AA = 0x78 | 0x00 = 0x78
+     * Byte 1: CV low = 0x04
+     * Byte 2: 111KDBBB = bit verify (K=0), D=1 (expect bit=1), BBB=3 (bit 3)
+     *        = 1110 1011 = 0xEB */
+    uint8_t data[] = {0x78, 0x04, 0xEB, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    /* Bit 3 of 0x00 is 0, but we expected 1 — no ACK */
+    EXPECT_EQ(ack_pulse_count, (uint32_t)0);
+
+}
+
+TEST(DccPacketDecoder, svc_verify_bit_match_fires_ack) {
+
+    reset_mocks();
+    ack_pulse_count = 0;
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.start_ack_pulse = mock_start_ack_pulse;
+    DccPacketDecoder_initialize(&interface);
+
+    /* Store 0x08 in CV5 — bit 3 is 1 */
+    mock_cv_values[4] = 0x08;
+
+    send_reset_packets(3);
+
+    /* Direct bit verify: expect bit 3 = 1
+     * Byte 2: 111KDBBB = K=0 (verify), D=1, BBB=3
+     *        = 1110 1011 = 0xEB */
+    uint8_t data[] = {0x78, 0x04, 0xEB, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    /* Bit 3 matches expected 1 — ACK fired */
+    EXPECT_EQ(ack_pulse_count, (uint32_t)1);
+
+}
+
+// ============================================================================
+// Service mode write — NULL start_ack_pulse
+// ============================================================================
+
+TEST(DccPacketDecoder, svc_write_null_ack_pulse) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.start_ack_pulse = NULL;
+    DccPacketDecoder_initialize(&interface);
+    send_reset_packets(3);
+
+    /* Direct write CV1 = 0x42: CC=11, CV1
+     * Byte 0: 0111 11 00 = 0x7C
+     * Byte 1: 0x00 (CV1 wire = 0)
+     * Byte 2: 0x42 */
+    uint8_t data[] = {0x7C, 0x00, 0x42, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    /* Write still succeeds even though ACK pulse is NULL */
+    EXPECT_EQ(cv_write_callback_count, (uint32_t)1);
+    EXPECT_EQ(mock_cv_values[0], (uint8_t)0x42);
+
+}
+
+// ============================================================================
+// Extended address partial CV read failure
+// ============================================================================
+
+// ============================================================================
+// Partial CV read failure helpers (forward declaration for tests below)
+// ============================================================================
+
+static uint16_t partial_fail_cv_early = 0;
+
+static bool mock_cv_read_partial_fail_early(uint16_t cv_number, uint8_t *value) {
+
+    if (cv_number == partial_fail_cv_early)
+        return false;
+
+    if (cv_number == 0 || cv_number > MOCK_CV_COUNT)
+        return false;
+
+    *value = mock_cv_values[cv_number - 1];
+    return true;
+
+}
+
+TEST(DccPacketDecoder, extended_address_partial_cv_read_fail) {
+
+    reset_mocks();
+    /* Configure for long address mode */
+    mock_cv_values[DCC_CV_CONFIG - 1] = DCC_CV29_SPEED_STEPS_BIT | DCC_CV29_EXTENDED_ADDRESS_BIT;
+    mock_cv_values[DCC_CV_EXTENDED_ADDRESS_HIGH - 1] = 0xC0 | 0x01;
+    mock_cv_values[DCC_CV_EXTENDED_ADDRESS_LOW - 1] = 0x50;
+
+    interface_dcc_packet_decoder_t interface = make_interface();
+
+    /* Make CV18 read fail — partial failure in _update_extended_address
+     * where CV17 reads ok but CV18 fails */
+    partial_fail_cv_early = DCC_CV_EXTENDED_ADDRESS_LOW;
+    interface.cv_read = mock_cv_read_partial_fail_early;
+    DccPacketDecoder_initialize(&interface);
+
+    /* Extended address wasn't fully read, so address stays at default.
+     * No crash is the important assertion. */
+
+}
+
+TEST(DccPacketDecoder, cv29_read_failure_defaults) {
+
+    reset_mocks();
+    /* Test CV29 read failure → defaults to 28-step, no direction reversal */
+    mock_cv_read_should_fail = true;
+
+    interface_dcc_packet_decoder_t interface = make_interface();
+    DccPacketDecoder_initialize(&interface);
+    mock_cv_read_should_fail = false;
+
+    /* With cv_read failing, _my_address defaults to 0 (broadcast).
+     * Send a broadcast packet to verify safe defaults work. */
+    uint8_t data[] = {0x00, 0x3F, 0x80 | 50, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    /* Broadcast reset is handled differently (addr 0, data 0).
+     * This is addr 0 with non-zero instruction, so it hits the
+     * broadcast address match path. No crash is important. */
+
+}
+
+// ============================================================================
+// Accessory address partial CV read failure (CV513 ok, CV521 fails)
+// ============================================================================
+
+static uint16_t partial_fail_cv = 0;
+
+static bool mock_cv_read_partial_fail(uint16_t cv_number, uint8_t *value) {
+
+    if (cv_number == partial_fail_cv)
+        return false;
+
+    if (cv_number == 0 || cv_number > MOCK_CV_COUNT)
+        return false;
+
+    *value = mock_cv_values[cv_number - 1];
+    return true;
+
+}
+
+TEST(DccPacketDecoder, accessory_address_cv521_read_fail) {
+
+    reset_mocks();
+    /* Set up as accessory decoder */
+    mock_cv_values[DCC_CV_ACC_CONFIG - 1] = DCC_CV541_ACCESSORY_DECODER_BIT;
+    mock_cv_values[DCC_CV_ACC_ADDRESS_LSB - 1] = 0x05;
+    mock_cv_values[DCC_CV_ACC_ADDRESS_MSB - 1] = 0x01;
+
+    interface_dcc_packet_decoder_t interface = make_interface();
+
+    /* CV521 (ACC_ADDRESS_MSB) read will fail */
+    partial_fail_cv = DCC_CV_ACC_ADDRESS_MSB;
+    interface.cv_read = mock_cv_read_partial_fail;
+    DccPacketDecoder_initialize(&interface);
+
+    /* Should not crash — address just won't be fully configured */
+
+}
+
+TEST(DccPacketDecoder, accessory_address_cv541_read_fail) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+
+    /* CV541 read will fail — _update_accessory_address never gets _my_address_type set */
+    partial_fail_cv = DCC_CV_ACC_CONFIG;
+    interface.cv_read = mock_cv_read_partial_fail;
+
+    /* Also set CV29 to NOT have accessory bit (so CV541 check fails first) */
+    mock_cv_values[DCC_CV_CONFIG - 1] = DCC_CV29_SPEED_STEPS_BIT;
+    DccPacketDecoder_initialize(&interface);
+
+    /* Should fall through to multi-function path with CV29 read fail on CV541 */
+
+}
+
+// ============================================================================
+// CV verify with cv_read failure — no ACK, callback still fires
+// ============================================================================
+
+TEST(DccPacketDecoder, svc_verify_byte_cv_read_fails) {
+
+    reset_mocks();
+    ack_pulse_count = 0;
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.start_ack_pulse = mock_start_ack_pulse;
+    interface.cv_read = NULL;  /* cv_read is NULL */
+    DccPacketDecoder_initialize(&interface);
+
+    /* Use interface with cv_read to initialize, then set to NULL */
+    interface.cv_read = mock_cv_read;
+    DccPacketDecoder_initialize(&interface);
+    send_reset_packets(3);
+
+    /* Now NULL out cv_read before verify */
+    interface.cv_read = NULL;
+
+    uint8_t data[] = {0x74, 0x04, 0x55, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    /* No ACK because cv_read is NULL */
+    EXPECT_EQ(ack_pulse_count, (uint32_t)0);
+    /* Callback still fires */
+    EXPECT_EQ(cv_verify_callback_count, (uint32_t)1);
+
+}
+
+// ============================================================================
+// Accessory CV verify and bit with NULL callbacks
+// ============================================================================
+
+TEST(DccPacketDecoder, acc_cv_verify_null_callback_no_crash) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.on_acc_cv_verify = NULL;
+    set_decoder_accessory_address(&interface, 1, false);
+
+    /* CV verify for basic accessory: byte2 = 111001AA = 0xE4, AA=0x00 */
+    uint8_t data[] = {0x81, 0xF8, 0xE4, 0x00, 0x42, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    EXPECT_EQ(acc_cv_verify_callback_count, (uint32_t)0);
+
+}
+
+TEST(DccPacketDecoder, acc_cv_bit_null_callback_no_crash) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.on_acc_cv_bit = NULL;
+    set_decoder_accessory_address(&interface, 1, false);
+
+    /* CV bit write for basic accessory: byte2 = 111010AA = 0xE8
+     * byte4 = 111KDBBB = 0xF8 (K=1 write, D=1, BBB=0) */
+    uint8_t data[] = {0x81, 0xF8, 0xE8, 0x00, 0xF8, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    EXPECT_EQ(acc_cv_bit_callback_count, (uint32_t)0);
+
+}
+
+// ============================================================================
+// Accessory CV bit — cv_write NULL and cv_read NULL guards
+// ============================================================================
+
+TEST(DccPacketDecoder, acc_cv_bit_write_null_cv_write) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.cv_write = NULL;
+    set_decoder_accessory_address(&interface, 1, false);
+
+    /* CV bit write for basic accessory */
+    uint8_t data[] = {0x81, 0xF8, 0xE8, 0x00, 0xF8, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    /* Should not crash — _cv_bit_manipulate_acc returns early */
+
+}
+
+TEST(DccPacketDecoder, acc_cv_bit_write_null_cv_read) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, false);
+
+    /* NULL out cv_read after init */
+    interface.cv_read = NULL;
+
+    uint8_t data[] = {0x81, 0xF8, 0xE8, 0x00, 0xF8, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    /* Should not crash */
+
+}
+
+// ============================================================================
+// Accessory CV write — cv_write NULL guard
+// ============================================================================
+
+TEST(DccPacketDecoder, acc_cv_write_null_cv_write) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.cv_write = NULL;
+    set_decoder_accessory_address(&interface, 1, false);
+
+    uint8_t data[] = {0x81, 0xF8, 0xEC, 0x00, 0x42, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    /* Write callback should not fire because cv_write is NULL */
+    EXPECT_EQ(acc_cv_write_callback_count, (uint32_t)0);
+
+}
+
+// ============================================================================
+// Accessory CV write — cv_write returns false
+// ============================================================================
+
+TEST(DccPacketDecoder, acc_cv_write_fails) {
+
+    reset_mocks();
+    mock_cv_write_should_fail = true;
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, false);
+
+    uint8_t data[] = {0x81, 0xF8, 0xEC, 0x00, 0x42, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    /* Write failed, so on_acc_cv_write callback should not fire */
+    EXPECT_EQ(acc_cv_write_callback_count, (uint32_t)0);
+
+}
+
+// ============================================================================
+// CV bit verify in ops mode — no on_cv_bit_command
+// ============================================================================
+
+TEST(DccPacketDecoder, cv_bit_verify_null_on_cv_bit_command) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.on_cv_bit_command = NULL;
+    set_decoder_short_address(&interface, 3);
+
+    /* CV access bit verify: 111010AA, data=111KDBBB (K=0 verify)
+     * Byte 1: 0xE8 | 0x00 = 0xE8
+     * Byte 2: CV low = 0x00 (CV1)
+     * Byte 3: 1110 0011 = 0xE3 (K=0, D=0, BBB=3) */
+    uint8_t data[] = {0x03, 0xE8, 0x00, 0xE3, 0x00};
+    data[4] = xor_bytes(data, 4);
+    DccPacketDecoder_process_packet(data, 5);
+
+    EXPECT_EQ(cv_bit_callback_count, (uint32_t)0);
+
+}
+
+// ============================================================================
+// CV verify — on_cv_verify_command NULL
+// ============================================================================
+
+TEST(DccPacketDecoder, cv_verify_null_on_cv_verify_callback) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.on_cv_verify_command = NULL;
+    set_decoder_short_address(&interface, 3);
+
+    /* CV verify ops: 111001AA = 0xE4, CV1 = 0x00, value = 0x42 */
+    uint8_t data[] = {0x03, 0xE4, 0x00, 0x42, 0x00};
+    data[4] = xor_bytes(data, 4);
+    DccPacketDecoder_process_packet(data, 5);
+
+    EXPECT_EQ(cv_verify_callback_count, (uint32_t)0);
+
+}
+
+// ============================================================================
+// CV write triggers address update for specific CVs
+// ============================================================================
+
+TEST(DccPacketDecoder, cv_write_cv17_updates_address_cache) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    /* Write CV17 (extended address high) via ops mode: 111011AA = 0xEC
+     * CV17 wire = 16 → AA = 0x00, low = 0x10 */
+    uint8_t data[] = {0x03, 0xEC, 0x10, 0xC1, 0x00};
+    data[4] = xor_bytes(data, 4);
+    DccPacketDecoder_process_packet(data, 5);
+
+    EXPECT_EQ(cv_write_callback_count, (uint32_t)1);
+
+}
+
+TEST(DccPacketDecoder, cv_write_cv18_updates_address_cache) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    /* Write CV18 (extended address low) via ops mode
+     * CV18 wire = 17 → AA = 0x00, low = 0x11 */
+    uint8_t data[] = {0x03, 0xEC, 0x11, 0x50, 0x00};
+    data[4] = xor_bytes(data, 4);
+    DccPacketDecoder_process_packet(data, 5);
+
+    EXPECT_EQ(cv_write_callback_count, (uint32_t)1);
+
+}
+
+// ============================================================================
+// Accessory CV ops write triggers address update for specific CVs
+// ============================================================================
+
+TEST(DccPacketDecoder, acc_cv_write_cv541_updates_address_cache) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, false);
+
+    /* CV write for CV541 (ACC_CONFIG) via basic accessory ops-mode
+     * CV541 wire = 540 = 0x21C → AA = 0x02, low = 0x1C
+     * Byte 2: 111011AA = 0xEC | 0x02 = 0xEE */
+    uint8_t data[] = {0x81, 0xF8, 0xEE, 0x1C, 0x80, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    EXPECT_EQ(acc_cv_write_callback_count, (uint32_t)1);
+
+}
+
+TEST(DccPacketDecoder, acc_cv_write_cv513_updates_address_cache) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, false);
+
+    /* CV write for CV513 (ACC_ADDRESS_LSB) via basic accessory ops-mode
+     * CV513 wire = 512 = 0x200 → AA = 0x02, low = 0x00
+     * Byte 2: 111011AA = 0xEC | 0x02 = 0xEE */
+    uint8_t data[] = {0x81, 0xF8, 0xEE, 0x00, 0x05, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    EXPECT_EQ(acc_cv_write_callback_count, (uint32_t)1);
+
+}
+
+// ============================================================================
+// Accessory bit manipulate with cv_read failure
+// ============================================================================
+
+TEST(DccPacketDecoder, acc_cv_bit_write_cv_read_fails) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, false);
+
+    /* Set cv_read to fail */
+    mock_cv_read_should_fail = true;
+
+    /* CV bit write for basic accessory: byte2=111010AA=0xE8
+     * byte4=111KDBBB=0xF8 (K=1 write, D=1, BBB=0) */
+    uint8_t data[] = {0x81, 0xF8, 0xE8, 0x00, 0xF8, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    /* Should not crash — cv_read failed, bit manipulate returns early */
+
+}
+
+// ============================================================================
+// Accessory bit verify (non-write path in acc CV)
+// ============================================================================
+
+TEST(DccPacketDecoder, acc_cv_bit_verify) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, false);
+
+    /* CV bit verify for basic accessory: byte2=111010AA=0xE8
+     * byte4=111KDBBB=0xE8 (K=0 verify, D=1, BBB=0) */
+    uint8_t data[] = {0x81, 0xF8, 0xE8, 0x00, 0xE8, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    EXPECT_EQ(acc_cv_bit_callback_count, (uint32_t)1);
+
+}
+
+// ============================================================================
+// Accessory extended address mismatch
+// ============================================================================
+
+TEST(DccPacketDecoder, acc_extended_command_dispatches) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 0, true);
+
+    /* Extended accessory for address 0, aspect 10 */
+    uint8_t data[] = {0x80, 0x71, 0x0A, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(acc_ext_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_acc_ext_address, (uint16_t)0);
+    EXPECT_EQ(last_acc_ext_aspect, (uint8_t)10);
+
+}
+
+// ============================================================================
+// Service mode bit verify in service mode context
+// ============================================================================
+
+TEST(DccPacketDecoder, svc_direct_bit_verify_match_fires_ack) {
+
+    reset_mocks();
+    ack_pulse_count = 0;
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.start_ack_pulse = mock_start_ack_pulse;
+    DccPacketDecoder_initialize(&interface);
+
+    mock_cv_values[4] = 0x08;  /* bit 3 is 1 */
+
+    send_reset_packets(3);
+
+    /* Direct bit verify: CC=10, CV5
+     * Byte 0: 0111 10 00 = 0x78
+     * Byte 1: CV low = 0x04
+     * Byte 2: 111KDBBB = K=0 (verify), D=1, BBB=3 = 0xEB */
+    uint8_t data[] = {0x78, 0x04, 0xEB, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    /* Bit 3 = 1, expected 1 → ACK */
+    EXPECT_EQ(ack_pulse_count, (uint32_t)1);
+    EXPECT_EQ(cv_bit_callback_count, (uint32_t)1);
+
+}
+
+// ============================================================================
+// Service mode bit write with NULL on_cv_bit_command
+// ============================================================================
+
+TEST(DccPacketDecoder, svc_bit_write_null_on_cv_bit_command) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.on_cv_bit_command = NULL;
+    DccPacketDecoder_initialize(&interface);
+    send_reset_packets(3);
+
+    /* Direct bit write: CC=10, CV1
+     * Byte 0: 0111 10 00 = 0x78
+     * Byte 1: CV low = 0x00
+     * Byte 2: 111KDBBB = K=1 (write), D=1, BBB=0 = 0xF8 */
+    uint8_t data[] = {0x78, 0x00, 0xF8, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(cv_bit_callback_count, (uint32_t)0);
+    /* CV1 bit 0 should still be set */
+    EXPECT_TRUE(mock_cv_values[0] & 0x01);
+
+}
+
+// ============================================================================
+// Primary address cv_read failure
+// ============================================================================
+
+TEST(DccPacketDecoder, primary_address_cv_read_fail) {
+
+    reset_mocks();
+    /* Set CV29 to short address mode */
+    mock_cv_values[DCC_CV_CONFIG - 1] = DCC_CV29_SPEED_STEPS_BIT;
+
+    interface_dcc_packet_decoder_t interface = make_interface();
+
+    /* Make CV1 (primary address) read fail */
+    partial_fail_cv_early = DCC_CV_PRIMARY_ADDRESS;
+    interface.cv_read = mock_cv_read_partial_fail_early;
+    DccPacketDecoder_initialize(&interface);
+
+    /* Should not crash — address stays at default 0 */
+
+}
+
+// ============================================================================
+// Accessory output-address mode with CV read partial failure
+// ============================================================================
+
+TEST(DccPacketDecoder, accessory_output_addr_cv_lsb_read_fail) {
+
+    reset_mocks();
+    mock_cv_values[DCC_CV_ACC_CONFIG - 1] = DCC_CV541_ACCESSORY_DECODER_BIT | DCC_CV541_ADDRESS_METHOD_BIT;
+    mock_cv_values[DCC_CV_ACC_ADDRESS_LSB - 1] = 0x01;
+    mock_cv_values[DCC_CV_ACC_ADDRESS_MSB - 1] = 0x00;
+
+    interface_dcc_packet_decoder_t interface = make_interface();
+
+    /* Fail CV513 read — second compound && in _update_accessory_address fails at first read */
+    partial_fail_cv_early = DCC_CV_ACC_ADDRESS_LSB;
+    interface.cv_read = mock_cv_read_partial_fail_early;
+    DccPacketDecoder_initialize(&interface);
+
+    /* Should not crash */
+
+}
+
+// ============================================================================
+// CV verify bit — cv_read fails
+// ============================================================================
+
+TEST(DccPacketDecoder, svc_verify_bit_cv_read_fails) {
+
+    reset_mocks();
+    ack_pulse_count = 0;
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.start_ack_pulse = mock_start_ack_pulse;
+    DccPacketDecoder_initialize(&interface);
+    send_reset_packets(3);
+
+    /* NULL out cv_read before verify */
+    interface.cv_read = NULL;
+
+    /* Direct bit verify: CC=10, CV5 */
+    uint8_t data[] = {0x78, 0x04, 0xEB, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    /* No ACK — cv_read is NULL */
+    EXPECT_EQ(ack_pulse_count, (uint32_t)0);
+
+}
+
+// ============================================================================
+// Accessory CV write returns false — _cv_write_and_notify_acc
+// ============================================================================
+
+TEST(DccPacketDecoder, acc_cv_write_returns_false) {
+
+    reset_mocks();
+    mock_cv_write_should_fail = true;
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, false);
+
+    uint8_t data[] = {0x81, 0xF8, 0xEC, 0x00, 0x42, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    /* Write failed — callback should not fire */
+    EXPECT_EQ(acc_cv_write_callback_count, (uint32_t)0);
+
+}
+
+// ============================================================================
+// Extended accessory CV operations via packet decoder
+// ============================================================================
+
+TEST(DccPacketDecoder, acc_extended_cv_verify_addr0) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 0, true);
+
+    /* Extended accessory CV verify: 6-byte packet, byte2=111001AA = 0xE4
+     * Address 0: byte0=0x80, byte1=0x71 */
+    uint8_t data[] = {0x80, 0x71, 0xE4, 0x00, 0x42, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    EXPECT_EQ(acc_cv_verify_callback_count, (uint32_t)1);
+
+}
+
+TEST(DccPacketDecoder, acc_extended_cv_bit_write_addr0) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 0, true);
+
+    /* Extended accessory CV bit write: byte2=111010AA=0xE8
+     * byte4=111KDBBB=0xF8 (K=1, D=1, BBB=0) */
+    uint8_t data[] = {0x80, 0x71, 0xE8, 0x00, 0xF8, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    EXPECT_EQ(acc_cv_bit_callback_count, (uint32_t)1);
 
 }

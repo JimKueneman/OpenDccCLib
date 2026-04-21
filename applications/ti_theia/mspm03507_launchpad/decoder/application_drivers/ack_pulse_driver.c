@@ -108,6 +108,21 @@ bool AckPulseDriver_is_enabled(void) {
 
 }
 
+void AckPulseDriver_start(void) {
+
+    if (!_enabled)
+        return;
+
+    DL_GPIO_setPins(GPIO_ACK_PORT, GPIO_ACK_ACK_OUT_PIN);
+
+}
+
+void AckPulseDriver_stop(void) {
+
+    DL_GPIO_clearPins(GPIO_ACK_PORT, GPIO_ACK_ACK_OUT_PIN);
+
+}
+
 void AckPulseDriver_fire(void) {
 
     if (!_enabled)

@@ -8,7 +8,7 @@
 #include "test/main_Test.hxx"
 
 #include "dcc/dcc_scheduler.h"
-#include "dcc/dcc_packet_encoder.h"
+#include "dcc/dcc_application_command_station_packet.h"
 #include "dcc/dcc_types.h"
 #include "dcc/dcc_defines.h"
 
@@ -21,8 +21,6 @@ static uint32_t load_packet_count = 0;
 static bool encoder_idle = true;
 static uint32_t on_packet_sent_count = 0;
 static dcc_packet_t last_sent_packet;
-static uint32_t on_idle_count = 0;
-
 static void mock_load_packet(const dcc_packet_t *packet) {
     uint8_t i;
     for (i = 0; i < packet->byte_count && i < DCC_PACKET_MAX_BYTES; i++)
@@ -45,17 +43,12 @@ static void mock_on_packet_sent(const dcc_packet_t *packet) {
     on_packet_sent_count++;
 }
 
-static void mock_on_idle(void) {
-    on_idle_count++;
-}
-
 static void reset_mocks(void) {
     memset(&last_loaded_packet, 0, sizeof(last_loaded_packet));
     load_packet_count = 0;
     encoder_idle = true;
     on_packet_sent_count = 0;
     memset(&last_sent_packet, 0, sizeof(last_sent_packet));
-    on_idle_count = 0;
 }
 
 static interface_dcc_scheduler_t make_interface(void) {
@@ -64,9 +57,8 @@ static interface_dcc_scheduler_t make_interface(void) {
 
     interface.load_packet = mock_load_packet;
     interface.is_encoder_idle = mock_is_encoder_idle;
-    interface.build_idle_packet = &DccPacketEncoder_idle;
+    interface.build_idle_packet = &DccApplicationCommandStationPacket_load_idle;
     interface.on_packet_sent = mock_on_packet_sent;
-    interface.on_idle = mock_on_idle;
 
     return interface;
 }
@@ -95,7 +87,6 @@ TEST(DccScheduler, run_sends_idle_when_empty) {
     DccScheduler_run(&context);
 
     EXPECT_EQ(load_packet_count, (uint32_t)1);
-    EXPECT_EQ(on_idle_count, (uint32_t)1);
 
     /* Verify idle packet was loaded */
     EXPECT_EQ(last_loaded_packet.data[0], DCC_IDLE_ADDR_BYTE);
@@ -126,7 +117,7 @@ TEST(DccScheduler, insert_and_send_one_shot) {
     DccScheduler_initialize(&context, &interface);
 
     dcc_packet_t pkt;
-    DccPacketEncoder_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt.repeat_count = 1;
 
     bool ok = DccScheduler_insert(&context, &pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
@@ -149,7 +140,7 @@ TEST(DccScheduler, one_shot_removed_after_repeat_exhausted) {
     DccScheduler_initialize(&context, &interface);
 
     dcc_packet_t pkt;
-    DccPacketEncoder_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt.repeat_count = 1;
 
     DccScheduler_insert(&context, &pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
@@ -163,7 +154,6 @@ TEST(DccScheduler, one_shot_removed_after_repeat_exhausted) {
 
     /* Second run — slot is now exhausted, should get idle */
     DccScheduler_run(&context);
-    EXPECT_EQ(on_idle_count, (uint32_t)1);
 }
 
 TEST(DccScheduler, one_shot_repeat_count_2) {
@@ -173,7 +163,7 @@ TEST(DccScheduler, one_shot_repeat_count_2) {
     DccScheduler_initialize(&context, &interface);
 
     dcc_packet_t pkt;
-    DccPacketEncoder_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt.repeat_count = 2;
 
     DccScheduler_insert(&context, &pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
@@ -192,7 +182,6 @@ TEST(DccScheduler, one_shot_repeat_count_2) {
 
     /* Third run — should be idle (exhausted after 2 repeats) */
     DccScheduler_run(&context);
-    EXPECT_EQ(on_idle_count, (uint32_t)1);
 }
 
 // ============================================================================
@@ -207,13 +196,13 @@ TEST(DccScheduler, estop_has_higher_priority_than_speed) {
 
     /* Insert speed packet first */
     dcc_packet_t speed_pkt;
-    DccPacketEncoder_speed_128(&speed_pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&speed_pkt, 3, DCC_ADDRESS_SHORT, 50, true);
     speed_pkt.repeat_count = 1;
     DccScheduler_insert(&context, &speed_pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
 
     /* Insert e-stop second */
     dcc_packet_t estop_pkt;
-    DccPacketEncoder_estop_all(&estop_pkt);
+    DccApplicationCommandStationPacket_load_estop_all(&estop_pkt);
     estop_pkt.repeat_count = 1;
     DccScheduler_insert(&context, &estop_pkt, 0, DCC_TAG_SPEED, DCC_PRIORITY_ESTOP, false);
 
@@ -235,13 +224,13 @@ TEST(DccScheduler, duplicate_combining_overwrites_packet) {
 
     /* Insert speed=50 for address 3 */
     dcc_packet_t pkt1;
-    DccPacketEncoder_speed_128(&pkt1, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt1, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt1.repeat_count = 1;
     DccScheduler_insert(&context, &pkt1, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
 
     /* Insert speed=80 for same address 3, same tag — should overwrite */
     dcc_packet_t pkt2;
-    DccPacketEncoder_speed_128(&pkt2, 3, DCC_ADDRESS_SHORT, 80, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt2, 3, DCC_ADDRESS_SHORT, 80, true);
     pkt2.repeat_count = 1;
     DccScheduler_insert(&context, &pkt2, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
 
@@ -258,7 +247,7 @@ TEST(DccScheduler, different_tags_do_not_combine) {
     DccScheduler_initialize(&context, &interface);
 
     dcc_packet_t pkt1;
-    DccPacketEncoder_speed_128(&pkt1, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt1, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt1.repeat_count = 1;
     DccScheduler_insert(&context, &pkt1, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
 
@@ -284,12 +273,12 @@ TEST(DccScheduler, different_addresses_do_not_combine) {
     DccScheduler_initialize(&context, &interface);
 
     dcc_packet_t pkt1;
-    DccPacketEncoder_speed_128(&pkt1, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt1, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt1.repeat_count = 1;
     DccScheduler_insert(&context, &pkt1, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
 
     dcc_packet_t pkt2;
-    DccPacketEncoder_speed_128(&pkt2, 5, DCC_ADDRESS_SHORT, 80, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt2, 5, DCC_ADDRESS_SHORT, 80, true);
     pkt2.repeat_count = 1;
     DccScheduler_insert(&context, &pkt2, 5, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
 
@@ -315,7 +304,7 @@ TEST(DccScheduler, auto_refresh_keeps_sending) {
     DccScheduler_initialize(&context, &interface);
 
     dcc_packet_t pkt;
-    DccPacketEncoder_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt.repeat_count = 0;  /* no one-shot repeats */
 
     DccScheduler_insert(&context, &pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
@@ -341,12 +330,12 @@ TEST(DccScheduler, auto_refresh_round_robin) {
 
     /* Insert two refresh slots for different addresses */
     dcc_packet_t pkt1;
-    DccPacketEncoder_speed_128(&pkt1, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt1, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt1.repeat_count = 0;
     DccScheduler_insert(&context, &pkt1, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
 
     dcc_packet_t pkt2;
-    DccPacketEncoder_speed_128(&pkt2, 5, DCC_ADDRESS_SHORT, 80, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt2, 5, DCC_ADDRESS_SHORT, 80, true);
     pkt2.repeat_count = 0;
     DccScheduler_insert(&context, &pkt2, 5, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
 
@@ -372,7 +361,7 @@ TEST(DccScheduler, one_shot_takes_priority_over_refresh) {
 
     /* Insert refresh slot */
     dcc_packet_t refresh_pkt;
-    DccPacketEncoder_speed_128(&refresh_pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&refresh_pkt, 3, DCC_ADDRESS_SHORT, 50, true);
     refresh_pkt.repeat_count = 0;
     DccScheduler_insert(&context, &refresh_pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
 
@@ -410,7 +399,7 @@ TEST(DccScheduler, remove_address_clears_slots) {
     DccScheduler_initialize(&context, &interface);
 
     dcc_packet_t pkt;
-    DccPacketEncoder_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt.repeat_count = 0;
     DccScheduler_insert(&context, &pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
 
@@ -418,7 +407,6 @@ TEST(DccScheduler, remove_address_clears_slots) {
 
     DccScheduler_run(&context);
     /* Should get idle, not the removed speed packet */
-    EXPECT_EQ(on_idle_count, (uint32_t)1);
     EXPECT_EQ(load_packet_count, (uint32_t)1);  /* idle packet is still loaded */
 }
 
@@ -429,19 +417,18 @@ TEST(DccScheduler, clear_removes_all_slots) {
     DccScheduler_initialize(&context, &interface);
 
     dcc_packet_t pkt1;
-    DccPacketEncoder_speed_128(&pkt1, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt1, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt1.repeat_count = 0;
     DccScheduler_insert(&context, &pkt1, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
 
     dcc_packet_t pkt2;
-    DccPacketEncoder_speed_128(&pkt2, 5, DCC_ADDRESS_SHORT, 80, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt2, 5, DCC_ADDRESS_SHORT, 80, true);
     pkt2.repeat_count = 0;
     DccScheduler_insert(&context, &pkt2, 5, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
 
     DccScheduler_clear(&context);
 
     DccScheduler_run(&context);
-    EXPECT_EQ(on_idle_count, (uint32_t)1);
     EXPECT_EQ(load_packet_count, (uint32_t)1);  /* idle packet is still loaded */
 }
 
@@ -456,7 +443,7 @@ TEST(DccScheduler, insert_returns_false_when_full) {
     DccScheduler_initialize(&context, &interface);
 
     dcc_packet_t pkt;
-    DccPacketEncoder_idle(&pkt);
+    DccApplicationCommandStationPacket_load_idle(&pkt);
     pkt.repeat_count = 1;
 
     /* Fill all slots with unique (address, tag) pairs */
@@ -509,20 +496,9 @@ TEST(DccScheduler, null_on_packet_sent_does_not_crash) {
     DccScheduler_initialize(&context, &interface);
 
     dcc_packet_t pkt;
-    DccPacketEncoder_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt.repeat_count = 1;
     DccScheduler_insert(&context, &pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
-
-    DccScheduler_run(&context);
-    EXPECT_EQ(load_packet_count, (uint32_t)1);
-}
-
-TEST(DccScheduler, null_on_idle_does_not_crash) {
-    reset_mocks();
-    dcc_scheduler_context_t context;
-    interface_dcc_scheduler_t interface = make_interface();
-    interface.on_idle = NULL;
-    DccScheduler_initialize(&context, &interface);
 
     DccScheduler_run(&context);
     EXPECT_EQ(load_packet_count, (uint32_t)1);
@@ -541,13 +517,13 @@ TEST(DccScheduler, one_shot_skips_zero_repeat_and_refresh_scans_non_refresh) {
 
     /* Insert a non-refresh slot with repeat_count=0 — active but exhausted */
     dcc_packet_t pkt_zero;
-    DccPacketEncoder_speed_128(&pkt_zero, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt_zero, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt_zero.repeat_count = 0;
     DccScheduler_insert(&context, &pkt_zero, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
 
     /* Insert a refresh slot for a different address */
     dcc_packet_t pkt_refresh;
-    DccPacketEncoder_speed_128(&pkt_refresh, 5, DCC_ADDRESS_SHORT, 80, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt_refresh, 5, DCC_ADDRESS_SHORT, 80, true);
     pkt_refresh.repeat_count = 0;
     DccScheduler_insert(&context, &pkt_refresh, 5, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
 
@@ -571,12 +547,12 @@ TEST(DccScheduler, remove_address_with_multiple_addresses) {
     DccScheduler_initialize(&context, &interface);
 
     dcc_packet_t pkt1;
-    DccPacketEncoder_speed_128(&pkt1, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt1, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt1.repeat_count = 0;
     DccScheduler_insert(&context, &pkt1, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
 
     dcc_packet_t pkt2;
-    DccPacketEncoder_speed_128(&pkt2, 5, DCC_ADDRESS_SHORT, 80, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt2, 5, DCC_ADDRESS_SHORT, 80, true);
     pkt2.repeat_count = 0;
     DccScheduler_insert(&context, &pkt2, 5, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
 
@@ -587,7 +563,6 @@ TEST(DccScheduler, remove_address_with_multiple_addresses) {
 
     /* Only address 5 should remain */
     EXPECT_EQ(last_loaded_packet.data[0], 5);
-    EXPECT_EQ(on_idle_count, (uint32_t)0);
 }
 
 // ============================================================================
@@ -617,7 +592,7 @@ TEST(DccScheduler, null_on_packet_sent_in_refresh_path) {
     DccScheduler_initialize(&context, &interface);
 
     dcc_packet_t pkt;
-    DccPacketEncoder_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt.repeat_count = 0;
     DccScheduler_insert(&context, &pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
 

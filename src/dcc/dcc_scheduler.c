@@ -28,7 +28,7 @@
  * @brief Packet scheduler with duplicate combining and auto-refresh.
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 13 Apr 2026
  */
 
 #include "dcc_scheduler.h"
@@ -327,12 +327,6 @@ void DccScheduler_run(dcc_scheduler_context_t *context) {
     }
 
     /* 3. Nothing to send — idle */
-    if (context->interface->on_idle) {
-
-        context->interface->on_idle();
-
-    }
-
     context->interface->build_idle_packet(&idle_packet);
     context->interface->load_packet(&idle_packet);
     context->first_packet_sent = true;

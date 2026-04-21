@@ -28,7 +28,7 @@
  * @brief RailCom cutout timer state machine for the command station.
  *
  * @author Jim Kueneman
- * @date 09 Apr 2026
+ * @date 13 Apr 2026
  */
 
 #include "dcc_railcom_cutout.h"
@@ -80,13 +80,19 @@ void DccRailcomCutout_cancel(dcc_railcom_cutout_context_t *context) {
 
         }
 
-        /* Re-enable H-bridge if it was disabled */
+        /* Re-enable H-bridge and disable UART if cutout was active */
         if (context->state == DCC_RAILCOM_CUTOUT_CH1 ||
             context->state == DCC_RAILCOM_CUTOUT_CH2) {
 
-            if (context->interface->hbridge_enable) {
+            if (context->interface->uart_rx_disable) {
 
-                context->interface->hbridge_enable();
+                context->interface->uart_rx_disable();
+
+            }
+
+            if (context->interface->end_railcom_cutout) {
+
+                context->interface->end_railcom_cutout();
 
             }
 
@@ -110,16 +116,16 @@ void DccRailcomCutout_timer_isr(dcc_railcom_cutout_context_t *context) {
 
         case DCC_RAILCOM_CUTOUT_DELAY:
 
-            /* 88us elapsed — begin cutout: disable H-bridge, enable Ch1 UART */
-            if (context->interface->hbridge_disable) {
+            /* 88us elapsed — begin cutout: disable H-bridge, enable UART rx */
+            if (context->interface->begin_railcom_cutout) {
 
-                context->interface->hbridge_disable();
+                context->interface->begin_railcom_cutout();
 
             }
 
-            if (context->interface->uart_ch1_enable) {
+            if (context->interface->uart_rx_enable) {
 
-                context->interface->uart_ch1_enable();
+                context->interface->uart_rx_enable();
 
             }
 
@@ -136,19 +142,8 @@ void DccRailcomCutout_timer_isr(dcc_railcom_cutout_context_t *context) {
 
         case DCC_RAILCOM_CUTOUT_CH1:
 
-            /* 464us elapsed — Ch1 window closed, Ch2 window opens */
-            if (context->interface->uart_ch1_disable) {
-
-                context->interface->uart_ch1_disable();
-
-            }
-
-            if (context->interface->uart_ch2_enable) {
-
-                context->interface->uart_ch2_enable();
-
-            }
-
+            /* 464us elapsed — Ch1 window closed, Ch2 window opens.
+             * UART rx stays enabled across both channels. */
             context->state = DCC_RAILCOM_CUTOUT_CH2;
 
             /* Reprogram timer for remaining cutout (Ch2 window) */
@@ -163,15 +158,15 @@ void DccRailcomCutout_timer_isr(dcc_railcom_cutout_context_t *context) {
         case DCC_RAILCOM_CUTOUT_CH2:
 
             /* 1544us total elapsed — cutout complete */
-            if (context->interface->uart_ch2_disable) {
+            if (context->interface->uart_rx_disable) {
 
-                context->interface->uart_ch2_disable();
+                context->interface->uart_rx_disable();
 
             }
 
-            if (context->interface->hbridge_enable) {
+            if (context->interface->end_railcom_cutout) {
 
-                context->interface->hbridge_enable();
+                context->interface->end_railcom_cutout();
 
             }
 

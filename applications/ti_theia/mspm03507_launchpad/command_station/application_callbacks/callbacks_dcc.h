@@ -30,7 +30,7 @@ extern "C" {
 
 // Called when a service mode operation completes (success, no-ack, error, etc.).
 // This demo implementation prints the result string over UART.
-extern void CallbacksDcc_on_service_mode_complete(dcc_service_mode_result_t result);
+extern void CallbacksDcc_on_service_mode_result(dcc_service_mode_result_t result);
 
 // Called after every DCC packet is fully transmitted on the track.
 // This demo implementation toggles a debug GPIO for oscilloscope triggering.

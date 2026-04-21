@@ -2,12 +2,38 @@
  * Copyright (c) 2026, Jim Kueneman
  * All rights reserved.
  *
- * Test suite for DCC Application Service Track
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  - Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  - Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @file dcc_application_service_track_api_Test.cxx
+ * @brief Test suite for DCC Application Service Track API
+ *
+ * @author Jim Kueneman
+ * @date 13 Apr 2026
  */
 
 #include "test/main_Test.hxx"
 
-#include "dcc/dcc_application_command_station_service_track.h"
+#include "dcc/dcc_application_service_track.h"
 #include "dcc/dcc_types.h"
 #include "dcc/dcc_defines.h"
 
@@ -258,8 +284,8 @@ static void reset_mocks(void) {
 #endif
 }
 
-static interface_dcc_application_command_station_service_track_t make_interface(void) {
-    interface_dcc_application_command_station_service_track_t iface;
+static interface_dcc_application_service_track_t make_interface(void) {
+    interface_dcc_application_service_track_t iface;
     memset(&iface, 0, sizeof(iface));
     iface.timer_start = mock_timer_start;
     iface.timer_stop = mock_timer_stop;
@@ -299,18 +325,18 @@ static interface_dcc_application_command_station_service_track_t make_interface(
 // initialize
 // ============================================================================
 
-TEST(DccApplicationServiceTrack, initialize_stores_interface) {
+TEST(DccApplicationServiceTrackApi, initialize_stores_interface) {
     reset_mocks();
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    DccApplicationCommandStationServiceTrack_power_on();
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    DccApplicationServiceTrack_power_on();
     EXPECT_EQ(timer_start_count, 1u);
 }
 
-TEST(DccApplicationServiceTrack, initialize_with_null) {
+TEST(DccApplicationServiceTrackApi, initialize_with_null) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    DccApplicationCommandStationServiceTrack_power_on();
+    DccApplicationServiceTrack_initialize(NULL);
+    DccApplicationServiceTrack_power_on();
     EXPECT_EQ(timer_start_count, 0u);
 }
 
@@ -318,20 +344,20 @@ TEST(DccApplicationServiceTrack, initialize_with_null) {
 // power_on
 // ============================================================================
 
-TEST(DccApplicationServiceTrack, power_on_null_guard) {
+TEST(DccApplicationServiceTrackApi, power_on_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    DccApplicationCommandStationServiceTrack_power_on();
+    DccApplicationServiceTrack_initialize(NULL);
+    DccApplicationServiceTrack_power_on();
     EXPECT_EQ(power_set_count, 0u);
     EXPECT_EQ(timer_start_count, 0u);
     EXPECT_EQ(encoder_start_count, 0u);
 }
 
-TEST(DccApplicationServiceTrack, power_on_delegates) {
+TEST(DccApplicationServiceTrackApi, power_on_delegates) {
     reset_mocks();
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    DccApplicationCommandStationServiceTrack_power_on();
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    DccApplicationServiceTrack_power_on();
     EXPECT_EQ(power_set_count, 1u);
     EXPECT_TRUE(power_set_value);
     EXPECT_EQ(timer_start_count, 1u);
@@ -343,20 +369,20 @@ TEST(DccApplicationServiceTrack, power_on_delegates) {
 // power_off
 // ============================================================================
 
-TEST(DccApplicationServiceTrack, power_off_null_guard) {
+TEST(DccApplicationServiceTrackApi, power_off_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    DccApplicationCommandStationServiceTrack_power_off();
+    DccApplicationServiceTrack_initialize(NULL);
+    DccApplicationServiceTrack_power_off();
     EXPECT_EQ(encoder_stop_count, 0u);
     EXPECT_EQ(timer_stop_count, 0u);
     EXPECT_EQ(power_set_count, 0u);
 }
 
-TEST(DccApplicationServiceTrack, power_off_delegates) {
+TEST(DccApplicationServiceTrackApi, power_off_delegates) {
     reset_mocks();
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    DccApplicationCommandStationServiceTrack_power_off();
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    DccApplicationServiceTrack_power_off();
     EXPECT_EQ(encoder_stop_count, 1u);
     EXPECT_EQ(timer_stop_count, 1u);
     EXPECT_EQ(power_set_count, 1u);
@@ -367,20 +393,20 @@ TEST(DccApplicationServiceTrack, power_off_delegates) {
 // enter
 // ============================================================================
 
-TEST(DccApplicationServiceTrack, enter_null_guard) {
+TEST(DccApplicationServiceTrackApi, enter_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    bool result = DccApplicationCommandStationServiceTrack_enter_service_mode();
+    DccApplicationServiceTrack_initialize(NULL);
+    bool result = DccApplicationServiceTrack_enter();
     EXPECT_FALSE(result);
     EXPECT_EQ(enter_service_mode_count, 0u);
 }
 
-TEST(DccApplicationServiceTrack, enter_delegates_returns_true) {
+TEST(DccApplicationServiceTrackApi, enter_delegates_returns_true) {
     reset_mocks();
     enter_service_mode_return = true;
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    bool result = DccApplicationCommandStationServiceTrack_enter_service_mode();
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    bool result = DccApplicationServiceTrack_enter();
     EXPECT_TRUE(result);
     EXPECT_EQ(power_set_count, 1u);
     EXPECT_TRUE(power_set_value);
@@ -390,12 +416,12 @@ TEST(DccApplicationServiceTrack, enter_delegates_returns_true) {
     EXPECT_EQ(enter_service_mode_count, 1u);
 }
 
-TEST(DccApplicationServiceTrack, enter_delegates_returns_false) {
+TEST(DccApplicationServiceTrackApi, enter_delegates_returns_false) {
     reset_mocks();
     enter_service_mode_return = false;
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    bool result = DccApplicationCommandStationServiceTrack_enter_service_mode();
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    bool result = DccApplicationServiceTrack_enter();
     EXPECT_FALSE(result);
     EXPECT_EQ(enter_service_mode_count, 1u);
 }
@@ -404,18 +430,18 @@ TEST(DccApplicationServiceTrack, enter_delegates_returns_false) {
 // exit
 // ============================================================================
 
-TEST(DccApplicationServiceTrack, exit_null_guard) {
+TEST(DccApplicationServiceTrackApi, exit_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    DccApplicationCommandStationServiceTrack_exit_service_mode();
+    DccApplicationServiceTrack_initialize(NULL);
+    DccApplicationServiceTrack_exit();
     EXPECT_EQ(exit_service_mode_count, 0u);
 }
 
-TEST(DccApplicationServiceTrack, exit_delegates) {
+TEST(DccApplicationServiceTrackApi, exit_delegates) {
     reset_mocks();
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    DccApplicationCommandStationServiceTrack_exit_service_mode();
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    DccApplicationServiceTrack_exit();
     EXPECT_EQ(exit_service_mode_count, 1u);
     EXPECT_EQ(encoder_stop_count, 1u);
     EXPECT_EQ(timer_stop_count, 1u);
@@ -427,30 +453,30 @@ TEST(DccApplicationServiceTrack, exit_delegates) {
 // is_active
 // ============================================================================
 
-TEST(DccApplicationServiceTrack, is_active_null_guard) {
+TEST(DccApplicationServiceTrackApi, is_active_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    bool result = DccApplicationCommandStationServiceTrack_is_service_mode_active();
+    DccApplicationServiceTrack_initialize(NULL);
+    bool result = DccApplicationServiceTrack_is_active();
     EXPECT_FALSE(result);
     EXPECT_EQ(is_service_mode_active_count, 0u);
 }
 
-TEST(DccApplicationServiceTrack, is_active_delegates_true) {
+TEST(DccApplicationServiceTrackApi, is_active_delegates_true) {
     reset_mocks();
     is_service_mode_active_return = true;
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    bool result = DccApplicationCommandStationServiceTrack_is_service_mode_active();
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    bool result = DccApplicationServiceTrack_is_active();
     EXPECT_TRUE(result);
     EXPECT_EQ(is_service_mode_active_count, 1u);
 }
 
-TEST(DccApplicationServiceTrack, is_active_delegates_false) {
+TEST(DccApplicationServiceTrackApi, is_active_delegates_false) {
     reset_mocks();
     is_service_mode_active_return = false;
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    bool result = DccApplicationCommandStationServiceTrack_is_service_mode_active();
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    bool result = DccApplicationServiceTrack_is_active();
     EXPECT_FALSE(result);
     EXPECT_EQ(is_service_mode_active_count, 1u);
 }
@@ -461,60 +487,60 @@ TEST(DccApplicationServiceTrack, is_active_delegates_false) {
 
 #ifdef DCC_COMPILE_SERVICE_MODE_DIRECT
 
-TEST(DccApplicationServiceTrack, direct_write_byte_null_guard) {
+TEST(DccApplicationServiceTrackApi, direct_write_byte_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    bool result = DccApplicationCommandStationServiceTrack_direct_write_byte(1, 0x55);
+    DccApplicationServiceTrack_initialize(NULL);
+    bool result = DccApplicationServiceTrack_direct_write_byte(1, 0x55);
     EXPECT_FALSE(result);
     EXPECT_EQ(direct_write_byte_count, 0u);
 }
 
-TEST(DccApplicationServiceTrack, direct_write_byte_delegates) {
+TEST(DccApplicationServiceTrackApi, direct_write_byte_delegates) {
     reset_mocks();
     direct_write_byte_return = true;
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    bool result = DccApplicationCommandStationServiceTrack_direct_write_byte(29, 0xAB);
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    bool result = DccApplicationServiceTrack_direct_write_byte(29, 0xAB);
     EXPECT_TRUE(result);
     EXPECT_EQ(direct_write_byte_count, 1u);
     EXPECT_EQ(direct_cv_number, 29u);
     EXPECT_EQ(direct_value, 0xAB);
 }
 
-TEST(DccApplicationServiceTrack, direct_verify_byte_null_guard) {
+TEST(DccApplicationServiceTrackApi, direct_verify_byte_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    bool result = DccApplicationCommandStationServiceTrack_direct_verify_byte(1, 0x55);
+    DccApplicationServiceTrack_initialize(NULL);
+    bool result = DccApplicationServiceTrack_direct_verify_byte(1, 0x55);
     EXPECT_FALSE(result);
     EXPECT_EQ(direct_verify_byte_count, 0u);
 }
 
-TEST(DccApplicationServiceTrack, direct_verify_byte_delegates) {
+TEST(DccApplicationServiceTrackApi, direct_verify_byte_delegates) {
     reset_mocks();
     direct_verify_byte_return = true;
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    bool result = DccApplicationCommandStationServiceTrack_direct_verify_byte(8, 0x10);
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    bool result = DccApplicationServiceTrack_direct_verify_byte(8, 0x10);
     EXPECT_TRUE(result);
     EXPECT_EQ(direct_verify_byte_count, 1u);
     EXPECT_EQ(direct_cv_number, 8u);
     EXPECT_EQ(direct_value, 0x10);
 }
 
-TEST(DccApplicationServiceTrack, direct_write_bit_null_guard) {
+TEST(DccApplicationServiceTrackApi, direct_write_bit_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    bool result = DccApplicationCommandStationServiceTrack_direct_write_bit(1, 3, true);
+    DccApplicationServiceTrack_initialize(NULL);
+    bool result = DccApplicationServiceTrack_direct_write_bit(1, 3, true);
     EXPECT_FALSE(result);
     EXPECT_EQ(direct_write_bit_count, 0u);
 }
 
-TEST(DccApplicationServiceTrack, direct_write_bit_delegates) {
+TEST(DccApplicationServiceTrackApi, direct_write_bit_delegates) {
     reset_mocks();
     direct_write_bit_return = true;
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    bool result = DccApplicationCommandStationServiceTrack_direct_write_bit(29, 5, true);
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    bool result = DccApplicationServiceTrack_direct_write_bit(29, 5, true);
     EXPECT_TRUE(result);
     EXPECT_EQ(direct_write_bit_count, 1u);
     EXPECT_EQ(direct_cv_number, 29u);
@@ -522,20 +548,20 @@ TEST(DccApplicationServiceTrack, direct_write_bit_delegates) {
     EXPECT_TRUE(direct_bit_value);
 }
 
-TEST(DccApplicationServiceTrack, direct_verify_bit_null_guard) {
+TEST(DccApplicationServiceTrackApi, direct_verify_bit_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    bool result = DccApplicationCommandStationServiceTrack_direct_verify_bit(1, 0, false);
+    DccApplicationServiceTrack_initialize(NULL);
+    bool result = DccApplicationServiceTrack_direct_verify_bit(1, 0, false);
     EXPECT_FALSE(result);
     EXPECT_EQ(direct_verify_bit_count, 0u);
 }
 
-TEST(DccApplicationServiceTrack, direct_verify_bit_delegates) {
+TEST(DccApplicationServiceTrackApi, direct_verify_bit_delegates) {
     reset_mocks();
     direct_verify_bit_return = true;
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    bool result = DccApplicationCommandStationServiceTrack_direct_verify_bit(8, 7, false);
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    bool result = DccApplicationServiceTrack_direct_verify_bit(8, 7, false);
     EXPECT_TRUE(result);
     EXPECT_EQ(direct_verify_bit_count, 1u);
     EXPECT_EQ(direct_cv_number, 8u);
@@ -551,40 +577,40 @@ TEST(DccApplicationServiceTrack, direct_verify_bit_delegates) {
 
 #ifdef DCC_COMPILE_SERVICE_MODE_PAGED
 
-TEST(DccApplicationServiceTrack, paged_write_null_guard) {
+TEST(DccApplicationServiceTrackApi, paged_write_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    bool result = DccApplicationCommandStationServiceTrack_paged_write(1, 0x55);
+    DccApplicationServiceTrack_initialize(NULL);
+    bool result = DccApplicationServiceTrack_paged_write(1, 0x55);
     EXPECT_FALSE(result);
     EXPECT_EQ(paged_write_count, 0u);
 }
 
-TEST(DccApplicationServiceTrack, paged_write_delegates) {
+TEST(DccApplicationServiceTrackApi, paged_write_delegates) {
     reset_mocks();
     paged_write_return = true;
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    bool result = DccApplicationCommandStationServiceTrack_paged_write(29, 0xCD);
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    bool result = DccApplicationServiceTrack_paged_write(29, 0xCD);
     EXPECT_TRUE(result);
     EXPECT_EQ(paged_write_count, 1u);
     EXPECT_EQ(paged_cv_number, 29u);
     EXPECT_EQ(paged_value, 0xCD);
 }
 
-TEST(DccApplicationServiceTrack, paged_verify_null_guard) {
+TEST(DccApplicationServiceTrackApi, paged_verify_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    bool result = DccApplicationCommandStationServiceTrack_paged_verify(1, 0x55);
+    DccApplicationServiceTrack_initialize(NULL);
+    bool result = DccApplicationServiceTrack_paged_verify(1, 0x55);
     EXPECT_FALSE(result);
     EXPECT_EQ(paged_verify_count, 0u);
 }
 
-TEST(DccApplicationServiceTrack, paged_verify_delegates) {
+TEST(DccApplicationServiceTrackApi, paged_verify_delegates) {
     reset_mocks();
     paged_verify_return = true;
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    bool result = DccApplicationCommandStationServiceTrack_paged_verify(8, 0xEF);
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    bool result = DccApplicationServiceTrack_paged_verify(8, 0xEF);
     EXPECT_TRUE(result);
     EXPECT_EQ(paged_verify_count, 1u);
     EXPECT_EQ(paged_cv_number, 8u);
@@ -599,40 +625,40 @@ TEST(DccApplicationServiceTrack, paged_verify_delegates) {
 
 #ifdef DCC_COMPILE_SERVICE_MODE_REGISTER
 
-TEST(DccApplicationServiceTrack, register_write_null_guard) {
+TEST(DccApplicationServiceTrackApi, register_write_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    bool result = DccApplicationCommandStationServiceTrack_register_write(1, 0x55);
+    DccApplicationServiceTrack_initialize(NULL);
+    bool result = DccApplicationServiceTrack_register_write(1, 0x55);
     EXPECT_FALSE(result);
     EXPECT_EQ(register_write_count, 0u);
 }
 
-TEST(DccApplicationServiceTrack, register_write_delegates) {
+TEST(DccApplicationServiceTrackApi, register_write_delegates) {
     reset_mocks();
     register_write_return = true;
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    bool result = DccApplicationCommandStationServiceTrack_register_write(3, 0x42);
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    bool result = DccApplicationServiceTrack_register_write(3, 0x42);
     EXPECT_TRUE(result);
     EXPECT_EQ(register_write_count, 1u);
     EXPECT_EQ(register_number, 3u);
     EXPECT_EQ(register_value, 0x42);
 }
 
-TEST(DccApplicationServiceTrack, register_verify_null_guard) {
+TEST(DccApplicationServiceTrackApi, register_verify_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    bool result = DccApplicationCommandStationServiceTrack_register_verify(1, 0x55);
+    DccApplicationServiceTrack_initialize(NULL);
+    bool result = DccApplicationServiceTrack_register_verify(1, 0x55);
     EXPECT_FALSE(result);
     EXPECT_EQ(register_verify_count, 0u);
 }
 
-TEST(DccApplicationServiceTrack, register_verify_delegates) {
+TEST(DccApplicationServiceTrackApi, register_verify_delegates) {
     reset_mocks();
     register_verify_return = true;
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    bool result = DccApplicationCommandStationServiceTrack_register_verify(5, 0x99);
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    bool result = DccApplicationServiceTrack_register_verify(5, 0x99);
     EXPECT_TRUE(result);
     EXPECT_EQ(register_verify_count, 1u);
     EXPECT_EQ(register_number, 5u);
@@ -647,39 +673,39 @@ TEST(DccApplicationServiceTrack, register_verify_delegates) {
 
 #ifdef DCC_COMPILE_SERVICE_MODE_ADDRESS
 
-TEST(DccApplicationServiceTrack, address_write_null_guard) {
+TEST(DccApplicationServiceTrackApi, address_write_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    bool result = DccApplicationCommandStationServiceTrack_address_write(3);
+    DccApplicationServiceTrack_initialize(NULL);
+    bool result = DccApplicationServiceTrack_address_write(3);
     EXPECT_FALSE(result);
     EXPECT_EQ(address_write_count, 0u);
 }
 
-TEST(DccApplicationServiceTrack, address_write_delegates) {
+TEST(DccApplicationServiceTrackApi, address_write_delegates) {
     reset_mocks();
     address_write_return = true;
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    bool result = DccApplicationCommandStationServiceTrack_address_write(42);
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    bool result = DccApplicationServiceTrack_address_write(42);
     EXPECT_TRUE(result);
     EXPECT_EQ(address_write_count, 1u);
     EXPECT_EQ(address_value, 42u);
 }
 
-TEST(DccApplicationServiceTrack, address_verify_null_guard) {
+TEST(DccApplicationServiceTrackApi, address_verify_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationServiceTrack_initialize(NULL);
-    bool result = DccApplicationCommandStationServiceTrack_address_verify(3);
+    DccApplicationServiceTrack_initialize(NULL);
+    bool result = DccApplicationServiceTrack_address_verify(3);
     EXPECT_FALSE(result);
     EXPECT_EQ(address_verify_count, 0u);
 }
 
-TEST(DccApplicationServiceTrack, address_verify_delegates) {
+TEST(DccApplicationServiceTrackApi, address_verify_delegates) {
     reset_mocks();
     address_verify_return = true;
-    interface_dcc_application_command_station_service_track_t iface = make_interface();
-    DccApplicationCommandStationServiceTrack_initialize(&iface);
-    bool result = DccApplicationCommandStationServiceTrack_address_verify(99);
+    interface_dcc_application_service_track_t iface = make_interface();
+    DccApplicationServiceTrack_initialize(&iface);
+    bool result = DccApplicationServiceTrack_address_verify(99);
     EXPECT_TRUE(result);
     EXPECT_EQ(address_verify_count, 1u);
     EXPECT_EQ(address_value, 99u);

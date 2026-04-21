@@ -20,6 +20,7 @@
 
 #define DCC_COMPILE_COMMAND_STATION
 // #define DCC_COMPILE_DECODER
+// #define DCC_COMPILE_ACCESSORY_DECODER
 
 // =============================================================================
 // Service Mode Selection (requires DCC_COMPILE_COMMAND_STATION)

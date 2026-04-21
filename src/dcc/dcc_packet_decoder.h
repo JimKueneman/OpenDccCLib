@@ -34,7 +34,7 @@
  * appropriate application callbacks.
  *
  * @author Jim Kueneman
- * @date 11 Apr 2026
+ * @date 13 Apr 2026
  */
 
 #ifndef __DCC_PACKET_DECODER__
@@ -61,8 +61,8 @@ typedef struct {
         /** @brief Speed command received. NULL = no notification. */
     void (*on_speed_command)(uint16_t address, uint8_t speed, bool direction, dcc_speed_mode_enum mode);
 
-        /** @brief Emergency stop received. NULL = no notification. */
-    void (*on_emergency_stop)(uint16_t address);
+        /** @brief Emergency stop command received. NULL = no notification. */
+    void (*on_emergency_stop_command)(uint16_t address);
 
         /** @brief Function command received. NULL = no notification. */
     void (*on_function_command)(uint16_t address, uint8_t function_number, bool state);
@@ -86,32 +86,32 @@ typedef struct {
         /** @brief Accessory CV bit manipulation (ops-mode) received. NULL = no notification. */
     void (*on_acc_cv_bit)(uint16_t cv_number, uint8_t bit_position, bool bit_value);
 
-        /** @brief CV write completed. NULL = no notification. */
-    void (*on_cv_write)(uint16_t cv_number, uint8_t value, bool service_mode);
+        /** @brief CV write command received. NULL = no notification. */
+    void (*on_cv_write_command)(uint16_t cv_number, uint8_t value, bool service_mode);
 
-        /** @brief CV verify received. NULL = no notification. */
-    void (*on_cv_verify)(uint16_t cv_number, uint8_t value, bool service_mode);
+        /** @brief CV verify command received. NULL = no notification. */
+    void (*on_cv_verify_command)(uint16_t cv_number, uint8_t value, bool service_mode);
 
-        /** @brief CV bit manipulation received. NULL = no notification. */
-    void (*on_cv_bit)(uint16_t cv_number, uint8_t bit_position, bool bit_value, bool service_mode);
+        /** @brief CV bit command received. NULL = no notification. */
+    void (*on_cv_bit_command)(uint16_t cv_number, uint8_t bit_position, bool bit_value, bool service_mode);
 
         /** @brief Consist control received. NULL = no notification. */
     void (*on_consist_command)(uint16_t address, uint8_t consist_address, bool direction_normal);
 
-        /** @brief Binary state short (1-127) received. NULL = no notification. */
-    void (*on_binary_state_short)(uint16_t address, uint8_t state_number, bool active);
+        /** @brief Binary state short command (1-127) received. NULL = no notification. */
+    void (*on_binary_state_short_command)(uint16_t address, uint8_t state_number, bool active);
 
-        /** @brief Binary state long (1-32767) received. NULL = no notification. */
-    void (*on_binary_state_long)(uint16_t address, uint16_t state_number, bool active);
+        /** @brief Binary state long command (1-32767) received. NULL = no notification. */
+    void (*on_binary_state_long_command)(uint16_t address, uint16_t state_number, bool active);
 
-        /** @brief Analog function received. NULL = no notification. */
-    void (*on_analog_function)(uint16_t address, uint8_t output_number, uint8_t value);
+        /** @brief Analog function command received. NULL = no notification. */
+    void (*on_analog_function_command)(uint16_t address, uint8_t output_number, uint8_t value);
 
-        /** @brief Speed restriction received. NULL = no notification. */
-    void (*on_speed_restriction)(uint16_t address, bool enabled, uint8_t speed_limit);
+        /** @brief Speed restriction command received. NULL = no notification. */
+    void (*on_speed_restriction_command)(uint16_t address, bool enabled, uint8_t speed_limit);
 
-        /** @brief Fire a service mode ACK pulse. NULL = no ACK hardware. */
-    void (*fire_ack_pulse)(void);
+        /** @brief Turn on the ACK current load. Library handles 6ms timing. */
+    void (*start_ack_pulse)(void);
 
 } interface_dcc_packet_decoder_t;
 

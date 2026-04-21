@@ -64,14 +64,14 @@ extern uint16_t TI_DccDriver_current_sense_read(void);
 
 // Start the shared fixed-period DCC timer (58us). Both main track and service
 // track are clocked from this single timer. The ISR must call
-// DccConfig_shared_timer_isr().
+// DccConfig_58us_timer_isr().
 extern void TI_DccDriver_shared_timer_start(uint16_t period_usec);
 
 // Stop the shared fixed-period DCC timer.
 extern void TI_DccDriver_shared_timer_stop(void);
 
 // Start the RailCom cutout one-shot timer with the given period in
-// microseconds. The ISR must call DccConfig_railcom_cutout_timer_isr().
+// microseconds. The ISR must call DccConfig_railcom_oneshot_timer_isr().
 extern void TI_DccDriver_railcom_timer_start(uint16_t period_usec);
 
 // Stop the RailCom cutout one-shot timer.

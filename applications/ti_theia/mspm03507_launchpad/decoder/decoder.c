@@ -59,22 +59,27 @@ const dcc_config_t dcc_config = {
      *
      * NOTE: Callbacks run from main-loop context (the ISR only captures
      * timestamps; the main loop drains them into the bit decoder). */
+    .railcom_tx_pin_set            = NULL,
+    .decoder_edge_irq_enable       = NULL,
+
+    .start_ack_pulse               = &AckPulseDriver_start,
+    .stop_ack_pulse                = &AckPulseDriver_stop,
+
     .on_speed_command              = &CallbacksDcc_on_speed_command,
-    .on_emergency_stop             = &CallbacksDcc_on_emergency_stop,
+    .on_emergency_stop_command     = &CallbacksDcc_on_emergency_stop,
     .on_function_command           = &CallbacksDcc_on_function_command,
     .on_accessory_basic_command    = &CallbacksDcc_on_accessory_basic_command,
     .on_accessory_extended_command = &CallbacksDcc_on_accessory_extended_command,
-    .on_cv_write                   = &CallbacksDcc_on_cv_write,
-    .on_cv_verify                  = &CallbacksDcc_on_cv_verify,
-    .on_cv_bit                     = &CallbacksDcc_on_cv_bit,
+    .on_cv_write_command           = &CallbacksDcc_on_cv_write,
+    .on_cv_verify_command          = &CallbacksDcc_on_cv_verify,
+    .on_cv_bit_command             = &CallbacksDcc_on_cv_bit,
     .on_consist_command            = &CallbacksDcc_on_consist_command,
-    .on_binary_state_short         = &CallbacksDcc_on_binary_state_short,
-    .on_binary_state_long          = &CallbacksDcc_on_binary_state_long,
-    .on_analog_function            = &CallbacksDcc_on_analog_function,
-    .on_speed_restriction          = &CallbacksDcc_on_speed_restriction,
+    .on_binary_state_short_command = &CallbacksDcc_on_binary_state_short,
+    .on_binary_state_long_command  = &CallbacksDcc_on_binary_state_long,
+    .on_analog_function_command    = &CallbacksDcc_on_analog_function,
+    .on_speed_restriction_command  = &CallbacksDcc_on_speed_restriction,
     .on_failsafe_entered           = &CallbacksDcc_on_failsafe_entered,
     .on_failsafe_exited            = &CallbacksDcc_on_failsafe_exited,
-    .fire_ack_pulse                = &AckPulseDriver_fire,
 };
 
 /* ========================================================================== */
@@ -165,7 +170,7 @@ static void _drain_edge_buffer(void) {
         uint32_t ts = _edge_buf[_edge_tail];
         _edge_tail = (_edge_tail + 1) & EDGE_BUF_MASK;
 
-        DccConfig_decoder_edge(ts);
+        DccConfig_decoder_edge_isr(ts);
 
     }
 

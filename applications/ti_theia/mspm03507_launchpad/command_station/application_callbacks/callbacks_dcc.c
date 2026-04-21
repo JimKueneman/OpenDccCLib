@@ -9,7 +9,7 @@
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
-void CallbacksDcc_on_service_mode_complete(dcc_service_mode_result_t result) {
+void CallbacksDcc_on_service_mode_result(dcc_service_mode_result_t result) {
 
     switch (result) {
 

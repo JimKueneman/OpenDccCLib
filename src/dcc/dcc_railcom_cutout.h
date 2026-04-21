@@ -38,7 +38,7 @@
  * through interface function pointers only (no direct includes).
  *
  * @author Jim Kueneman
- * @date 09 Apr 2026
+ * @date 13 Apr 2026
  */
 
 #ifndef __DCC_RAILCOM_CUTOUT__
@@ -72,23 +72,17 @@ typedef struct {
         /** @brief Stop the one-shot timer. */
     void (*timer_one_shot_stop)(void);
 
-        /** @brief Disable (tristate) the H-bridge for the cutout window. */
-    void (*hbridge_disable)(void);
+        /** @brief Begin the RailCom cutout (disable/tristate the H-bridge). */
+    void (*begin_railcom_cutout)(void);
 
-        /** @brief Re-enable the H-bridge after the cutout window. */
-    void (*hbridge_enable)(void);
+        /** @brief End the RailCom cutout (re-enable the H-bridge). */
+    void (*end_railcom_cutout)(void);
 
-        /** @brief Enable UART receive for RailCom Ch1. */
-    void (*uart_ch1_enable)(void);
+        /** @brief Enable UART receive for the RailCom cutout window. */
+    void (*uart_rx_enable)(void);
 
-        /** @brief Disable UART receive for RailCom Ch1. */
-    void (*uart_ch1_disable)(void);
-
-        /** @brief Enable UART receive for RailCom Ch2. */
-    void (*uart_ch2_enable)(void);
-
-        /** @brief Disable UART receive for RailCom Ch2. */
-    void (*uart_ch2_disable)(void);
+        /** @brief Disable UART receive after the RailCom cutout window. */
+    void (*uart_rx_disable)(void);
 
         /** @brief Signal that the cutout is complete. Called from Timer 2 ISR.
          *  Typically sets a volatile bool in the bit encoder context. */

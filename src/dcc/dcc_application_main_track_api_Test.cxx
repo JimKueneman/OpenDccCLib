@@ -2,12 +2,38 @@
  * Copyright (c) 2026, Jim Kueneman
  * All rights reserved.
  *
- * Test suite for DCC Application Main Track
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  - Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  - Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @file dcc_application_main_track_api_Test.cxx
+ * @brief Test suite for DCC Application Main Track API
+ *
+ * @author Jim Kueneman
+ * @date 13 Apr 2026
  */
 
 #include "test/main_Test.hxx"
 
-#include "dcc/dcc_application_command_station_main_track.h"
+#include "dcc/dcc_application_main_track.h"
 #include "dcc/dcc_types.h"
 #include "dcc/dcc_defines.h"
 
@@ -98,8 +124,8 @@ static void reset_mocks(void) {
     clear_count = 0;
 }
 
-static interface_dcc_application_command_station_main_track_t make_interface(void) {
-    interface_dcc_application_command_station_main_track_t iface;
+static interface_dcc_application_main_track_t make_interface(void) {
+    interface_dcc_application_main_track_t iface;
     memset(&iface, 0, sizeof(iface));
     iface.timer_start = mock_timer_start;
     iface.timer_stop = mock_timer_stop;
@@ -116,18 +142,18 @@ static interface_dcc_application_command_station_main_track_t make_interface(voi
 // initialize
 // ============================================================================
 
-TEST(DccApplicationMainTrack, initialize_stores_interface) {
+TEST(DccApplicationMainTrackApi, initialize_stores_interface) {
     reset_mocks();
-    interface_dcc_application_command_station_main_track_t iface = make_interface();
-    DccApplicationCommandStationMainTrack_initialize(&iface);
-    DccApplicationCommandStationMainTrack_power_on();
+    interface_dcc_application_main_track_t iface = make_interface();
+    DccApplicationMainTrack_initialize(&iface);
+    DccApplicationMainTrack_power_on();
     EXPECT_EQ(timer_start_count, 1u);
 }
 
-TEST(DccApplicationMainTrack, initialize_with_null) {
+TEST(DccApplicationMainTrackApi, initialize_with_null) {
     reset_mocks();
-    DccApplicationCommandStationMainTrack_initialize(NULL);
-    DccApplicationCommandStationMainTrack_power_on();
+    DccApplicationMainTrack_initialize(NULL);
+    DccApplicationMainTrack_power_on();
     EXPECT_EQ(timer_start_count, 0u);
 }
 
@@ -135,20 +161,20 @@ TEST(DccApplicationMainTrack, initialize_with_null) {
 // power_on
 // ============================================================================
 
-TEST(DccApplicationMainTrack, power_on_null_guard) {
+TEST(DccApplicationMainTrackApi, power_on_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationMainTrack_initialize(NULL);
-    DccApplicationCommandStationMainTrack_power_on();
+    DccApplicationMainTrack_initialize(NULL);
+    DccApplicationMainTrack_power_on();
     EXPECT_EQ(power_set_count, 0u);
     EXPECT_EQ(timer_start_count, 0u);
     EXPECT_EQ(encoder_start_count, 0u);
 }
 
-TEST(DccApplicationMainTrack, power_on_delegates) {
+TEST(DccApplicationMainTrackApi, power_on_delegates) {
     reset_mocks();
-    interface_dcc_application_command_station_main_track_t iface = make_interface();
-    DccApplicationCommandStationMainTrack_initialize(&iface);
-    DccApplicationCommandStationMainTrack_power_on();
+    interface_dcc_application_main_track_t iface = make_interface();
+    DccApplicationMainTrack_initialize(&iface);
+    DccApplicationMainTrack_power_on();
     EXPECT_EQ(power_set_count, 1u);
     EXPECT_TRUE(power_set_value);
     EXPECT_EQ(timer_start_count, 1u);
@@ -160,20 +186,20 @@ TEST(DccApplicationMainTrack, power_on_delegates) {
 // power_off
 // ============================================================================
 
-TEST(DccApplicationMainTrack, power_off_null_guard) {
+TEST(DccApplicationMainTrackApi, power_off_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationMainTrack_initialize(NULL);
-    DccApplicationCommandStationMainTrack_power_off();
+    DccApplicationMainTrack_initialize(NULL);
+    DccApplicationMainTrack_power_off();
     EXPECT_EQ(encoder_stop_count, 0u);
     EXPECT_EQ(timer_stop_count, 0u);
     EXPECT_EQ(power_set_count, 0u);
 }
 
-TEST(DccApplicationMainTrack, power_off_delegates) {
+TEST(DccApplicationMainTrackApi, power_off_delegates) {
     reset_mocks();
-    interface_dcc_application_command_station_main_track_t iface = make_interface();
-    DccApplicationCommandStationMainTrack_initialize(&iface);
-    DccApplicationCommandStationMainTrack_power_off();
+    interface_dcc_application_main_track_t iface = make_interface();
+    DccApplicationMainTrack_initialize(&iface);
+    DccApplicationMainTrack_power_off();
     EXPECT_EQ(encoder_stop_count, 1u);
     EXPECT_EQ(timer_stop_count, 1u);
     EXPECT_EQ(power_set_count, 1u);
@@ -181,131 +207,86 @@ TEST(DccApplicationMainTrack, power_off_delegates) {
 }
 
 // ============================================================================
-// add_to_auto_refresh
+// insert
 // ============================================================================
 
-TEST(DccApplicationMainTrack, add_to_auto_refresh_null_guard) {
+TEST(DccApplicationMainTrackApi, insert_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationMainTrack_initialize(NULL);
+    DccApplicationMainTrack_initialize(NULL);
     dcc_packet_t pkt;
     memset(&pkt, 0, sizeof(pkt));
-    bool result = DccApplicationCommandStationMainTrack_add_to_auto_refresh(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
+    bool result = DccApplicationMainTrack_insert(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
     EXPECT_FALSE(result);
     EXPECT_EQ(insert_count, 0u);
 }
 
-TEST(DccApplicationMainTrack, add_to_auto_refresh_delegates_and_returns_true) {
+TEST(DccApplicationMainTrackApi, insert_delegates_returns_true) {
     reset_mocks();
     insert_return = true;
-    interface_dcc_application_command_station_main_track_t iface = make_interface();
-    DccApplicationCommandStationMainTrack_initialize(&iface);
+    interface_dcc_application_main_track_t iface = make_interface();
+    DccApplicationMainTrack_initialize(&iface);
     dcc_packet_t pkt;
     memset(&pkt, 0, sizeof(pkt));
     pkt.byte_count = 3;
-    bool result = DccApplicationCommandStationMainTrack_add_to_auto_refresh(&pkt, 42, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
+    bool result = DccApplicationMainTrack_insert(&pkt, 42, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
     EXPECT_TRUE(result);
     EXPECT_EQ(insert_count, 1u);
-    EXPECT_TRUE(insert_auto_refresh);
+    EXPECT_EQ(insert_packet, &pkt);
     EXPECT_EQ(insert_address, 42u);
     EXPECT_EQ(insert_tag, DCC_TAG_SPEED);
     EXPECT_EQ(insert_priority, DCC_PRIORITY_SPEED);
-    EXPECT_EQ(insert_packet, &pkt);
-}
-
-TEST(DccApplicationMainTrack, add_to_auto_refresh_delegates_and_returns_false) {
-    reset_mocks();
-    insert_return = false;
-    interface_dcc_application_command_station_main_track_t iface = make_interface();
-    DccApplicationCommandStationMainTrack_initialize(&iface);
-    dcc_packet_t pkt;
-    memset(&pkt, 0, sizeof(pkt));
-    bool result = DccApplicationCommandStationMainTrack_add_to_auto_refresh(&pkt, 1, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
-    EXPECT_FALSE(result);
-    EXPECT_EQ(insert_count, 1u);
     EXPECT_TRUE(insert_auto_refresh);
 }
 
-// ============================================================================
-// send_packet
-// ============================================================================
-
-TEST(DccApplicationMainTrack, send_packet_null_guard) {
-    reset_mocks();
-    DccApplicationCommandStationMainTrack_initialize(NULL);
-    dcc_packet_t pkt;
-    memset(&pkt, 0, sizeof(pkt));
-    bool result = DccApplicationCommandStationMainTrack_send_packet(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
-    EXPECT_FALSE(result);
-    EXPECT_EQ(insert_count, 0u);
-}
-
-TEST(DccApplicationMainTrack, send_packet_delegates_and_returns_true) {
-    reset_mocks();
-    insert_return = true;
-    interface_dcc_application_command_station_main_track_t iface = make_interface();
-    DccApplicationCommandStationMainTrack_initialize(&iface);
-    dcc_packet_t pkt;
-    memset(&pkt, 0, sizeof(pkt));
-    pkt.byte_count = 3;
-    bool result = DccApplicationCommandStationMainTrack_send_packet(&pkt, 42, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
-    EXPECT_TRUE(result);
-    EXPECT_EQ(insert_count, 1u);
-    EXPECT_FALSE(insert_auto_refresh);
-    EXPECT_EQ(insert_address, 42u);
-    EXPECT_EQ(insert_tag, DCC_TAG_SPEED);
-    EXPECT_EQ(insert_priority, DCC_PRIORITY_SPEED);
-    EXPECT_EQ(insert_packet, &pkt);
-}
-
-TEST(DccApplicationMainTrack, send_packet_delegates_and_returns_false) {
+TEST(DccApplicationMainTrackApi, insert_delegates_returns_false) {
     reset_mocks();
     insert_return = false;
-    interface_dcc_application_command_station_main_track_t iface = make_interface();
-    DccApplicationCommandStationMainTrack_initialize(&iface);
+    interface_dcc_application_main_track_t iface = make_interface();
+    DccApplicationMainTrack_initialize(&iface);
     dcc_packet_t pkt;
     memset(&pkt, 0, sizeof(pkt));
-    bool result = DccApplicationCommandStationMainTrack_send_packet(&pkt, 1, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
+    bool result = DccApplicationMainTrack_insert(&pkt, 1, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
     EXPECT_FALSE(result);
     EXPECT_EQ(insert_count, 1u);
     EXPECT_FALSE(insert_auto_refresh);
 }
 
 // ============================================================================
-// remove_from_auto_refresh
+// remove_address
 // ============================================================================
 
-TEST(DccApplicationMainTrack, remove_from_auto_refresh_null_guard) {
+TEST(DccApplicationMainTrackApi, remove_address_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationMainTrack_initialize(NULL);
-    DccApplicationCommandStationMainTrack_remove_from_auto_refresh(10);
+    DccApplicationMainTrack_initialize(NULL);
+    DccApplicationMainTrack_remove_address(10);
     EXPECT_EQ(remove_address_count, 0u);
 }
 
-TEST(DccApplicationMainTrack, remove_from_auto_refresh_delegates) {
+TEST(DccApplicationMainTrackApi, remove_address_delegates) {
     reset_mocks();
-    interface_dcc_application_command_station_main_track_t iface = make_interface();
-    DccApplicationCommandStationMainTrack_initialize(&iface);
-    DccApplicationCommandStationMainTrack_remove_from_auto_refresh(55);
+    interface_dcc_application_main_track_t iface = make_interface();
+    DccApplicationMainTrack_initialize(&iface);
+    DccApplicationMainTrack_remove_address(55);
     EXPECT_EQ(remove_address_count, 1u);
     EXPECT_EQ(remove_address_value, 55u);
 }
 
 // ============================================================================
-// remove_all_auto_refresh
+// clear
 // ============================================================================
 
-TEST(DccApplicationMainTrack, remove_all_auto_refresh_null_guard) {
+TEST(DccApplicationMainTrackApi, clear_null_guard) {
     reset_mocks();
-    DccApplicationCommandStationMainTrack_initialize(NULL);
-    DccApplicationCommandStationMainTrack_remove_all_auto_refresh();
+    DccApplicationMainTrack_initialize(NULL);
+    DccApplicationMainTrack_clear();
     EXPECT_EQ(clear_count, 0u);
 }
 
-TEST(DccApplicationMainTrack, remove_all_auto_refresh_delegates) {
+TEST(DccApplicationMainTrackApi, clear_delegates) {
     reset_mocks();
-    interface_dcc_application_command_station_main_track_t iface = make_interface();
-    DccApplicationCommandStationMainTrack_initialize(&iface);
-    DccApplicationCommandStationMainTrack_remove_all_auto_refresh();
+    interface_dcc_application_main_track_t iface = make_interface();
+    DccApplicationMainTrack_initialize(&iface);
+    DccApplicationMainTrack_clear();
     EXPECT_EQ(clear_count, 1u);
 }
 

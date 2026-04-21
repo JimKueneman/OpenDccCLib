@@ -36,7 +36,7 @@
  * the main loop to swap buffers.
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 13 Apr 2026
  */
 
 #ifndef __DCC_BIT_ENCODER__
@@ -53,10 +53,6 @@ extern "C" {
 
     /** @brief Interface struct — dependencies injected by dcc_config.c */
 typedef struct {
-
-        /** @brief Set timer compare value for next half-bit period (ISR context).
-         *  Used by the variable-period ISR (DccBitEncoder_half_bit_isr). */
-    void (*timer_set_period)(uint16_t half_bit_period_usec);
 
         /** @brief Toggle this channel's DCC output GPIO pin (ISR context).
          *  Used by the fixed-period tick ISR (DccBitEncoder_tick_isr). */
@@ -116,16 +112,6 @@ typedef struct {
      *  interface Pointer to populated  interface_dcc_bit_encoder_t struct.
      */
 extern void DccBitEncoder_initialize(dcc_bit_encoder_context_t *context, const interface_dcc_bit_encoder_t *interface);
-
-    /**
-     * @brief ISR entry point — call from timer compare-match ISR.
-     *  context Pointer to  dcc_bit_encoder_context_t instance.
-     *
-     * @details Each call handles one half-bit. The state machine advances through:
-     * PREAMBLE -> START_BIT -> DATA -> (separator or END_BIT) -> RAILCOM_CUTOUT -> IDLE.
-     * Calls timer_set_period() to set the next half-bit timing.
-     */
-extern void DccBitEncoder_half_bit_isr(dcc_bit_encoder_context_t *context);
 
     /**
      * @brief Fixed-period tick ISR entry point — call every 58us from shared timer.

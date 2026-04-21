@@ -324,10 +324,10 @@ typedef struct {
 #endif /* DCC_COMPILE_DECODER */
 
 // =============================================================================
-// RailCom encoder types (Decoder)
+// RailCom encoder types (Decoder / Accessory Decoder)
 // =============================================================================
 
-#ifdef DCC_COMPILE_DECODER
+#if defined(DCC_COMPILE_DECODER) || defined(DCC_COMPILE_ACCESSORY_DECODER)
 
     /** @brief Maximum data bytes in a RailCom response (decoder side) */
 #ifndef DCC_RAILCOM_DATAGRAM_MAX_BYTES
@@ -343,7 +343,7 @@ typedef struct {
 
 } dcc_railcom_response_t;
 
-#endif /* DCC_COMPILE_DECODER */
+#endif /* DCC_COMPILE_DECODER || DCC_COMPILE_ACCESSORY_DECODER */
 
 #ifdef __cplusplus
 }

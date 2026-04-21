@@ -7,8 +7,8 @@
 //      drivers and (optionally) your application callbacks.
 //   2. Call DccConfig_initialize(&config) once at startup.
 //   3. Wire ISRs:
-//        - Shared 58us timer ISR must call DccConfig_shared_timer_isr().
-//        - RailCom cutout one-shot timer ISR must call DccConfig_railcom_cutout_timer_isr().
+//        - Shared 58us timer ISR must call DccConfig_58us_timer_isr().
+//        - RailCom cutout one-shot timer ISR must call DccConfig_railcom_oneshot_timer_isr().
 //        - A 100 ms periodic timer (or SysTick) must call DccConfig_100ms_timer_tick().
 //   4. Call DccConfig_run() repeatedly in your main loop.
 //
@@ -49,7 +49,7 @@ static const dcc_config_t dcc_config = {
     .get_timestamp_usec      = &TI_DccDriver_get_timestamp_usec,
 
     // Shared fixed-period timer (58us) drives both main and service track
-    // bit encoders via DccConfig_shared_timer_isr().
+    // bit encoders via DccConfig_58us_timer_isr().
     .shared_timer_start      = &TI_DccDriver_shared_timer_start,
     .shared_timer_stop       = &TI_DccDriver_shared_timer_stop,
 
@@ -61,7 +61,6 @@ static const dcc_config_t dcc_config = {
     // Main track hardware -- runs the scheduler (normal DCC operations).
     .main_track = {
         .timer_start      = NULL,    /* not used with shared timer */
-        .timer_set_period = NULL,    /* not used with tick ISR */
         .timer_stop       = NULL,    /* not used with shared timer */
         .pin_toggle       = &TI_DccDriver_main_pin_toggle,
         .track_power_set  = &TI_DccDriver_track_power_set,
@@ -72,7 +71,6 @@ static const dcc_config_t dcc_config = {
     // Service track hardware -- runs service mode (programming).
     .service_track = {
         .timer_start        = NULL,  /* not used with shared timer */
-        .timer_set_period   = NULL,  /* not used with tick ISR */
         .timer_stop         = NULL,  /* not used with shared timer */
         .pin_toggle         = &TI_DccDriver_svc_pin_toggle,
         .track_power_set    = &TI_DccDriver_svc_track_power_set,
@@ -81,9 +79,8 @@ static const dcc_config_t dcc_config = {
     },
 
     // OPTIONAL application callbacks.
-    .on_idle                 = NULL,
     .on_packet_sent          = &CallbacksDcc_on_packet_sent,
-    .on_service_mode_complete = &CallbacksDcc_on_service_mode_complete,
+    .on_service_mode_result  = &CallbacksDcc_on_service_mode_result,
 };
 
 /* ========================================================================== */
@@ -101,7 +98,7 @@ void DCC_BIT_TIMER_INST_IRQHandler(void) {
 
         case DL_TIMER_IIDX_ZERO:
             TI_DccDriver_timestamp_tick();
-            DccConfig_shared_timer_isr();
+            DccConfig_58us_timer_isr();
             break;
 
         default:
@@ -118,7 +115,7 @@ void RAILCOM_TIMER_INST_IRQHandler(void) {
     switch (DL_TimerA_getPendingInterrupt(RAILCOM_TIMER_INST)) {
 
         case DL_TIMER_IIDX_ZERO:
-            DccConfig_railcom_cutout_timer_isr();
+            DccConfig_railcom_oneshot_timer_isr();
             break;
 
         default:
@@ -158,7 +155,7 @@ int main(void) {
     TI_UartDriver_initialize();
 
     // Pass our configuration to the DCC library. After this call the library
-    // is ready but track power is still off. Call DccApplicationMainTrack_power_on()
+    // is ready but track power is still off. Call DccApplicationCommandStationMainTrack_power_on()
     // (via a UART command in this demo) to start sending DCC packets.
     DccConfig_initialize(&dcc_config);
 

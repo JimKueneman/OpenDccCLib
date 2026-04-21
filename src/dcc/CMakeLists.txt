@@ -3,6 +3,12 @@ set(SOURCES
     dcc_config.c
     dcc_application_main_track.c
     dcc_application_service_track.c
+    dcc_application_command_station_main_track.c
+    dcc_application_command_station_service_track.c
+    dcc_application_command_station_packet.c
+    dcc_application_decoder_cv.c
+    dcc_application_decoder_railcom.c
+    dcc_application_accessory_decoder_railcom.c
     dcc_packet_encoder.c
     dcc_bit_encoder.c
     dcc_scheduler.c
@@ -38,6 +44,12 @@ set(TESTS ${TESTS}
     ${ROOT_DIR}/src/dcc/dcc_cv_storage_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_railcom_encoder_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_railcom_cutout_Test.cxx
+    ${ROOT_DIR}/src/dcc/dcc_application_decoder_cv_Test.cxx
+    ${ROOT_DIR}/src/dcc/dcc_application_decoder_railcom_Test.cxx
+    ${ROOT_DIR}/src/dcc/dcc_application_accessory_decoder_railcom_Test.cxx
+    ${ROOT_DIR}/src/dcc/dcc_application_main_track_api_Test.cxx
+    ${ROOT_DIR}/src/dcc/dcc_application_service_track_api_Test.cxx
+    ${ROOT_DIR}/src/dcc/dcc_packet_encoder_raw_Test.cxx
 
     PARENT_SCOPE
 )
