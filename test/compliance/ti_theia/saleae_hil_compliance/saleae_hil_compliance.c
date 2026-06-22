@@ -1,6 +1,9 @@
-// command_station.c
+// saleae_hil_compliance.c
 //
-// Main entry point for the DCC Command Station demo on MSPM0G3507 LaunchPad.
+// Main entry point for the Saleae hardware-in-the-loop DCC compliance test
+// firmware on the MSPM0G3507 LaunchPad. Cloned from the command_station demo:
+// same UART command interface, used to drive the DCC signal under test while a
+// Saleae logic analyzer captures and verifies it against the NMRA standards.
 //
 // INTEGRATION PATTERN:
 //   1. Fill a dcc_config_t struct with function pointers to your hardware
@@ -174,7 +177,7 @@ int main(void) {
 
     // Startup banner
     TI_UartDriver_write_string("\r\n");
-    TI_UartDriver_write_string("DCC Command Station - MSPM0G3507 LaunchPad\r\n");
+    TI_UartDriver_write_string("DCC Saleae HIL Compliance - MSPM0G3507 LaunchPad\r\n");
     TI_UartDriver_write_string("Type HELP for available commands.\r\n");
     TI_UartDriver_write_string("> ");
 

@@ -1,0 +1,9 @@
+# Python virtual environment (local; recreate with: python3 -m venv .venv)
+.venv/
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Generated compliance reports / captures
+reports/
