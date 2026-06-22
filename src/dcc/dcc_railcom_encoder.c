@@ -93,6 +93,20 @@ uint8_t DccRailcomEncoder_encode_byte(uint8_t value) {
 
 }
 
+void DccRailcomEncoder_send_code_word(uint8_t code_word) {
+
+    if (!_interface->uart_write) {
+
+        return;
+
+    }
+
+    /* Special code words (ACK 0xF0/0x0F, NACK 0x3C) are transmitted raw,
+     * bypassing the 4/8 encode table (2026 draft S-9.3.2). */
+    _interface->uart_write(code_word);
+
+}
+
 void DccRailcomEncoder_send_ch1(uint8_t datagram_id, uint8_t data) {
 
     uint16_t combined;

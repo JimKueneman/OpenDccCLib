@@ -2,7 +2,15 @@
  * Copyright (c) 2026, Jim Kueneman
  * All rights reserved.
  *
- * Test suite for DCC RailCom Cutout Timer
+ * Test suite for DCC RailCom Cutout Timer (5-state machine)
+ *
+ * State machine (action fires when each loaded duration EXPIRES;
+ * cumulative spec event times in parens, defaults shown):
+ *   DELAY    (26)  -> T_CS  = 26:  tristate H-bridge / begin cutout -> SETTLING
+ *   SETTLING (54)  -> T_TS1 = 80:  enable UART Rx                   -> CH1
+ *   CH1      (97)  -> T_TC1 = 177: disable UART Rx                  -> GAP
+ *   GAP      (16)  -> T_TS2 = 193: enable UART Rx                   -> CH2
+ *   CH2      (261) -> T_CE  = 454: disable UART Rx, restore H-bridge -> IDLE
  */
 
 #include "test/main_Test.hxx"
@@ -120,6 +128,19 @@ static interface_dcc_railcom_cutout_t make_interface(void) {
 
 }
 
+/* Initialize a context with the spec-default timing values. */
+static void init_with_defaults(dcc_railcom_cutout_context_t *context,
+                               const interface_dcc_railcom_cutout_t *interface) {
+
+    DccRailcomCutout_initialize(context, interface,
+                                DCC_RAILCOM_CUTOUT_START_DELAY_US,
+                                DCC_RAILCOM_UART_RX_DELAY_US,
+                                DCC_RAILCOM_CH1_WINDOW_US,
+                                DCC_RAILCOM_CH1_CH2_GAP_US,
+                                DCC_RAILCOM_CH2_WINDOW_US);
+
+}
+
 // ============================================================================
 // Initialization tests
 // ============================================================================
@@ -129,14 +150,29 @@ TEST(DccRailcomCutout, initialize_sets_idle) {
     reset_mocks();
     dcc_railcom_cutout_context_t context;
     interface_dcc_railcom_cutout_t interface = make_interface();
-    DccRailcomCutout_initialize(&context, &interface);
+    init_with_defaults(&context, &interface);
 
     EXPECT_TRUE(DccRailcomCutout_is_idle(&context));
 
 }
 
+TEST(DccRailcomCutout, initialize_stores_timing_fields) {
+
+    reset_mocks();
+    dcc_railcom_cutout_context_t context;
+    interface_dcc_railcom_cutout_t interface = make_interface();
+    DccRailcomCutout_initialize(&context, &interface, 1, 2, 3, 4, 5);
+
+    EXPECT_EQ(context.start_delay_us, (uint16_t)1);
+    EXPECT_EQ(context.uart_rx_delay_us, (uint16_t)2);
+    EXPECT_EQ(context.ch1_window_us, (uint16_t)3);
+    EXPECT_EQ(context.ch1_ch2_gap_us, (uint16_t)4);
+    EXPECT_EQ(context.ch2_window_us, (uint16_t)5);
+
+}
+
 // ============================================================================
-// Begin starts 88us delay
+// Begin starts DELAY one-shot (start_delay_us)
 // ============================================================================
 
 TEST(DccRailcomCutout, begin_starts_delay_timer) {
@@ -144,47 +180,91 @@ TEST(DccRailcomCutout, begin_starts_delay_timer) {
     reset_mocks();
     dcc_railcom_cutout_context_t context;
     interface_dcc_railcom_cutout_t interface = make_interface();
-    DccRailcomCutout_initialize(&context, &interface);
+    init_with_defaults(&context, &interface);
 
     DccRailcomCutout_begin(&context);
 
     EXPECT_FALSE(DccRailcomCutout_is_idle(&context));
     EXPECT_EQ(timer_start_count, (uint32_t)1);
-    EXPECT_EQ(last_timer_period, (uint16_t)DCC_RAILCOM_CUTOUT_START_US);
+    EXPECT_EQ(last_timer_period, (uint16_t)DCC_RAILCOM_CUTOUT_START_DELAY_US);
+    EXPECT_EQ(last_timer_period, (uint16_t)26);
 
 }
 
 // ============================================================================
-// Full cutout sequence: DELAY -> CH1 -> CH2 -> IDLE
+// Per-state one-shot periods: 26 / 54 / 97 / 16 / 261
 // ============================================================================
 
-TEST(DccRailcomCutout, full_sequence_callback_order) {
+TEST(DccRailcomCutout, per_state_timer_periods_are_correct) {
 
     reset_mocks();
     dcc_railcom_cutout_context_t context;
     interface_dcc_railcom_cutout_t interface = make_interface();
-    DccRailcomCutout_initialize(&context, &interface);
+    init_with_defaults(&context, &interface);
 
+    DccRailcomCutout_begin(&context);            /* load DELAY */
+    EXPECT_EQ(last_timer_period, (uint16_t)26);
+
+    DccRailcomCutout_timer_isr(&context);        /* DELAY expiry -> load SETTLING */
+    EXPECT_EQ(last_timer_period, (uint16_t)54);
+
+    DccRailcomCutout_timer_isr(&context);        /* SETTLING expiry -> load CH1 */
+    EXPECT_EQ(last_timer_period, (uint16_t)97);
+
+    DccRailcomCutout_timer_isr(&context);        /* CH1 expiry -> load GAP */
+    EXPECT_EQ(last_timer_period, (uint16_t)16);
+
+    DccRailcomCutout_timer_isr(&context);        /* GAP expiry -> load CH2 */
+    EXPECT_EQ(last_timer_period, (uint16_t)261);
+
+    /* begin + 4 reprograms (DELAY,SETTLING,CH1,GAP); CH2 expiry does not reprogram */
+    EXPECT_EQ(timer_start_count, (uint32_t)5);
+
+}
+
+// ============================================================================
+// Full sequence: IDLE -> DELAY -> SETTLING -> CH1 -> GAP -> CH2 -> IDLE
+// ============================================================================
+
+TEST(DccRailcomCutout, full_sequence_state_transitions_and_actions) {
+
+    reset_mocks();
+    dcc_railcom_cutout_context_t context;
+    interface_dcc_railcom_cutout_t interface = make_interface();
+    init_with_defaults(&context, &interface);
+
+    /* IDLE -> DELAY */
     DccRailcomCutout_begin(&context);
+    EXPECT_FALSE(DccRailcomCutout_is_idle(&context));
 
-    /* ISR 1: 88us delay elapsed -> begin cutout, enable UART rx, start 464us */
+    /* DELAY expiry (T_CS): tristate H-bridge, NOT UART yet */
     DccRailcomCutout_timer_isr(&context);
-
     EXPECT_TRUE(cutout_began);
+    EXPECT_FALSE(uart_rx_enabled);
+    EXPECT_FALSE(DccRailcomCutout_is_idle(&context));
+
+    /* SETTLING expiry (T_TS1): enable UART Rx (Ch1 opens) */
+    DccRailcomCutout_timer_isr(&context);
     EXPECT_TRUE(uart_rx_enabled);
-    EXPECT_EQ(last_timer_period, (uint16_t)DCC_RAILCOM_CH1_WINDOW_US);
+    EXPECT_FALSE(uart_rx_disabled);
     EXPECT_FALSE(DccRailcomCutout_is_idle(&context));
 
-    /* ISR 2: 464us Ch1 elapsed -> start 1080us (UART rx stays enabled) */
+    /* CH1 expiry (T_TC1): disable UART Rx (Ch1 closes) */
+    uart_rx_disabled = false;
     DccRailcomCutout_timer_isr(&context);
-
-    EXPECT_EQ(last_timer_period,
-              (uint16_t)(DCC_RAILCOM_CUTOUT_TOTAL_US - DCC_RAILCOM_CH1_WINDOW_US));
+    EXPECT_TRUE(uart_rx_disabled);
+    EXPECT_FALSE(cutout_ended);
     EXPECT_FALSE(DccRailcomCutout_is_idle(&context));
 
-    /* ISR 3: 1080us Ch2 elapsed -> disable UART rx, end cutout, complete */
+    /* GAP expiry (T_TS2): re-enable UART Rx (Ch2 opens) */
+    uart_rx_enabled = false;
     DccRailcomCutout_timer_isr(&context);
+    EXPECT_TRUE(uart_rx_enabled);
+    EXPECT_FALSE(DccRailcomCutout_is_idle(&context));
 
+    /* CH2 expiry (T_CE): disable UART Rx, restore H-bridge, complete */
+    uart_rx_disabled = false;
+    DccRailcomCutout_timer_isr(&context);
     EXPECT_TRUE(uart_rx_disabled);
     EXPECT_TRUE(cutout_ended);
     EXPECT_TRUE(cutout_complete_called);
@@ -192,56 +272,51 @@ TEST(DccRailcomCutout, full_sequence_callback_order) {
 
 }
 
+// ============================================================================
+// Full sequence: exact event ordering (incl. UART enable/disable across gap)
+// ============================================================================
+
 TEST(DccRailcomCutout, full_sequence_event_order) {
 
     reset_mocks();
     dcc_railcom_cutout_context_t context;
     interface_dcc_railcom_cutout_t interface = make_interface();
-    DccRailcomCutout_initialize(&context, &interface);
+    init_with_defaults(&context, &interface);
 
-    DccRailcomCutout_begin(&context);
-    DccRailcomCutout_timer_isr(&context);  /* DELAY -> CH1 */
-    DccRailcomCutout_timer_isr(&context);  /* CH1 -> CH2 */
-    DccRailcomCutout_timer_isr(&context);  /* CH2 -> IDLE */
+    DccRailcomCutout_begin(&context);            /* IDLE -> DELAY */
+    DccRailcomCutout_timer_isr(&context);        /* DELAY -> SETTLING */
+    DccRailcomCutout_timer_isr(&context);        /* SETTLING -> CH1 */
+    DccRailcomCutout_timer_isr(&context);        /* CH1 -> GAP */
+    DccRailcomCutout_timer_isr(&context);        /* GAP -> CH2 */
+    DccRailcomCutout_timer_isr(&context);        /* CH2 -> IDLE */
 
-    /* Verify exact callback ordering */
-    ASSERT_EQ(event_log_count, (uint32_t)8);
+    /* begin: timer_start(26)
+     * DELAY:    begin_railcom_cutout, timer_start(54)
+     * SETTLING: uart_rx_enable,       timer_start(97)
+     * CH1:      uart_rx_disable,      timer_start(16)
+     * GAP:      uart_rx_enable,       timer_start(261)
+     * CH2:      uart_rx_disable, end_railcom_cutout, cutout_complete
+     *
+     * Total: begin(1) + DELAY(2) + SETTLING(2) + CH1(2) + GAP(2) + CH2(3) = 12 */
+    ASSERT_EQ(event_log_count, (uint32_t)12);
 
-    /* begin: timer_start(88) */
-    EXPECT_STREQ(event_log[0], "timer_start");
+    EXPECT_STREQ(event_log[0], "timer_start");           /* begin DELAY */
 
-    /* ISR 1 (DELAY): begin_railcom_cutout, uart_rx_enable, timer_start(464) */
-    EXPECT_STREQ(event_log[1], "begin_railcom_cutout");
-    EXPECT_STREQ(event_log[2], "uart_rx_enable");
-    EXPECT_STREQ(event_log[3], "timer_start");
+    EXPECT_STREQ(event_log[1], "begin_railcom_cutout");  /* DELAY expiry */
+    EXPECT_STREQ(event_log[2], "timer_start");
 
-    /* ISR 2 (CH1): timer_start(1080) — UART rx stays enabled */
+    EXPECT_STREQ(event_log[3], "uart_rx_enable");        /* SETTLING expiry: Ch1 opens */
     EXPECT_STREQ(event_log[4], "timer_start");
 
-    /* ISR 3 (CH2): uart_rx_disable, end_railcom_cutout, cutout_complete */
-    EXPECT_STREQ(event_log[5], "uart_rx_disable");
-    EXPECT_STREQ(event_log[6], "end_railcom_cutout");
-    EXPECT_STREQ(event_log[7], "cutout_complete");
+    EXPECT_STREQ(event_log[5], "uart_rx_disable");       /* CH1 expiry: Ch1 closes */
+    EXPECT_STREQ(event_log[6], "timer_start");
 
-}
+    EXPECT_STREQ(event_log[7], "uart_rx_enable");        /* GAP expiry: Ch2 opens */
+    EXPECT_STREQ(event_log[8], "timer_start");
 
-TEST(DccRailcomCutout, timer_periods_are_correct) {
-
-    reset_mocks();
-    dcc_railcom_cutout_context_t context;
-    interface_dcc_railcom_cutout_t interface = make_interface();
-    DccRailcomCutout_initialize(&context, &interface);
-
-    DccRailcomCutout_begin(&context);
-    EXPECT_EQ(last_timer_period, (uint16_t)88);
-
-    DccRailcomCutout_timer_isr(&context);
-    EXPECT_EQ(last_timer_period, (uint16_t)464);
-
-    DccRailcomCutout_timer_isr(&context);
-    EXPECT_EQ(last_timer_period, (uint16_t)1080);
-
-    EXPECT_EQ(timer_start_count, (uint32_t)3);
+    EXPECT_STREQ(event_log[9], "uart_rx_disable");       /* CH2 expiry: Ch2 closes */
+    EXPECT_STREQ(event_log[10], "end_railcom_cutout");   /* restore H-bridge */
+    EXPECT_STREQ(event_log[11], "cutout_complete");
 
 }
 
@@ -254,7 +329,7 @@ TEST(DccRailcomCutout, spurious_isr_in_idle_is_harmless) {
     reset_mocks();
     dcc_railcom_cutout_context_t context;
     interface_dcc_railcom_cutout_t interface = make_interface();
-    DccRailcomCutout_initialize(&context, &interface);
+    init_with_defaults(&context, &interface);
 
     DccRailcomCutout_timer_isr(&context);
 
@@ -264,23 +339,43 @@ TEST(DccRailcomCutout, spurious_isr_in_idle_is_harmless) {
 }
 
 // ============================================================================
-// Cancel during cutout
+// Cancel during each active state
 // ============================================================================
 
-TEST(DccRailcomCutout, cancel_during_delay_stops_timer) {
+TEST(DccRailcomCutout, cancel_during_delay_stops_timer_no_restore) {
 
     reset_mocks();
     dcc_railcom_cutout_context_t context;
     interface_dcc_railcom_cutout_t interface = make_interface();
-    DccRailcomCutout_initialize(&context, &interface);
+    init_with_defaults(&context, &interface);
 
-    DccRailcomCutout_begin(&context);
+    DccRailcomCutout_begin(&context);            /* DELAY */
     DccRailcomCutout_cancel(&context);
 
     EXPECT_TRUE(timer_stopped);
     EXPECT_TRUE(DccRailcomCutout_is_idle(&context));
-    /* Cutout was not begun during DELAY, so no end needed */
+    /* H-bridge not yet tristated during DELAY -> no restore */
     EXPECT_FALSE(cutout_ended);
+    EXPECT_FALSE(uart_rx_disabled);
+
+}
+
+TEST(DccRailcomCutout, cancel_during_settling_ends_cutout) {
+
+    reset_mocks();
+    dcc_railcom_cutout_context_t context;
+    interface_dcc_railcom_cutout_t interface = make_interface();
+    init_with_defaults(&context, &interface);
+
+    DccRailcomCutout_begin(&context);            /* DELAY */
+    DccRailcomCutout_timer_isr(&context);        /* DELAY -> SETTLING, H-bridge tristated */
+
+    DccRailcomCutout_cancel(&context);
+
+    EXPECT_TRUE(timer_stopped);
+    EXPECT_TRUE(cutout_ended);
+    EXPECT_TRUE(uart_rx_disabled);
+    EXPECT_TRUE(DccRailcomCutout_is_idle(&context));
 
 }
 
@@ -289,11 +384,36 @@ TEST(DccRailcomCutout, cancel_during_ch1_ends_cutout) {
     reset_mocks();
     dcc_railcom_cutout_context_t context;
     interface_dcc_railcom_cutout_t interface = make_interface();
-    DccRailcomCutout_initialize(&context, &interface);
+    init_with_defaults(&context, &interface);
 
-    DccRailcomCutout_begin(&context);
-    DccRailcomCutout_timer_isr(&context);  /* DELAY -> CH1, cutout began */
+    DccRailcomCutout_begin(&context);            /* DELAY */
+    DccRailcomCutout_timer_isr(&context);        /* -> SETTLING */
+    DccRailcomCutout_timer_isr(&context);        /* -> CH1 */
 
+    uart_rx_disabled = false;
+    DccRailcomCutout_cancel(&context);
+
+    EXPECT_TRUE(timer_stopped);
+    EXPECT_TRUE(cutout_ended);
+    EXPECT_TRUE(uart_rx_disabled);
+    EXPECT_TRUE(DccRailcomCutout_is_idle(&context));
+
+}
+
+TEST(DccRailcomCutout, cancel_during_gap_ends_cutout) {
+
+    reset_mocks();
+    dcc_railcom_cutout_context_t context;
+    interface_dcc_railcom_cutout_t interface = make_interface();
+    init_with_defaults(&context, &interface);
+
+    DccRailcomCutout_begin(&context);            /* DELAY */
+    DccRailcomCutout_timer_isr(&context);        /* -> SETTLING */
+    DccRailcomCutout_timer_isr(&context);        /* -> CH1 */
+    DccRailcomCutout_timer_isr(&context);        /* -> GAP */
+
+    cutout_ended = false;
+    uart_rx_disabled = false;
     DccRailcomCutout_cancel(&context);
 
     EXPECT_TRUE(timer_stopped);
@@ -308,14 +428,16 @@ TEST(DccRailcomCutout, cancel_during_ch2_ends_cutout) {
     reset_mocks();
     dcc_railcom_cutout_context_t context;
     interface_dcc_railcom_cutout_t interface = make_interface();
-    DccRailcomCutout_initialize(&context, &interface);
+    init_with_defaults(&context, &interface);
 
-    DccRailcomCutout_begin(&context);
-    DccRailcomCutout_timer_isr(&context);  /* DELAY -> CH1 */
-    DccRailcomCutout_timer_isr(&context);  /* CH1 -> CH2 */
+    DccRailcomCutout_begin(&context);            /* DELAY */
+    DccRailcomCutout_timer_isr(&context);        /* -> SETTLING */
+    DccRailcomCutout_timer_isr(&context);        /* -> CH1 */
+    DccRailcomCutout_timer_isr(&context);        /* -> GAP */
+    DccRailcomCutout_timer_isr(&context);        /* -> CH2 */
 
-    cutout_ended = false;  /* Reset to verify cancel ends cutout */
-    uart_rx_disabled = false;  /* Reset to verify cancel disables UART */
+    cutout_ended = false;
+    uart_rx_disabled = false;
     DccRailcomCutout_cancel(&context);
 
     EXPECT_TRUE(timer_stopped);
@@ -330,7 +452,7 @@ TEST(DccRailcomCutout, cancel_when_idle_is_harmless) {
     reset_mocks();
     dcc_railcom_cutout_context_t context;
     interface_dcc_railcom_cutout_t interface = make_interface();
-    DccRailcomCutout_initialize(&context, &interface);
+    init_with_defaults(&context, &interface);
 
     DccRailcomCutout_cancel(&context);
 
@@ -346,7 +468,7 @@ TEST(DccRailcomCutout, cancel_when_idle_is_harmless) {
 TEST(DccRailcomCutout, begin_with_null_interface_does_not_crash) {
 
     dcc_railcom_cutout_context_t context;
-    DccRailcomCutout_initialize(&context, NULL);
+    DccRailcomCutout_initialize(&context, NULL, 26, 54, 97, 16, 261);
 
     DccRailcomCutout_begin(&context);
 
@@ -357,40 +479,19 @@ TEST(DccRailcomCutout, begin_with_null_interface_does_not_crash) {
 TEST(DccRailcomCutout, timer_isr_with_null_interface_does_not_crash) {
 
     dcc_railcom_cutout_context_t context;
-    DccRailcomCutout_initialize(&context, NULL);
+    DccRailcomCutout_initialize(&context, NULL, 26, 54, 97, 16, 261);
 
     DccRailcomCutout_timer_isr(&context);
 
 }
 
-// ============================================================================
-// Second cutout after first completes
-// ============================================================================
+TEST(DccRailcomCutout, cancel_with_null_interface_does_not_crash) {
 
-TEST(DccRailcomCutout, second_cutout_after_first_succeeds) {
-
-    reset_mocks();
     dcc_railcom_cutout_context_t context;
-    interface_dcc_railcom_cutout_t interface = make_interface();
-    DccRailcomCutout_initialize(&context, &interface);
+    DccRailcomCutout_initialize(&context, NULL, 26, 54, 97, 16, 261);
 
-    /* First cutout */
-    DccRailcomCutout_begin(&context);
-    DccRailcomCutout_timer_isr(&context);
-    DccRailcomCutout_timer_isr(&context);
-    DccRailcomCutout_timer_isr(&context);
+    DccRailcomCutout_cancel(&context);
 
-    EXPECT_TRUE(cutout_complete_called);
-    EXPECT_TRUE(DccRailcomCutout_is_idle(&context));
-
-    /* Second cutout */
-    cutout_complete_called = false;
-    DccRailcomCutout_begin(&context);
-    DccRailcomCutout_timer_isr(&context);
-    DccRailcomCutout_timer_isr(&context);
-    DccRailcomCutout_timer_isr(&context);
-
-    EXPECT_TRUE(cutout_complete_called);
     EXPECT_TRUE(DccRailcomCutout_is_idle(&context));
 
 }
@@ -405,7 +506,7 @@ TEST(DccRailcomCutout, begin_with_null_timer_one_shot_start) {
     dcc_railcom_cutout_context_t context;
     interface_dcc_railcom_cutout_t interface = make_interface();
     interface.timer_one_shot_start = NULL;
-    DccRailcomCutout_initialize(&context, &interface);
+    init_with_defaults(&context, &interface);
 
     DccRailcomCutout_begin(&context);
 
@@ -421,40 +522,86 @@ TEST(DccRailcomCutout, timer_isr_delay_with_null_callbacks) {
     dcc_railcom_cutout_context_t context;
     interface_dcc_railcom_cutout_t interface;
     memset(&interface, 0, sizeof(interface));
-    /* Only timer_one_shot_start for begin(), all others NULL */
     interface.timer_one_shot_start = mock_timer_one_shot_start;
-    DccRailcomCutout_initialize(&context, &interface);
+    init_with_defaults(&context, &interface);
 
     DccRailcomCutout_begin(&context);
 
-    /* Now NULL out timer_one_shot_start so ISR DELAY state sees all NULL */
+    /* NULL out timer_one_shot_start so the DELAY ISR sees all relevant NULLs */
     interface.timer_one_shot_start = NULL;
 
-    /* ISR in DELAY state: begin_railcom_cutout=NULL, uart_rx_enable=NULL,
-     * timer_one_shot_start=NULL — all three NULL branches taken */
-    DccRailcomCutout_timer_isr(&context);
+    DccRailcomCutout_timer_isr(&context);        /* DELAY: begin=NULL, timer=NULL */
 
     EXPECT_FALSE(cutout_began);
-    EXPECT_FALSE(uart_rx_enabled);
 
 }
 
-TEST(DccRailcomCutout, timer_isr_ch1_with_null_timer_start) {
+TEST(DccRailcomCutout, timer_isr_settling_with_null_callbacks) {
 
     reset_mocks();
     dcc_railcom_cutout_context_t context;
     interface_dcc_railcom_cutout_t interface = make_interface();
-    DccRailcomCutout_initialize(&context, &interface);
+    init_with_defaults(&context, &interface);
 
     DccRailcomCutout_begin(&context);
-    DccRailcomCutout_timer_isr(&context);  /* DELAY -> CH1 */
+    DccRailcomCutout_timer_isr(&context);        /* DELAY -> SETTLING */
 
-    /* NULL out timer_one_shot_start before CH1 ISR */
+    interface.uart_rx_enable = NULL;
     interface.timer_one_shot_start = NULL;
     timer_start_count = 0;
 
-    DccRailcomCutout_timer_isr(&context);  /* CH1 -> CH2, timer_start NULL */
+    DccRailcomCutout_timer_isr(&context);        /* SETTLING: enable=NULL, timer=NULL */
 
+    EXPECT_FALSE(uart_rx_enabled);
+    EXPECT_EQ(timer_start_count, (uint32_t)0);
+    EXPECT_FALSE(DccRailcomCutout_is_idle(&context));
+
+}
+
+TEST(DccRailcomCutout, timer_isr_ch1_with_null_callbacks) {
+
+    reset_mocks();
+    dcc_railcom_cutout_context_t context;
+    interface_dcc_railcom_cutout_t interface = make_interface();
+    init_with_defaults(&context, &interface);
+
+    DccRailcomCutout_begin(&context);
+    DccRailcomCutout_timer_isr(&context);        /* -> SETTLING */
+    DccRailcomCutout_timer_isr(&context);        /* -> CH1 */
+
+    interface.uart_rx_disable = NULL;
+    interface.timer_one_shot_start = NULL;
+    timer_start_count = 0;
+    uart_rx_disabled = false;
+
+    DccRailcomCutout_timer_isr(&context);        /* CH1: disable=NULL, timer=NULL */
+
+    EXPECT_FALSE(uart_rx_disabled);
+    EXPECT_EQ(timer_start_count, (uint32_t)0);
+    EXPECT_FALSE(DccRailcomCutout_is_idle(&context));
+
+}
+
+TEST(DccRailcomCutout, timer_isr_gap_with_null_callbacks) {
+
+    reset_mocks();
+    dcc_railcom_cutout_context_t context;
+    interface_dcc_railcom_cutout_t interface = make_interface();
+    init_with_defaults(&context, &interface);
+
+    DccRailcomCutout_begin(&context);
+    DccRailcomCutout_timer_isr(&context);        /* -> SETTLING */
+    DccRailcomCutout_timer_isr(&context);        /* -> CH1 */
+    DccRailcomCutout_timer_isr(&context);        /* -> GAP */
+
+    interface.uart_rx_enable = NULL;
+    interface.timer_one_shot_start = NULL;
+    timer_start_count = 0;
+    uart_rx_enabled = false;
+
+    DccRailcomCutout_timer_isr(&context);        /* GAP: enable=NULL, timer=NULL */
+
+    EXPECT_FALSE(uart_rx_enabled);
     EXPECT_EQ(timer_start_count, (uint32_t)0);
     EXPECT_FALSE(DccRailcomCutout_is_idle(&context));
 
@@ -465,18 +612,20 @@ TEST(DccRailcomCutout, timer_isr_ch2_with_null_callbacks) {
     reset_mocks();
     dcc_railcom_cutout_context_t context;
     interface_dcc_railcom_cutout_t interface = make_interface();
-    DccRailcomCutout_initialize(&context, &interface);
+    init_with_defaults(&context, &interface);
 
     DccRailcomCutout_begin(&context);
-    DccRailcomCutout_timer_isr(&context);  /* DELAY -> CH1 */
-    DccRailcomCutout_timer_isr(&context);  /* CH1 -> CH2 */
+    DccRailcomCutout_timer_isr(&context);        /* -> SETTLING */
+    DccRailcomCutout_timer_isr(&context);        /* -> CH1 */
+    DccRailcomCutout_timer_isr(&context);        /* -> GAP */
+    DccRailcomCutout_timer_isr(&context);        /* -> CH2 */
 
-    /* NULL out CH2 completion callbacks */
     interface.uart_rx_disable = NULL;
     interface.end_railcom_cutout = NULL;
     interface.on_cutout_complete = NULL;
+    uart_rx_disabled = false;
 
-    DccRailcomCutout_timer_isr(&context);  /* CH2 -> IDLE */
+    DccRailcomCutout_timer_isr(&context);        /* CH2 -> IDLE, all NULL */
 
     EXPECT_TRUE(DccRailcomCutout_is_idle(&context));
     EXPECT_FALSE(uart_rx_disabled);
@@ -490,31 +639,92 @@ TEST(DccRailcomCutout, cancel_during_ch1_with_null_callbacks) {
     reset_mocks();
     dcc_railcom_cutout_context_t context;
     interface_dcc_railcom_cutout_t interface = make_interface();
-    DccRailcomCutout_initialize(&context, &interface);
+    init_with_defaults(&context, &interface);
 
     DccRailcomCutout_begin(&context);
-    DccRailcomCutout_timer_isr(&context);  /* DELAY -> CH1 */
+    DccRailcomCutout_timer_isr(&context);        /* -> SETTLING */
+    DccRailcomCutout_timer_isr(&context);        /* -> CH1 */
 
-    /* NULL out cancel-path callbacks */
     interface.timer_one_shot_stop = NULL;
     interface.uart_rx_disable = NULL;
     interface.end_railcom_cutout = NULL;
+    uart_rx_disabled = false;
+    cutout_ended = false;
 
     DccRailcomCutout_cancel(&context);
 
     EXPECT_TRUE(DccRailcomCutout_is_idle(&context));
     EXPECT_FALSE(timer_stopped);
+    EXPECT_FALSE(uart_rx_disabled);
+    EXPECT_FALSE(cutout_ended);
 
 }
 
-TEST(DccRailcomCutout, cancel_with_null_interface_does_not_crash) {
+// ============================================================================
+// Second cutout after first completes
+// ============================================================================
 
+TEST(DccRailcomCutout, second_cutout_after_first_succeeds) {
+
+    reset_mocks();
     dcc_railcom_cutout_context_t context;
-    DccRailcomCutout_initialize(&context, NULL);
+    interface_dcc_railcom_cutout_t interface = make_interface();
+    init_with_defaults(&context, &interface);
 
-    /* Force state to non-idle to verify cancel's NULL guard */
-    DccRailcomCutout_cancel(&context);
+    /* First cutout: DELAY,SETTLING,CH1,GAP,CH2 = 5 ISRs */
+    DccRailcomCutout_begin(&context);
+    DccRailcomCutout_timer_isr(&context);
+    DccRailcomCutout_timer_isr(&context);
+    DccRailcomCutout_timer_isr(&context);
+    DccRailcomCutout_timer_isr(&context);
+    DccRailcomCutout_timer_isr(&context);
 
+    EXPECT_TRUE(cutout_complete_called);
     EXPECT_TRUE(DccRailcomCutout_is_idle(&context));
+
+    /* Second cutout */
+    cutout_complete_called = false;
+    last_timer_period = 0;
+    DccRailcomCutout_begin(&context);
+    EXPECT_EQ(last_timer_period, (uint16_t)26);  /* reloads DELAY */
+
+    DccRailcomCutout_timer_isr(&context);
+    DccRailcomCutout_timer_isr(&context);
+    DccRailcomCutout_timer_isr(&context);
+    DccRailcomCutout_timer_isr(&context);
+    DccRailcomCutout_timer_isr(&context);
+
+    EXPECT_TRUE(cutout_complete_called);
+    EXPECT_TRUE(DccRailcomCutout_is_idle(&context));
+
+}
+
+// ============================================================================
+// 0 -> default substitution happens in dcc_config.c, not in the module.
+// The module uses exactly the values passed to initialize. Verify that a
+// caller passing custom (non-default) timings drives those periods.
+// ============================================================================
+
+TEST(DccRailcomCutout, custom_timings_drive_each_state_period) {
+
+    reset_mocks();
+    dcc_railcom_cutout_context_t context;
+    interface_dcc_railcom_cutout_t interface = make_interface();
+    DccRailcomCutout_initialize(&context, &interface, 10, 20, 30, 40, 50);
+
+    DccRailcomCutout_begin(&context);
+    EXPECT_EQ(last_timer_period, (uint16_t)10);  /* DELAY */
+
+    DccRailcomCutout_timer_isr(&context);
+    EXPECT_EQ(last_timer_period, (uint16_t)20);  /* SETTLING */
+
+    DccRailcomCutout_timer_isr(&context);
+    EXPECT_EQ(last_timer_period, (uint16_t)30);  /* CH1 */
+
+    DccRailcomCutout_timer_isr(&context);
+    EXPECT_EQ(last_timer_period, (uint16_t)40);  /* GAP */
+
+    DccRailcomCutout_timer_isr(&context);
+    EXPECT_EQ(last_timer_period, (uint16_t)50);  /* CH2 */
 
 }

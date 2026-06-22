@@ -40,8 +40,8 @@
 // RailCom datagram ID aliases (mapped to existing dcc_defines.h constants)
 // =============================================================================
 
-    /** @brief SRQ -- Ch1 datagram ID 0 (S-9.3.2) */
-#define RAILCOM_ID_SRQ          DCC_RAILCOM_ID_MOBILITY_0
+    /* SRQ is a 12-bit Channel-1 datagram with NO identifier (S-9.3.2
+     * Section 7.1 / Table 36); see DccApplicationAccessoryDecoderRailcom_on_cutout. */
 
     /** @brief All-pairs status -- Ch2 datagram ID 3 (S-9.3.2) */
 #define RAILCOM_ID_STATUS_4     3
@@ -270,20 +270,43 @@ void DccApplicationAccessoryDecoderRailcom_on_cutout(void) {
 
     if (_srq_state == DCC_ACC_SRQ_PENDING) {
 
-        /* Build and send Ch1 SRQ datagram from stored address */
+        /* Build and send the Ch1 SRQ datagram from the stored address.
+         *
+         * Per S-9.3.2 Section 7.1 / Table 36 (page 45-46), the SRQ is a
+         * 12-bit Channel-1 datagram with NO identifier:
+         *
+         *     basic    : 0AAA AAAA-AAAA  (MSB = 0, 11-bit address)
+         *     extended : 1AAA AAAA-AAAA  (MSB = 1, 11-bit address)
+         *
+         * DccRailcomEncoder_send_ch1() packs its two arguments into one
+         * 12-bit value as ((datagram_id & 0x0F) << 8) | data, then splits
+         * that into two 6-bit RailCom code words.  There is no SRQ
+         * identifier, so the full 12 bits must carry the format bit and the
+         * 11-bit address:
+         *
+         *     bit 11      = format flag (0 basic, 1 extended)
+         *     bits 10..0  = accessory decoder address
+         *
+         * Mapped onto send_ch1(datagram_id, data):
+         *     datagram_id (bits 11..8) = (format << 3) | ((address >> 8) & 0x07)
+         *     data        (bits  7..0) = address & 0xFF
+         */
+        uint16_t datagram;
+        uint8_t high_field;
+        uint8_t low_field;
+
+        datagram = (uint16_t)(_srq_address & 0x07FF);
+
         if (_srq_is_extended) {
 
-            /* Extended (11-bit): low 8 bits in data, upper 3 bits in high nibble */
-            _interface->send_ch1(RAILCOM_ID_SRQ,
-                                 (uint8_t)(_srq_address & 0xFF));
-
-        } else {
-
-            /* Basic (9-bit): low 8 bits in data, high bit in upper nibble */
-            _interface->send_ch1(RAILCOM_ID_SRQ,
-                                 (uint8_t)(_srq_address & 0xFF));
+            datagram |= (uint16_t)(1u << 11);
 
         }
+
+        high_field = (uint8_t)((datagram >> 8) & 0x0F);
+        low_field = (uint8_t)(datagram & 0xFF);
+
+        _interface->send_ch1(high_field, low_field);
 
     } else if (_srq_state == DCC_ACC_SRQ_RESPONDING) {
 

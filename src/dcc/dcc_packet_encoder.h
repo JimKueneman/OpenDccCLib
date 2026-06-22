@@ -399,17 +399,6 @@ extern bool DccPacketEncoder_binary_state_long(dcc_packet_t *packet, dcc_address
      */
 extern bool DccPacketEncoder_analog_function(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t output_number, uint8_t value);
 
-    /**
-     * @brief Build a speed restriction packet.
-     *  packet Pointer to  dcc_packet_t struct to fill.
-     * @param address DCC address.
-     *  address_type Short or long address ( dcc_address_type_enum).
-     * @param enabled true=restriction active, false=restriction removed.
-     * @param speed_limit Speed limit value (0-127).
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccPacketEncoder_speed_restriction(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, bool enabled, uint8_t speed_limit);
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

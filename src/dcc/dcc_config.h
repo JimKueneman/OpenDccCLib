@@ -233,6 +233,26 @@ typedef struct {
         /** @brief Stop the RailCom cutout one-shot timer. */
     void (*railcom_timer_stop)(void);
 
+        /** @brief Cutout DELAY duration before tristating the H-bridge at
+         *  T_CS = 26us after the packet end bit. 0 = use spec default. */
+    uint16_t railcom_cutout_start_delay_us;
+
+        /** @brief Cutout SETTLING duration before enabling UART Rx at
+         *  T_TS1 = 80us (cumulative). 0 = use spec default. */
+    uint16_t railcom_uart_rx_delay_us;
+
+        /** @brief Cutout CH1 window before disabling UART Rx at
+         *  T_TC1 = 177us (cumulative). 0 = use spec default. */
+    uint16_t railcom_ch1_window_us;
+
+        /** @brief Cutout GAP between Ch1 and Ch2 before re-enabling UART Rx at
+         *  T_TS2 = 193us (cumulative). 0 = use spec default. */
+    uint16_t railcom_ch1_ch2_gap_us;
+
+        /** @brief Cutout CH2 window before disabling UART Rx and restoring the
+         *  H-bridge at T_CE = 454us (cumulative). 0 = use spec default. */
+    uint16_t railcom_ch2_window_us;
+
         /** @brief Main track output hardware. Runs the scheduler (normal DCC). */
     dcc_output_hw_t main_track;
 
@@ -340,9 +360,6 @@ typedef struct {
 
         /** @brief Analog function output command received. */
     void (*on_analog_function_command)(uint16_t address, uint8_t output_number, uint8_t value);
-
-        /** @brief Speed restriction command received. */
-    void (*on_speed_restriction_command)(uint16_t address, bool enabled, uint8_t speed_limit);
 
         /** @brief Decoder entered fail-safe mode (no valid packet timeout). */
     void (*on_failsafe_entered)(void);

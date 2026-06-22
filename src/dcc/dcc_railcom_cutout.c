@@ -35,14 +35,16 @@
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
-    /** @brief Ch2 window duration = total cutout - Ch1 window. */
-#define RAILCOM_CH2_WINDOW_US \
-    (DCC_RAILCOM_CUTOUT_TOTAL_US - DCC_RAILCOM_CH1_WINDOW_US)
-
-void DccRailcomCutout_initialize(dcc_railcom_cutout_context_t *context, const interface_dcc_railcom_cutout_t *interface) {
+void DccRailcomCutout_initialize(dcc_railcom_cutout_context_t *context, const interface_dcc_railcom_cutout_t *interface,
+                                 uint16_t start_delay, uint16_t uart_rx_delay, uint16_t ch1, uint16_t gap, uint16_t ch2) {
 
     context->interface = interface;
     context->state = DCC_RAILCOM_CUTOUT_IDLE;
+    context->start_delay_us = start_delay;
+    context->uart_rx_delay_us = uart_rx_delay;
+    context->ch1_window_us = ch1;
+    context->ch1_ch2_gap_us = gap;
+    context->ch2_window_us = ch2;
 
 }
 
@@ -56,9 +58,10 @@ void DccRailcomCutout_begin(dcc_railcom_cutout_context_t *context) {
 
     context->state = DCC_RAILCOM_CUTOUT_DELAY;
 
+    /* Load the DELAY duration; tristate fires when it expires (T_CS). */
     if (context->interface->timer_one_shot_start) {
 
-        context->interface->timer_one_shot_start(DCC_RAILCOM_CUTOUT_START_US);
+        context->interface->timer_one_shot_start(context->start_delay_us);
 
     }
 
@@ -80,8 +83,12 @@ void DccRailcomCutout_cancel(dcc_railcom_cutout_context_t *context) {
 
         }
 
-        /* Re-enable H-bridge and disable UART if cutout was active */
-        if (context->state == DCC_RAILCOM_CUTOUT_CH1 ||
+        /* Re-enable H-bridge and disable UART if the cutout was active.
+         * The H-bridge is tristated once DELAY expires, i.e. in any of
+         * SETTLING / CH1 / GAP / CH2. */
+        if (context->state == DCC_RAILCOM_CUTOUT_SETTLING ||
+            context->state == DCC_RAILCOM_CUTOUT_CH1 ||
+            context->state == DCC_RAILCOM_CUTOUT_GAP ||
             context->state == DCC_RAILCOM_CUTOUT_CH2) {
 
             if (context->interface->uart_rx_disable) {
@@ -116,13 +123,28 @@ void DccRailcomCutout_timer_isr(dcc_railcom_cutout_context_t *context) {
 
         case DCC_RAILCOM_CUTOUT_DELAY:
 
-            /* 88us elapsed — begin cutout: disable H-bridge, enable UART rx */
+            /* DELAY expired (T_CS) — tristate H-bridge / begin cutout.
+             * Load SETTLING duration. */
             if (context->interface->begin_railcom_cutout) {
 
                 context->interface->begin_railcom_cutout();
 
             }
 
+            context->state = DCC_RAILCOM_CUTOUT_SETTLING;
+
+            if (context->interface->timer_one_shot_start) {
+
+                context->interface->timer_one_shot_start(context->uart_rx_delay_us);
+
+            }
+
+            break;
+
+        case DCC_RAILCOM_CUTOUT_SETTLING:
+
+            /* SETTLING expired (T_TS1) — enable UART Rx (Ch1 opens).
+             * Load CH1 window duration. */
             if (context->interface->uart_rx_enable) {
 
                 context->interface->uart_rx_enable();
@@ -131,10 +153,9 @@ void DccRailcomCutout_timer_isr(dcc_railcom_cutout_context_t *context) {
 
             context->state = DCC_RAILCOM_CUTOUT_CH1;
 
-            /* Reprogram timer for Ch1 window duration */
             if (context->interface->timer_one_shot_start) {
 
-                context->interface->timer_one_shot_start(DCC_RAILCOM_CH1_WINDOW_US);
+                context->interface->timer_one_shot_start(context->ch1_window_us);
 
             }
 
@@ -142,14 +163,39 @@ void DccRailcomCutout_timer_isr(dcc_railcom_cutout_context_t *context) {
 
         case DCC_RAILCOM_CUTOUT_CH1:
 
-            /* 464us elapsed — Ch1 window closed, Ch2 window opens.
-             * UART rx stays enabled across both channels. */
-            context->state = DCC_RAILCOM_CUTOUT_CH2;
+            /* CH1 expired (T_TC1) — disable UART Rx (Ch1 closes).
+             * Load GAP duration. */
+            if (context->interface->uart_rx_disable) {
 
-            /* Reprogram timer for remaining cutout (Ch2 window) */
+                context->interface->uart_rx_disable();
+
+            }
+
+            context->state = DCC_RAILCOM_CUTOUT_GAP;
+
             if (context->interface->timer_one_shot_start) {
 
-                context->interface->timer_one_shot_start(RAILCOM_CH2_WINDOW_US);
+                context->interface->timer_one_shot_start(context->ch1_ch2_gap_us);
+
+            }
+
+            break;
+
+        case DCC_RAILCOM_CUTOUT_GAP:
+
+            /* GAP expired (T_TS2) — re-enable UART Rx (Ch2 opens).
+             * Load CH2 window duration. */
+            if (context->interface->uart_rx_enable) {
+
+                context->interface->uart_rx_enable();
+
+            }
+
+            context->state = DCC_RAILCOM_CUTOUT_CH2;
+
+            if (context->interface->timer_one_shot_start) {
+
+                context->interface->timer_one_shot_start(context->ch2_window_us);
 
             }
 
@@ -157,7 +203,8 @@ void DccRailcomCutout_timer_isr(dcc_railcom_cutout_context_t *context) {
 
         case DCC_RAILCOM_CUTOUT_CH2:
 
-            /* 1544us total elapsed — cutout complete */
+            /* CH2 expired (T_CE) — disable UART Rx, restore H-bridge,
+             * cutout complete. */
             if (context->interface->uart_rx_disable) {
 
                 context->interface->uart_rx_disable();

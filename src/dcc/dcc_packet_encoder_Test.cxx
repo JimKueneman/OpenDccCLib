@@ -1009,39 +1009,6 @@ TEST(DccPacketEncoder, analog_function_long_addr) {
 }
 
 // ============================================================================
-// Speed restriction tests
-// ============================================================================
-
-TEST(DccPacketEncoder, speed_restriction_enabled) {
-    dcc_packet_t pkt;
-    bool ok = DccApplicationCommandStationPacket_load_speed_restriction(&pkt, 3, DCC_ADDRESS_SHORT, true, 64);
-
-    EXPECT_TRUE(ok);
-    EXPECT_EQ(pkt.data[0], 3);
-    EXPECT_EQ(pkt.data[1], DCC_ADV_OPS_SPEED_RESTRICTION);  /* 0x3E */
-    /* Data: 1 1000000 = 0xC0 (enabled + limit 64) */
-    EXPECT_EQ(pkt.data[2], 0x80 | 64);
-    EXPECT_EQ(pkt.byte_count, 4);
-    verify_xor(&pkt);
-}
-
-TEST(DccPacketEncoder, speed_restriction_disabled) {
-    dcc_packet_t pkt;
-    bool ok = DccApplicationCommandStationPacket_load_speed_restriction(&pkt, 3, DCC_ADDRESS_SHORT, false, 0);
-
-    EXPECT_TRUE(ok);
-    EXPECT_EQ(pkt.data[2], 0x00);  /* disabled + limit 0 */
-    verify_xor(&pkt);
-}
-
-TEST(DccPacketEncoder, speed_restriction_rejects_invalid_limit) {
-    dcc_packet_t pkt;
-    bool ok = DccApplicationCommandStationPacket_load_speed_restriction(&pkt, 3, DCC_ADDRESS_SHORT, true, 128);
-
-    EXPECT_FALSE(ok);
-}
-
-// ============================================================================
 // Branch coverage: rejects accessory address type
 // ============================================================================
 
@@ -1083,11 +1050,6 @@ TEST(DccPacketEncoder, binary_state_long_rejects_accessory) {
 TEST(DccPacketEncoder, analog_function_rejects_accessory) {
     dcc_packet_t pkt;
     EXPECT_FALSE(DccApplicationCommandStationPacket_load_analog_function(&pkt, 1, DCC_ADDRESS_ACCESSORY, 0, 0));
-}
-
-TEST(DccPacketEncoder, speed_restriction_rejects_accessory) {
-    dcc_packet_t pkt;
-    EXPECT_FALSE(DccApplicationCommandStationPacket_load_speed_restriction(&pkt, 1, DCC_ADDRESS_ACCESSORY, true, 60));
 }
 
 // ============================================================================

@@ -58,6 +58,15 @@ static const dcc_config_t dcc_config = {
     .railcom_timer_start     = &TI_DccDriver_railcom_timer_start,
     .railcom_timer_stop      = &TI_DccDriver_railcom_timer_stop,
 
+    // RailCom cutout state-machine timing (microseconds). These are the NMRA
+    // spec defaults; cumulative event times shown in parentheses. Set any field
+    // to 0 to let the library substitute the same spec default.
+    .railcom_cutout_start_delay_us = 26,   /* DELAY    -> T_CS  = 26us  (tristate H-bridge) */
+    .railcom_uart_rx_delay_us      = 54,   /* SETTLING -> T_TS1 = 80us  (enable UART Rx)    */
+    .railcom_ch1_window_us         = 97,   /* CH1      -> T_TC1 = 177us (disable UART Rx)   */
+    .railcom_ch1_ch2_gap_us        = 16,   /* GAP      -> T_TS2 = 193us (enable UART Rx)    */
+    .railcom_ch2_window_us         = 261,  /* CH2      -> T_CE  = 454us (restore H-bridge)  */
+
     // Main track hardware -- runs the scheduler (normal DCC operations).
     .main_track = {
         .timer_start      = NULL,    /* not used with shared timer */
@@ -108,8 +117,9 @@ void DCC_BIT_TIMER_INST_IRQHandler(void) {
     DL_GPIO_clearPins(GPIO_ISR_TIME_PORT, GPIO_ISR_TIME_ISR_TIME_PIN);
 }
 
-// RailCom cutout one-shot timer ISR. Fires at each phase boundary of the
-// cutout sequence (88us, 464us, 1080us). Drives the cutout state machine.
+// RailCom cutout one-shot timer ISR. Fires at each state expiry of the cutout
+// sequence (DELAY 26us, SETTLING 54us, CH1 97us, GAP 16us, CH2 261us).
+// Drives the cutout state machine.
 void RAILCOM_TIMER_INST_IRQHandler(void) {
 
     switch (DL_TimerA_getPendingInterrupt(RAILCOM_TIMER_INST)) {

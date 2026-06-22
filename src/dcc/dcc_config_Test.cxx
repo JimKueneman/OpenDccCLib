@@ -44,7 +44,8 @@ static void mock_svc_pin_toggle(void) {}
 static uint32_t on_packet_sent_count = 0;
 static void mock_on_packet_sent(const dcc_packet_t *packet) { (void)packet; on_packet_sent_count++; }
 
-static void mock_railcom_timer_start(uint16_t period) { (void)period; }
+static uint16_t last_railcom_timer_period = 0;
+static void mock_railcom_timer_start(uint16_t period) { last_railcom_timer_period = period; }
 static void mock_railcom_timer_stop(void) {}
 
 static void mock_begin_railcom_cutout(void) {}
@@ -645,8 +646,78 @@ TEST(DccConfig, railcom_cutout_full_cycle_via_isr) {
      * enters RAILCOM_CUTOUT state. */
     pump_main_track_until_idle(200);
 
-    /* Drive the cutout state machine: DELAY → CH1 → CH2 → IDLE.
+    /* Drive the cutout state machine through all 5 states:
+     * DELAY → SETTLING → CH1 → GAP → CH2 → IDLE.
      * On CH2→IDLE, _railcom_on_cutout_complete fires. */
+    DccConfig_railcom_oneshot_timer_isr();  /* DELAY -> SETTLING */
+    DccConfig_railcom_oneshot_timer_isr();  /* SETTLING -> CH1 */
+    DccConfig_railcom_oneshot_timer_isr();  /* CH1 -> GAP */
+    DccConfig_railcom_oneshot_timer_isr();  /* GAP -> CH2 */
+    DccConfig_railcom_oneshot_timer_isr();  /* CH2 -> IDLE, complete */
+
+    DccApplicationCommandStationMainTrack_power_off();
+}
+
+TEST(DccConfig, railcom_cutout_zero_config_uses_spec_defaults) {
+    /* Leaving the five timing fields at 0 in the config must make
+     * dcc_config.c substitute the dcc_defines spec defaults. The first
+     * one-shot period loaded by begin() is the DELAY duration. */
+    dcc_config_t cfg = make_test_config();
+    dcc_railcom_hw_t rc = make_railcom_hw();
+    cfg.main_track.railcom = &rc;
+    cfg.railcom_timer_start = mock_railcom_timer_start;
+    cfg.railcom_timer_stop = mock_railcom_timer_stop;
+    /* All five railcom_cutout_*_us fields are 0 (memset in make_test_config). */
+    DccConfig_initialize(&cfg);
+    DccApplicationCommandStationMainTrack_power_on();
+
+    dcc_packet_t pkt = make_idle_packet();
+    DccApplicationCommandStationMainTrack_send_packet(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
+    DccConfig_run();
+
+    last_railcom_timer_period = 0;
+    pump_main_track_until_idle(200);  /* end bit fires begin() -> loads DELAY */
+    EXPECT_EQ(last_railcom_timer_period, (uint16_t)DCC_RAILCOM_CUTOUT_START_DELAY_US);
+
+    DccConfig_railcom_oneshot_timer_isr();  /* DELAY expiry -> loads SETTLING */
+    EXPECT_EQ(last_railcom_timer_period, (uint16_t)DCC_RAILCOM_UART_RX_DELAY_US);
+
+    DccConfig_railcom_oneshot_timer_isr();  /* SETTLING expiry -> loads CH1 */
+    EXPECT_EQ(last_railcom_timer_period, (uint16_t)DCC_RAILCOM_CH1_WINDOW_US);
+
+    DccConfig_railcom_oneshot_timer_isr();  /* CH1 expiry -> loads GAP */
+    EXPECT_EQ(last_railcom_timer_period, (uint16_t)DCC_RAILCOM_CH1_CH2_GAP_US);
+
+    DccConfig_railcom_oneshot_timer_isr();  /* GAP expiry -> loads CH2 */
+    EXPECT_EQ(last_railcom_timer_period, (uint16_t)DCC_RAILCOM_CH2_WINDOW_US);
+
+    DccConfig_railcom_oneshot_timer_isr();  /* CH2 expiry -> IDLE */
+
+    DccApplicationCommandStationMainTrack_power_off();
+}
+
+TEST(DccConfig, railcom_cutout_nonzero_config_overrides_defaults) {
+    /* A non-zero config value must override the spec default. */
+    dcc_config_t cfg = make_test_config();
+    dcc_railcom_hw_t rc = make_railcom_hw();
+    cfg.main_track.railcom = &rc;
+    cfg.railcom_timer_start = mock_railcom_timer_start;
+    cfg.railcom_timer_stop = mock_railcom_timer_stop;
+    cfg.railcom_cutout_start_delay_us = 7;  /* custom DELAY */
+    DccConfig_initialize(&cfg);
+    DccApplicationCommandStationMainTrack_power_on();
+
+    dcc_packet_t pkt = make_idle_packet();
+    DccApplicationCommandStationMainTrack_send_packet(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
+    DccConfig_run();
+
+    last_railcom_timer_period = 0;
+    pump_main_track_until_idle(200);
+    EXPECT_EQ(last_railcom_timer_period, (uint16_t)7);
+
+    /* Pump to completion to leave the state machine idle. */
+    DccConfig_railcom_oneshot_timer_isr();
+    DccConfig_railcom_oneshot_timer_isr();
     DccConfig_railcom_oneshot_timer_isr();
     DccConfig_railcom_oneshot_timer_isr();
     DccConfig_railcom_oneshot_timer_isr();
@@ -918,9 +989,12 @@ TEST(DccDefines, cv28_bit_masks) {
 }
 
 TEST(DccDefines, railcom_timing_constants) {
-    EXPECT_EQ(DCC_RAILCOM_CUTOUT_START_US, 88);
-    EXPECT_EQ(DCC_RAILCOM_CH1_WINDOW_US, 464);
-    EXPECT_EQ(DCC_RAILCOM_CUTOUT_TOTAL_US, 1544);
+    /* 5-state cutout per-state default durations (microseconds). */
+    EXPECT_EQ(DCC_RAILCOM_CUTOUT_START_DELAY_US, 26);
+    EXPECT_EQ(DCC_RAILCOM_UART_RX_DELAY_US, 54);
+    EXPECT_EQ(DCC_RAILCOM_CH1_WINDOW_US, 97);
+    EXPECT_EQ(DCC_RAILCOM_CH1_CH2_GAP_US, 16);
+    EXPECT_EQ(DCC_RAILCOM_CH2_WINDOW_US, 261);
 }
 
 TEST(DccDefines, user_config_constants_are_set) {

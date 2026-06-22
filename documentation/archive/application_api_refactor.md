@@ -1,5 +1,11 @@
 # Application API Refactor Working Plan
 
+> **ARCHIVED / HISTORICAL — record of a largely-executed plan.** Phases 1–9
+> (renames, module moves, ACK-pulse refactor) have shipped; phase 10 (accessory
+> RailCom) is partially in. Still-pending items (RailCom cutout retiming, XPOM,
+> etc.) are tracked in [../STATUS.md](../STATUS.md). Kept here as the record of
+> what changed and why.
+
 **Date:** 2026-04-13  
 **Status:** Planning  
 

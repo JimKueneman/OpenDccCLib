@@ -1,0 +1,62 @@
+# OpenDccCLib Documentation
+
+This folder is the documentation root. Start here — it maps every document and
+tells you which one is authoritative for what.
+
+> **Verified against commit `c4dc61e` (2026-04-21).** The living documents below
+> carry their own "verified against" line; if it is older than the latest commit,
+> treat the content as possibly stale and confirm against the source.
+
+## Living documents (kept current)
+
+| Document | Purpose |
+|---|---|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | **As-built** design: modules, feature flags, interface-struct DI, execution contexts, scheduler/bit-encoder. The source of truth for how the library is structured today. |
+| [STATUS.md](STATUS.md) | What is implemented, what is pending, and known defects. The live backlog. |
+| [ComplianceMatrix.md](ComplianceMatrix.md) | Per-feature mapping of NMRA spec (released + draft) → implementation → test coverage, with deviations and gaps. |
+| [PDF_Regeneration_Guide.md](PDF_Regeneration_Guide.md) | How to regenerate the guide/brochure PDFs and what to pull from the current source so a rebuild stays accurate. |
+
+## Reference material (stable, external truth)
+
+| Document | Purpose |
+|---|---|
+| [specs/DCC_Spec_Reference.md](specs/DCC_Spec_Reference.md) | Distilled notes from the **released** NMRA S-9.x standards. |
+| [specs/DCC_Draft_Deltas.md](specs/DCC_Draft_Deltas.md) | Differences between released standards and the **draft** revisions (XPOM, Logon, SUSI, E24, tightened RailCom timing). Implementation status of these features is tracked in [STATUS.md](STATUS.md). |
+| [specs/drafts/DCC_Draft_Spec_Reference.md](specs/drafts/DCC_Draft_Spec_Reference.md) | Index of the draft spec PDFs. |
+| [specs/*.pdf](specs/) | Original NMRA standard PDFs (input source documents). |
+| [style_guides/StyleGuide_v4.md](style_guides/StyleGuide_v4.md) | C source style guide. |
+| [style_guides/Doxygen_StyleGuide_v2_0.md](style_guides/Doxygen_StyleGuide_v2_0.md) | Doxygen comment conventions. |
+
+## Test & validation docs
+
+| Document | Purpose |
+|---|---|
+| [../test/README.md](../test/README.md) | How to build and run the host unit-test suite (CMake + GoogleTest + gcovr). |
+| [../applications/ti_theia/mspm03507_launchpad/loopback_test/README.md](../applications/ti_theia/mspm03507_launchpad/loopback_test/README.md) | Hardware-in-the-loop loopback test setup (two MSPM0 boards). |
+| [../applications/ti_theia/mspm03507_launchpad/loopback_test/dcc_loopback_test_plan.md](../applications/ti_theia/mspm03507_launchpad/loopback_test/dcc_loopback_test_plan.md) | Detailed loopback test plan. |
+
+## Historical (frozen — do not treat as current)
+
+| Document | Purpose |
+|---|---|
+| [archive/OpenDccCLib_Requirements.md](archive/OpenDccCLib_Requirements.md) | Original design intent / requirements. Superseded by [ARCHITECTURE.md](ARCHITECTURE.md); module and API names here predate the role-first refactor. |
+| [archive/application_api_refactor.md](archive/application_api_refactor.md) | The 10-phase application-API refactor plan, now largely executed. Kept as the record of what shipped. Any still-pending items live in [STATUS.md](STATUS.md). |
+| [archive/compliance_deviation_fixes.md](archive/compliance_deviation_fixes.md) | Executed plan for the six "implemented but wrong" deviation fixes (cutout timing, SRQ, ACK, datagram IDs, speed-restriction removal, double-buffer doc). The deferred decoder-RailCom-Tx follow-on lives in [STATUS.md](STATUS.md). |
+
+## Guides & generated artifacts
+
+The Quick Start / Developer guide PDFs and the brochure
+(`QuickStartGuide_*.pdf`, `DeveloperGuide_*.pdf`, `OpenDccCLib_Brochure.pdf`) are
+**committed deliverables**, kept in sync with the library. They are produced
+out-of-band by a local reportlab generator that is intentionally **not** tracked
+in the repo; see [PDF_Regeneration_Guide.md](PDF_Regeneration_Guide.md) for how to
+regenerate them and what to pull from the current source.
+
+API reference is produced by **Doxygen** from the source headers (see `Doxyfile`
+and `../src/mainpage.h`); its output (`documentation/html/`) is git-ignored and
+regenerated locally as needed.
+
+Narrative documentation lives as Markdown in this folder. Structural facts have a
+single source of truth in [ARCHITECTURE.md](ARCHITECTURE.md) and
+[STATUS.md](STATUS.md) — link to them rather than restating module names, struct
+fields, or timing values.

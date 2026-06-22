@@ -107,9 +107,6 @@ typedef struct {
         /** @brief Analog function command received. NULL = no notification. */
     void (*on_analog_function_command)(uint16_t address, uint8_t output_number, uint8_t value);
 
-        /** @brief Speed restriction command received. NULL = no notification. */
-    void (*on_speed_restriction_command)(uint16_t address, bool enabled, uint8_t speed_limit);
-
         /** @brief Turn on the ACK current load. Library handles 6ms timing. */
     void (*start_ack_pulse)(void);
 

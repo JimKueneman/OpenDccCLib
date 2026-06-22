@@ -390,27 +390,67 @@ TEST_F(AccDecoderRailcomTest, on_cutout_null_interface_guard) {
 
 }
 
+/* SRQ Channel-1 wire format per S-9.3.2 Section 7.1 / Table 36 (p.45-46):
+ *   12-bit datagram, NO identifier.
+ *     basic    : 0AAA AAAA-AAAA  (MSB = 0, 11-bit address)
+ *     extended : 1AAA AAAA-AAAA  (MSB = 1, 11-bit address)
+ * DccRailcomEncoder_send_ch1(id, data) packs ((id & 0x0F) << 8) | data into
+ * the 12 bits, so the mock receives:
+ *     id   (bits 11..8) = (format << 3) | ((address >> 8) & 0x07)
+ *     data (bits  7..0) = address & 0xFF
+ */
+
 TEST_F(AccDecoderRailcomTest, on_cutout_pending_sends_ch1_basic) {
 
-    DccApplicationAccessoryDecoderRailcom_send_srq(0x00AB, false);
+    /* Basic, high address 0x1FF (= 0b1_1111_1111) exercises the high 3 bits.
+     * format = 0, so id field = (0 << 3) | ((0x1FF >> 8) & 0x07) = 0x01. */
+    DccApplicationAccessoryDecoderRailcom_send_srq(0x01FF, false);
 
     DccApplicationAccessoryDecoderRailcom_on_cutout();
 
     EXPECT_EQ(send_ch1_count, 1u);
-    EXPECT_EQ(last_ch1_id, DCC_RAILCOM_ID_MOBILITY_0);
-    EXPECT_EQ(last_ch1_data, 0xAB);
+    EXPECT_EQ(last_ch1_id, 0x01);   /* MSB(format)=0, high 3 addr bits = 001 */
+    EXPECT_EQ(last_ch1_data, 0xFF); /* low 8 addr bits */
 
 }
 
 TEST_F(AccDecoderRailcomTest, on_cutout_pending_sends_ch1_extended) {
 
+    /* Extended, full 11-bit address 0x3FF (= 0b011_1111_1111).
+     * format = 1, so id field = (1 << 3) | ((0x3FF >> 8) & 0x07)
+     *                         = 0x08 | 0x03 = 0x0B. */
     DccApplicationAccessoryDecoderRailcom_send_srq(0x03FF, true);
 
     DccApplicationAccessoryDecoderRailcom_on_cutout();
 
     EXPECT_EQ(send_ch1_count, 1u);
-    EXPECT_EQ(last_ch1_id, DCC_RAILCOM_ID_MOBILITY_0);
-    EXPECT_EQ(last_ch1_data, 0xFF);
+    EXPECT_EQ(last_ch1_id, 0x0B);   /* MSB(format)=1, high 3 addr bits = 011 */
+    EXPECT_EQ(last_ch1_data, 0xFF); /* low 8 addr bits */
+
+}
+
+TEST_F(AccDecoderRailcomTest, on_cutout_basic_and_extended_differ_for_same_address) {
+
+    /* Same address, different format must produce different Channel-1 payloads
+     * (the format MSB must actually change the encoded datagram). */
+    DccApplicationAccessoryDecoderRailcom_send_srq(0x03FF, false);
+    DccApplicationAccessoryDecoderRailcom_on_cutout();
+    uint8_t basic_id = last_ch1_id;
+    uint8_t basic_data = last_ch1_data;
+
+    reset_mocks();
+    DccApplicationAccessoryDecoderRailcom_initialize(&mock_interface);
+
+    DccApplicationAccessoryDecoderRailcom_send_srq(0x03FF, true);
+    DccApplicationAccessoryDecoderRailcom_on_cutout();
+    uint8_t ext_id = last_ch1_id;
+    uint8_t ext_data = last_ch1_data;
+
+    /* Low byte identical (same address), id field differs by the format MSB. */
+    EXPECT_EQ(basic_data, ext_data);
+    EXPECT_EQ(basic_id, 0x03);      /* format=0: (0<<3)|0x03 */
+    EXPECT_EQ(ext_id, 0x0B);        /* format=1: (1<<3)|0x03 */
+    EXPECT_NE(basic_id, ext_id);
 
 }
 

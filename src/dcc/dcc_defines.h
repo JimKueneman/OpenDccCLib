@@ -141,9 +141,6 @@ extern "C" {
     /** @brief 128-step speed control (full instruction byte: 001 11111) */
 #define DCC_ADV_OPS_128_SPEED               0x3F
 
-    /** @brief Speed restriction (full instruction byte: 001 11110) */
-#define DCC_ADV_OPS_SPEED_RESTRICTION       0x3E
-
     /** @brief Analog function control (full instruction byte: 001 11101) */
 #define DCC_ADV_OPS_ANALOG_FUNCTION         0x3D
 
@@ -298,14 +295,25 @@ extern "C" {
 // RailCom Constants (S-9.3.2)
 // =============================================================================
 
-    /** @brief RailCom cutout start delay after packet end bit (microseconds) */
-#define DCC_RAILCOM_CUTOUT_START_US         88
+    /** @brief Cutout state DELAY duration: tristate H-bridge at T_CS = 26us
+     *  after the packet end bit (microseconds). */
+#define DCC_RAILCOM_CUTOUT_START_DELAY_US   26
 
-    /** @brief RailCom Channel 1 window duration (microseconds) */
-#define DCC_RAILCOM_CH1_WINDOW_US           464
+    /** @brief Cutout state SETTLING duration: enable UART Rx at T_TS1 = 80us
+     *  (cumulative; 26 + 54) (microseconds). */
+#define DCC_RAILCOM_UART_RX_DELAY_US        54
 
-    /** @brief RailCom total cutout window (microseconds) */
-#define DCC_RAILCOM_CUTOUT_TOTAL_US         1544
+    /** @brief Cutout state CH1 window duration: disable UART Rx at T_TC1 = 177us
+     *  (cumulative; 80 + 97) (microseconds). */
+#define DCC_RAILCOM_CH1_WINDOW_US           97
+
+    /** @brief Cutout state GAP duration: re-enable UART Rx at T_TS2 = 193us
+     *  (cumulative; 177 + 16) (microseconds). */
+#define DCC_RAILCOM_CH1_CH2_GAP_US          16
+
+    /** @brief Cutout state CH2 window duration: disable UART Rx and restore
+     *  H-bridge at T_CE = 454us (cumulative; 193 + 261) (microseconds). */
+#define DCC_RAILCOM_CH2_WINDOW_US           261
 
     /** @brief RailCom Channel 1 max bytes */
 #define DCC_RAILCOM_CH1_MAX_BYTES           2
@@ -314,15 +322,48 @@ extern "C" {
 #define DCC_RAILCOM_CH2_MAX_BYTES           6
 
 // =============================================================================
-// RailCom Datagram IDs (S-9.3.2)
+// RailCom Mobile Channel 2 Datagram IDs (2026 draft S-9.3.2, Table 19)
 // =============================================================================
 
-#define DCC_RAILCOM_ID_MOBILITY_0           0
-#define DCC_RAILCOM_ID_MOBILITY_1           1
-#define DCC_RAILCOM_ID_ADDRESS_FEEDBACK     2
-#define DCC_RAILCOM_ID_CV_READBACK_7        7
-#define DCC_RAILCOM_ID_CV_READBACK_8        8
-#define DCC_RAILCOM_ID_DCC_ACK              15
+    /** @brief POM (programming-on-main) response */
+#define DCC_RAILCOM_ID_POM                  0
+
+    /** @brief ADR1 / ID1 — HIGH bits of address */
+#define DCC_RAILCOM_ID_ADR1_HIGH            1
+
+    /** @brief ADR2 / ID2 — LOW bits of address */
+#define DCC_RAILCOM_ID_ADR2_LOW             2
+
+    /** @brief EXT (extended) datagram */
+#define DCC_RAILCOM_ID_EXT                  3
+
+    /** @brief DYN (dynamic data) datagram */
+#define DCC_RAILCOM_ID_DYN                  7
+
+    /** @brief XPOM datagrams (IDs 8..11) */
+#define DCC_RAILCOM_ID_XPOM_8               8
+#define DCC_RAILCOM_ID_XPOM_9               9
+#define DCC_RAILCOM_ID_XPOM_10              10
+#define DCC_RAILCOM_ID_XPOM_11              11
+
+    /** @brief CV auto-transfer datagram */
+#define DCC_RAILCOM_ID_CV_AUTO              12
+
+    /** @brief Time datagram */
+#define DCC_RAILCOM_ID_TIME                 14
+
+    /** @brief Logon Enable datagram */
+#define DCC_RAILCOM_ID_LOGON_ENABLE         15
+
+// =============================================================================
+// RailCom 4/8 Special Code Words (2026 draft S-9.3.2)
+// =============================================================================
+
+    /** @brief ACK special code word (raw byte, bypasses 4/8 table) */
+#define DCC_RAILCOM_CODE_WORD_ACK           0xF0
+
+    /** @brief NACK special code word (raw byte, bypasses 4/8 table) */
+#define DCC_RAILCOM_CODE_WORD_NACK          0x3C
 
 // =============================================================================
 // Idle / Reset Packet Constants

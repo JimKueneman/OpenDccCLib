@@ -78,6 +78,7 @@ typedef struct {
     uint8_t retry_count;
     volatile bool ack_detected;
     uint16_t ack_high_count;
+    volatile bool ack_overrun;  /**< true once a high run exceeded DCC_ACK_MAX_SAMPLES (over-current, not an ACK) */
     volatile bool packet_complete_flag;
     bool first_packet_sent;
     bool is_write_operation;        /**< true = write (has recovery phase) */

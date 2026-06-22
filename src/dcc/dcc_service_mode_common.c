@@ -80,6 +80,20 @@ static void _load_reset_packet(dcc_service_mode_common_context_t *context) {
 #define DCC_ACK_MIN_SAMPLES \
     ((USER_DEFINED_DCC_ACK_MIN_DURATION_US / DCC_ONE_BIT_HALF_PERIOD_US) - 1)
 
+    /**
+     * @brief Maximum consecutive high samples for a valid ACK.
+     *
+     * @details S-9.2.3 p.2 defines a Basic ACK as >= 60 mA sustained for
+     * 6 ms +/- 1 ms (a two-sided 5-7 ms window). A high run that lasts
+     * longer than the upper bound is treated by S-9.2.3 p.3 as an
+     * over-current / fault condition, NOT an ACK. We therefore reject any
+     * run exceeding this many samples. Unlike DCC_ACK_MIN_SAMPLES (which
+     * subtracts 1), the MAX uses the raw quotient as the inclusive upper
+     * bound. With the typical config: MIN ~= 85, MAX ~= 120.
+     */
+#define DCC_ACK_MAX_SAMPLES \
+    (USER_DEFINED_DCC_ACK_MAX_DURATION_US / DCC_ONE_BIT_HALF_PERIOD_US)
+
 
 // =============================================================================
 // Public API
@@ -95,6 +109,7 @@ void DccServiceModeCommon_initialize(dcc_service_mode_common_context_t *context,
     context->retry_count = 0;
     context->ack_detected = false;
     context->ack_high_count = 0;
+    context->ack_overrun = false;
     context->packet_complete_flag = false;
     context->first_packet_sent = false;
     context->is_write_operation = false;
@@ -116,17 +131,35 @@ void DccServiceModeCommon_ack_sample(dcc_service_mode_common_context_t *context,
 
     if (sense_value >= USER_DEFINED_DCC_ACK_THRESHOLD_MA) {
 
-        context->ack_high_count++;
+        /* Still high: defer the decision. Count the run; if it grows past
+         * the upper bound, flag it as an over-current run (S-9.2.3 p.3),
+         * not an ACK, and stop counting this run. */
+        if (!context->ack_overrun) {
 
-        if (context->ack_high_count >= DCC_ACK_MIN_SAMPLES) {
+            context->ack_high_count++;
 
-            context->ack_detected = true;
+            if (context->ack_high_count > DCC_ACK_MAX_SAMPLES) {
+
+                context->ack_overrun = true;
+
+            }
 
         }
 
     } else {
 
+        /* Falling edge: the high run just ended. Accept it as an ACK only
+         * if it stayed within the two-sided 5-7 ms window (S-9.2.3 p.2):
+         * long enough (>= MIN) and not flagged as over-current (<= MAX). */
+        if (!context->ack_overrun &&
+            context->ack_high_count >= DCC_ACK_MIN_SAMPLES) {
+
+            context->ack_detected = true;
+
+        }
+
         context->ack_high_count = 0;
+        context->ack_overrun = false;
 
     }
 
@@ -281,6 +314,7 @@ void DccServiceModeCommon_run(dcc_service_mode_common_context_t *context) {
             context->packet_count = 0;
             context->ack_detected = false;
             context->ack_high_count = 0;
+            context->ack_overrun = false;
             context->state = SERVICE_COMMON_STATE_COMMAND;
 
         }
@@ -344,6 +378,7 @@ bool DccServiceModeCommon_begin_operation(dcc_service_mode_common_context_t *con
     context->retry_count = 0;
     context->ack_detected = false;
     context->ack_high_count = 0;
+    context->ack_overrun = false;
     context->packet_complete_flag = false;
     context->first_packet_sent = false;
     context->is_write_operation = is_write_operation;

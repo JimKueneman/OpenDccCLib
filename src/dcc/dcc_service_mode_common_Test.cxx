@@ -884,6 +884,85 @@ TEST(DccServiceModeCommon, ack_one_below_threshold_not_detected) {
 }
 
 // ============================================================================
+// ACK upper bound: pulse within [MIN, MAX] then low → SUCCESS
+// (S-9.2.3 p.2: ACK is 6 ms +/- 1 ms, a two-sided window. MIN=85, MAX=120.)
+// ============================================================================
+
+TEST(DccServiceModeCommon, ack_within_max_window_detected) {
+
+    setup_and_begin();
+    drive_to_command_phase();
+
+    DccServiceModeCommon_run(&test_context);  /* first command packet */
+
+    /* Feed 110 above-threshold samples: within [MIN(85), MAX(120)].
+     * Detection is deferred until the falling edge below. */
+    uint16_t sample_index;
+    for (sample_index = 0; sample_index < 110; sample_index++) {
+
+        DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+
+    }
+
+    /* Falling edge: a valid-length run latches as ACK here. */
+    DccServiceModeCommon_ack_sample(&test_context, 0);
+
+    DccServiceModeCommon_run(&test_context);  /* detect ACK → RESET_POST */
+    drive_post_reset_to_idle();
+
+    EXPECT_EQ(step_callback_count, (uint32_t)1);
+    EXPECT_EQ(step_result, DCC_SERVICE_MODE_SUCCESS);
+
+}
+
+// ============================================================================
+// ACK upper bound: pulse longer than MAX then low → NO_ACK
+// (S-9.2.3 p.3: a run longer than the upper bound is over-current, not an ACK.)
+// ============================================================================
+
+TEST(DccServiceModeCommon, ack_beyond_max_window_not_detected) {
+
+    setup_and_begin();
+    drive_to_command_phase();
+
+    DccServiceModeCommon_run(&test_context);  /* first command packet */
+
+    /* Feed 130 above-threshold samples: beyond MAX(120). This flags an
+     * over-current run; the falling edge must NOT latch an ACK. */
+    uint16_t sample_index;
+    for (sample_index = 0; sample_index < 130; sample_index++) {
+
+        DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+
+    }
+
+    /* Falling edge: over-current run is rejected, not accepted as ACK. */
+    DccServiceModeCommon_ack_sample(&test_context, 0);
+
+    /* Drive remaining command packets — no ACK should be present. */
+    uint8_t packet_index;
+    for (packet_index = 1; packet_index < DCC_SERVICE_MODE_COMMAND_REPEAT; packet_index++) {
+
+        DccServiceModeCommon_run(&test_context);
+
+    }
+
+    DccServiceModeCommon_run(&test_context);  /* evaluate → retry */
+
+    /* Drive through all retries without ACK */
+    uint8_t retry;
+    for (retry = 0; retry < USER_DEFINED_DCC_SERVICE_MODE_RETRIES; retry++) {
+
+        drive_full_cycle_with_ack(false);
+
+    }
+
+    EXPECT_EQ(step_callback_count, (uint32_t)1);
+    EXPECT_EQ(step_result, DCC_SERVICE_MODE_NO_ACK);
+
+}
+
+// ============================================================================
 // ACK during retry attempt → SUCCESS (retries stop)
 // ============================================================================
 

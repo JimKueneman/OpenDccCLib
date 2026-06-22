@@ -42,32 +42,42 @@ Both boards should show a blinking heartbeat LED (PB22) once flashed and running
 
 ## Step 2 — Wire the Boards
 
-Connect three wires between the two LaunchPads:
+Signals connect **same-label pin to same-label pin** between the two boards
+(all pins are on PORTB):
 
 ```
-  Board A (Command Station)              Board B (Decoder)
-  ========================               =================
+  Board A (Command Station)               Board B (Decoder)
+  ========================                =================
 
-  PB12  (DCC signal out)  ──────────────>  PB1   (DCC signal in)
-  PB17  (debug toggle)    ──────────────>  PA28  (trigger in, optional)
-  GND                     ──────────────   GND
+  PB1   (DCC signal out)    ─────────────>  PB1   (DCC signal in)
+  PB4   (service track out) ─────────────>  PB4   (service track in)
+  PB12  (ACK sense in)      <─────────────  PB12  (ACK out)
+  PB17  (track select out)  ─────────────>  PB17  (track select in)
+  GND                       ───────────────  GND
 ```
 
-**Required connections:**
-- **PB12 → PB1** — the DCC signal wire. This carries the actual DCC bitstream.
-- **GND ↔ GND** — common ground between the two boards. Without this the signal
-  levels are undefined and decoding will fail.
+**Required for the main-track tests** (speed, functions, accessories, binary state, analog, ops-mode CV):
+- **PB1 → PB1** — the DCC signal wire; carries the actual DCC bitstream.
+- **GND ↔ GND** — common ground between the boards. Without it the signal levels
+  are undefined and decoding will fail.
 
-**Optional connection:**
-- **PB17 → PA28** — debug trigger. Board A toggles PB17 on every packet sent.
-  Useful for oscilloscope triggering but not required for the tests.
+**Also required for the service-mode / CV-programming tests:**
+- **PB4 → PB4** — service-track DCC signal.
+- **PB12 → PB12** — the decoder asserts its ACK current load on PB12; the command
+  station senses it on PB12.
+- **PB17 → PB17** — track select: the command station drives this to tell the
+  decoder whether the main (PB1) or service (PB4) input is active.
+
+**Optional (scope / logic-analyzer only — no inter-board wire needed):** Board A
+toggles **PB3** (debug) and **PB2** (DCC mirror); Board B toggles **PB3** on each
+decoded edge.
 
 Both boards also connect to the PC via their own USB cable (UART backchannel at
 230400 baud).
 
 ```
          ┌──── USB ────  Board A (Command Station)
-   PC ───┤                   PB12 ──── PB1
+   PC ───┤                   PB1  ──── PB1
          └──── USB ────  Board B (Decoder)
                              GND ────── GND
 ```
@@ -140,7 +150,7 @@ A full passing run takes roughly 1-2 minutes depending on serial timeouts.
 |---------|-------------|-----|
 | `POWER ON failed` or no response from Board A | Wrong `--cmd-port` / `--dec-port` swapped | Swap the two port arguments |
 | All RECV assertions fail (no packets received) | Missing GND wire between boards | Connect GND ↔ GND |
-| All RECV assertions fail (boards powered) | DCC wire not connected or wrong pin | Verify PB12 → PB1 wire |
+| All RECV assertions fail (boards powered) | DCC wire not connected or wrong pin | Verify PB1 → PB1 (DCC) wire |
 | Sporadic test failures | Loose jumper wire connection | Reseat the wires firmly |
 | `serial.serialutil.SerialException` | Port in use by another program | Close any open serial terminals |
 | Board not appearing as a serial port | Board not flashed or USB issue | Re-flash firmware; try a different USB cable |

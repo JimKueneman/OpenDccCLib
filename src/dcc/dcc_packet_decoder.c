@@ -891,17 +891,6 @@ static void _dispatch_advanced_ops(uint16_t address, const uint8_t *instruction_
 
         }
 
-    } else if (first == DCC_ADV_OPS_SPEED_RESTRICTION && instruction_byte_count >= 2) {
-
-        bool enabled = (instruction_bytes[1] & 0x80) ? true : false;
-        uint8_t limit = instruction_bytes[1] & 0x7F;
-
-        if (_interface->on_speed_restriction_command) {
-
-            _interface->on_speed_restriction_command(address, enabled, limit);
-
-        }
-
     }
 
 }

@@ -936,7 +936,7 @@ bool DccApplicationCommandStationPacket_load_consist_clear(dcc_packet_t *packet,
 }
 
 // =============================================================================
-// Binary State / Analog Function / Speed Restriction
+// Binary State / Analog Function
 // =============================================================================
 
 bool DccApplicationCommandStationPacket_load_binary_state_short(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t state_number, bool active) {
@@ -1037,42 +1037,6 @@ bool DccApplicationCommandStationPacket_load_analog_function(dcc_packet_t *packe
 
     /* Value */
     packet->data[byte_index] = value;
-    byte_index++;
-
-    packet->byte_count = byte_index;
-    _append_xor(packet);
-
-    packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
-
-    return true;
-
-}
-
-bool DccApplicationCommandStationPacket_load_speed_restriction(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, bool enabled, uint8_t speed_limit) {
-
-    uint8_t byte_index;
-
-    if (!_is_loco_address_type(address_type)) {
-
-        return false;
-
-    }
-
-    if (speed_limit > 127) {
-
-        return false;
-
-    }
-
-    byte_index = _encode_address(packet, address, address_type);
-
-    /* Advanced operations instruction byte */
-    packet->data[byte_index] = DCC_ADV_OPS_SPEED_RESTRICTION;
-    byte_index++;
-
-    /* Data byte: EXXXXXXX — E=enable, X=speed limit */
-    packet->data[byte_index] = (enabled ? 0x80 : 0x00) | (speed_limit & 0x7F);
     byte_index++;
 
     packet->byte_count = byte_index;

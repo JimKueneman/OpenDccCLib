@@ -1,7 +1,7 @@
 """DCC loopback integration tests — Multifunction (Locomotive) Decoder.
 
 Tests for multifunction decoder commands: speed, functions, consist,
-binary state, analog output, speed restriction, ops-mode CV, and
+binary state, analog output, ops-mode CV, and
 address boundaries.
 
 Usage:
@@ -337,40 +337,6 @@ class TestSpeedBoundaries:
         assert len(recv) > 0
         p = parse_recv(recv[0])
         assert p["speed"] == "126"
-
-
-# =============================================================================
-# Speed Restriction (S-9.2.1)
-# =============================================================================
-
-@pytest.mark.multifunction
-@pytest.mark.speed
-class TestSpeedRestriction:
-    """Speed restriction commands per S-9.2.1."""
-
-    @pytest.fixture(autouse=True)
-    def setup_decoder(self, dcc):
-        dcc.set_decoder_address(3, "SHORT")
-
-    def test_restrict_on(self, dcc):
-        resp = dcc.send_command("RESTRICT 3 ON 50")
-        assert resp.startswith("OK")
-        recv = dcc.wait_recv()
-        assert len(recv) > 0
-        p = parse_recv(recv[0])
-        assert p["type"] == "RESTRICT"
-        assert p["addr"] == "3"
-        assert p["enabled"] == "ON"
-        assert p["limit"] == "50"
-
-    def test_restrict_off(self, dcc):
-        resp = dcc.send_command("RESTRICT 3 OFF")
-        assert resp.startswith("OK")
-        recv = dcc.wait_recv()
-        assert len(recv) > 0
-        p = parse_recv(recv[0])
-        assert p["type"] == "RESTRICT"
-        assert p["enabled"] == "OFF"
 
 
 # =============================================================================

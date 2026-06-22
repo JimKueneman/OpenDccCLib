@@ -59,7 +59,6 @@ UART command interface:
 | BSS | `BSS <addr> <1-127> <ON\|OFF>` | `OK: BSS addr=N state=N ON\|OFF` |
 | BSL | `BSL <addr> <1-32767> <ON\|OFF>` | `OK: BSL addr=N state=N ON\|OFF` |
 | ANALOG | `ANALOG <addr> <output> <value>` | `OK: ANALOG addr=N output=N value=N` |
-| RESTRICT | `RESTRICT <addr> ON <limit>\|OFF` | `OK: RESTRICT addr=N ON\|OFF` |
 | REFRESH | `REFRESH ON\|OFF` | `OK: auto-refresh ON\|OFF` |
 | DEBUG | `DEBUG` | `OK: toggled PB17` |
 | SVC ENTER | `SVC ENTER` | `OK: service mode entered` |
@@ -162,7 +161,7 @@ static const dcc_config_t dcc_config = {
     .cv_write                = &DecoderCallbacks_cv_write,
 
     /* Decoder: NULL-optional */
-    .railcom_uart_write      = NULL,
+    .railcom_tx_pin_set        = NULL,
 
     /* Decoder: OPTIONAL application callbacks */
     .on_speed_command              = &DecoderCallbacks_on_speed_command,
@@ -177,7 +176,6 @@ static const dcc_config_t dcc_config = {
     .on_binary_state_short         = &DecoderCallbacks_on_binary_state_short,
     .on_binary_state_long          = &DecoderCallbacks_on_binary_state_long,
     .on_analog_function            = &DecoderCallbacks_on_analog_function,
-    .on_speed_restriction          = &DecoderCallbacks_on_speed_restriction,
     .on_failsafe_entered           = &DecoderCallbacks_on_failsafe_entered,
     .on_failsafe_exited            = &DecoderCallbacks_on_failsafe_exited,
 };
@@ -231,7 +229,6 @@ RECV CONSIST addr=3 consist=10 dir=NORMAL
 RECV BSS addr=3 state=1 active=ON
 RECV BSL addr=3 state=1 active=ON
 RECV ANALOG addr=3 output=1 value=128
-RECV RESTRICT addr=3 enabled=ON limit=50
 ```
 
 Callback implementations:
@@ -318,15 +315,6 @@ void DecoderCallbacks_on_analog_function(uint16_t address, uint8_t output_number
                                           uint8_t value) {
     _recv_enqueue("RECV ANALOG addr=%u output=%u value=%u",
                   address, output_number, value);
-}
-
-void DecoderCallbacks_on_speed_restriction(uint16_t address, bool enabled,
-                                            uint8_t speed_limit) {
-    if (enabled)
-        _recv_enqueue("RECV RESTRICT addr=%u enabled=ON limit=%u",
-                      address, speed_limit);
-    else
-        _recv_enqueue("RECV RESTRICT addr=%u enabled=OFF", address);
 }
 
 void DecoderCallbacks_on_failsafe_entered(void) {
@@ -600,13 +588,6 @@ Note: CV writes require the decoder lock to be open (CV15 == CV16). The stub ini
 | 44 | `ANALOG 3 1 0` | `RECV ANALOG addr=3 output=1 value=0` |
 | 45 | `ANALOG 3 1 255` | `RECV ANALOG addr=3 output=1 value=255` |
 
-#### Speed Restriction (decoder addr=3 SHORT)
-
-| # | Command (Board A) | Expected RECV (Board B) |
-|---|---|---|
-| 46 | `RESTRICT 3 ON 50` | `RECV RESTRICT addr=3 enabled=ON limit=50` |
-| 47 | `RESTRICT 3 OFF` | `RECV RESTRICT addr=3 enabled=OFF` |
-
 #### Edge Cases
 
 | # | Test | Setup | Expected |
@@ -705,7 +686,6 @@ Cross-referenced against S-9.1, S-9.2, S-9.2.1, S-9.2.1.1, S-9.2.2, S-9.2.3, S-9
 | S-9.2.1 | Binary state control (short form): on/off, max (127) | TestBinaryStateShort |
 | S-9.2.1 | Binary state control (long form): on/off, max (32767) | TestBinaryStateLong |
 | S-9.2.1 | Analog function output: 0, 128, 255 | TestAnalogFunction |
-| S-9.2.1 | Speed restriction: on with limit, off | TestSpeedRestriction |
 | S-9.2 | Idle packet does not trigger decoder callbacks | TestIdlePackets |
 | S-9.2 | Power off stops DCC signal | test_power_off_stops_dcc |
 | S-9.2 | Power on resumes DCC signal | test_power_off_stops_dcc (restores power) |

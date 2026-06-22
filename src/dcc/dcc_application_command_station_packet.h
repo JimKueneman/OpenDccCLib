@@ -533,7 +533,7 @@ extern bool DccApplicationCommandStationPacket_load_consist_set(dcc_packet_t *pa
 extern bool DccApplicationCommandStationPacket_load_consist_clear(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type);
 
 // =============================================================================
-// Binary State / Analog Function / Speed Restriction
+// Binary State / Analog Function
 // =============================================================================
 
     /**
@@ -581,22 +581,6 @@ extern bool DccApplicationCommandStationPacket_load_binary_state_long(dcc_packet
      * @return true if packet was built successfully, false if invalid parameters.
      */
 extern bool DccApplicationCommandStationPacket_load_analog_function(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t output_number, uint8_t value);
-
-    /**
-     * @brief Build a speed restriction packet.
-     *
-     * @details Applies or removes a speed limit on the addressed decoder.
-     *     When enabled, the decoder clamps its speed output to the given
-     *     limit regardless of speed commands received.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param enabled true=restriction active, false=restriction removed.
-     * @param speed_limit Speed limit value (0-127).
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_speed_restriction(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, bool enabled, uint8_t speed_limit);
 
 #ifdef __cplusplus
 }

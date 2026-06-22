@@ -1,5 +1,10 @@
 # OpenDccCLib — Library Requirements & Architecture
 
+> **ARCHIVED / HISTORICAL — frozen original design intent.** Module and API names
+> here predate the role-first naming refactor and no longer match the source.
+> For the current as-built design see [../ARCHITECTURE.md](../ARCHITECTURE.md);
+> for current status see [../STATUS.md](../STATUS.md).
+
 ## Context
 
 Design a C library implementing NMRA DCC (Digital Command Control) specifications S-9.1 through S-9.3.2. The library provides a simple user-facing API on the front end and generates spec-compliant DCC signals on the back end. It follows the same architectural patterns as OpenLcbCLib: single config struct, DI via function pointers, compile-time feature flags, no dynamic memory, portable to any MCU.

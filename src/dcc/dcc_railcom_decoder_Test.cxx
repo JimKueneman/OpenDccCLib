@@ -140,13 +140,25 @@ TEST(DccRailcomDecoder, decode_byte_ack_0xF0) {
 
 }
 
-TEST(DccRailcomDecoder, decode_byte_nack_0x0F) {
+TEST(DccRailcomDecoder, decode_byte_ack_0x0F) {
 
     reset_mocks();
     interface_dcc_railcom_decoder_t interface = make_interface();
     DccRailcomDecoder_initialize(&test_context, &interface);
 
-    EXPECT_EQ(DccRailcomDecoder_decode_byte(0x0F), DCC_RAILCOM_DECODE_NACK);
+    /* 0x0F is the alternate ACK special code word (2026 draft S-9.3.2) */
+    EXPECT_EQ(DccRailcomDecoder_decode_byte(0x0F), DCC_RAILCOM_DECODE_ACK);
+
+}
+
+TEST(DccRailcomDecoder, decode_byte_nack_0x3C) {
+
+    reset_mocks();
+    interface_dcc_railcom_decoder_t interface = make_interface();
+    DccRailcomDecoder_initialize(&test_context, &interface);
+
+    /* 0x3C is the NACK special code word (2026 draft S-9.3.2) */
+    EXPECT_EQ(DccRailcomDecoder_decode_byte(0x3C), DCC_RAILCOM_DECODE_NACK);
 
 }
 

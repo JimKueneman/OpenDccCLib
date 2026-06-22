@@ -28,11 +28,15 @@
  * @brief RailCom cutout timer state machine for the command station.
  *
  * @details Manages the one-shot Timer 2 that creates the RailCom cutout
- * window after each DCC packet. The cutout sequence is:
- *   1. 88us delay after end bit (pre-cutout)
- *   2. H-bridge disabled, Ch1 UART enabled (464us window)
- *   3. Ch2 UART enabled (1080us window)
- *   4. H-bridge re-enabled, cutout_complete flag set
+ * window after each DCC packet. Each state loads a one-shot duration; its
+ * action fires when that duration EXPIRES. Cumulative spec event times in
+ * parentheses (defaults shown):
+ *   1. DELAY    (26us)  -> T_CS  = 26us:  tristate H-bridge / begin cutout
+ *   2. SETTLING (54us)  -> T_TS1 = 80us:  enable UART Rx (Ch1 opens)
+ *   3. CH1      (97us)  -> T_TC1 = 177us: disable UART Rx (Ch1 closes)
+ *   4. GAP      (16us)  -> T_TS2 = 193us: enable UART Rx (Ch2 opens)
+ *   5. CH2      (261us) -> T_CE  = 454us: disable UART Rx, restore H-bridge,
+ *                                         set cutout_complete flag
  *
  * This module is independent of the DCC bit encoder. Communication is
  * through interface function pointers only (no direct includes).
@@ -57,9 +61,11 @@ extern "C" {
 typedef enum {
 
     DCC_RAILCOM_CUTOUT_IDLE,      /**< No cutout in progress */
-    DCC_RAILCOM_CUTOUT_DELAY,     /**< 88us pre-cutout delay */
-    DCC_RAILCOM_CUTOUT_CH1,       /**< Ch1 window (464us) */
-    DCC_RAILCOM_CUTOUT_CH2        /**< Ch2 window (1080us) */
+    DCC_RAILCOM_CUTOUT_DELAY,     /**< Pre-cutout delay; expiry tristates H-bridge (T_CS) */
+    DCC_RAILCOM_CUTOUT_SETTLING,  /**< Settling; expiry enables UART Rx (T_TS1) */
+    DCC_RAILCOM_CUTOUT_CH1,       /**< Ch1 window; expiry disables UART Rx (T_TC1) */
+    DCC_RAILCOM_CUTOUT_GAP,       /**< Ch1/Ch2 gap; expiry re-enables UART Rx (T_TS2) */
+    DCC_RAILCOM_CUTOUT_CH2        /**< Ch2 window; expiry disables UART Rx, restores H-bridge (T_CE) */
 
 } dcc_railcom_cutout_state_enum;
 
@@ -96,20 +102,41 @@ typedef struct {
     const interface_dcc_railcom_cutout_t *interface;
     dcc_railcom_cutout_state_enum state;
 
+        /** @brief DELAY duration (us) — fires tristate at T_CS on expiry. */
+    uint16_t start_delay_us;
+
+        /** @brief SETTLING duration (us) — fires UART Rx enable at T_TS1 on expiry. */
+    uint16_t uart_rx_delay_us;
+
+        /** @brief CH1 window duration (us) — fires UART Rx disable at T_TC1 on expiry. */
+    uint16_t ch1_window_us;
+
+        /** @brief GAP duration (us) — fires UART Rx enable at T_TS2 on expiry. */
+    uint16_t ch1_ch2_gap_us;
+
+        /** @brief CH2 window duration (us) — fires UART Rx disable + restore at T_CE on expiry. */
+    uint16_t ch2_window_us;
+
 } dcc_railcom_cutout_context_t;
 
     /**
      * @brief Initialize the RailCom cutout module.
      *  context Pointer to  dcc_railcom_cutout_context_t instance.
      *  interface Pointer to populated  interface_dcc_railcom_cutout_t struct.
+     *  start_delay  DELAY duration (us)    — tristate H-bridge at T_CS on expiry.
+     *  uart_rx_delay SETTLING duration (us) — enable UART Rx at T_TS1 on expiry.
+     *  ch1          CH1 window duration (us) — disable UART Rx at T_TC1 on expiry.
+     *  gap          GAP duration (us)      — re-enable UART Rx at T_TS2 on expiry.
+     *  ch2          CH2 window duration (us) — disable UART Rx + restore at T_CE on expiry.
      */
-extern void DccRailcomCutout_initialize(dcc_railcom_cutout_context_t *context, const interface_dcc_railcom_cutout_t *interface);
+extern void DccRailcomCutout_initialize(dcc_railcom_cutout_context_t *context, const interface_dcc_railcom_cutout_t *interface,
+                                        uint16_t start_delay, uint16_t uart_rx_delay, uint16_t ch1, uint16_t gap, uint16_t ch2);
 
     /**
      * @brief Begin the cutout sequence. Called when the end bit completes.
      *  context Pointer to  dcc_railcom_cutout_context_t instance.
      *
-     * @details Starts Timer 2 with an 88us one-shot for the pre-cutout delay.
+     * @details Starts Timer 2 with a one-shot for the pre-cutout DELAY duration.
      */
 extern void DccRailcomCutout_begin(dcc_railcom_cutout_context_t *context);
 
@@ -123,7 +150,8 @@ extern void DccRailcomCutout_cancel(dcc_railcom_cutout_context_t *context);
      * @brief Timer 2 ISR entry point. Call from the one-shot timer ISR.
      *  context Pointer to  dcc_railcom_cutout_context_t instance.
      *
-     * @details Advances the cutout state machine through DELAY -> CH1 -> CH2 -> IDLE.
+     * @details Advances the cutout state machine through
+     *  DELAY -> SETTLING -> CH1 -> GAP -> CH2 -> IDLE.
      */
 extern void DccRailcomCutout_timer_isr(dcc_railcom_cutout_context_t *context);
 

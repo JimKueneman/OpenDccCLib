@@ -137,6 +137,51 @@ TEST(DccRailcomEncoder, round_trip_all_values) {
 }
 
 // ============================================================================
+// Raw special code word tests (ACK/NACK, 2026 draft S-9.3.2)
+// ============================================================================
+
+TEST(DccRailcomEncoder, send_code_word_ack_raw) {
+
+    reset_mocks();
+    interface_dcc_railcom_encoder_t interface = make_interface();
+    DccRailcomEncoder_initialize(&interface);
+
+    /* ACK code word 0xF0 is transmitted raw, bypassing the 4/8 table */
+    DccRailcomEncoder_send_code_word(DCC_RAILCOM_CODE_WORD_ACK);
+
+    EXPECT_EQ(uart_byte_count, (uint8_t)1);
+    EXPECT_EQ(uart_bytes[0], (uint8_t)0xF0);
+
+}
+
+TEST(DccRailcomEncoder, send_code_word_nack_raw) {
+
+    reset_mocks();
+    interface_dcc_railcom_encoder_t interface = make_interface();
+    DccRailcomEncoder_initialize(&interface);
+
+    /* NACK code word 0x3C is transmitted raw, bypassing the 4/8 table */
+    DccRailcomEncoder_send_code_word(DCC_RAILCOM_CODE_WORD_NACK);
+
+    EXPECT_EQ(uart_byte_count, (uint8_t)1);
+    EXPECT_EQ(uart_bytes[0], (uint8_t)0x3C);
+
+}
+
+TEST(DccRailcomEncoder, send_code_word_null_uart_no_crash) {
+
+    reset_mocks();
+    interface_dcc_railcom_encoder_t interface;
+    memset(&interface, 0, sizeof(interface));
+    interface.uart_write = NULL;
+    DccRailcomEncoder_initialize(&interface);
+
+    DccRailcomEncoder_send_code_word(DCC_RAILCOM_CODE_WORD_ACK);
+    EXPECT_EQ(uart_byte_count, (uint8_t)0);
+
+}
+
+// ============================================================================
 // Channel 1 send tests
 // ============================================================================
 

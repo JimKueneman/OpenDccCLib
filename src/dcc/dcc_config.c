@@ -578,7 +578,22 @@ void DccConfig_initialize(const dcc_config_t *config) {
 
     }
 
-    DccRailcomCutout_initialize(&_railcom_cutout_context, &_railcom_cutout_interface);
+    /* Resolve each cutout timing: a non-zero config value overrides the spec
+     * default, 0 selects the dcc_defines spec default. */
+    uint16_t cutout_start_delay = config->railcom_cutout_start_delay_us
+        ? config->railcom_cutout_start_delay_us : DCC_RAILCOM_CUTOUT_START_DELAY_US;
+    uint16_t cutout_uart_rx_delay = config->railcom_uart_rx_delay_us
+        ? config->railcom_uart_rx_delay_us : DCC_RAILCOM_UART_RX_DELAY_US;
+    uint16_t cutout_ch1_window = config->railcom_ch1_window_us
+        ? config->railcom_ch1_window_us : DCC_RAILCOM_CH1_WINDOW_US;
+    uint16_t cutout_ch1_ch2_gap = config->railcom_ch1_ch2_gap_us
+        ? config->railcom_ch1_ch2_gap_us : DCC_RAILCOM_CH1_CH2_GAP_US;
+    uint16_t cutout_ch2_window = config->railcom_ch2_window_us
+        ? config->railcom_ch2_window_us : DCC_RAILCOM_CH2_WINDOW_US;
+
+    DccRailcomCutout_initialize(&_railcom_cutout_context, &_railcom_cutout_interface,
+                                cutout_start_delay, cutout_uart_rx_delay, cutout_ch1_window,
+                                cutout_ch1_ch2_gap, cutout_ch2_window);
 
     /* Wire main track application layer.
      * Uses ref-counted shared timer wrappers. */
@@ -715,7 +730,6 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _packet_decoder_interface.on_binary_state_short_command = config->on_binary_state_short_command;
     _packet_decoder_interface.on_binary_state_long_command = config->on_binary_state_long_command;
     _packet_decoder_interface.on_analog_function_command = config->on_analog_function_command;
-    _packet_decoder_interface.on_speed_restriction_command = config->on_speed_restriction_command;
     _packet_decoder_interface.start_ack_pulse = config->start_ack_pulse;
     DccPacketDecoder_initialize(&_packet_decoder_interface);
 

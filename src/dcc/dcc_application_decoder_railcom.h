@@ -57,6 +57,9 @@ typedef struct {
         /** @brief Send a Channel 2 datagram (up to 6 encoded bytes). */
     void (*send_ch2)(const dcc_railcom_response_t *response);
 
+        /** @brief Send a raw special code word (ACK/NACK), bypassing 4/8 table. */
+    void (*send_code_word)(uint8_t code_word);
+
 } interface_dcc_application_decoder_railcom_t;
 
     /**
@@ -120,16 +123,18 @@ extern void DccApplicationDecoderRailcom_send_pom_response(uint16_t cv_address, 
 extern void DccApplicationDecoderRailcom_send_dynamic_data(uint8_t subid, uint8_t value);
 
     /**
-     * @brief Send a Ch2 ACK control word.
+     * @brief Send the RailCom ACK special code word.
      *
-     * Sends the RailCom ACK response per NMRA S-9.3.2.
+     * Transmits the raw ACK code word (@ref DCC_RAILCOM_CODE_WORD_ACK) per the
+     * 2026 draft S-9.3.2, bypassing the 4/8 encode table.
      */
 extern void DccApplicationDecoderRailcom_send_ack(void);
 
     /**
-     * @brief Send a Ch2 NACK control word.
+     * @brief Send the RailCom NACK special code word.
      *
-     * Sends the RailCom NACK response per NMRA S-9.3.2.
+     * Transmits the raw NACK code word (@ref DCC_RAILCOM_CODE_WORD_NACK) per the
+     * 2026 draft S-9.3.2, bypassing the 4/8 encode table.
      */
 extern void DccApplicationDecoderRailcom_send_nack(void);
 

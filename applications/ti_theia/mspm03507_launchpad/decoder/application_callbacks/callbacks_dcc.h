@@ -100,10 +100,6 @@ extern void CallbacksDcc_on_analog_function(uint16_t address,
                                              uint8_t output_number,
                                              uint8_t value);
 
-/* Speed restriction (layout-imposed speed limit). */
-extern void CallbacksDcc_on_speed_restriction(uint16_t address, bool enabled,
-                                               uint8_t speed_limit);
-
 /* Failsafe -- fires when no valid DCC packets arrive for too long,
  * and again when valid packets resume.  Stop the motor on enter. */
 extern void CallbacksDcc_on_failsafe_entered(void);

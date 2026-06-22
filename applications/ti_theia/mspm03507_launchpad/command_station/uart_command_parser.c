@@ -1072,57 +1072,6 @@ static void _cmd_analog(char *tokens[], int count) {
     _respond(_resp_buf);
 }
 
-static void _cmd_restrict(char *tokens[], int count) {
-
-    /* RESTRICT <addr> ON <speed_limit> */
-    /* RESTRICT <addr> OFF */
-
-    if (count < 3) {
-        _respond("ERR: usage: RESTRICT <addr> ON <speed_limit>|OFF");
-        return;
-    }
-
-    uint16_t addr;
-    dcc_address_type_enum addr_type;
-    _parse_address(tokens[1], &addr, &addr_type);
-
-    bool enabled;
-    uint8_t speed_limit = 0;
-
-    if (strcmp(tokens[2], "ON") == 0) {
-        enabled = true;
-        if (count >= 4)
-            speed_limit = (uint8_t)atoi(tokens[3]);
-    } else if (strcmp(tokens[2], "OFF") == 0) {
-        enabled = false;
-    } else {
-        _respond("ERR: usage: RESTRICT <addr> ON <speed_limit>|OFF");
-        return;
-    }
-
-    dcc_packet_t packet;
-    if (!DccApplicationCommandStationPacket_load_speed_restriction(&packet, addr, addr_type,
-                                             enabled, speed_limit)) {
-        _respond("ERR: invalid restrict parameters");
-        return;
-    }
-    packet.repeat_count = 3;
-
-    if (!_schedule_main_track(&packet, addr, DCC_TAG_SPEED,
-                              DCC_PRIORITY_SPEED, false)) {
-        _respond("ERR: scheduler full");
-        return;
-    }
-
-    if (enabled)
-        snprintf(_resp_buf, sizeof(_resp_buf),
-                 "OK: RESTRICT addr=%u ON limit=%u", addr, speed_limit);
-    else
-        snprintf(_resp_buf, sizeof(_resp_buf),
-                 "OK: RESTRICT addr=%u OFF", addr);
-    _respond(_resp_buf);
-}
-
 static void _cmd_help(void) {
 
     _respond("DCC Command Station Commands:");
@@ -1150,7 +1099,6 @@ static void _cmd_help(void) {
     _respond("  BSS <addr> <1-127> <ON|OFF>");
     _respond("  BSL <addr> <1-32767> <ON|OFF>");
     _respond("  ANALOG <addr> <output> <value>");
-    _respond("  RESTRICT <addr> ON <limit>|OFF");
     _respond("  REFRESH ON|OFF  (auto-refresh speed/func)");
     _respond("  STATUS");
     _respond("  HELP");
@@ -1205,8 +1153,6 @@ void UartCommandParser_process(void) {
         _cmd_bsl(tokens, count);
     else if (strcmp(tokens[0], "ANALOG") == 0)
         _cmd_analog(tokens, count);
-    else if (strcmp(tokens[0], "RESTRICT") == 0)
-        _cmd_restrict(tokens, count);
     else if (strcmp(tokens[0], "STATUS") == 0)
         _cmd_status();
     else if (strcmp(tokens[0], "HELP") == 0)

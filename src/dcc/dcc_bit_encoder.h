@@ -31,9 +31,10 @@
  * on the wire by driving the hardware timer compare register. The user's
  * timer output compare toggle mode handles the actual pin transitions.
  *
- * The bit encoder is double-buffered: it reads from an "active" packet while
- * the scheduler prepares the "ready" packet. On packet completion, it signals
- * the main loop to swap buffers.
+ * The bit encoder holds a single active packet plus a packet_loaded flag: it
+ * transmits the active packet, and on completion signals the main loop, which
+ * loads the next packet via DccBitEncoder_load_packet(). (There is no separate
+ * front/back buffer swap; the reload happens within the inter-packet window.)
  *
  * @author Jim Kueneman
  * @date 13 Apr 2026

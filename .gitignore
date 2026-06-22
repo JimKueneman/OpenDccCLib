@@ -1,0 +1,16 @@
+.DS_Store
+node_modules/
+test/build/
+
+# TI Theia / CCS build artifacts
+**/Debug/
+.clangd
+
+# Python
+__pycache__/
+*.pyc
+
+# Generated documentation (Doxygen output). Source spec PDFs under
+# documentation/specs/ are NOT generated and stay tracked.
+documentation/html/
+documentation/latex/

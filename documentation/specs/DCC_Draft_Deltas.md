@@ -1,5 +1,9 @@
 # DCC Draft Specification Deltas
 
+> Sections 1–4 (DCC core: S-9.2.1, S-9.2.1.1, S-9.2.2, S-9.3.2) verified claim-by-claim
+> against the draft NMRA PDFs in `drafts/`. Sections 5–6 (E24, SUSI) are summaries only,
+> not yet verified against their draft PDFs.
+
 Changes between the current released NMRA S-9.x standards and the draft revisions
 under review (downloaded Apr 13, 2026 from [NMRA Documents Under Revision](https://www.nmra.org/documents-under-revision)).
 
@@ -38,7 +42,7 @@ to the Logon/Data Space protocol defined in S-9.2.1.1.
 
 #### Hard Reset (NEW)
 
-Format: `0000000F`
+Format: `0000TTTF` with `TTT=000` (so the byte is `0000000F`)
 - F=0: Digital Decoder Reset (existing — erase volatile memory, return to power-up state)
 - F=1: **Hard Reset** — CVs 29, 31, 32 reset to factory default, CV 19 set to `00000000`, then a normal Digital Decoder Reset is performed
 
@@ -236,9 +240,9 @@ Decoder makes no distinction — both are valid on the wire.
 
 #### Extended Accessory — Timed Output Mode (NEW)
 
-When used for timed output, byte 3 format:
+When used for timed output, byte 3 format `RZZZZZZZ`:
 - Bit 7 (R): selects output within pair
-- Bits 6–0 (ZZZZZZZ): 14-bit timed value (100 ms resolution, across 2 bytes)
+- Bits 6–0 (ZZZZZZZ): 7-bit timed value (100 ms resolution) in a single byte
 - `0000000` = off, `1111111` = continuous
 
 #### Accessory XPOM (NEW)
@@ -420,7 +424,7 @@ ReadShortInfo response: `1RAAAAAA AAAAAAAA FFFFFFFF PPPPPPPP PPPPPPPP CRC-8`
 
 Assigns session-specific DCC address. Does NOT modify CV1/CV17/CV18/CV19 or CV513/CV521.
 
-Feedback: change flags + 16-bit change counter + protocol support flags.
+Feedback: change flags + 12-bit change counter (right-justified across two CV bytes) + protocol support flags.
 
 **CV 28 bit 7** must be set to enable Logon. If clear, decoder ignores all 254 commands
 0xE0–0xFF but NOT Get Data or Select.
@@ -442,11 +446,12 @@ Feedback: change flags + 16-bit change counter + protocol support flags.
 
 #### WriteBlock (command `11111100`)
 
-Writes to data space at specified offset. Feedback codes:
-- `10000001` = success
-- `10000010` = permanent error
-- `10000011` = temporary error
-- `10000000` = still in progress
+Writes to data space at specified offset. Feedback is `ID13 1CCCCCCC 11111100` followed by a fixed **2-byte argument word** (MSB first):
+- `10000001` + `0x0000` = executed successfully
+- `10000001` + `0x8000` = written data differs from data sent
+- `10000010` + error code = permanent error
+- `10000011` + error code = temporary error
+- `10000000` + `0x0000` = still in progress (ignore argument on receipt)
 
 700 ms timeout; decoder sends in-progress every 500 ms.
 
@@ -497,6 +502,8 @@ CV31=2 for all standard data spaces:
 | 2 | 0 | Capabilities |
 | 2 | 1 | Data Space Info |
 | 2 | 2 | Short GUI |
+
+**Prepended length byte:** each data space stores its length (in bytes) at offset 0; content begins at offset 1. A prepended length of **0 or 255 means the data space is unimplemented**. Per-space length ranges: Capabilities 4–31, Data Space Info 1–30, Short GUI 11–29. (CV31=2, CV32=3 overlaps the CV data space and is unimplemented.)
 
 ### 2.15 Requirements Matrix
 
@@ -604,10 +611,13 @@ Renamed to **Decoder Automatic Stopping Configuration**:
 
 **CV 1**: Default value = 3. If CV1=0 or >127 and CV29 bit 5=0, DCC protocol is disabled.
 
+**CV 7**: redefined from "reserved for manufacturer" to a defined **read-only** Manufacturer Version Number ("its value cannot be changed"). However, *write* commands to CV7 are repurposed to configure address-less devices per RCN-226 (same write-triggers-special-function convention as CV8's write-to-reset).
+
 **CV 8**: When value = 238 (0xEE), CVs 107–108 hold 12-bit extended manufacturer ID.
 
 **CV 9**: Explicit formula: PWM period (us) = (131 + MANTISSA × 4) × 2^EXP
-(MANTISSA = bits 0–4, EXP = bits 5–7).
+(MANTISSA = bits 0–4, EXP = bits 5–7). **Note:** this formula text is struck through
+(marked for removal) in the Feb-2026 draft — do not rely on it as authoritative.
 
 **CV 10**: Valid range now **1–126** (was implied 0–128).
 
@@ -663,6 +673,14 @@ New accessory CV 29 [541] bit definitions:
 | 7 | Control Type — 0=Multifunction, 1=Accessory |
 
 New CV 33 for accessory decoders: output pair status (4 pairs, queryable via RailCom).
+
+**New accessory CVs 15–18:**
+- **CV15/CV16 — Decoder Lock** (optional): same mechanism as mobile-decoder CV15/16.
+- **CV17/CV18 — Mirrored Address**: mirror of accessory CV1/CV9 expressed in the mobile-decoder CV1/CV9 layout (one output pair always addressed). CV17 bits 6–7 are set only if CV29[541] bit 7 = 0 (decoder addressed as a mobile decoder); if CV29[541] bit 7 = 1, CV17 bits 3–7 must be 0 (only 11 address bits available).
+
+**Linear vs Non-Linear addressing (Table 9):** stored address = CV1[513] (LSB) + CV9[521] (MSB). Output↔packet mapping: for packet address 3–2047, Output = Packet − 3; for 0–2, Output = Packet − 3 + 2048; then CV1 = Output mod 256, CV9 = Output ÷ 256.
+- **Linear** (required for new designs, per S-9.2.1 §2.4.1): user address = output address, except user address 2048.
+- **Non-Linear** (legacy): a 256 (mod 2048) offset applies to the addresses that differ (e.g. Linear user 253 ↔ Non-Linear user 509).
 
 ### 3.11 Power Source Conversion Codes (Appendix B — Updated)
 
@@ -850,6 +868,8 @@ CV31=0, CV32=255:
 | 8–19 | 329–340 | Container 1–12 contents (0–100%) |
 | 20 | 341 | ADR datagram 1+2 contents (Basic Location Service) |
 | 21 | 342 | Warning/alarm messages |
+| 22 | 343 | Trip meters |
+| 23 | 344 | Maintenance interval (reset by writing 255) |
 | 26 | 347 | Temperature (-50°C to 205°C, linear 0–255) |
 | 27 | 348 | Direction status byte (east/west) |
 
@@ -892,6 +912,7 @@ Uses binary state XF2 (broadcast): `11011101 00000010`
 Uses binary state XF1 (addressed): `11011101 00000001`
 - Response ID3: TTTT (location type 0–7) + 11-bit position ID
 - If decoder doesn't know location, local detector completes the response
+- Location-type codes (Table 24): `0x0`–`0x7` = location info; `0x8`–`0x9` reserved; `0xA` diesel filling; `0xB` coaling; `0xC` water; `0xD` sanding; `0xE` charging; `0xF` general filling station
 
 ### 4.15 Reserved Binary States XF1–XF15 (NEW)
 
@@ -940,11 +961,11 @@ Controlled by binary state XF3:
 |------------|-----|-------------|
 | SRQ | — | 12-bit in Ch1, no identifier. MSB=0: basic, MSB=1: extended format |
 | POM | 0 | Read/write/bit with NACK support. 0.5s timeout |
-| Status 1 | 4 | Mandatory. Basic: 5-bit aspect. Extended: 8-bit aspect. Includes command-match bit |
+| Status 1 | 4 | Mandatory. Basic: 5-bit aspect. Extended: 8-bit aspect. Includes command-match bit (bit 6) and setpoint-vs-actual bit (bit 5: 0=setpoint, 1=actual value) |
 | Status 4 | 3 | All 4 output pairs in 8-bit datagram |
 | Time | 5 | Bit 7=resolution (0=0.1s, 1=1s). Range 0–12.7s or 0–127s |
 | Error | 6 | See error codes below |
-| Status 2 | 8 | Legacy. 4-bit config type + 3-bit status |
+| Status 2 | 8 | Legacy. Bits 7-4 = config type, bit 3 = status report type, bits 2-0 = status |
 
 ### 4.21 Accessory Error Codes (NEW)
 
@@ -970,7 +991,7 @@ Controlled by binary state XF3:
 | 0x1 | Turnout switch |
 | 0x2 | Three-way switch |
 | 0x3 | Double-crossing switch |
-| 0x4 | Turntable |
+| 0x4 | *(not defined — falls in the 0x4–0x7 reserved range)* |
 | 0x8 | Track lock signal |
 | 0x9 | Shape signal Hp0/Hp1 |
 | 0xA | Shape signal Hp0/Hp1/Hp2 |

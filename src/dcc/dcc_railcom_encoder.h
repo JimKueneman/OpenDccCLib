@@ -29,8 +29,8 @@
  *
  * @details Encodes 6-bit data values into 8-bit DC-balanced codewords per
  * NMRA RP-9.3.2. Provides functions to send Channel 1 and Channel 2
- * datagrams via the UART write callback. Disabled at runtime if
- * railcom_uart_write is NULL.
+ * datagrams via the interface's uart_write callback. Disabled at runtime if
+ * uart_write is NULL.
  *
  * @author Jim Kueneman
  * @date 07 Apr 2026
@@ -68,6 +68,17 @@ extern void DccRailcomEncoder_initialize(const interface_dcc_railcom_encoder_t *
      * @return 8-bit DC-balanced codeword, or 0x00 if value is out of range.
      */
 extern uint8_t DccRailcomEncoder_encode_byte(uint8_t value);
+
+    /**
+     * @brief Send a raw RailCom special code word (bypasses the 4/8 table).
+     * @param code_word Raw 8-bit code word to transmit (e.g.
+     *        @ref DCC_RAILCOM_CODE_WORD_ACK or @ref DCC_RAILCOM_CODE_WORD_NACK).
+     *
+     * @details Special code words (ACK/NACK) per the 2026 draft S-9.3.2 are
+     * transmitted verbatim over the same UART write path as encoded bytes,
+     * but are NOT run through the 4/8 encode table.
+     */
+extern void DccRailcomEncoder_send_code_word(uint8_t code_word);
 
     /**
      * @brief Send a Channel 1 datagram (2 encoded bytes, 12-bit payload).

@@ -50,9 +50,6 @@ const dcc_config_t dcc_config = {
     .cv_read                 = &CallbacksDcc_cv_read,
     .cv_write                = &CallbacksDcc_cv_write,
 
-    /* --- RailCom UART (set to NULL if not used) --- */
-    .railcom_uart_write      = NULL,
-
     /* --- Application callbacks (OPTIONAL, NULL = no notification) ---
      * Each of these fires when the library decodes the corresponding DCC
      * command.  Set any to NULL if you do not need that command type.
@@ -77,7 +74,6 @@ const dcc_config_t dcc_config = {
     .on_binary_state_short_command = &CallbacksDcc_on_binary_state_short,
     .on_binary_state_long_command  = &CallbacksDcc_on_binary_state_long,
     .on_analog_function_command    = &CallbacksDcc_on_analog_function,
-    .on_speed_restriction_command  = &CallbacksDcc_on_speed_restriction,
     .on_failsafe_entered           = &CallbacksDcc_on_failsafe_entered,
     .on_failsafe_exited            = &CallbacksDcc_on_failsafe_exited,
 };

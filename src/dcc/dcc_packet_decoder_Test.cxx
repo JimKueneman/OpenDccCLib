@@ -84,11 +84,6 @@ static uint8_t last_analog_output;
 static uint8_t last_analog_value;
 static uint32_t analog_callback_count;
 
-static uint16_t last_restrict_address;
-static bool last_restrict_enabled;
-static uint8_t last_restrict_limit;
-static uint32_t restrict_callback_count;
-
 static uint16_t last_acc_cv_write_number;
 static uint8_t last_acc_cv_write_value;
 static uint32_t acc_cv_write_callback_count;
@@ -282,15 +277,6 @@ static void mock_on_analog(uint16_t address, uint8_t output_number, uint8_t valu
 
 }
 
-static void mock_on_restrict(uint16_t address, bool enabled, uint8_t speed_limit) {
-
-    last_restrict_address = address;
-    last_restrict_enabled = enabled;
-    last_restrict_limit = speed_limit;
-    restrict_callback_count++;
-
-}
-
 static void reset_mocks(void) {
 
     memset(mock_cv_values, 0, sizeof(mock_cv_values));
@@ -376,11 +362,6 @@ static void reset_mocks(void) {
     last_analog_value = 0;
     analog_callback_count = 0;
 
-    last_restrict_address = 0;
-    last_restrict_enabled = false;
-    last_restrict_limit = 0;
-    restrict_callback_count = 0;
-
     mock_cv_read_should_fail = false;
     mock_cv_write_should_fail = false;
 
@@ -443,7 +424,6 @@ static interface_dcc_packet_decoder_t make_interface(void) {
     interface.on_binary_state_short_command = mock_on_bss;
     interface.on_binary_state_long_command = mock_on_bsl;
     interface.on_analog_function_command = mock_on_analog;
-    interface.on_speed_restriction_command = mock_on_restrict;
 
     return interface;
 
@@ -1339,42 +1319,6 @@ TEST(DccPacketDecoder, analog_function_null_callback) {
 }
 
 // ============================================================================
-// Speed restriction
-// ============================================================================
-
-TEST(DccPacketDecoder, speed_restriction) {
-
-    reset_mocks();
-    interface_dcc_packet_decoder_t interface = make_interface();
-    set_decoder_short_address(&interface, 3);
-
-    /* Speed restriction: 0x3E, then 1SSSSSSS (enabled=1, limit=60) */
-    uint8_t data[] = {0x03, DCC_ADV_OPS_SPEED_RESTRICTION, 0x80 | 60, 0x00};
-    data[3] = xor_bytes(data, 3);
-    DccPacketDecoder_process_packet(data, 4);
-
-    EXPECT_EQ(restrict_callback_count, (uint32_t)1);
-    EXPECT_TRUE(last_restrict_enabled);
-    EXPECT_EQ(last_restrict_limit, (uint8_t)60);
-
-}
-
-TEST(DccPacketDecoder, speed_restriction_null_callback) {
-
-    reset_mocks();
-    interface_dcc_packet_decoder_t interface = make_interface();
-    interface.on_speed_restriction_command = NULL;
-    set_decoder_short_address(&interface, 3);
-
-    uint8_t data[] = {0x03, DCC_ADV_OPS_SPEED_RESTRICTION, 0x80 | 60, 0x00};
-    data[3] = xor_bytes(data, 3);
-    DccPacketDecoder_process_packet(data, 4);
-
-    EXPECT_EQ(restrict_callback_count, (uint32_t)0);
-
-}
-
-// ============================================================================
 // Function groups F21-F28
 // ============================================================================
 
@@ -2037,21 +1981,6 @@ TEST(DccPacketDecoder, adv_ops_analog_too_few_bytes) {
 
 }
 
-TEST(DccPacketDecoder, adv_ops_speed_restriction_too_few_bytes) {
-
-    reset_mocks();
-    interface_dcc_packet_decoder_t interface = make_interface();
-    set_decoder_short_address(&interface, 3);
-
-    /* Speed restriction opcode (0x3E) but only 1 instruction byte (needs 2) */
-    uint8_t data[] = {0x03, DCC_ADV_OPS_SPEED_RESTRICTION, 0x00};
-    data[2] = xor_bytes(data, 2);
-    DccPacketDecoder_process_packet(data, 3);
-
-    EXPECT_EQ(restrict_callback_count, (uint32_t)0);
-
-}
-
 TEST(DccPacketDecoder, feature_expansion_too_few_bytes) {
 
     reset_mocks();
@@ -2160,14 +2089,13 @@ TEST(DccPacketDecoder, unrecognized_adv_ops_instruction) {
     interface_dcc_packet_decoder_t interface = make_interface();
     set_decoder_short_address(&interface, 3);
 
-    /* Advanced ops range (001xxxxx) but not 0x3F/0x3D/0x3E → 0x20 */
+    /* Advanced ops range (001xxxxx) but not 0x3F/0x3D → 0x20 */
     uint8_t data[] = {0x03, 0x20, 0x00, 0x00};
     data[3] = xor_bytes(data, 3);
     DccPacketDecoder_process_packet(data, 4);
 
     EXPECT_EQ(speed_callback_count, (uint32_t)0);
     EXPECT_EQ(analog_callback_count, (uint32_t)0);
-    EXPECT_EQ(restrict_callback_count, (uint32_t)0);
 
 }
 
@@ -3154,28 +3082,6 @@ TEST(DccPacketDecoder, speed_14_direction_reversed) {
     EXPECT_EQ(last_speed_mode, DCC_SPEED_MODE_14);
     /* Direction reversed */
     EXPECT_FALSE(last_speed_direction);
-
-}
-
-// ============================================================================
-// Speed restriction enabled=false
-// ============================================================================
-
-TEST(DccPacketDecoder, speed_restriction_disabled) {
-
-    reset_mocks();
-    interface_dcc_packet_decoder_t interface = make_interface();
-    set_decoder_short_address(&interface, 3);
-
-    /* Advanced ops: 001 11110 = 0x3E (speed restriction)
-     * Second byte: 0SSSSSSS = 0x3C → enabled=0, limit=60 */
-    uint8_t data[] = {0x03, 0x3E, 0x3C, 0x00};
-    data[3] = xor_bytes(data, 3);
-    DccPacketDecoder_process_packet(data, 4);
-
-    EXPECT_EQ(restrict_callback_count, (uint32_t)1);
-    EXPECT_FALSE(last_restrict_enabled);
-    EXPECT_EQ(last_restrict_limit, (uint8_t)60);
 
 }
 

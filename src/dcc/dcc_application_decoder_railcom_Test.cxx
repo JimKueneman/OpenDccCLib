@@ -45,6 +45,12 @@ static uint8_t last_ch1_data = 0;
 
 static uint32_t send_ch2_count = 0;
 static dcc_railcom_response_t last_ch2_response;
+/* Records every Ch2 datagram in order so multi-datagram responses can be
+ * verified (e.g. the 3-datagram track-search form). */
+static dcc_railcom_response_t ch2_history[8];
+
+static uint32_t send_code_word_count = 0;
+static uint8_t last_code_word = 0;
 
 static void mock_send_ch1(uint8_t datagram_id, uint8_t data) {
 
@@ -56,8 +62,21 @@ static void mock_send_ch1(uint8_t datagram_id, uint8_t data) {
 
 static void mock_send_ch2(const dcc_railcom_response_t *response) {
 
+    if (send_ch2_count < 8) {
+
+        ch2_history[send_ch2_count] = *response;
+
+    }
+
     send_ch2_count++;
     last_ch2_response = *response;
+
+}
+
+static void mock_send_code_word(uint8_t code_word) {
+
+    send_code_word_count++;
+    last_code_word = code_word;
 
 }
 
@@ -68,6 +87,9 @@ static void reset_mocks(void) {
     last_ch1_data = 0;
     send_ch2_count = 0;
     memset(&last_ch2_response, 0, sizeof(last_ch2_response));
+    memset(ch2_history, 0, sizeof(ch2_history));
+    send_code_word_count = 0;
+    last_code_word = 0;
 
 }
 
@@ -78,6 +100,7 @@ static interface_dcc_application_decoder_railcom_t make_interface(void) {
 
     iface.send_ch1 = mock_send_ch1;
     iface.send_ch2 = mock_send_ch2;
+    iface.send_code_word = mock_send_code_word;
 
     return iface;
 
@@ -123,9 +146,10 @@ TEST(DccApplicationDecoderRailcom, send_address_feedback_first_call_sends_adr1) 
     uint16_t address = 0x0A5B;
     DccApplicationDecoderRailcom_send_address_feedback(address);
 
+    /* ADR1 (ID 1) carries the HIGH bits (2026 draft S-9.3.2, Table 19) */
     EXPECT_EQ(send_ch1_count, (uint32_t)1);
     EXPECT_EQ(last_ch1_datagram_id, (uint8_t)1);
-    EXPECT_EQ(last_ch1_data, (uint8_t)(address & 0xFF));
+    EXPECT_EQ(last_ch1_data, (uint8_t)((address >> 8) & 0x3F));
 
 }
 
@@ -139,9 +163,10 @@ TEST(DccApplicationDecoderRailcom, send_address_feedback_second_call_sends_adr2)
     DccApplicationDecoderRailcom_send_address_feedback(address);
     DccApplicationDecoderRailcom_send_address_feedback(address);
 
+    /* ADR2 (ID 2) carries the LOW bits (2026 draft S-9.3.2, Table 19) */
     EXPECT_EQ(send_ch1_count, (uint32_t)2);
     EXPECT_EQ(last_ch1_datagram_id, (uint8_t)2);
-    EXPECT_EQ(last_ch1_data, (uint8_t)((address >> 8) & 0x3F));
+    EXPECT_EQ(last_ch1_data, (uint8_t)(address & 0xFF));
 
 }
 
@@ -161,10 +186,10 @@ TEST(DccApplicationDecoderRailcom, send_address_feedback_alternates) {
     DccApplicationDecoderRailcom_send_address_feedback(address);
     EXPECT_EQ(last_ch1_datagram_id, (uint8_t)2);
 
-    /* 3rd call: back to ADR1 */
+    /* 3rd call: back to ADR1 (HIGH bits) */
     DccApplicationDecoderRailcom_send_address_feedback(address);
     EXPECT_EQ(last_ch1_datagram_id, (uint8_t)1);
-    EXPECT_EQ(last_ch1_data, (uint8_t)(address & 0xFF));
+    EXPECT_EQ(last_ch1_data, (uint8_t)((address >> 8) & 0x3F));
 
 }
 
@@ -211,12 +236,24 @@ TEST(DccApplicationDecoderRailcom, send_track_search_delegates) {
     uint8_t seconds = 55;
     DccApplicationDecoderRailcom_send_track_search_response(address, seconds);
 
-    EXPECT_EQ(send_ch2_count, (uint32_t)1);
-    EXPECT_EQ(last_ch2_response.datagram_id, (uint8_t)2);
-    EXPECT_EQ(last_ch2_response.data[0], (uint8_t)(address & 0xFF));
-    EXPECT_EQ(last_ch2_response.data[1], (uint8_t)((address >> 8) & 0x3F));
-    EXPECT_EQ(last_ch2_response.data[2], seconds);
-    EXPECT_EQ(last_ch2_response.count, (uint8_t)3);
+    /* Three datagrams sent together (2026 draft S-9.3.2):
+     * ID1 (ADR1 HIGH), ID2 (ADR2 LOW), ID14 (Time). */
+    EXPECT_EQ(send_ch2_count, (uint32_t)3);
+
+    /* Datagram 1: ID1 (ADR1) — HIGH bits */
+    EXPECT_EQ(ch2_history[0].datagram_id, (uint8_t)1);
+    EXPECT_EQ(ch2_history[0].data[0], (uint8_t)((address >> 8) & 0x3F));
+    EXPECT_EQ(ch2_history[0].count, (uint8_t)1);
+
+    /* Datagram 2: ID2 (ADR2) — LOW bits */
+    EXPECT_EQ(ch2_history[1].datagram_id, (uint8_t)2);
+    EXPECT_EQ(ch2_history[1].data[0], (uint8_t)(address & 0xFF));
+    EXPECT_EQ(ch2_history[1].count, (uint8_t)1);
+
+    /* Datagram 3: ID14 (Time) */
+    EXPECT_EQ(ch2_history[2].datagram_id, (uint8_t)14);
+    EXPECT_EQ(ch2_history[2].data[0], seconds);
+    EXPECT_EQ(ch2_history[2].count, (uint8_t)1);
 
 }
 
@@ -330,11 +367,11 @@ TEST(DccApplicationDecoderRailcom, send_ack_null_guard) {
 
     DccApplicationDecoderRailcom_send_ack();
 
-    EXPECT_EQ(send_ch2_count, (uint32_t)0);
+    EXPECT_EQ(send_code_word_count, (uint32_t)0);
 
 }
 
-TEST(DccApplicationDecoderRailcom, send_ack_delegates) {
+TEST(DccApplicationDecoderRailcom, send_ack_sends_raw_code_word) {
 
     reset_mocks();
     interface_dcc_application_decoder_railcom_t iface = make_interface();
@@ -342,10 +379,11 @@ TEST(DccApplicationDecoderRailcom, send_ack_delegates) {
 
     DccApplicationDecoderRailcom_send_ack();
 
-    EXPECT_EQ(send_ch2_count, (uint32_t)1);
-    EXPECT_EQ(last_ch2_response.datagram_id, (uint8_t)15);
-    EXPECT_EQ(last_ch2_response.data[0], (uint8_t)0x00);
-    EXPECT_EQ(last_ch2_response.count, (uint8_t)1);
+    /* ACK is a raw special code word 0xF0 (2026 draft S-9.3.2), not a datagram */
+    EXPECT_EQ(send_ch2_count, (uint32_t)0);
+    EXPECT_EQ(send_code_word_count, (uint32_t)1);
+    EXPECT_EQ(last_code_word, (uint8_t)DCC_RAILCOM_CODE_WORD_ACK);
+    EXPECT_EQ(last_code_word, (uint8_t)0xF0);
 
 }
 
@@ -358,11 +396,11 @@ TEST(DccApplicationDecoderRailcom, send_nack_null_guard) {
 
     DccApplicationDecoderRailcom_send_nack();
 
-    EXPECT_EQ(send_ch2_count, (uint32_t)0);
+    EXPECT_EQ(send_code_word_count, (uint32_t)0);
 
 }
 
-TEST(DccApplicationDecoderRailcom, send_nack_delegates) {
+TEST(DccApplicationDecoderRailcom, send_nack_sends_raw_code_word) {
 
     reset_mocks();
     interface_dcc_application_decoder_railcom_t iface = make_interface();
@@ -370,10 +408,11 @@ TEST(DccApplicationDecoderRailcom, send_nack_delegates) {
 
     DccApplicationDecoderRailcom_send_nack();
 
-    EXPECT_EQ(send_ch2_count, (uint32_t)1);
-    EXPECT_EQ(last_ch2_response.datagram_id, (uint8_t)15);
-    EXPECT_EQ(last_ch2_response.data[0], (uint8_t)0x01);
-    EXPECT_EQ(last_ch2_response.count, (uint8_t)1);
+    /* NACK is a raw special code word 0x3C (2026 draft S-9.3.2), not a datagram */
+    EXPECT_EQ(send_ch2_count, (uint32_t)0);
+    EXPECT_EQ(send_code_word_count, (uint32_t)1);
+    EXPECT_EQ(last_code_word, (uint8_t)DCC_RAILCOM_CODE_WORD_NACK);
+    EXPECT_EQ(last_code_word, (uint8_t)0x3C);
 
 }
 

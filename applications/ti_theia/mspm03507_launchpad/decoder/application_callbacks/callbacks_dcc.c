@@ -268,23 +268,6 @@ void CallbacksDcc_on_analog_function(uint16_t address,
 
 }
 
-void CallbacksDcc_on_speed_restriction(uint16_t address, bool enabled,
-                                        uint8_t speed_limit) {
-
-    if (enabled) {
-
-        _recv_enqueue("RECV RESTRICT addr=%u enabled=ON limit=%u",
-                      address, speed_limit);
-
-    } else {
-
-        _recv_enqueue("RECV RESTRICT addr=%u enabled=OFF",
-                      address);
-
-    }
-
-}
-
 void CallbacksDcc_on_failsafe_entered(void) {
 
     _recv_enqueue("RECV FAILSAFE_ENTER");
