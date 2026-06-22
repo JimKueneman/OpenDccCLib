@@ -176,18 +176,31 @@ TEST(DccPacketEncoder, speed128_preamble_is_ops_mode) {
 
 TEST(DccPacketEncoder, estop_all_packet) {
     dcc_packet_t pkt;
-    DccApplicationCommandStationPacket_load_estop_all(&pkt);
+    /* isPanic=true -> S-9.2 baseline broadcast stop, S=1 (stop delivering energy) */
+    DccApplicationCommandStationPacket_load_estop_all(&pkt, true);
 
-    EXPECT_EQ(pkt.data[0], 0x00);  /* broadcast address */
-    EXPECT_EQ(pkt.data[1], 0x3F);  /* advanced ops 128-step */
-    EXPECT_EQ(pkt.data[2], 0x81);  /* forward + e-stop (speed=1) */
-    EXPECT_EQ(pkt.byte_count, 4);  /* 3 data + 1 XOR */
+    EXPECT_EQ(pkt.data[0], 0x00);  /* broadcast address          */
+    EXPECT_EQ(pkt.data[1], 0x51);  /* 01DC000S: D=0 C=1 S=1       */
+    EXPECT_EQ(pkt.data[2], 0x51);  /* error byte = copy of byte 2 */
+    EXPECT_EQ(pkt.byte_count, 3);  /* addr + instruction + error  */
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, estop_all_controlled) {
+    dcc_packet_t pkt;
+    /* isPanic=false -> baseline broadcast stop, S=0 (bring to a controlled stop) */
+    DccApplicationCommandStationPacket_load_estop_all(&pkt, false);
+
+    EXPECT_EQ(pkt.data[0], 0x00);
+    EXPECT_EQ(pkt.data[1], 0x50);  /* 01DC000S: D=0 C=1 S=0 */
+    EXPECT_EQ(pkt.data[2], 0x50);
+    EXPECT_EQ(pkt.byte_count, 3);
     verify_xor(&pkt);
 }
 
 TEST(DccPacketEncoder, estop_all_preamble) {
     dcc_packet_t pkt;
-    DccApplicationCommandStationPacket_load_estop_all(&pkt);
+    DccApplicationCommandStationPacket_load_estop_all(&pkt, true);
 
     EXPECT_EQ(pkt.preamble_bits, DCC_PREAMBLE_BITS_OPS);
 }

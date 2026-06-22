@@ -23,6 +23,7 @@
 #include "dcc_lib/dcc_application_command_station_main_track.h"
 #include "dcc_lib/dcc_application_command_station_service_track.h"
 #include "dcc_lib/dcc_application_command_station_packet.h"
+#include "application_callbacks/callbacks_dcc.h"
 #include "dcc_user_config.h"
 
 #include <string.h>
@@ -313,7 +314,7 @@ static void _cmd_estop(char *tokens[], int count) {
         _respond(_resp_buf);
     } else {
         /* Broadcast emergency stop */
-        DccApplicationCommandStationPacket_load_estop_all(&packet);
+        DccApplicationCommandStationPacket_load_estop_all(&packet, true);
         packet.repeat_count = 3;
 
         if (!_schedule_main_track(&packet, 0, DCC_TAG_SPEED,
@@ -924,6 +925,58 @@ static void _cmd_status(void) {
     _respond(_resp_buf);
 }
 
+// Arm the test trigger (PB3): the next non-idle packet transmitted drives a
+// clean rising edge so a logic analyzer can hardware-trigger on the packet
+// under test. Used by the HIL compliance harness.
+static void _cmd_trig(void) {
+
+    CallbacksDcc_arm_trigger();
+    _respond("OK: trigger armed (next non-idle packet pulses PB3)");
+}
+
+// Send a broadcast reset packet (00 00 00) once on the main track. Exposed so
+// the HIL harness can verify the S-9.2 reset-packet encoding on the wire.
+static void _cmd_reset(void) {
+
+    dcc_packet_t packet;
+    DccApplicationCommandStationPacket_load_reset(&packet);
+    packet.repeat_count = 3;
+
+    if (!_schedule_main_track(&packet, 0, DCC_TAG_SPEED,
+                              DCC_PRIORITY_ESTOP, false)) {
+        _respond("ERR: scheduler full");
+        return;
+    }
+    _respond("OK: RESET packet scheduled (00 00 00)");
+}
+
+// Broadcast CONTROLLED stop (S-9.2 baseline 01DC000S with S=0): all decoders
+// decelerate to a stop. The emergency form (S=1) is the ESTOP command.
+static void _cmd_stop(void) {
+
+    dcc_packet_t packet;
+    DccApplicationCommandStationPacket_load_estop_all(&packet, false);  /* S=0 */
+    packet.repeat_count = 3;
+
+    if (!_schedule_main_track(&packet, 0, DCC_TAG_SPEED,
+                              DCC_PRIORITY_ESTOP, false)) {
+        _respond("ERR: scheduler full");
+        return;
+    }
+    _respond("OK: broadcast controlled stop (S=0)");
+}
+
+// Clear all auto-refresh entries AND reset the per-loco function/speed state so
+// the track returns to a clean idle-only stream. Used by the HIL harness for
+// test isolation between driven captures (so accumulated function bits don't
+// bleed from one test into the next).
+static void _cmd_clear(void) {
+
+    DccApplicationCommandStationMainTrack_remove_all_auto_refresh();
+    memset(_loco_table, 0, sizeof(_loco_table));
+    _respond("OK: cleared (auto-refresh + loco state, idle-only)");
+}
+
 static void _cmd_consist(char *tokens[], int count) {
 
     /* CONSIST <addr> SET <consist_addr> [NORMAL|REVERSE] */
@@ -1101,6 +1154,10 @@ static void _cmd_help(void) {
     _respond("  ANALOG <addr> <output> <value>");
     _respond("  REFRESH ON|OFF  (auto-refresh speed/func)");
     _respond("  STATUS");
+    _respond("  TRIG  (arm PB3 test trigger for next non-idle packet)");
+    _respond("  CLEAR (remove all auto-refresh; idle-only stream)");
+    _respond("  RESET (send one broadcast reset packet 00 00 00)");
+    _respond("  STOP  (broadcast controlled stop, baseline S=0)");
     _respond("  HELP");
 }
 
@@ -1155,6 +1212,14 @@ void UartCommandParser_process(void) {
         _cmd_analog(tokens, count);
     else if (strcmp(tokens[0], "STATUS") == 0)
         _cmd_status();
+    else if (strcmp(tokens[0], "TRIG") == 0)
+        _cmd_trig();
+    else if (strcmp(tokens[0], "CLEAR") == 0)
+        _cmd_clear();
+    else if (strcmp(tokens[0], "RESET") == 0)
+        _cmd_reset();
+    else if (strcmp(tokens[0], "STOP") == 0)
+        _cmd_stop();
     else if (strcmp(tokens[0], "HELP") == 0)
         _cmd_help();
     else {

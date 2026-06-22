@@ -75,15 +75,16 @@ extern void DccApplicationCommandStationPacket_load_idle(dcc_packet_t *packet);
 extern void DccApplicationCommandStationPacket_load_reset(dcc_packet_t *packet);
 
     /**
-     * @brief Build a broadcast emergency stop packet.
+     * @brief Build a broadcast stop packet (S-9.2 baseline 01DC000S form).
      *
-     * @details Sends a 128-step speed command with e-stop value to the
-     *     broadcast address, causing all decoders to immediately halt
-     *     motor output.
+     * @details Broadcasts the baseline Digital Decoder Broadcast Stop to address
+     *     0, using the 01x instruction class every decoder is required to obey.
      *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+     * @param packet  Pointer to a @ref dcc_packet_t struct to fill.
+     * @param isPanic true  = stop delivering energy (emergency stop, S=1);
+     *                false = bring the locomotive to a controlled stop (S=0).
      */
-extern void DccApplicationCommandStationPacket_load_estop_all(dcc_packet_t *packet);
+extern void DccApplicationCommandStationPacket_load_estop_all(dcc_packet_t *packet, bool isPanic);
 
 // =============================================================================
 // Speed Commands

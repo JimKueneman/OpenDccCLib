@@ -17,7 +17,7 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 - **Roles:** Command Station, Decoder, Accessory Decoder — `DCC_COMPILE_COMMAND_STATION` / `_DECODER` / `_ACCESSORY_DECODER`.
 - **Service modes:** Direct, Paged, Register, Address — all implemented.
 - **Tests:** 23 host unit-test binaries, ~923 tests passing (host, mocked drivers); ≈99% line coverage. Green host tests inject mock drivers — see **Known defects** (decoder RailCom Tx), which they cannot catch.
-- **Hardware-in-loop:** two-board MSPM0 loopback suite (manual gate, not CI).
+- **Hardware-in-loop:** two-board MSPM0 loopback suite (manual gate, not CI); plus a Saleae logic-analyzer compliance rig ([test/compliance/](../test/compliance/)) that drives the command station over UART and wire-verifies S-9.1/S-9.2/S-9.2.1 packets via a PB3 hardware trigger (34 checks, manual gate).
 
 ---
 
@@ -31,6 +31,7 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
   - ✅ Accessory **extended SRQ** now transmits the full address (basic ≠ extended).
   - ✅ Speed-restriction (`00111110`) **removed** (byte reserved for Zimo East-West).
   - ✅ RailCom decoder-response **datagram IDs aligned to the 2026 draft**; ACK/NACK now sent as 4/8 special code words; CS-side decode-table bug fixed (`0x0F`→ACK, `0x3C`→NACK).
+  - ✅ **Broadcast stop** rebuilt to the S-9.2 baseline `01DC000S` form (was a 128-step speed-1 packet that baseline-only decoders ignore). `load_estop_all(packet, isPanic)` now emits emergency S=1 (`00 51 51`) and controlled stop S=0 (`00 50 50`); wire-verified on the Saleae HIL rig. Deprecated `DccPacketEncoder_estop_all` removed.
 - **Top functional gaps (not implemented):**
   - ❌ **Fail-safe / CV11 packet timeout (S-9.2.4)** — only dead callback declarations + an unused `#define`.
   - ❌ **XPOM** (S-9.2.1 §2.3.7.4) — no command-station encoder.
@@ -59,8 +60,8 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 | Preamble/start/data/end framing + XOR | S-9.2 | — | encode `dcc_bit_encoder.c`; decode `dcc_bit_decoder.c` + `dcc_packet_decoder.c:_validate_xor` | bit-encoder (11), `bad_xor_ignored` | ✅ |
 | Idle packet | S-9.2 | — | `..._packet.c:CSPacket_idle` | `idle_packet_*` | ✅ |
 | Reset packet | S-9.2 | — | `..._packet.c:CSPacket_reset` | `reset_packet_*` | ✅ |
-| Broadcast e-stop | S-9.2 | — | `..._packet.c:CSPacket_estop_all` | `estop_all_*` | ✅ |
-| Broadcast normal stop (S=0) | S-9.2 | — | no dedicated function (only e-stop) | — | ⚠️ partial |
+| Broadcast e-stop (S=1) | S-9.2 | — | `..._packet.c:CSPacket_estop_all(isPanic=true)` → baseline `01DC000S` (`00 51 51`) | `estop_all_packet`; HIL S-9.2 wire-verified | ✅ |
+| Broadcast controlled stop (S=0) | S-9.2 | — | `..._packet.c:CSPacket_estop_all(isPanic=false)` → baseline `01DC000S` (`00 50 50`) | `estop_all_controlled`; HIL S-9.2 wire-verified | ✅ |
 | Address ranges / matching | S-9.2 + S-9.2.1 | — | `dcc_packet_decoder.c:process_packet` | `matching_address_dispatched`, broadcast/long tests | ✅ |
 
 ## 3. Extended Packets — Multifunction (S-9.2.1)

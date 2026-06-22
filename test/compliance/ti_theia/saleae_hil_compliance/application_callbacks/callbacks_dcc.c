@@ -43,10 +43,33 @@ void CallbacksDcc_on_service_mode_result(dcc_service_mode_result_t result) {
     }
 }
 
+// Test trigger state. When armed, the next NON-idle packet raises PB3 once so a
+// logic analyzer can hardware-trigger on the exact packet under test.
+static volatile bool _test_trigger_armed = false;
+
+// The DCC idle packet (S-9.2): 11111111 00000000 11111111.
+static bool _is_idle_packet(const dcc_packet_t *p) {
+
+    return p->byte_count == 3 &&
+           p->data[0] == 0xFF && p->data[1] == 0x00 && p->data[2] == 0xFF;
+}
+
+void CallbacksDcc_arm_trigger(void) {
+
+    // Drop PB3 low first so the armed packet produces one clean rising edge.
+    DL_GPIO_clearPins(GPIO_DEBUG_PORT, GPIO_DEBUG_DEBUG_PIN_PIN);
+    _test_trigger_armed = true;
+}
+
 void CallbacksDcc_on_packet_sent(const dcc_packet_t *packet) {
 
-    (void)packet;
-    DL_GPIO_togglePins(GPIO_DEBUG_PORT, GPIO_DEBUG_DEBUG_PIN_PIN);
+    // When armed, fire the trigger on the first non-idle packet (the packet
+    // under test), then disarm. PB3 stays quiet otherwise, so the rising edge
+    // is unambiguous for the analyzer's digital trigger.
+    if (_test_trigger_armed && !_is_idle_packet(packet)) {
+        DL_GPIO_setPins(GPIO_DEBUG_PORT, GPIO_DEBUG_DEBUG_PIN_PIN);
+        _test_trigger_armed = false;
+    }
 }
 
 #endif /* DCC_COMPILE_COMMAND_STATION */

@@ -33,8 +33,15 @@ extern "C" {
 extern void CallbacksDcc_on_service_mode_result(dcc_service_mode_result_t result);
 
 // Called after every DCC packet is fully transmitted on the track.
-// This demo implementation toggles a debug GPIO for oscilloscope triggering.
+// In this HIL-compliance firmware it drives the test-trigger GPIO (PB3): when
+// armed via CallbacksDcc_arm_trigger(), the next NON-idle packet raises PB3 so
+// a logic analyzer can hardware-trigger on the exact packet under test.
 extern void CallbacksDcc_on_packet_sent(const dcc_packet_t *packet);
+
+// Arm the test trigger: clears PB3 low and arms it so the next non-idle packet
+// transmitted drives a single clean rising edge on PB3. Called from the UART
+// "TRIG" command just before the harness sends the command under test.
+extern void CallbacksDcc_arm_trigger(void);
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
 

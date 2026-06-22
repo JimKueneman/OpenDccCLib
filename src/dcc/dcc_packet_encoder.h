@@ -59,10 +59,6 @@ extern void DccPacketEncoder_idle(dcc_packet_t *packet);
      *   packet Pointer to  dcc_packet_t struct to fill. */
 extern void DccPacketEncoder_reset(dcc_packet_t *packet);
 
-    /** @brief Build a broadcast emergency stop packet.
-     *   packet Pointer to  dcc_packet_t struct to fill. */
-extern void DccPacketEncoder_estop_all(dcc_packet_t *packet);
-
 // =============================================================================
 // Speed Commands
 // =============================================================================

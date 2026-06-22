@@ -94,24 +94,6 @@ TEST(DccPacketEncoderRaw, reset_bytes) {
 }
 
 // ============================================================================
-// Emergency stop all
-// ============================================================================
-
-TEST(DccPacketEncoderRaw, estop_all_bytes) {
-
-    dcc_packet_t pkt;
-    DccPacketEncoder_estop_all(&pkt);
-
-    EXPECT_EQ(pkt.data[0], DCC_ADDRESS_BROADCAST_VALUE);
-    EXPECT_EQ(pkt.data[1], DCC_ADV_OPS_128_SPEED);
-    EXPECT_EQ(pkt.data[2], 0x81);
-    EXPECT_EQ(pkt.byte_count, 4);
-    EXPECT_EQ(pkt.preamble_bits, DCC_PREAMBLE_BITS_OPS);
-    verify_xor(&pkt);
-
-}
-
-// ============================================================================
 // Speed 128
 // ============================================================================
 

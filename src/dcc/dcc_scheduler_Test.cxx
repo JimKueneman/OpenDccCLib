@@ -202,7 +202,7 @@ TEST(DccScheduler, estop_has_higher_priority_than_speed) {
 
     /* Insert e-stop second */
     dcc_packet_t estop_pkt;
-    DccApplicationCommandStationPacket_load_estop_all(&estop_pkt);
+    DccApplicationCommandStationPacket_load_estop_all(&estop_pkt, true);
     estop_pkt.repeat_count = 1;
     DccScheduler_insert(&context, &estop_pkt, 0, DCC_TAG_SPEED, DCC_PRIORITY_ESTOP, false);
 

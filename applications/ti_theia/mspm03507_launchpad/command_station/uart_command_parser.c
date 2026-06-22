@@ -313,7 +313,7 @@ static void _cmd_estop(char *tokens[], int count) {
         _respond(_resp_buf);
     } else {
         /* Broadcast emergency stop */
-        DccApplicationCommandStationPacket_load_estop_all(&packet);
+        DccApplicationCommandStationPacket_load_estop_all(&packet, true);
         packet.repeat_count = 3;
 
         if (!_schedule_main_track(&packet, 0, DCC_TAG_SPEED,
@@ -324,6 +324,22 @@ static void _cmd_estop(char *tokens[], int count) {
 
         _respond("OK: ESTOP broadcast");
     }
+}
+
+// Broadcast CONTROLLED stop (S-9.2 baseline 01DC000S with S=0): all decoders
+// decelerate to a stop. ESTOP is the emergency form (S=1).
+static void _cmd_stop(void) {
+
+    dcc_packet_t packet;
+    DccApplicationCommandStationPacket_load_estop_all(&packet, false);  /* S=0 */
+    packet.repeat_count = 3;
+
+    if (!_schedule_main_track(&packet, 0, DCC_TAG_SPEED,
+                              DCC_PRIORITY_ESTOP, false)) {
+        _respond("ERR: scheduler full");
+        return;
+    }
+    _respond("OK: broadcast controlled stop (S=0)");
 }
 
 static void _cmd_func(char *tokens[], int count) {
@@ -1077,7 +1093,8 @@ static void _cmd_help(void) {
     _respond("DCC Command Station Commands:");
     _respond("  POWER ON|OFF");
     _respond("  SPEED <addr> <speed> <FWD|REV> [14|28|128]");
-    _respond("  ESTOP [addr]");
+    _respond("  ESTOP [addr]  (emergency: stop delivering energy)");
+    _respond("  STOP  (broadcast controlled stop, baseline S=0)");
     _respond("  FUNC <addr> <0-68> <ON|OFF>");
     _respond("  ACC <board> <pair> <ON|OFF>");
     _respond("  ACC CV WRITE|VERIFY <board> <pair> <cv> <value>");
@@ -1135,6 +1152,8 @@ void UartCommandParser_process(void) {
         _cmd_speed(tokens, count);
     else if (strcmp(tokens[0], "ESTOP") == 0)
         _cmd_estop(tokens, count);
+    else if (strcmp(tokens[0], "STOP") == 0)
+        _cmd_stop();
     else if (strcmp(tokens[0], "FUNC") == 0)
         _cmd_func(tokens, count);
     else if (strcmp(tokens[0], "ACC") == 0)

@@ -223,14 +223,18 @@ void DccApplicationCommandStationPacket_load_reset(dcc_packet_t *packet) {
 
 }
 
-void DccApplicationCommandStationPacket_load_estop_all(dcc_packet_t *packet) {
+void DccApplicationCommandStationPacket_load_estop_all(dcc_packet_t *packet, bool isPanic) {
 
-    /* Broadcast address 0x00 + 128-step speed with e-stop (speed=1) */
-    packet->data[0] = DCC_ADDRESS_BROADCAST_VALUE;
-    packet->data[1] = DCC_ADV_OPS_128_SPEED;
-    packet->data[2] = 0x81;  /* direction=forward, speed=1 (e-stop) */
-    packet->byte_count = 3;
-    _append_xor(packet);
+    /* S-9.2 baseline broadcast stop: 00000000 0 01DC000S, error byte = copy of
+     * byte two. Uses the baseline 01x speed/direction instruction class that
+     * every decoder must obey -- NOT the 128-step form (which baseline-only
+     * decoders ignore). Byte two = 01DC000S with D=0, C=1 (ignore direction).
+     * isPanic -> S: 1 = stop delivering energy (emergency); 0 = bring the
+     * locomotive to a controlled stop. */
+    packet->data[0] = DCC_ADDRESS_BROADCAST_VALUE;          /* 00000000      */
+    packet->data[1] = 0x50 | (isPanic ? 0x01u : 0x00u);    /* 01 0 1 000 S  */
+    packet->byte_count = 2;
+    _append_xor(packet);   /* error byte = data[0] ^ data[1] = copy of byte two */
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
     packet->repeat_count = 0;

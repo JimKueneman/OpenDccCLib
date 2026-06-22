@@ -218,20 +218,6 @@ void DccPacketEncoder_reset(dcc_packet_t *packet) {
 
 }
 
-void DccPacketEncoder_estop_all(dcc_packet_t *packet) {
-
-    /* Broadcast address 0x00 + 128-step speed with e-stop (speed=1) */
-    packet->data[0] = DCC_ADDRESS_BROADCAST_VALUE;
-    packet->data[1] = DCC_ADV_OPS_128_SPEED;
-    packet->data[2] = 0x81;  /* direction=forward, speed=1 (e-stop) */
-    packet->byte_count = 3;
-    _append_xor(packet);
-
-    packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
-
-}
-
 // =============================================================================
 // Speed Commands
 // =============================================================================
