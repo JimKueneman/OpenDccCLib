@@ -12,9 +12,18 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 
 ---
 
+## Snapshot
+
+- **Roles:** Command Station, Decoder, Accessory Decoder — `DCC_COMPILE_COMMAND_STATION` / `_DECODER` / `_ACCESSORY_DECODER`.
+- **Service modes:** Direct, Paged, Register, Address — all implemented.
+- **Tests:** 23 host unit-test binaries, ~923 tests passing (host, mocked drivers); ≈99% line coverage. Green host tests inject mock drivers — see **Known defects** (decoder RailCom Tx), which they cannot catch.
+- **Hardware-in-loop:** two-board MSPM0 loopback suite (manual gate, not CI).
+
+---
+
 ## Summary
 
-- **Strong, fully-tested core:** packet encoding (speed/function/accessory/CV-POM/consist/binary-state/analog), scheduler, bit encoder, all four service modes, bit/packet decoder, CV storage, RailCom 4/8 encode+decode, decoder-side RailCom responses, accessory-decoder RailCom. ~921 unit tests, ~99% line coverage.
+- **Strong, fully-tested core:** packet encoding (speed/function/accessory/CV-POM/consist/binary-state/analog), scheduler, bit encoder, all four service modes, bit/packet decoder, CV storage, RailCom 4/8 encode+decode, decoder-side RailCom responses, accessory-decoder RailCom. ~923 unit tests, ~99% line coverage.
 - **Compliance deviations — ALL FIXED 2026-06-22** (see [archive/compliance_deviation_fixes.md](archive/compliance_deviation_fixes.md); 923 tests pass):
   - ✅ **RailCom cutout** rebuilt as a 5-state machine (DELAY/SETTLING/CH1/GAP/CH2) with spec timing (T_CS 26 / T_TS1 80 / T_TC1 177 / T_TS2 193 / T_CE 454 µs), now user-configurable via `dcc_config_t` (0 = spec default).
   - ✅ Bit-encoder comment corrected to "single-buffered" (matches the code).
@@ -29,7 +38,7 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
   - ❌ **Accessory NOP** packet encoder — only auto-schedule comments.
   - ❌ **Indexed CVs (CV31/32)** decoder paging — defines only.
   - ❌ **Factory reset (CV8)** — write-permission exception only, no reset-to-defaults logic.
-  - ❌ **Logon / Data Spaces (S-9.2.1.1)** — absent (draft-only; out of current scope).
+  - ❌ **Logon / Data Spaces (S-9.2.1.1)** — absent. *Released standard (2022), not draft-only — the 2026 draft only expands it.* Out of current scope.
 - **Housekeeping:** old pre-refactor modules (`dcc_packet_encoder`, `dcc_application_service_track`, `dcc_application_main_track`) still coexist with the role-first replacements; both are compiled and tested.
 
 ---
@@ -76,7 +85,7 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 
 | Feature | Released | Draft | Implemented | Tested | Status |
 |---|---|---|---|---|---|
-| Logon auto-registration, partitions 253/254 | S-9.2.1.1 | §2 (expanded) | ❌ no `logon` anywhere in `src/` | — | ❌ (draft-scope) |
+| Logon auto-registration, partitions 253/254 | S-9.2.1.1 (released, 2022) | §2 (expanded) | ❌ no `logon` anywhere in `src/` | — | ❌ released standard, not implemented |
 | CRC-8 + XOR for >6-byte packets | S-9.2.1.1 | §2.4 | ❌ | — | ❌ |
 | Data Spaces / WriteBlock / ReadBlock | S-9.2.1.1 | §2.11 | ❌ | — | ❌ |
 
@@ -132,8 +141,8 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 > CV-auto, raw, SRQ, Status 1/4) is implemented and unit-tested at the datagram / 4-8 layer
 > only. `dcc_config.c` leaves the encoder's `uart_write` NULL and there is no byte→pin bridge
 > or decoder-side Tx timer, so **nothing is transmitted in a real build**. The ✅ marks reflect
-> datagram-layer correctness + tests, not end-to-end transmission. See
-> [STATUS.md](STATUS.md) → "Decoder-side RailCom Tx integration."
+> datagram-layer correctness + tests, not end-to-end transmission. See the
+> **Backlog → Known defects** entry below.
 
 ## Command-station main-track / scheduler (cross-cutting)
 
@@ -144,25 +153,47 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 
 ---
 
-## Deviations & gaps — action list
+## Backlog
 
-**Spec-compliance fixes — DONE (2026-06-22):**
-1. ✅ RailCom cutout retimed + 5-state machine + configurable (`dcc_defines.h`, `dcc_railcom_cutout.c/.h`, `dcc_config.h/.c`, MSPM0 app).
-2. ✅ ACK upper bound enforced (`dcc_service_mode_common.c`).
-3. ✅ Accessory extended SRQ transmits the full address.
-4. ✅ Speed-restriction removed (`00111110` left reserved).
-5. ✅ RailCom decoder-response datagram IDs aligned to the 2026 draft + CS-side decode-table fix.
-6. ✅ Bit-encoder double-buffer doc corrected.
+Open work, tagged by where each item is defined. Most are **released-standard
+conformance gaps**, not draft features. (Per-feature detail is in the §1–8 tables above.)
 
-**Functional gaps (not implemented):**
-5. Fail-safe / CV11 packet timeout (S-9.2.4) — wire `on_failsafe_entered/exited` and a timeout timer.
-6. XPOM command-station encoder (S-9.2.1 §2.3.7.4).
-7. Time/Date & System Time packet encoders (S-9.2.1).
-8. Accessory NOP packet encoder (S-9.2.1 §2.4.6) — needed by the SRQ auto-scheduling that already references it.
-9. Indexed-CV (CV31/32) decoder paging; factory-reset-to-defaults on CV8; CV29 bits 2/3/4/7 behavior.
+| Item | Spec | State | Notes |
+|---|---|---|---|
+| **Fail-safe / packet timeout (CV11)** | Released **S-9.2.4** | Not implemented | Only dead `on_failsafe_entered/exited` callbacks + an unused `DCC_CV_PACKET_TIMEOUT` define; no timeout timer or fail-safe state. |
+| **XPOM (Extended POM)** | Released **S-9.2.1** §2.3.7.4 | Not started | 24-bit indexed CV read/write/bit (`1110GGSS`); exceeds the 6-byte packet limit. |
+| **Time/Date & System Time packets** | Released **S-9.2.1** §2.3.6.2/.3 | Not started | Broadcast clock packets; only an unused `#define DCC_FEAT_TIME_DATE`. |
+| **Accessory NOP packet** | Released **S-9.2.1** §2.4.6 | Not started | No encoder; the accessory SRQ auto-scheduling references it. |
+| **Indexed CVs (CV31/32)** | Released **S-9.2.2** | Not started | Page-pointer access to CVs 257-512; defines exist, no paging logic. |
+| **CV29 bits 2/3/4/7 behavior** | Released **S-9.2.2** | Partial | Decoder acts on bits 0/1/5 only; bit 2 (power-source), 3 (RailCom), 4 (speed table), 7 (decoder type) not acted on. |
+| **Factory reset to defaults (CV8)** | Manufacturer convention | Partial | Write-permission exception only; no reset-to-defaults logic. |
+| **Logon / Data Spaces** | Released **S-9.2.1.1** (2022) | Not started | Partitions 253/254, CRC-8+XOR, Logon auto-registration, Data Spaces. Released, not draft-only — the 2026 draft (deltas §2) only expands it. |
+| **Decoder-side RailCom Tx integration** ⚠️ | Library | Needs design attention | See **Known defects** below. |
+| **Old/new module duplication** | Library | Cleanup | Retire pre-refactor `dcc_packet_encoder` / `dcc_application_main_track` / `dcc_application_service_track` now that the role-first modules exist. |
+| **SUSI bus** | Draft **S-9.4.x** (new std) | Not started | Decoder-to-peripheral bus; out of current scope. Deltas §6. |
+| **E24 decoder interface** | Draft **S-9.1.1.6** (new std) | Not started | 28-pin small-scale decoder interface; out of current scope. Deltas §5. |
 
-**Out of current scope (draft-only):** Logon / Data Spaces (S-9.2.1.1), CRC-8 framing, NACK code word, SUSI, E24.
+### Known defects
 
-**Housekeeping:** retire the duplicate pre-refactor modules (`dcc_packet_encoder`, `dcc_application_service_track`, `dcc_application_main_track`) now that the role-first modules exist.
+- **Decoder-side RailCom Tx not wired to hardware** ⚠️ *(deferred design issue).* The decoder
+  RailCom encoder + response API are unit-tested with mock drivers, but `dcc_config.c` leaves the
+  encoder's `uart_write` permanently NULL and there is no byte→pin bridge or decoder-side Tx
+  one-shot timer (archived Open-Question-#2) — so **no RailCom is transmitted in a real build**.
+  Host unit tests cannot catch it (they inject a mock `uart_write`). Needs a bit-bang and/or UART
+  backend. Tracked plan context: [archive/compliance_deviation_fixes.md](archive/compliance_deviation_fixes.md).
 
-*Cross-references: [STATUS.md](STATUS.md) (pending-work backlog), [ARCHITECTURE.md](ARCHITECTURE.md) (module map).*
+### Recently resolved (2026-06-22)
+
+- The six compliance deviations (see Summary) — RailCom cutout retiming, accessory extended SRQ,
+  ACK upper bound, speed-restriction removal, datagram-ID alignment + CS decode-table fix,
+  bit-encoder doc. Plan: [archive/compliance_deviation_fixes.md](archive/compliance_deviation_fixes.md).
+- **POM vs service-mode ACK** — decoder CV callbacks now carry a `service_mode` flag and the ACK
+  pulse fires only in service mode (`dcc_packet_decoder.c`), so POM no longer triggers the ACK load.
+
+### Spec-reference errata
+
+Corrected in [specs/DCC_Spec_Reference.md](specs/DCC_Spec_Reference.md): analog-function instruction
+byte is `00111101` (was `11111101`); the "Advanced Extended Packets" content (binary state, analog,
+time/date, system time) belongs to **S-9.2.1**, not S-9.2.1.1 (which is the Logon / Data-Space standard).
+
+*Cross-reference: [ARCHITECTURE.md](ARCHITECTURE.md) (module map).*

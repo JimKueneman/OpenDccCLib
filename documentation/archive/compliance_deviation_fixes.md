@@ -9,7 +9,7 @@
 > is not wired to hardware — `dcc_config.c` leaves the encoder's `uart_write` permanently NULL,
 > and there is no byte→pin bridge or decoder-side Tx one-shot timer (archived Open-Question-#2).
 > The encoder + response API are unit-tested with mocks but transmit nothing in a real build.
-> This is a larger design issue, deferred. Tracked in [../STATUS.md](../STATUS.md) →
+> This is a larger design issue, deferred. Tracked in [../ComplianceMatrix.md](../ComplianceMatrix.md) →
 > "Decoder-side RailCom Tx integration."
 
 ## Goal
@@ -156,7 +156,7 @@ Land the small, self-contained fixes first; do the cutout rework last (it change
 
 ## Out of scope (tracked elsewhere)
 
-- Not-implemented features → see [../STATUS.md](../STATUS.md) backlog: fail-safe/CV11, XPOM,
+- Not-implemented features → see [../ComplianceMatrix.md](../ComplianceMatrix.md) backlog: fail-safe/CV11, XPOM,
   Time/Date & System Time, accessory NOP encoder, indexed CVs (CV31/32), factory-reset-to-defaults,
   CV29 bits 2/3/4/7 behavior, Logon/Data Spaces.
 - Retiring the duplicate pre-refactor modules (`dcc_packet_encoder`, `dcc_application_service_track`,

@@ -375,7 +375,7 @@ address; reads or writes up to 4 contiguous CVs (S-9.2.1 §2.3.7.4).
 - **Channel 2**: starts T_TS2 = **193 µs**, ends T_TC2 ≤ **454 µs**
 - Data rate 250 kbit/s ±2%
 
-> ⚠ The previously listed values (88 / ~464 / ~1544 µs) were incorrect and appear nowhere in the standard. The firmware constants in `dcc_defines.h` (88 / 464 / 1544) still use those old values — see STATUS.md.
+> ⚠ The previously listed values (88 / ~464 / ~1544 µs) were incorrect and appear nowhere in the standard. The firmware constants in `dcc_defines.h` (88 / 464 / 1544) still use those old values — see ComplianceMatrix.md.
 
 ### Channel 1 (Short / Broadcast)
 - 2 bytes; each byte on the wire = start bit + **8 data bits** (4/8 line code) + stop bit. Net payload = 12 bits (2 × 6)

@@ -68,7 +68,7 @@ read for current values. If the code changed, these are what changed with it.
 | **UART CLI command list** (QSG command tables) | `command_station/uart_command_parser.c/.h`, `decoder/decoder_command_parser.c/.h` | Commands change as the demo evolves |
 | **Test suite list & counts** | `src/dcc/*_Test.cxx` + `src/dcc/CMakeLists.txt`; run the suite for live counts | Currently 23 test binaries; report counts only if freshly measured |
 | **Coverage numbers** (brochure / dev-guide stats) | Build the tests and read the gcovr report under `test/build/gcovr/` | Don't quote stale figures; measure at rebuild time |
-| **Status / known limitations / pending features** | `documentation/STATUS.md` | If a guide describes a feature, confirm it's actually "implemented" there (e.g. RailCom cutout retiming is pending) |
+| **Status / known limitations / pending features** | `documentation/ComplianceMatrix.md` | If a guide describes a feature, confirm it's actually "implemented" there (e.g. RailCom cutout retiming is pending) |
 | **License / author / repo URL** | repo `LICENSE`/file headers, `README.md` | |
 
 ---
@@ -110,7 +110,7 @@ For each, the **outline is a starting skeleton** — adjust to match the code. T
 ### 5.5 Brochure
 - **Goal:** one-page (≈3-page) sell sheet.
 - **Outline:** What is DCC? → What is OpenDccCLib? → Key features → **Protocol coverage table** → Demo platforms / getting started → Architecture highlights → **Unit-test coverage stats** → Getting started steps → Documentation & repository.
-- **Pull:** feature list from `ARCHITECTURE.md` + `STATUS.md` (only claim what's actually implemented); coverage stats and test-suite count **measured at build time**; module coverage table from `ARCHITECTURE.md` §6; version/license/URL from the repo.
+- **Pull:** feature list from `ARCHITECTURE.md` + `ComplianceMatrix.md` (only claim what's actually implemented); coverage stats and test-suite count **measured at build time**; module coverage table from `ARCHITECTURE.md` §6; version/license/URL from the repo.
 
 ---
 
@@ -121,12 +121,12 @@ publishing:
 
 1. **RailCom cutout timing.** Old text said the H-bridge tristates at "T_CS = 88µs."
    Per spec, T_CS is 26–32µs; 88µs is roughly T_TS1. The current code still uses an
-   88µs delay (a known pending fix — see `STATUS.md`). State whatever
+   88µs delay (a known pending fix — see `ComplianceMatrix.md`). State whatever
    `dcc_defines.h` actually defines **and** flag it as the in-progress retiming, or
    omit precise numbers until that lands. Don't reprint "T_CS = 88µs" as correct.
 2. **Module names.** Old file trees referenced `dcc_packet_encoder.h/c`. The
    role-first module is `dcc_application_command_station_packet`. (Both currently
-   exist — see `STATUS.md` on the pending old-module retirement.) Use the names in
+   exist — see `ComplianceMatrix.md` on the pending old-module retirement.) Use the names in
    `ARCHITECTURE.md` §6.
 3. **API table accuracy.** The old CS dev-guide "Main Track Operations" table mixed
    packet builders (`_load_*`, on `DccApplicationCommandStationPacket`) with
@@ -145,5 +145,5 @@ publishing:
 ---
 
 *Companion docs: [ARCHITECTURE.md](ARCHITECTURE.md) (as-built design),
-[STATUS.md](STATUS.md) (what's implemented vs pending), and Doxygen
+[ComplianceMatrix.md](ComplianceMatrix.md) (what's implemented vs pending), and Doxygen
 (`Doxyfile`) for the API reference.*
