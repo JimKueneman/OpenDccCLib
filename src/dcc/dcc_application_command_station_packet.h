@@ -612,6 +612,12 @@ extern bool DccApplicationCommandStationPacket_load_analog_function(dcc_packet_t
      *     synchronize relative timing. The timestamp refers to the beginning
      *     of the packet's start bit.
      *
+     * @note The byte-level packet format for this instruction is defined only in
+     *     the NMRA draft revision of S-9.2.1 (posted 15-Nov-2025) and has not
+     *     yet been ratified. The ratified spec acknowledges the packet exists but
+     *     provides no byte-level definition. This implementation may need to
+     *     change if the format is modified before ratification.
+     *
      * @param packet Pointer to a @ref dcc_packet_t struct to fill.
      * @param milliseconds Milliseconds since system startup (0-65535), sent
      *     most-significant byte first per the spec.
@@ -630,6 +636,12 @@ extern void DccApplicationCommandStationPacket_load_system_time(dcc_packet_t *pa
      *     hours, an update flag, and the clock acceleration factor. Distinct
      *     from @ref DccApplicationCommandStationPacket_load_system_time, which
      *     reports raw milliseconds since startup.
+     *
+     * @note The byte-level packet format for this instruction is defined only in
+     *     the NMRA draft revision of S-9.2.1 (posted 15-Nov-2025). The ratified
+     *     spec acknowledges this packet type but provides no byte-level
+     *     definition. This implementation may need to change if the format is
+     *     modified before ratification.
      *
      * @param packet Pointer to a @ref dcc_packet_t struct to fill.
      * @param minutes Minutes past the hour (0-59).
@@ -650,6 +662,11 @@ extern bool DccApplicationCommandStationPacket_load_model_time(dcc_packet_t *pac
      *     expansion sub-instruction 00001 (0xC1). The year is a 12-bit value
      *     split across two bytes (most-significant 4 bits packed with the month,
      *     least-significant 8 bits in the final data byte).
+     *
+     * @note This packet type is entirely new in the NMRA draft revision of
+     *     S-9.2.1 (posted 15-Nov-2025) and does not exist in the current
+     *     ratified spec. This implementation may need to change if the format
+     *     is modified before ratification.
      *
      * @param packet Pointer to a @ref dcc_packet_t struct to fill.
      * @param day Day of the month (1-31).
