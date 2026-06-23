@@ -649,6 +649,58 @@ TEST(DccPacketEncoder, accessory_extended_rejects_invalid_address) {
 }
 
 // ============================================================================
+// Accessory NOP tests (S-9.2.1 2.4.6: 10AAAAAA 0 0AAA1AAT)
+// ============================================================================
+
+TEST(DccPacketEncoder, accessory_nop_addr1_basic) {
+    dcc_packet_t pkt;
+    bool ok = DccApplicationCommandStationPacket_load_accessory_nop(&pkt, 1, false);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[0], 0x81);   /* 10AAAAAA, low 6 = 1 */
+    EXPECT_EQ(pkt.data[1], 0x78);   /* 0AAA1AAT: high3 inv=111, NOP bit3=1, T=0 */
+    EXPECT_EQ(pkt.byte_count, 3);   /* addr + instruction + XOR */
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, accessory_nop_addr1_extended) {
+    dcc_packet_t pkt;
+    bool ok = DccApplicationCommandStationPacket_load_accessory_nop(&pkt, 1, true);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[0], 0x81);
+    EXPECT_EQ(pkt.data[1], 0x79);   /* T=1 */
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, accessory_nop_high3_inverted) {
+    dcc_packet_t pkt;   /* addr 64 -> (64>>6)=1, exercises high-3 inversion */
+    bool ok = DccApplicationCommandStationPacket_load_accessory_nop(&pkt, 64, false);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[0], 0x80);   /* low 6 = 0 */
+    EXPECT_EQ(pkt.data[1], 0x68);   /* high3 inv of 1 = 6 (0x60) | NOP 0x08 */
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, accessory_nop_high_addr_extended) {
+    dcc_packet_t pkt;   /* addr 1500 -> exercises mid-2 bits + T */
+    bool ok = DccApplicationCommandStationPacket_load_accessory_nop(&pkt, 1500, true);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[0], 0x9C);
+    EXPECT_EQ(pkt.data[1], 0x0D);   /* high3 inv=0 | NOP 0x08 | mid2=2 (0x04) | T=1 */
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, accessory_nop_rejects_invalid_address) {
+    dcc_packet_t pkt;
+    bool ok = DccApplicationCommandStationPacket_load_accessory_nop(&pkt, 2048, false);
+
+    EXPECT_FALSE(ok);
+}
+
+// ============================================================================
 // Basic accessory stop tests
 // ============================================================================
 
@@ -1018,6 +1070,56 @@ TEST(DccPacketEncoder, analog_function_long_addr) {
     EXPECT_EQ(pkt.data[3], 0);
     EXPECT_EQ(pkt.data[4], 255);
     EXPECT_EQ(pkt.byte_count, 6);
+    verify_xor(&pkt);
+}
+
+// ============================================================================
+// System Time tests (S-9.2.1 §2.3.6.3)
+// ============================================================================
+
+TEST(DccPacketEncoder, system_time_zero) {
+    dcc_packet_t pkt;
+    DccApplicationCommandStationPacket_load_system_time(&pkt, 0);
+
+    EXPECT_EQ(pkt.data[0], 0x00);                  /* broadcast address 0 */
+    EXPECT_EQ(pkt.data[1], DCC_FEAT_SYSTEM_TIME);  /* 0xC2, 110-00010 */
+    EXPECT_EQ(pkt.data[2], 0x00);                  /* ms MSB */
+    EXPECT_EQ(pkt.data[3], 0x00);                  /* ms LSB */
+    EXPECT_EQ(pkt.byte_count, 5);
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, system_time_mid_value) {
+    dcc_packet_t pkt;
+    /* 30000 = 0x7530: MSB 0x75, LSB 0x30 */
+    DccApplicationCommandStationPacket_load_system_time(&pkt, 30000);
+
+    EXPECT_EQ(pkt.data[0], 0x00);
+    EXPECT_EQ(pkt.data[1], DCC_FEAT_SYSTEM_TIME);
+    EXPECT_EQ(pkt.data[2], 0x75);
+    EXPECT_EQ(pkt.data[3], 0x30);
+    EXPECT_EQ(pkt.byte_count, 5);
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, system_time_small_value_clears_msb) {
+    dcc_packet_t pkt;
+    /* 1 ms: MSB 0x00, LSB 0x01 — verifies the byte split */
+    DccApplicationCommandStationPacket_load_system_time(&pkt, 1);
+
+    EXPECT_EQ(pkt.data[2], 0x00);
+    EXPECT_EQ(pkt.data[3], 0x01);
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, system_time_max_value) {
+    dcc_packet_t pkt;
+    /* 65535 = 0xFFFF: both bytes 0xFF */
+    DccApplicationCommandStationPacket_load_system_time(&pkt, 65535);
+
+    EXPECT_EQ(pkt.data[2], 0xFF);
+    EXPECT_EQ(pkt.data[3], 0xFF);
+    EXPECT_EQ(pkt.byte_count, 5);
     verify_xor(&pkt);
 }
 

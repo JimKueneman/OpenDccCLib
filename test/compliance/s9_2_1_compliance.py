@@ -48,16 +48,17 @@ def framed(bs):
     return list(bs) + [_xor(bs)]
 
 
-def addr_bytes(addr):
-    """Short address (1 byte) or long address (11AAAAAA AAAAAAAA)."""
-    if addr <= 127:
+def addr_bytes(addr, force_long=False):
+    """Short address (1 byte, 1-127) or long address (11AAAAAA AAAAAAAA).
+    force_long encodes a <=127 address in long form (e.g. the 'NNNl' suffix)."""
+    if addr <= 127 and not force_long:
         return [addr & 0x7F]
     return [0xC0 | ((addr >> 8) & 0x3F), addr & 0xFF]
 
 
-def speed_128(addr, spd, fwd):
+def speed_128(addr, spd, fwd, force_long=False):
     # 00111111 DSSSSSSS  (Advanced Operations 001, GGGGG=11111)
-    return framed(addr_bytes(addr) + [0x3F, (0x80 if fwd else 0x00) | (spd & 0x7F)])
+    return framed(addr_bytes(addr, force_long) + [0x3F, (0x80 if fwd else 0x00) | (spd & 0x7F)])
 
 
 def group1(addr, fl_f4_bits):
@@ -79,6 +80,26 @@ def func_f13_f20(addr, bits):       # 11011110 DDDDDDDD
 
 def func_f21_f28(addr, bits):       # 11011111 DDDDDDDD
     return framed(addr_bytes(addr) + [0xDF, bits & 0xFF])
+
+
+def func_f29_f36(addr, bits):       # 11011000 DDDDDDDD
+    return framed(addr_bytes(addr) + [0xD8, bits & 0xFF])
+
+
+def func_f37_f44(addr, bits):       # 11011001 DDDDDDDD
+    return framed(addr_bytes(addr) + [0xD9, bits & 0xFF])
+
+
+def func_f45_f52(addr, bits):       # 11011010 DDDDDDDD
+    return framed(addr_bytes(addr) + [0xDA, bits & 0xFF])
+
+
+def func_f53_f60(addr, bits):       # 11011011 DDDDDDDD
+    return framed(addr_bytes(addr) + [0xDB, bits & 0xFF])
+
+
+def func_f61_f68(addr, bits):       # 11011100 DDDDDDDD
+    return framed(addr_bytes(addr) + [0xDC, bits & 0xFF])
 
 
 def cv_write_pom(addr, cv, val):    # 1110 11 VV  VVVVVVVV  DDDDDDDD  (GG=11 write)
@@ -103,6 +124,13 @@ def analog(addr, output, value):              # 00111101 VVVVVVVV DDDDDDDD
     return framed(addr_bytes(addr) + [0x3D, output & 0xFF, value & 0xFF])
 
 
+def system_time(ms):
+    # S-9.2.1 §2.3.6.3: broadcast to address 0, feature-expansion 110-00010
+    # (= 0xC2). 16-bit milliseconds-since-startup, MOST significant byte first
+    # (spec: "third byte = MSB, fourth byte = LSB"), then the XOR error byte.
+    return framed([0x00, 0xC2, (ms >> 8) & 0xFF, ms & 0xFF])
+
+
 def speed_28(addr, speed, fwd):
     # 01Dcssss : 28-step. 0=stop, 1=e-stop; for 2-29 the code's LSB goes to bit4
     # (c) and the rest+1 to ssss (standard 28-step bit-interleaving).
@@ -115,6 +143,13 @@ def speed_28(addr, speed, fwd):
     return framed(addr_bytes(addr) + [(0x60 if fwd else 0x40) | low5])
 
 
+def speed_14(addr, speed, fwd):
+    # 01DCSSSS : 14-step. C=FL headlight (the UART always sends FL on -> C=1).
+    # SSSS = speed: 0=stop, 1=e-stop, 2-15 = steps 1-14.
+    return framed(addr_bytes(addr)
+                  + [(0x60 if fwd else 0x40) | 0x10 | (speed & 0x0F)])
+
+
 def accessory_basic(board, pair, activate, output=0):
     # 10AAAAAA 1AAADAAR : low 6 address bits in byte1; high 3 address bits in
     # byte2 are INVERTED; D=activate, AA=output pair, R=output within pair.
@@ -125,13 +160,26 @@ def accessory_basic(board, pair, activate, output=0):
     return framed([b1, b2])
 
 
-def accessory_extended(addr, aspect):
-    # 10AAAAAA 0AAA0AA1 DDDDDDDD : 11-bit address (high 3 bits in byte2 INVERTED),
-    # mid 2 bits in byte2 bits2-1, low 6 in byte1; D = signal aspect.
-    a = addr & 0x7FF
-    b1 = 0x80 | (a & 0x3F)
-    b2 = ((~(a >> 8) & 0x07) << 4) | (((a >> 6) & 0x03) << 1) | 0x01
+def accessory_extended(board, aspect):
+    # S-9.2.1 2.4.2 (p.17):  10 A7A6A5A4A3A2  0  0 Ā10Ā9Ā8 0 A1A0 1  DDDDDDDD
+    # 'board' is the 9-bit accessory decoder address (1-511), same address space
+    # as basic. The wire address A10..A0 = board << 2, so the 2 LSBs A1A0 = 00
+    # (extended has no output pair; the aspect byte carries the data). byte1's low
+    # 6 bits ARE A7..A2 because 'board' already sits 2 bits above the wire LSBs.
+    # See project memory "accessory address convention" (board addr, not raw 11-bit).
+    b1 = 0x80 | (board & 0x3F)                  # A7..A2
+    b2 = ((~(board >> 6) & 0x07) << 4) | 0x01   # ~A10..A8 ; A1A0 = 00 ; bit0 = 1
     return framed([b1, b2, aspect & 0xFF])
+
+
+def accessory_nop(addr, is_extended):
+    # 10AAAAAA 0 0AAA1AAT : NOP (S-9.2.1 2.4.6), library address convention:
+    # low6 -> byte1, high3 inverted -> byte2[6:4], next2 -> byte2[2:1];
+    # bit3 = 1 (NOP marker), bit0 = T (0 basic, 1 extended).
+    b1 = 0x80 | (addr & 0x3F)
+    b2 = (((~(addr >> 6) & 0x07) << 4) | 0x08
+          | (((addr >> 9) & 0x03) << 1) | (1 if is_extended else 0))
+    return framed([b1, b2])
 
 
 # ----------------------------------------------------------------------------
@@ -141,21 +189,67 @@ def accessory_extended(addr, aspect):
 EXACT = [
     ("SPEED 3 64 FWD",      speed_128(3, 64, True),    "§2.3.2.1", "128-step speed 64 fwd"),
     ("SPEED 3 64 REV",      speed_128(3, 64, False),   "§2.3.2.1", "128-step speed 64 rev"),
+    ("SPEED 3 0 FWD",       speed_128(3, 0, True),     "§2.3.2.1", "128-step stop (DSSSSSSS=0)"),
+    ("SPEED 3 1 FWD",       speed_128(3, 1, True),     "§2.3.2.1", "128-step e-stop (DSSSSSSS=1)"),
+    ("SPEED 3 127 FWD",     speed_128(3, 127, True),   "§2.3.2.1", "128-step max (DSSSSSSS=127)"),
+    ("SPEED 1000 0 FWD",    speed_128(1000, 0, True),  "§2.3.2.1", "128-step long addr + stop (boundary x long)"),
+    ("SPEED 1000 1 FWD",    speed_128(1000, 1, True),  "§2.3.2.1", "128-step long addr + e-stop"),
+    ("SPEED 1000 127 FWD",  speed_128(1000, 127, True),"§2.3.2.1", "128-step long addr + max"),
     ("SPEED 1000 64 FWD",   speed_128(1000, 64, True), "§2.3.1",   "long address (11AAAAAA AAAAAAAA)"),
+    ("SPEED 1 64 FWD",      speed_128(1, 64, True),    "§2.3.1",   "short address min (01)"),
+    ("SPEED 127 64 FWD",    speed_128(127, 64, True),  "§2.3.1",   "short address max (7F)"),
+    ("SPEED 128 64 FWD",    speed_128(128, 64, True),  "§2.3.1",   "long address min (C0 80)"),
+    ("SPEED 10239 64 FWD",  speed_128(10239, 64, True),"§2.3.1",   "long address max usable (E7 FF)"),
+    ("SPEED 3L 64 FWD",     speed_128(3, 64, True, force_long=True), "§2.3.1", "low address forced long (C0 03)"),
     ("FUNC 3 0 ON",         group1(3, 0x10),           "§2.3.4",   "func group 1: FL on"),
     ("FUNC 3 1 ON",         group1(3, 0x01),           "§2.3.4",   "func group 1: F1 on"),
     ("FUNC 3 5 ON",         group2_high(3, 0x01),      "§2.3.5",   "func group 2: F5 on (1011)"),
     ("FUNC 3 9 ON",         group2_low(3, 0x01),       "§2.3.5",   "func group 2: F9 on (1010)"),
     ("FUNC 3 13 ON",        func_f13_f20(3, 0x01),     "§2.3.6",   "F13-F20 expansion (11011110)"),
     ("FUNC 3 21 ON",        func_f21_f28(3, 0x01),     "§2.3.6",   "F21-F28 expansion (11011111)"),
+    ("FUNC 3 29 ON",        func_f29_f36(3, 0x01),     "§2.3.6",   "F29-F36 expansion (11011000)"),
+    ("FUNC 3 37 ON",        func_f37_f44(3, 0x01),     "§2.3.6",   "F37-F44 expansion (11011001)"),
+    ("FUNC 3 45 ON",        func_f45_f52(3, 0x01),     "§2.3.6",   "F45-F52 expansion (11011010)"),
+    ("FUNC 3 53 ON",        func_f53_f60(3, 0x01),     "§2.3.6",   "F53-F60 expansion (11011011)"),
+    ("FUNC 3 61 ON",        func_f61_f68(3, 0x01),     "§2.3.6",   "F61-F68 expansion (11011100)"),
     ("CV WRITE 3 1 8",      cv_write_pom(3, 1, 8),     "§2.3.7.3", "CV-POM write CV1=8 (1110 11)"),
     ("CV VERIFY 3 1 8",     cv_verify_pom(3, 1, 8),    "§2.3.7.3", "CV-POM verify CV1=8 (1110 01)"),
     ("CONSIST 3 SET 5",     consist_set(3, 5, True),   "§2.3.1.4", "consist set addr 5 normal"),
     ("BSS 3 1 ON",          binary_state_short(3, 1, True), "§2.3.6.1", "binary state short (11011101)"),
     ("ANALOG 3 1 64",       analog(3, 1, 64),          "§2.3.2.3", "analog function (00111101)"),
-    ("SPEED 3 10 FWD 28",   speed_28(3, 10, True),     "§2.3.2.1", "28-step speed 10 fwd (01Dcssss)"),
+    ("SPEED 3 10 FWD 28",   speed_28(3, 10, True),     "§2.3.2.1", "28-step speed 10 fwd (c-bit even)"),
+    ("SPEED 3 11 FWD 28",   speed_28(3, 11, True),     "§2.3.2.1", "28-step speed 11 fwd (c-bit odd)"),
+    ("SPEED 3 0 FWD 28",    speed_28(3, 0, True),      "§2.3.2.1", "28-step stop (cssss=0)"),
+    ("SPEED 3 1 FWD 28",    speed_28(3, 1, True),      "§2.3.2.1", "28-step e-stop (cssss=1)"),
+    ("SPEED 3 29 FWD 28",   speed_28(3, 29, True),     "§2.3.2.1", "28-step max step (cssss=29)"),
+    ("SPEED 3 10 REV 28",   speed_28(3, 10, False),    "§2.3.2.1", "28-step speed 10 reverse"),
+    ("SPEED 3 0 FWD 14",    speed_14(3, 0, True),      "§2.3.2.1", "14-step stop (SSSS=0)"),
+    ("SPEED 3 1 FWD 14",    speed_14(3, 1, True),      "§2.3.2.1", "14-step e-stop (SSSS=1)"),
+    ("SPEED 3 15 FWD 14",   speed_14(3, 15, True),     "§2.3.2.1", "14-step max (SSSS=15, FL on)"),
+    ("SPEED 3 8 REV 14",    speed_14(3, 8, False),     "§2.3.2.1", "14-step speed 8 reverse"),
     ("ACC 1 0 ON",          accessory_basic(1, 0, True), "§2.4",   "accessory basic (inverted high addr bits)"),
     ("ACCE 1 5",            accessory_extended(1, 5),  "§2.4",     "accessory extended (inverted high addr bits)"),
+    ("NOP 1",               accessory_nop(1, False),   "§2.4.6",   "accessory NOP basic (0AAA1AAT, T=0)"),
+    ("NOP 1 E",             accessory_nop(1, True),    "§2.4.6",   "accessory NOP extended (T=1)"),
+    ("NOP 1500 E",          accessory_nop(1500, True), "§2.4.6",   "accessory NOP high addr (mid-2 bits)"),
+    # --- accessory address boundary coverage ---
+    # The accessory address param is the 9-bit BOARD address (wire A10..A0 = board<<2),
+    # NOT a raw 11-bit value. board >= 64 is the 6-bit rollover where the board vs
+    # raw-11-bit conventions first diverge -- exactly the case addr=1 hid.
+    ("ACC 64 0 ON",         accessory_basic(64, 0, True),  "§2.4",   "accessory basic board 64 (6-bit rollover, high-3 inv=1)"),
+    ("ACC 256 0 ON",        accessory_basic(256, 0, True), "§2.4",   "accessory basic board 256 (high-3 inv=4)"),
+    ("ACC 511 0 ON",        accessory_basic(511, 0, True), "§2.4",   "accessory basic board 511 (9-bit max)"),
+    ("ACCE 64 5",           accessory_extended(64, 5),     "§2.4.2", "accessory extended board 64 (catches board-vs-raw11 split)"),
+    ("ACCE 256 5",          accessory_extended(256, 5),    "§2.4.2", "accessory extended board 256"),
+    ("ACCE 511 5",          accessory_extended(511, 5),    "§2.4.2", "accessory extended board 511 (9-bit max)"),
+    ("NOP 64",              accessory_nop(64, False),      "§2.4.6", "accessory NOP basic board 64"),
+    ("NOP 256 E",           accessory_nop(256, True),      "§2.4.6", "accessory NOP extended board 256"),
+    ("NOP 511 E",           accessory_nop(511, True),      "§2.4.6", "accessory NOP extended board 511"),
+    # --- system time (broadcast, S-9.2.1 §2.3.6.3) boundary coverage ---
+    ("SYSTIME 0",           system_time(0),       "§2.3.6.3", "system time ms=0 (00 C2 00 00)"),
+    ("SYSTIME 1",           system_time(1),       "§2.3.6.3", "system time ms=1 (MSB clear, 00 01)"),
+    ("SYSTIME 30000",       system_time(30000),   "§2.3.6.3", "system time ms=30000 (75 30)"),
+    ("SYSTIME 65535",       system_time(65535),   "§2.3.6.3", "system time ms=65535 (FF FF, 16-bit max)"),
 ]
 
 

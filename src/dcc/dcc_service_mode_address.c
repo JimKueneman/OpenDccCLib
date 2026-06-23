@@ -35,6 +35,8 @@
 
 #ifdef DCC_COMPILE_SERVICE_MODE_ADDRESS
 
+#include <string.h>
+
 static dcc_service_mode_address_context_t *_active_context = (void *)0;
 
 static void _append_xor(dcc_packet_t *packet) {
@@ -72,6 +74,7 @@ void DccServiceModeAddress_initialize(dcc_service_mode_address_context_t *contex
 bool DccServiceModeAddress_write(dcc_service_mode_address_context_t *context, uint8_t address) {
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
 
     if (address < 1 || address > 127) {
 
@@ -100,6 +103,7 @@ bool DccServiceModeAddress_write(dcc_service_mode_address_context_t *context, ui
 bool DccServiceModeAddress_verify(dcc_service_mode_address_context_t *context, uint8_t address) {
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
 
     if (address < 1 || address > 127) {
 

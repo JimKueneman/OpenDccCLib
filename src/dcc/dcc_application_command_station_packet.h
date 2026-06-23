@@ -33,7 +33,7 @@
  * calls these via an interface struct to build packets on demand.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 23 Jun 2026
  */
 
 #ifndef __DCC_APPLICATION_COMMAND_STATION_PACKET__
@@ -317,6 +317,21 @@ extern bool DccApplicationCommandStationPacket_load_accessory_basic(dcc_packet_t
 extern bool DccApplicationCommandStationPacket_load_accessory_extended(dcc_packet_t *packet, uint16_t address, uint8_t aspect);
 
     /**
+     * @brief Build a NOP packet for basic or extended accessory decoders.
+     *
+     * @details Encodes the S-9.2.1 (2.4.6) No-Operation command
+     *     (10AAAAAA 0 0AAA1AAT). It changes no output state; it lets a
+     *     bi-directional accessory decoder raise a service request (SRQ) during
+     *     the RailCom cutout. The T bit selects the addressed decoder type.
+     *
+     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+     * @param address 11-bit accessory address (0-2047).
+     * @param is_extended false = basic accessory decoder (T=0); true = extended (T=1).
+     * @return true if packet was built successfully, false if invalid parameters.
+     */
+extern bool DccApplicationCommandStationPacket_load_accessory_nop(dcc_packet_t *packet, uint16_t address, bool is_extended);
+
+    /**
      * @brief Build a basic accessory stop (deactivate) packet.
      *
      * @details Encodes a basic accessory instruction with activate=0 for the
@@ -582,6 +597,26 @@ extern bool DccApplicationCommandStationPacket_load_binary_state_long(dcc_packet
      * @return true if packet was built successfully, false if invalid parameters.
      */
 extern bool DccApplicationCommandStationPacket_load_analog_function(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t output_number, uint8_t value);
+
+// =============================================================================
+// System Time (S-9.2.1 §2.3.6.3)
+// =============================================================================
+
+    /**
+     * @brief Build a System Time broadcast packet (S-9.2.1 §2.3.6.3).
+     *
+     * @details Broadcasts a 16-bit milliseconds-since-startup timestamp to
+     *     broadcast address 0 using feature-expansion sub-instruction 00010.
+     *     The value wraps at 65535 (~65.5 seconds). The spec recommends a
+     *     command station send this roughly every 30 seconds so decoders can
+     *     synchronize relative timing. The timestamp refers to the beginning
+     *     of the packet's start bit.
+     *
+     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+     * @param milliseconds Milliseconds since system startup (0-65535), sent
+     *     most-significant byte first per the spec.
+     */
+extern void DccApplicationCommandStationPacket_load_system_time(dcc_packet_t *packet, uint16_t milliseconds);
 
 #ifdef __cplusplus
 }

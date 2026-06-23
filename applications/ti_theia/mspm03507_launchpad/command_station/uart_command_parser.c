@@ -246,6 +246,7 @@ static void _cmd_speed(char *tokens[], int count) {
     loco->direction = direction;
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     bool ok = false;
 
     switch (mode) {
@@ -289,6 +290,7 @@ static void _cmd_speed(char *tokens[], int count) {
 static void _cmd_estop(char *tokens[], int count) {
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
 
     if (count >= 2) {
         /* E-stop specific address */
@@ -331,6 +333,7 @@ static void _cmd_estop(char *tokens[], int count) {
 static void _cmd_stop(void) {
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     DccApplicationCommandStationPacket_load_estop_all(&packet, false);  /* S=0 */
     packet.repeat_count = 3;
 
@@ -362,6 +365,7 @@ static void _cmd_func(char *tokens[], int count) {
     }
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     bool ok = false;
 
     if (func_num <= 4) {
@@ -561,6 +565,7 @@ static void _cmd_acc(char *tokens[], int count) {
         uint8_t value = (count >= 7) ? (uint8_t)atoi(tokens[6]) : 0;
 
         dcc_packet_t packet;
+        memset(&packet, 0, sizeof(packet));
         bool ok = false;
 
         if (strcmp(tokens[2], "WRITE") == 0 && count >= 7) {
@@ -604,6 +609,7 @@ static void _cmd_acc(char *tokens[], int count) {
     bool activate = (strcmp(tokens[3], "ON") == 0);
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     if (!DccApplicationCommandStationPacket_load_accessory_basic(&packet, board, pair, activate)) {
         _respond("ERR: invalid accessory parameters");
         return;
@@ -638,6 +644,7 @@ static void _cmd_acce(char *tokens[], int count) {
         uint8_t value = (count >= 6) ? (uint8_t)atoi(tokens[5]) : 0;
 
         dcc_packet_t packet;
+        memset(&packet, 0, sizeof(packet));
         bool ok = false;
 
         if (strcmp(tokens[2], "WRITE") == 0 && count >= 6) {
@@ -680,6 +687,7 @@ static void _cmd_acce(char *tokens[], int count) {
     uint8_t aspect = (uint8_t)atoi(tokens[2]);
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     if (!DccApplicationCommandStationPacket_load_accessory_extended(&packet, addr, aspect)) {
         _respond("ERR: invalid parameters");
         return;
@@ -694,6 +702,38 @@ static void _cmd_acce(char *tokens[], int count) {
 
     snprintf(_resp_buf, sizeof(_resp_buf), "OK: ACCE addr=%u aspect=%u",
              addr, aspect);
+    _respond(_resp_buf);
+}
+
+// NOP <addr> [E] — accessory No-Operation (S-9.2.1 2.4.6). Lets a bi-directional
+// accessory decoder raise an SRQ without changing output. E = extended decoder.
+static void _cmd_nop(char *tokens[], int count) {
+
+    if (count < 2) {
+        _respond("ERR: usage: NOP <addr> [E]");
+        return;
+    }
+
+    uint16_t addr = (uint16_t)atoi(tokens[1]);
+    bool is_extended = (count >= 3 && tokens[2][0] == 'E');
+
+    dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
+
+    if (!DccApplicationCommandStationPacket_load_accessory_nop(&packet, addr, is_extended)) {
+        _respond("ERR: invalid NOP address");
+        return;
+    }
+    packet.repeat_count = 3;
+
+    if (!_schedule_main_track(&packet, addr, DCC_TAG_ACCESSORY,
+                              DCC_PRIORITY_ACCESSORY, false)) {
+        _respond("ERR: scheduler full");
+        return;
+    }
+
+    snprintf(_resp_buf, sizeof(_resp_buf), "OK: NOP addr=%u %s",
+             addr, is_extended ? "extended" : "basic");
     _respond(_resp_buf);
 }
 
@@ -715,6 +755,7 @@ static void _cmd_cv(char *tokens[], int count) {
     uint8_t value = (uint8_t)atoi(tokens[4]);
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     bool ok = false;
 
     if (strcmp(tokens[1], "WRITE") == 0) {
@@ -955,6 +996,7 @@ static void _cmd_consist(char *tokens[], int count) {
     _parse_address(tokens[1], &addr, &addr_type);
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     bool ok = false;
 
     if (strcmp(tokens[2], "SET") == 0 && count >= 4) {
@@ -1003,6 +1045,7 @@ static void _cmd_bss(char *tokens[], int count) {
     bool active = (strcmp(tokens[3], "ON") == 0);
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     if (!DccApplicationCommandStationPacket_load_binary_state_short(&packet, addr, addr_type,
                                               state_num, active)) {
         _respond("ERR: invalid binary state parameters");
@@ -1037,6 +1080,7 @@ static void _cmd_bsl(char *tokens[], int count) {
     bool active = (strcmp(tokens[3], "ON") == 0);
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     if (!DccApplicationCommandStationPacket_load_binary_state_long(&packet, addr, addr_type,
                                              state_num, active)) {
         _respond("ERR: invalid binary state parameters");
@@ -1071,6 +1115,7 @@ static void _cmd_analog(char *tokens[], int count) {
     uint8_t value = (uint8_t)atoi(tokens[3]);
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     if (!DccApplicationCommandStationPacket_load_analog_function(&packet, addr, addr_type, output, value)) {
         _respond("ERR: invalid analog parameters");
         return;
@@ -1100,6 +1145,7 @@ static void _cmd_help(void) {
     _respond("  ACC CV WRITE|VERIFY <board> <pair> <cv> <value>");
     _respond("  ACC CV BIT <board> <pair> <cv> <bit_pos> <0|1>");
     _respond("  ACCE <addr> <aspect>");
+    _respond("  NOP <addr> [E]  (accessory NOP; E=extended)");
     _respond("  ACCE CV WRITE|VERIFY <addr> <cv> <value>");
     _respond("  ACCE CV BIT <addr> <cv> <bit_pos> <0|1>");
     _respond("  CV WRITE|VERIFY <addr> <cv> <value>");
@@ -1160,6 +1206,8 @@ void UartCommandParser_process(void) {
         _cmd_acc(tokens, count);
     else if (strcmp(tokens[0], "ACCE") == 0)
         _cmd_acce(tokens, count);
+    else if (strcmp(tokens[0], "NOP") == 0)
+        _cmd_nop(tokens, count);
     else if (strcmp(tokens[0], "CV") == 0)
         _cmd_cv(tokens, count);
     else if (strcmp(tokens[0], "SVC") == 0)

@@ -35,6 +35,8 @@
 
 #ifdef DCC_COMPILE_SERVICE_MODE_DIRECT
 
+#include <string.h>
+
 static void _append_xor(dcc_packet_t *packet) {
 
     uint8_t xor_byte = 0;
@@ -77,13 +79,20 @@ void DccServiceModeDirect_initialize(dcc_service_mode_direct_context_t *context,
 bool DccServiceModeDirect_write_byte(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t value) {
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     uint16_t wire_cv;
 
-    if (cv_number < 1 || cv_number > 1024)
+    if (cv_number < 1 || cv_number > 1024) {
+
         return false;
 
-    if (!context->interface->is_common_idle())
+    }
+
+    if (!context->interface->is_common_idle()) {
+
         return false;
+
+    }
 
     wire_cv = cv_number - 1;
 
@@ -103,13 +112,20 @@ bool DccServiceModeDirect_write_byte(dcc_service_mode_direct_context_t *context,
 bool DccServiceModeDirect_verify_byte(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t value) {
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     uint16_t wire_cv;
 
-    if (cv_number < 1 || cv_number > 1024)
+    if (cv_number < 1 || cv_number > 1024) {
+
         return false;
 
-    if (!context->interface->is_common_idle())
+    }
+
+    if (!context->interface->is_common_idle()) {
+
         return false;
+
+    }
 
     wire_cv = cv_number - 1;
 
@@ -129,16 +145,26 @@ bool DccServiceModeDirect_verify_byte(dcc_service_mode_direct_context_t *context
 bool DccServiceModeDirect_write_bit(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t bit_position, bool bit_value) {
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     uint16_t wire_cv;
 
-    if (cv_number < 1 || cv_number > 1024)
+    if (cv_number < 1 || cv_number > 1024) {
+
         return false;
 
-    if (bit_position > 7)
+    }
+
+    if (bit_position > 7) {
+
         return false;
 
-    if (!context->interface->is_common_idle())
+    }
+
+    if (!context->interface->is_common_idle()) {
+
         return false;
+
+    }
 
     wire_cv = cv_number - 1;
 
@@ -158,16 +184,26 @@ bool DccServiceModeDirect_write_bit(dcc_service_mode_direct_context_t *context, 
 bool DccServiceModeDirect_verify_bit(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t bit_position, bool bit_value) {
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     uint16_t wire_cv;
 
-    if (cv_number < 1 || cv_number > 1024)
+    if (cv_number < 1 || cv_number > 1024) {
+
         return false;
 
-    if (bit_position > 7)
+    }
+
+    if (bit_position > 7) {
+
         return false;
 
-    if (!context->interface->is_common_idle())
+    }
+
+    if (!context->interface->is_common_idle()) {
+
         return false;
+
+    }
 
     wire_cv = cv_number - 1;
 

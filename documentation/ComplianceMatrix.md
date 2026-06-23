@@ -35,8 +35,7 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 - **Top functional gaps (not implemented):**
   - ❌ **Fail-safe / CV11 packet timeout (S-9.2.4)** — only dead callback declarations + an unused `#define`.
   - ❌ **XPOM** (S-9.2.1 §2.3.7.4) — no command-station encoder.
-  - ❌ **Time/Date & System Time** packets (S-9.2.1) — unused `#define` only.
-  - ❌ **Accessory NOP** packet encoder — only auto-schedule comments.
+  - ❌ **Time/Date** packet (S-9.2.1 §2.3.6.2) — unused `#define DCC_FEAT_TIME_DATE` only. *(System Time §2.3.6.3 now done — host + HIL verified.)*
   - ❌ **Indexed CVs (CV31/32)** decoder paging — defines only.
   - ❌ **Factory reset (CV8)** — write-permission exception only, no reset-to-defaults logic.
   - ❌ **Logon / Data Spaces (S-9.2.1.1)** — absent. *Released standard (2022), not draft-only — the 2026 draft only expands it.* Out of current scope.
@@ -73,14 +72,15 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 | Function expansion F13–F68 | S-9.2.1 §2.3.6 | — | `CSPacket_func_f13_f20 … _f61_f68` | `func_f13_f20 … _f61_f68` | ✅ |
 | Accessory basic / extended | S-9.2.1 §2.4 | notation `1AAADAAR` | `CSPacket_accessory_basic/_extended`; decode `_dispatch_accessory_*` | basic/extended encode+decode | ✅ |
 | Accessory basic/extended **stop** | S-9.2.1 | Tbl 36 | `CSPacket_accessory_basic_stop/_extended_stop` | `accessory_*_stop_*` | ✅ (new module only) |
-| Accessory **NOP** | S-9.2.1 §2.4.6 | NEW | ❌ no encoder (auto-sched comments only) | — | ❌ |
+| Accessory **NOP** | S-9.2.1 §2.4.6 | NEW | `..._packet.c:CSPacket_load_accessory_nop(addr, is_extended)` → `10AAAAAA 0 0AAA1AAT` | `accessory_nop_*` (5 host); HIL s9_2_1 | ✅ |
 | CV ops-mode (POM) write/verify/bit | S-9.2.1 §2.3.7.3 | GG/F notation | `CSPacket_cv_write_pom/_verify_pom/_cv_bit_pom`; decode `_dispatch_cv_access` | `cv_write_ops_*`, `cv_bit_ops_*` | ✅ |
 | **XPOM** (24-bit indexed, read/write/bit) | S-9.2.1 §2.3.7.4 | §1.6 | ❌ absent | — | ❌ |
 | Consist set / clear | S-9.2.1 §2.3.1.4 | TTTT notation | `CSPacket_consist_set/_clear`; decode `_dispatch_instruction` | `consist_*` | ✅ |
 | Binary state short / long | S-9.2.1 §2.3.6.1/.4 | moved here from 9.2.1.1 | `CSPacket_binary_state_short/_long`; decode `_dispatch_feature_expansion` | `binary_state_*` | ✅ |
 | Analog function (`00111101`) | S-9.2.1 §2.3.2.3 | byte corrected | `CSPacket_analog_function`; decode `_dispatch_advanced_ops` | `analog_function*` | ✅ |
 | Speed restriction (`00111110`) | — | reserved: Zimo East-West | **removed** | — | ✅ removed (byte left reserved) |
-| Time/Date, System Time | S-9.2.1 §2.3.6.2/.3 | full layouts NEW | ❌ unused `#define DCC_FEAT_TIME_DATE` only | — | ❌ |
+| System Time (broadcast clock) | S-9.2.1 §2.3.6.3 | full layout NEW | `CSPacket_load_system_time` (`00 C2` + 16-bit ms, MSB-first); broadcast to addr 0 | `system_time*` (host) + `SYSTIME` HIL exact-byte | ✅ |
+| Time/Date | S-9.2.1 §2.3.6.2 | full layout NEW | ❌ unused `#define DCC_FEAT_TIME_DATE` only | — | ❌ |
 
 ## 4. Advanced Extended / Logon (S-9.2.1.1)
 
@@ -163,8 +163,9 @@ conformance gaps**, not draft features. (Per-feature detail is in the §1–8 ta
 |---|---|---|---|
 | **Fail-safe / packet timeout (CV11)** | Released **S-9.2.4** | Not implemented | Only dead `on_failsafe_entered/exited` callbacks + an unused `DCC_CV_PACKET_TIMEOUT` define; no timeout timer or fail-safe state. |
 | **XPOM (Extended POM)** | Released **S-9.2.1** §2.3.7.4 | Not started | 24-bit indexed CV read/write/bit (`1110GGSS`); exceeds the 6-byte packet limit. |
-| **Time/Date & System Time packets** | Released **S-9.2.1** §2.3.6.2/.3 | Not started | Broadcast clock packets; only an unused `#define DCC_FEAT_TIME_DATE`. |
-| **Accessory NOP packet** | Released **S-9.2.1** §2.4.6 | Not started | No encoder; the accessory SRQ auto-scheduling references it. |
+| **System Time packet** | Released **S-9.2.1** §2.3.6.3 | **Done** | `load_system_time` (broadcast `00 C2` + 16-bit ms, MSB-first); host gtest + HIL exact-byte verified. |
+| **Time/Date packet** | Released **S-9.2.1** §2.3.6.2 | Not started | Broadcast clock (CC=Time/Date sub-formats); only an unused `#define DCC_FEAT_TIME_DATE`. |
+| **Accessory NOP packet** | Released **S-9.2.1** §2.4.6 | **Done** | `load_accessory_nop` (basic/extended); host + HIL exact-byte verified. |
 | **Indexed CVs (CV31/32)** | Released **S-9.2.2** | Not started | Page-pointer access to CVs 257-512; defines exist, no paging logic. |
 | **CV29 bits 2/3/4/7 behavior** | Released **S-9.2.2** | Partial | Decoder acts on bits 0/1/5 only; bit 2 (power-source), 3 (RailCom), 4 (speed table), 7 (decoder type) not acted on. |
 | **Factory reset to defaults (CV8)** | Manufacturer convention | Partial | Write-permission exception only; no reset-to-defaults logic. |

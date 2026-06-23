@@ -35,6 +35,8 @@
 
 #ifdef DCC_COMPILE_SERVICE_MODE_PAGED
 
+#include <string.h>
+
 // =============================================================================
 // Internal types
 // =============================================================================
@@ -91,6 +93,7 @@ static void _on_data_access_complete(dcc_service_mode_result_t result);
 static void _on_page_select_complete(dcc_service_mode_result_t result) {
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
 
     if (result != DCC_SERVICE_MODE_SUCCESS) {
 
@@ -139,6 +142,7 @@ void DccServiceModePaged_initialize(dcc_service_mode_paged_context_t *context, c
 bool DccServiceModePaged_write(dcc_service_mode_paged_context_t *context, uint16_t cv_number, uint8_t value) {
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     uint8_t page;
 
     if (cv_number < 1 || cv_number > 1024) {
@@ -175,6 +179,7 @@ bool DccServiceModePaged_write(dcc_service_mode_paged_context_t *context, uint16
 bool DccServiceModePaged_verify(dcc_service_mode_paged_context_t *context, uint16_t cv_number, uint8_t value) {
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
     uint8_t page;
 
     if (cv_number < 1 || cv_number > 1024) {

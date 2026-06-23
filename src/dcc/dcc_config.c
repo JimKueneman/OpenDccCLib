@@ -43,6 +43,8 @@
 #include "dcc_defines.h"
 
 #ifdef DCC_COMPILE_COMMAND_STATION
+#include <string.h>
+
 #include "dcc_bit_encoder.h"
 #include "dcc_application_command_station_packet.h"
 #include "dcc_scheduler.h"
@@ -870,6 +872,7 @@ void DccConfig_100ms_timer_tick(void) {
              * address. The threshold starts at max and is lowered on SRQ
              * collision (garbled Ch1 data) to narrow the responder pool. */
             dcc_packet_t nop_packet;
+            memset(&nop_packet, 0, sizeof(nop_packet));
             DccApplicationCommandStationPacket_load_accessory_basic_stop(
                 &nop_packet, _nop_threshold_address, 0);
             nop_packet.repeat_count = 1;

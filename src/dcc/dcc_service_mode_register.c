@@ -35,6 +35,8 @@
 
 #ifdef DCC_COMPILE_SERVICE_MODE_REGISTER
 
+#include <string.h>
+
 static dcc_service_mode_register_context_t *_active_context = (void *)0;
 
 static void _append_xor(dcc_packet_t *packet) {
@@ -72,6 +74,7 @@ void DccServiceModeRegister_initialize(dcc_service_mode_register_context_t *cont
 bool DccServiceModeRegister_write(dcc_service_mode_register_context_t *context, uint8_t register_number, uint8_t value) {
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
 
     if (register_number < 1 || register_number > 8) {
 
@@ -100,6 +103,7 @@ bool DccServiceModeRegister_write(dcc_service_mode_register_context_t *context, 
 bool DccServiceModeRegister_verify(dcc_service_mode_register_context_t *context, uint8_t register_number, uint8_t value) {
 
     dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
 
     if (register_number < 1 || register_number > 8) {
 

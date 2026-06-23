@@ -32,7 +32,7 @@
  * directly from the NMRA specifications.
  *
  * @author Jim Kueneman
- * @date 11 Apr 2026
+ * @date 23 Jun 2026
  */
 
 #ifndef __DCC_DEFINES__
@@ -182,6 +182,9 @@ extern "C" {
 
     /** @brief Time/date command */
 #define DCC_FEAT_TIME_DATE                  0xC1
+
+    /** @brief System time command (full instruction byte: 110 00010) */
+#define DCC_FEAT_SYSTEM_TIME                0xC2
 
 // =============================================================================
 // CV Access Long Form Masks (S-9.2.1)

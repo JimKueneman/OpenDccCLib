@@ -33,7 +33,7 @@
  * with the correct byte layout and XOR error detection byte per NMRA S-9.2.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 23 Jun 2026
  */
 
 #include "dcc_application_command_station_packet.h"
@@ -563,6 +563,34 @@ bool DccApplicationCommandStationPacket_load_accessory_extended(dcc_packet_t *pa
 
 }
 
+bool DccApplicationCommandStationPacket_load_accessory_nop(dcc_packet_t *packet, uint16_t address, bool is_extended) {
+
+    if (address > 2047) {
+
+        return false;
+
+    }
+
+    /* Byte 1: 10AAAAAA — lower 6 bits of address */
+    packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)(address & 0x3F);
+
+    /* Byte 2: 0AAA1AAT — upper 3 bits inverted (bits 6-4), bit 3 = 1 (NOP marker),
+     * next 2 address bits (bits 2-1), T (bit 0): 0 = basic, 1 = extended */
+    packet->data[1] = (uint8_t)((~(address >> 6) & 0x07) << 4)
+                      | 0x08
+                      | (uint8_t)(((address >> 9) & 0x03) << 1)
+                      | (is_extended ? 0x01 : 0x00);
+
+    packet->byte_count = 2;
+    _append_xor(packet);
+
+    packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
+    packet->repeat_count = 0;
+
+    return true;
+
+}
+
     /**
      * @verbatim
      * @param packet        Pointer to a dcc_packet_t struct to fill.
@@ -1050,6 +1078,23 @@ bool DccApplicationCommandStationPacket_load_analog_function(dcc_packet_t *packe
     packet->repeat_count = 0;
 
     return true;
+
+}
+
+void DccApplicationCommandStationPacket_load_system_time(dcc_packet_t *packet, uint16_t milliseconds) {
+
+    /* S-9.2.1 §2.3.6.3 System Time: broadcast to address 0, feature-expansion
+     * sub-instruction 110-00010. Three-byte instruction carrying a 16-bit
+     * milliseconds-since-startup count, most significant byte first. */
+    packet->data[0] = DCC_ADDRESS_BROADCAST_VALUE;              /* 00000000  */
+    packet->data[1] = DCC_FEAT_SYSTEM_TIME;                     /* 110-00010 */
+    packet->data[2] = (uint8_t)((milliseconds >> 8) & 0xFF);    /* MSB       */
+    packet->data[3] = (uint8_t)(milliseconds & 0xFF);           /* LSB       */
+    packet->byte_count = 4;
+    _append_xor(packet);
+
+    packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
+    packet->repeat_count = 0;
 
 }
 

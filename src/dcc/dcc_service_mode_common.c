@@ -62,6 +62,7 @@ typedef enum {
 static void _load_reset_packet(dcc_service_mode_common_context_t *context) {
 
     dcc_packet_t reset_packet;
+    memset(&reset_packet, 0, sizeof(reset_packet));
 
     reset_packet.data[0] = DCC_RESET_BYTE;
     reset_packet.data[1] = DCC_RESET_BYTE;
@@ -119,8 +120,11 @@ void DccServiceModeCommon_initialize(dcc_service_mode_common_context_t *context,
 
 void DccServiceModeCommon_ack_sample(dcc_service_mode_common_context_t *context, uint16_t sense_value) {
 
-    if (context->ack_detected)
+    if (context->ack_detected) {
+
         return;
+
+    }
 
     if (context->state != SERVICE_COMMON_STATE_COMMAND &&
         context->state != SERVICE_COMMON_STATE_RECOVERY) {
@@ -281,8 +285,11 @@ static void _run_reset_post_state(dcc_service_mode_common_context_t *context) {
 
 void DccServiceModeCommon_run(dcc_service_mode_common_context_t *context) {
 
-    if (!context->in_service_mode)
+    if (!context->in_service_mode) {
+
         return;
+
+    }
 
     /* Wait for encoder to finish the previous packet before advancing. */
     if (context->first_packet_sent) {
@@ -298,8 +305,11 @@ void DccServiceModeCommon_run(dcc_service_mode_common_context_t *context) {
     }
 
     /* Belt-and-suspenders: verify encoder is actually idle */
-    if (!context->interface->is_encoder_idle())
+    if (!context->interface->is_encoder_idle()) {
+
         return;
+
+    }
 
     if (context->state == SERVICE_COMMON_STATE_RESET_PRE) {
 
@@ -356,8 +366,11 @@ bool DccServiceModeCommon_enter(dcc_service_mode_common_context_t *context) {
 
 void DccServiceModeCommon_exit(dcc_service_mode_common_context_t *context) {
 
-    if (context->state != SERVICE_COMMON_STATE_IDLE)
+    if (context->state != SERVICE_COMMON_STATE_IDLE) {
+
         return;
+
+    }
 
     context->in_service_mode = false;
 
@@ -365,11 +378,17 @@ void DccServiceModeCommon_exit(dcc_service_mode_common_context_t *context) {
 
 bool DccServiceModeCommon_begin_operation(dcc_service_mode_common_context_t *context, const dcc_packet_t *command_packet, dcc_service_mode_step_callback_t on_step_complete, bool is_write_operation, uint8_t recovery_count) {
 
-    if (!context->in_service_mode)
+    if (!context->in_service_mode) {
+
         return false;
 
-    if (context->state != SERVICE_COMMON_STATE_IDLE)
+    }
+
+    if (context->state != SERVICE_COMMON_STATE_IDLE) {
+
         return false;
+
+    }
 
     memcpy(&context->command_packet, command_packet, sizeof(dcc_packet_t));
     context->step_callback = on_step_complete;

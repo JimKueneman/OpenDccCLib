@@ -97,6 +97,8 @@ void DccApplicationDecoderRailcom_initialize(const interface_dcc_application_dec
 
 #ifdef DCC_COMPILE_DECODER
 
+#include <string.h>
+
 /**
  * @verbatim
  * @param address  The decoder address (0-10239).
@@ -135,6 +137,7 @@ void DccApplicationDecoderRailcom_send_address_feedback(uint16_t address) {
 void DccApplicationDecoderRailcom_send_track_search_response(uint16_t address, uint8_t seconds_since_powerup) {
 
     dcc_railcom_response_t response;
+    memset(&response, 0, sizeof(response));
 
     if (!_interface) {
 
@@ -174,6 +177,7 @@ void DccApplicationDecoderRailcom_send_track_search_response(uint16_t address, u
 void DccApplicationDecoderRailcom_send_cv_auto_transfer(uint32_t indexed_cv_address, uint8_t value) {
 
     dcc_railcom_response_t response;
+    memset(&response, 0, sizeof(response));
 
     if (!_interface) {
 
@@ -208,6 +212,7 @@ void DccApplicationDecoderRailcom_send_cv_auto_transfer(uint32_t indexed_cv_addr
 void DccApplicationDecoderRailcom_send_pom_response(uint16_t cv_address, uint8_t value) {
 
     dcc_railcom_response_t response;
+    memset(&response, 0, sizeof(response));
 
     if (!_interface) {
 
@@ -233,6 +238,7 @@ void DccApplicationDecoderRailcom_send_pom_response(uint16_t cv_address, uint8_t
 void DccApplicationDecoderRailcom_send_dynamic_data(uint8_t subid, uint8_t value) {
 
     dcc_railcom_response_t response;
+    memset(&response, 0, sizeof(response));
 
     if (!_interface) {
 
@@ -285,6 +291,7 @@ void DccApplicationDecoderRailcom_send_nack(void) {
 void DccApplicationDecoderRailcom_send_raw(uint8_t datagram_id, const uint8_t *data, uint8_t count) {
 
     dcc_railcom_response_t response;
+    memset(&response, 0, sizeof(response));
     uint8_t i;
 
     if (!_interface) {

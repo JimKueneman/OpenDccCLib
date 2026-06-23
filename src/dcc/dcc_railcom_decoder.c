@@ -125,6 +125,7 @@ static void _decode_channel_1(dcc_railcom_decoder_context_t *context, const uint
     uint8_t decoded_1;
     uint16_t combined;
     dcc_railcom_datagram_t datagram;
+    memset(&datagram, 0, sizeof(dcc_railcom_datagram_t));
 
     if (raw_count < DCC_RAILCOM_CH1_MAX_BYTES) {
 
@@ -143,7 +144,6 @@ static void _decode_channel_1(dcc_railcom_decoder_context_t *context, const uint
 
     combined = ((uint16_t)decoded_0 << 6) | decoded_1;
 
-    memset(&datagram, 0, sizeof(dcc_railcom_datagram_t));
     datagram.datagram_id = (uint8_t)((combined >> 8) & 0x0F);
     datagram.data[0] = (uint8_t)(combined & 0xFF);
     datagram.count = 1;
@@ -176,6 +176,7 @@ static void _decode_channel_2(dcc_railcom_decoder_context_t *context, const uint
     bool all_valid = true;
     uint16_t combined;
     dcc_railcom_datagram_t datagram;
+    memset(&datagram, 0, sizeof(dcc_railcom_datagram_t));
 
     if (raw_count <= DCC_RAILCOM_CH1_MAX_BYTES) {
 
@@ -209,7 +210,6 @@ static void _decode_channel_2(dcc_railcom_decoder_context_t *context, const uint
 
     combined = ((uint16_t)decoded_bytes[0] << 6) | decoded_bytes[1];
 
-    memset(&datagram, 0, sizeof(dcc_railcom_datagram_t));
     datagram.datagram_id = (uint8_t)((combined >> 8) & 0x0F);
     datagram.data[0] = (uint8_t)(combined & 0xFF);
     datagram.count = 1;
