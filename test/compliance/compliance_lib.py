@@ -14,6 +14,7 @@ Requires: pip install logic2-automation pyserial   (into test/compliance/.venv)
 import os
 import csv
 import html
+import math
 import tempfile
 import datetime
 
@@ -383,6 +384,31 @@ def first_non_idle(decoded, idle):
 
 def stats(xs):
     return (min(xs), sum(xs) / len(xs), max(xs)) if xs else (0, 0, 0)
+
+
+def sigma_margin_detail(values, lo_limit=None, hi_limit=None):
+    """Stats string with σ and margin to each spec wall in σ units.
+
+    lo_limit / hi_limit: spec boundary (None = no wall on that side).
+    A positive margin means the population mean is that many σ inside the limit.
+    """
+    n = len(values)
+    if n < 2:
+        return f"n={n} (need >= 2 for σ)"
+    lo  = min(values)
+    mean = sum(values) / n
+    hi  = max(values)
+    std = math.sqrt(sum((x - mean) ** 2 for x in values) / (n - 1))
+    parts = [f"n={n}", f"min={lo:.2f}", f"mean={mean:.3f}",
+             f"max={hi:.2f}", f"σ={std:.3f}"]
+    if std > 0:
+        if lo_limit is not None:
+            parts.append(f"lo=+{(mean - lo_limit) / std:.1f}σ")
+        if hi_limit is not None:
+            parts.append(f"hi=+{(hi_limit - mean) / std:.1f}σ")
+    else:
+        parts.append("(all identical)")
+    return "  ".join(parts)
 
 
 # ----------------------------------------------------------------------------

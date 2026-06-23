@@ -73,30 +73,6 @@ void DccApplicationCommandStationMainTrack_power_off(void) {
 
 }
 
-void DccApplicationCommandStationMainTrack_set_railcom_enabled(bool enabled) {
-
-    if (!_interface) {
-
-        return;
-
-    }
-
-    _interface->set_railcom_enabled(enabled);
-
-}
-
-bool DccApplicationCommandStationMainTrack_is_railcom_enabled(void) {
-
-    if (!_interface) {
-
-        return false;
-
-    }
-
-    return _interface->is_railcom_enabled();
-
-}
-
 bool DccApplicationCommandStationMainTrack_send_packet(const dcc_packet_t *packet, dcc_address_t address, dcc_tag_enum tag, dcc_priority_enum priority) {
 
     if (!_interface) {

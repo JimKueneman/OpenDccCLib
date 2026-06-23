@@ -44,6 +44,28 @@
 /* do not get notified of that event.                                         */
 /* ========================================================================== */
 
+/* ========================================================================== */
+/* RailCom cutout (compliance rig)                                            */
+/*                                                                            */
+/* Continuous-clock model: the bit encoder never stalls, so the DCC line (PB1) */
+/* runs continuously -- IDENTICAL with or without RailCom. The cutout is a     */
+/* separate cutout-active SIGNAL: begin/end (TI_DccDriver_main_cutout_begin/    */
+/* end) raise/drop PB2 (DCC_MIRROR). Real H-bridge hardware would mux on that   */
+/* signal to tristate the track during the window; here PB2 is just the Saleae  */
+/* cutout-window marker. Fires only when RAILCOM ON has been sent AND .railcom  */
+/* is wired. uart_rx_* / uart_read are NULL: no RailCom receive path on this    */
+/* rig.                                                                        */
+/* ========================================================================== */
+
+static const dcc_railcom_hw_t _main_railcom_hw = {
+    .begin_railcom_cutout       = &TI_DccDriver_main_cutout_begin,
+    .end_railcom_cutout         = &TI_DccDriver_main_cutout_end,
+    .uart_rx_enable             = NULL,
+    .uart_rx_disable            = NULL,
+    .uart_read                  = NULL,
+    .on_railcom_datagram_result = NULL,
+};
+
 static const dcc_config_t dcc_config = {
 
     // REQUIRED -- these three are needed for every role (command station or decoder).
@@ -61,14 +83,17 @@ static const dcc_config_t dcc_config = {
     .railcom_timer_start     = &TI_DccDriver_railcom_timer_start,
     .railcom_timer_stop      = &TI_DccDriver_railcom_timer_stop,
 
-    // RailCom cutout state-machine timing (microseconds). These are the NMRA
-    // spec defaults; cumulative event times shown in parentheses. Set any field
-    // to 0 to let the library substitute the same spec default.
-    .railcom_cutout_start_delay_us = 26,   /* DELAY    -> T_CS  = 26us  (tristate H-bridge) */
-    .railcom_uart_rx_delay_us      = 54,   /* SETTLING -> T_TS1 = 80us  (enable UART Rx)    */
-    .railcom_ch1_window_us         = 97,   /* CH1      -> T_TC1 = 177us (disable UART Rx)   */
-    .railcom_ch1_ch2_gap_us        = 16,   /* GAP      -> T_TS2 = 193us (enable UART Rx)    */
-    .railcom_ch2_window_us         = 261,  /* CH2      -> T_CE  = 454us (restore H-bridge)  */
+    // RailCom cutout state-machine timing (microseconds), HARDWARE-CALIBRATED for
+    // this rig. The library periods are durations; real ISR/dispatch latency adds
+    // ~6 us by T_CS and ~18 us by T_CE. Measured at spec defaults: T_CS hit the
+    // 32 us ceiling and T_CE landed at 472 us. These values trim the durations so
+    // the measured cutout centers in the S-9.3.2 windows (T_CS ~29 / 26-32,
+    // T_CE ~471 / 454-488). Set any field to 0 to fall back to the spec default.
+    .railcom_cutout_start_delay_us = 23,   /* DELAY    -> T_CS  ~29us (was 26; -3 for latency) */
+    .railcom_uart_rx_delay_us      = 54,   /* SETTLING -> T_TS1                                */
+    .railcom_ch1_window_us         = 97,   /* CH1      -> T_TC1                                */
+    .railcom_ch1_ch2_gap_us        = 16,   /* GAP      -> T_TS2                                */
+    .railcom_ch2_window_us         = 263,  /* CH2      -> T_CE  ~471us (was 261; +2 re-center) */
 
     // Main track hardware -- runs the scheduler (normal DCC operations).
     .main_track = {
@@ -77,7 +102,7 @@ static const dcc_config_t dcc_config = {
         .pin_toggle       = &TI_DccDriver_main_pin_toggle,
         .track_power_set  = &TI_DccDriver_track_power_set,
         .current_sense_read = NULL,  /* no current sensing on main track */
-        .railcom          = NULL,    /* TODO: add RailCom detector later */
+        .railcom          = &_main_railcom_hw,  /* cutout marker on PB2 (DCC_MIRROR) */
     },
 
     // Service track hardware -- runs service mode (programming).

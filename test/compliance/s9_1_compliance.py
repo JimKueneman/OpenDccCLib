@@ -46,33 +46,30 @@ def checks(rep, decoded):
 
     # 1. ONE half-bit timing
     if ones:
-        lo, mean, hi = lib.stats(ones)
         ok = all(ONE_HALF_MIN_US <= w <= ONE_HALF_MAX_US for w in ones)
         rep.check("S-9.1 Tbl2.1", "ONE half-bit 55-61 us (nom 58)", ok,
-                  f"n={len(ones)} min={lo:.2f} mean={mean:.3f} max={hi:.2f} us")
+                  lib.sigma_margin_detail(ones, ONE_HALF_MIN_US, ONE_HALF_MAX_US) + " us")
     else:
         rep.check("S-9.1 Tbl2.1", "ONE half-bit", False, "no one-bits decoded")
 
     # 2. ZERO half-bit timing + total duration
     if zeros:
-        lo, mean, hi = lib.stats(zeros)
         ok = all(w >= ZERO_HALF_MIN_US for w in zeros)
         rep.check("S-9.1 Tbl2.1", "ZERO half-bit >= 95 us", ok,
-                  f"n={len(zeros)} min={lo:.2f} mean={mean:.3f} max={hi:.2f} us")
-        total_ok = all((a + b) <= ZERO_BIT_TOTAL_MAX_US
-                       for (a, b, c) in halves if c == "0")
+                  lib.sigma_margin_detail(zeros, ZERO_HALF_MIN_US, None) + " us")
+        zero_totals = [a + b for (a, b, c) in halves if c == "0"]
+        total_ok = all(t <= ZERO_BIT_TOTAL_MAX_US for t in zero_totals)
         rep.check("S-9.1", "ZERO total bit <= 12000 us", total_ok,
-                  f"max zero-bit total = "
-                  f"{max((a+b) for (a,b,c) in halves if c=='0'):.2f} us")
+                  lib.sigma_margin_detail(zero_totals, None, ZERO_BIT_TOTAL_MAX_US) + " us")
     else:
         rep.check("S-9.1 Tbl2.1", "ZERO half-bit", False, "no zero-bits decoded")
 
     # 3. intra-bit symmetry
     if halves:
-        worst = max(abs(a - b) for (a, b, c) in halves)
+        deltas = [abs(a - b) for (a, b, c) in halves]
         rep.check("S-9.1", f"intra-bit symmetry <= {INTRA_BIT_SYMMETRY_US} us",
-                  worst <= INTRA_BIT_SYMMETRY_US,
-                  f"worst half-pair delta = {worst:.2f} us")
+                  max(deltas) <= INTRA_BIT_SYMMETRY_US,
+                  lib.sigma_margin_detail(deltas, None, INTRA_BIT_SYMMETRY_US) + " us")
 
     # 4. preamble length -- exclude inflated first packet; strip merged end bit
     interior_pk = packets[1:]

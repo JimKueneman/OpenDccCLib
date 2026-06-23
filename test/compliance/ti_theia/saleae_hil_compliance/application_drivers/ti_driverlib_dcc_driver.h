@@ -77,9 +77,17 @@ extern void TI_DccDriver_railcom_timer_start(uint16_t period_usec);
 // Stop the RailCom cutout one-shot timer.
 extern void TI_DccDriver_railcom_timer_stop(void);
 
-// Toggle the main track DCC signal GPIO pin. Called from ISR context by the
-// bit encoder's tick_isr.
+// Toggle the main track DCC signal GPIO pin. Called from ISR context by the bit
+// encoder's tick_isr. Always toggles -- the DCC line runs continuously and looks
+// identical with or without RailCom.
 extern void TI_DccDriver_main_pin_toggle(void);
+
+// RailCom cutout-active signal: raise (T_CS) / drop (T_CE) the PB2 (DCC_MIRROR)
+// pin. This is the signal that real H-bridge hardware muxes on to tristate the
+// track during the cutout; here it is the Saleae cutout-window marker. Wired to
+// the .railcom begin/end hooks, called by the cutout timer.
+extern void TI_DccDriver_main_cutout_begin(void);
+extern void TI_DccDriver_main_cutout_end(void);
 
 // Enable or disable the service track power output (PB4).
 extern void TI_DccDriver_svc_track_power_set(bool enabled);

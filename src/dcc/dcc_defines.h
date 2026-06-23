@@ -68,8 +68,12 @@ extern "C" {
 // Preamble (S-9.2)
 // =============================================================================
 
-    /** @brief Minimum preamble bits for operations mode */
-#define DCC_PREAMBLE_BITS_OPS               14
+    /** @brief Preamble bits for operations mode. 16 (>= the S-9.2 minimum of 14)
+     *  so that a RailCom cutout (which blanks ~4-5 early preamble bits in the
+     *  continuous-clock model) still leaves >= 11 driven preamble bits for the
+     *  decoder (10 required, S-9.3.2). Sent unconditionally; harmless when RailCom
+     *  is off (a non-RailCom decoder just sees a slightly longer preamble). */
+#define DCC_PREAMBLE_BITS_OPS               16
 
     /** @brief Minimum preamble bits for service mode */
 #define DCC_PREAMBLE_BITS_SERVICE           20

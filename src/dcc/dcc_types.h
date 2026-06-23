@@ -315,8 +315,7 @@ typedef enum {
     DCC_BIT_STATE_START_BIT,      /**< Sending packet start zero-bit */
     DCC_BIT_STATE_DATA,           /**< Sending data bits of a byte */
     DCC_BIT_STATE_XOR,            /**< Sending XOR error detection byte */
-    DCC_BIT_STATE_END_BIT,        /**< Sending packet end one-bit */
-    DCC_BIT_STATE_RAILCOM_CUTOUT  /**< RailCom cutout window */
+    DCC_BIT_STATE_END_BIT         /**< Sending packet end one-bit */
 
 } dcc_bit_state_enum;
 

@@ -44,8 +44,6 @@ void DccBitEncoder_initialize(dcc_bit_encoder_context_t *context, const interfac
     context->half_bit = 0;
     context->tick_counter = 0;
     context->current_bit_is_one = true;
-    context->cutout_complete = false;
-    context->railcom_enabled = false;
     context->toggle_next = false;
 
 }
@@ -109,27 +107,6 @@ static void _set_bit_type(dcc_bit_encoder_context_t *context, bool is_one_bit) {
 }
 
     /**
-     * @brief Handle cutout completion for the tick ISR.
-     * @param context Pointer to the instance context.
-     */
-static void _tick_handle_cutout_complete(dcc_bit_encoder_context_t *context) {
-
-    context->cutout_complete = false;
-    context->packet_loaded = false;
-    context->state = DCC_BIT_STATE_IDLE;
-    context->tick_counter = 0;
-    context->half_bit = 0;
-    _set_bit_type(context, true);
-
-    if (context->interface->on_packet_complete) {
-
-        context->interface->on_packet_complete();
-
-    }
-
-}
-
-    /**
      * @brief Handle DATA state for the tick ISR.
      * @param context Pointer to the instance context.
      */
@@ -165,24 +142,28 @@ static void _tick_handle_data(dcc_bit_encoder_context_t *context) {
      */
 static void _tick_handle_end_bit(dcc_bit_encoder_context_t *context) {
 
-    if (context->railcom_enabled && context->interface->railcom_cutout_begin) {
+    /* Continuous-clock RailCom: when the output stage is RailCom-capable
+     * (railcom_cutout_begin wired), arm the cutout timer, which emits the
+     * cutout-active strobe (T_CS..T_CE). The encoder does NOT stall -- it completes
+     * the packet and keeps clocking the next preamble, so the DCC bit stream is
+     * continuous and identical with or without RailCom. The application/hardware
+     * decides whether to act on the strobe (mux the H-bridge into the cutout). The
+     * 16-bit ops preamble (DCC_PREAMBLE_BITS_OPS) covers the cutout window. */
+    if (context->interface->railcom_cutout_begin) {
 
-        context->state = DCC_BIT_STATE_RAILCOM_CUTOUT;
         context->interface->railcom_cutout_begin();
 
-    } else {
+    }
 
-        context->packet_loaded = false;
-        context->state = DCC_BIT_STATE_IDLE;
+    context->packet_loaded = false;
+    context->state = DCC_BIT_STATE_IDLE;
 
-        if (context->interface->on_packet_complete) {
+    if (context->interface->on_packet_complete) {
 
-            context->interface->on_packet_complete();
-
-        }
-        _set_bit_type(context, true);
+        context->interface->on_packet_complete();
 
     }
+    _set_bit_type(context, true);
 
 }
 
@@ -199,20 +180,9 @@ void DccBitEncoder_tick_isr(dcc_bit_encoder_context_t *context) {
 
     }
 
-    /* ---- RailCom cutout: wait for Timer 2 to signal completion ---- */
-    if (context->state == DCC_BIT_STATE_RAILCOM_CUTOUT) {
-
-        if (context->cutout_complete) {
-
-            _tick_handle_cutout_complete(context);
-
-        }
-
-        /* Do not toggle pin during cutout — H-bridge is off. */
-        context->toggle_next = false;
-        return;
-
-    }
+    /* Continuous-clock RailCom: there is no cutout WAIT state. The encoder keeps
+     * clocking through the cutout window; the driver blanks its own output between
+     * the begin/end hooks (T_CS..T_CE). So the bit stream never pauses here. */
 
     /* ---- Tick counting: decide whether this was a half-bit boundary ---- */
     context->tick_counter++;

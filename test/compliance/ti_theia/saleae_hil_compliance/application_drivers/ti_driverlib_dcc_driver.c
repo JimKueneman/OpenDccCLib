@@ -122,10 +122,24 @@ void TI_DccDriver_railcom_timer_stop(void) {
 
 void TI_DccDriver_main_pin_toggle(void) {
 
+    /* Continuous DCC: the encoder never stalls, so we always toggle PB1. The DCC
+     * line is IDENTICAL whether RailCom is on or off. The cutout is a separate
+     * signal (begin/end below) that real H-bridge hardware would mux on to
+     * tristate the track -- blanking is hardware's job, not ours. */
     DL_GPIO_togglePins(GPIO_DCC_PORT, GPIO_DCC_DCC_SIGNAL_PIN);
-    if (!(DL_GPIO_readPins(GPIO_TRACK_SELECT_PORT, GPIO_TRACK_SELECT_TRACK_SEL_PIN) & GPIO_TRACK_SELECT_TRACK_SEL_PIN)) {
-        DL_GPIO_togglePins(GPIO_DCC_MIRROR_PORT, GPIO_DCC_MIRROR_DCC_MIRROR_PIN);
-    }
+}
+
+/* Cutout-active signal (T_CS): raise PB2. In a real station this gates the
+ * H-bridge into the cutout (tristate). Here it is the Saleae cutout-window marker. */
+void TI_DccDriver_main_cutout_begin(void) {
+
+    DL_GPIO_setPins(GPIO_DCC_MIRROR_PORT, GPIO_DCC_MIRROR_DCC_MIRROR_PIN);
+}
+
+/* Cutout-active signal (T_CE): drop PB2 -- the H-bridge resumes driving the track. */
+void TI_DccDriver_main_cutout_end(void) {
+
+    DL_GPIO_clearPins(GPIO_DCC_MIRROR_PORT, GPIO_DCC_MIRROR_DCC_MIRROR_PIN);
 }
 
 void TI_DccDriver_svc_track_power_set(bool enabled) {
@@ -149,9 +163,7 @@ void TI_DccDriver_svc_pin_toggle(void) {
 
     DL_GPIO_togglePins(GPIO_SERVICE_MODE_DCC_PORT,
                        GPIO_SERVICE_MODE_DCC_SERVICE_MODE_DCC_SIGNAL_PIN);
-    if (DL_GPIO_readPins(GPIO_TRACK_SELECT_PORT, GPIO_TRACK_SELECT_TRACK_SEL_PIN) & GPIO_TRACK_SELECT_TRACK_SEL_PIN) {
-        DL_GPIO_togglePins(GPIO_DCC_MIRROR_PORT, GPIO_DCC_MIRROR_DCC_MIRROR_PIN);
-    }
+    /* PB2 (DCC_MIRROR) is now the RailCom cutout marker, not a DCC mirror. */
 }
 
 void TI_DccDriver_timestamp_tick(void) {

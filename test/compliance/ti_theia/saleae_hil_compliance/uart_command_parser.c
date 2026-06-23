@@ -200,26 +200,6 @@ static void _cmd_power(char *tokens[], int count) {
     }
 }
 
-// RAILCOM ON|OFF -- runtime enable/disable of RailCom cutout generation on the
-// main track (S-9.3.2). Cutout fires only when enabled AND hardware-capable.
-static void _cmd_railcom(char *tokens[], int count) {
-
-    if (count < 2) {
-        _respond("ERR: usage: RAILCOM ON|OFF");
-        return;
-    }
-
-    if (strcmp(tokens[1], "ON") == 0) {
-        DccApplicationCommandStationMainTrack_set_railcom_enabled(true);
-        _respond("OK: RailCom ON");
-    } else if (strcmp(tokens[1], "OFF") == 0) {
-        DccApplicationCommandStationMainTrack_set_railcom_enabled(false);
-        _respond("OK: RailCom OFF");
-    } else {
-        _respond("ERR: usage: RAILCOM ON|OFF");
-    }
-}
-
 static void _cmd_refresh(char *tokens[], int count) {
 
     if (count < 2) {
@@ -1288,7 +1268,6 @@ static void _cmd_help(void) {
 
     _respond("DCC Command Station Commands:");
     _respond("  POWER ON|OFF");
-    _respond("  RAILCOM ON|OFF  (enable/disable RailCom cutout generation)");
     _respond("  SPEED <addr> <speed> <FWD|REV> [14|28|128]");
     _respond("  ESTOP [addr]");
     _respond("  FUNC <addr> <0-68> <ON|OFF>");
@@ -1350,8 +1329,6 @@ void UartCommandParser_process(void) {
 
     if (strcmp(tokens[0], "POWER") == 0)
         _cmd_power(tokens, count);
-    else if (strcmp(tokens[0], "RAILCOM") == 0)
-        _cmd_railcom(tokens, count);
     else if (strcmp(tokens[0], "REFRESH") == 0)
         _cmd_refresh(tokens, count);
     else if (strcmp(tokens[0], "SPEED") == 0)

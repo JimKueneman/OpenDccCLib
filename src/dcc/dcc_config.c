@@ -260,17 +260,6 @@ static void _main_encoder_stop(void) {
 
 }
 
-static void _main_set_railcom_enabled(bool enabled) {
-
-    _main_encoder_context.railcom_enabled = enabled;
-
-}
-
-static bool _main_is_railcom_enabled(void) {
-
-    return _main_encoder_context.railcom_enabled;
-
-}
 
 static bool _main_scheduler_insert(const dcc_packet_t *packet, dcc_address_t address, dcc_tag_enum tag, dcc_priority_enum priority, bool auto_refresh) {
 
@@ -417,18 +406,14 @@ static void _shared_timer_release(void) {
 }
 
 /* =========================================================================
- * RailCom cutout bridge: on_cutout_complete sets the encoder's flag
+ * RailCom cutout bridge: the bit encoder's end bit arms the cutout timer.
+ * The encoder runs continuously (no cutout-complete wait) -- the driver blanks
+ * its own output between the begin/end hooks -- so on_cutout_complete is unused.
  * ========================================================================= */
 
 static void _railcom_cutout_begin_wrapper(void) {
 
     DccRailcomCutout_begin(&_railcom_cutout_context);
-
-}
-
-static void _railcom_on_cutout_complete(void) {
-
-    _main_encoder_context.cutout_complete = true;
 
 }
 
@@ -579,7 +564,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _railcom_cutout_interface.end_railcom_cutout = (void *)0;
     _railcom_cutout_interface.uart_rx_enable = (void *)0;
     _railcom_cutout_interface.uart_rx_disable = (void *)0;
-    _railcom_cutout_interface.on_cutout_complete = &_railcom_on_cutout_complete;
+    _railcom_cutout_interface.on_cutout_complete = (void *)0;  /* encoder runs continuously */
 
     if (config->main_track.railcom) {
 
@@ -617,8 +602,6 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _main_application_interface.scheduler_insert = &_main_scheduler_insert;
     _main_application_interface.scheduler_remove_address = &_main_scheduler_remove_address;
     _main_application_interface.scheduler_clear = &_main_scheduler_clear;
-    _main_application_interface.set_railcom_enabled = &_main_set_railcom_enabled;
-    _main_application_interface.is_railcom_enabled = &_main_is_railcom_enabled;
 
     DccApplicationCommandStationMainTrack_initialize(&_main_application_interface);
 

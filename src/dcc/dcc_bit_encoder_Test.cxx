@@ -157,11 +157,10 @@ TEST(DccBitEncoder, tick_preamble_is_all_one_bits) {
     DccApplicationCommandStationPacket_load_idle(&pkt);
     DccBitEncoder_load_packet(&context, &pkt);
 
-    /* Idle packet: 14-bit preamble.
-     * IDLE→PREAMBLE transition = 1 one-bit (2 ticks), then 14 preamble
-     * one-bits count down = 28 more ticks. Total = 30 ticks before start bit.
-     * Pump 28 ticks to stay within preamble (before the last preamble bit
-     * transitions to start bit). */
+    /* Idle packet: 16-bit preamble (DCC_PREAMBLE_BITS_OPS).
+     * IDLE→PREAMBLE transition = 1 one-bit (2 ticks), then 16 preamble
+     * one-bits count down = 32 more ticks. Total = 34 ticks before start bit.
+     * Pump 28 ticks to stay well within the preamble (all one-bits). */
     pump_tick_isr(&context, 28);
 
     /* Every tick should have a toggle (all one-bits) */
@@ -190,20 +189,20 @@ TEST(DccBitEncoder, tick_zero_bit_takes_four_ticks) {
     DccApplicationCommandStationPacket_load_idle(&pkt);
     DccBitEncoder_load_packet(&context, &pkt);
 
-    /* Idle packet: 14-bit preamble.
+    /* Idle packet: 16-bit preamble (DCC_PREAMBLE_BITS_OPS).
      * The IDLE→PREAMBLE transition itself produces 1 one-bit, then
-     * preamble_count counts down from 14 producing 14 more one-bits.
-     * Total one-bits before start bit: 15 = 30 ticks.
-     * Start bit (zero-bit) = 4 ticks. Pump 34 ticks total. */
-    pump_tick_isr(&context, 34);
+     * preamble_count counts down from 16 producing 16 more one-bits.
+     * Total one-bits before start bit: 17 = 34 ticks.
+     * Start bit (zero-bit) = 4 ticks. Pump 38 ticks total. */
+    pump_tick_isr(&context, 38);
 
-    /* 30 preamble toggles + 2 start bit toggles = 32 total */
-    EXPECT_EQ(toggle_call_count, (uint32_t)32);
+    /* 34 preamble toggles + 2 start bit toggles = 36 total */
+    EXPECT_EQ(toggle_call_count, (uint32_t)36);
 
     /* Verify the start bit toggles are spaced 2 ticks apart */
-    ASSERT_GE(toggle_log_count, (uint32_t)32);
-    uint32_t first_zero_toggle = toggle_log[30];   /* first half of start bit */
-    uint32_t second_zero_toggle = toggle_log[31];   /* second half of start bit */
+    ASSERT_GE(toggle_log_count, (uint32_t)36);
+    uint32_t first_zero_toggle = toggle_log[34];   /* first half of start bit */
+    uint32_t second_zero_toggle = toggle_log[35];   /* second half of start bit */
     EXPECT_EQ(second_zero_toggle - first_zero_toggle, (uint32_t)2);
 
 }
@@ -227,7 +226,7 @@ TEST(DccBitEncoder, tick_packet_complete_without_railcom) {
 
 }
 
-TEST(DccBitEncoder, tick_packet_complete_with_railcom_cutout) {
+TEST(DccBitEncoder, tick_railcom_cutout_arms_timer_continuously) {
 
     reset_tick_mocks();
     dcc_bit_encoder_context_t context;
@@ -239,45 +238,20 @@ TEST(DccBitEncoder, tick_packet_complete_with_railcom_cutout) {
     DccApplicationCommandStationPacket_load_idle(&pkt);
     DccBitEncoder_load_packet(&context, &pkt);
 
-    /* RailCom must be enabled at runtime for the cutout to fire */
-    context.railcom_enabled = true;
-
-    /* Pump enough ticks to reach end bit — cutout_begin should fire */
+    /* Continuous-clock model: the end bit ARMS the cutout timer (cutout_begin) AND
+     * completes the packet immediately -- no stall, no RAILCOM_CUTOUT state. The
+     * cutout fires whenever the output stage is RailCom-capable (begin hook wired);
+     * there is no runtime enable gate -- the application/hardware decides whether to
+     * act on the cutout-active strobe. The encoder keeps clocking either way. */
     pump_tick_isr(&context, 400);
 
-    EXPECT_TRUE(cutout_begin_called);
-    /* Packet should NOT be complete yet — waiting for cutout_complete flag */
-    EXPECT_FALSE(packet_complete_called);
-    EXPECT_EQ(context.state, DCC_BIT_STATE_RAILCOM_CUTOUT);
+    EXPECT_TRUE(cutout_begin_called);     /* cutout timer armed at the end bit */
+    EXPECT_TRUE(packet_complete_called);  /* completed immediately, did NOT stall */
 
-    /* Simulate Timer 2 signaling cutout complete */
-    context.cutout_complete = true;
-    pump_tick_isr(&context, 1);
-
-    EXPECT_TRUE(packet_complete_called);
-    EXPECT_TRUE(DccBitEncoder_is_idle(&context));
-
-}
-
-TEST(DccBitEncoder, tick_railcom_wired_but_disabled_skips_cutout) {
-
-    reset_tick_mocks();
-    dcc_bit_encoder_context_t context;
-    interface_dcc_bit_encoder_t interface = make_tick_interface(true);
-    DccBitEncoder_initialize(&context, &interface);
-    DccBitEncoder_start(&context);
-
-    /* Hardware is RailCom-capable (begin hook wired) but railcom_enabled
-     * defaults false, so no cutout is emitted — packet completes normally. */
-    dcc_packet_t pkt;
-    DccApplicationCommandStationPacket_load_idle(&pkt);
-    DccBitEncoder_load_packet(&context, &pkt);
-
-    pump_tick_isr(&context, 400);
-
-    EXPECT_FALSE(cutout_begin_called);
-    EXPECT_TRUE(packet_complete_called);
-    EXPECT_TRUE(DccBitEncoder_is_idle(&context));
+    /* Bit stream never pauses: encoder keeps producing toggles after the end bit. */
+    uint32_t toggles_before = toggle_call_count;
+    pump_tick_isr(&context, 4);
+    EXPECT_GT(toggle_call_count, toggles_before);
 
 }
 
@@ -348,7 +322,7 @@ TEST(DccBitEncoder, tick_isr_with_null_interface_does_nothing) {
 
 }
 
-TEST(DccBitEncoder, tick_cutout_no_toggle_during_wait) {
+TEST(DccBitEncoder, tick_railcom_continuous_through_cutout_window) {
 
     reset_tick_mocks();
     dcc_bit_encoder_context_t context;
@@ -360,19 +334,15 @@ TEST(DccBitEncoder, tick_cutout_no_toggle_during_wait) {
     DccApplicationCommandStationPacket_load_idle(&pkt);
     DccBitEncoder_load_packet(&context, &pkt);
 
-    context.railcom_enabled = true;
-
-    /* Reach cutout state */
+    /* Run past the end bit (arms the cutout timer). */
     pump_tick_isr(&context, 400);
     EXPECT_TRUE(cutout_begin_called);
-    EXPECT_EQ(context.state, DCC_BIT_STATE_RAILCOM_CUTOUT);
 
-    /* Record toggle count before cutout wait ticks */
+    /* Continuous clock: across the whole cutout window (~8 bit-times) the encoder
+     * keeps toggling -- the bit stream never pauses. The DRIVER blanks its own
+     * output between begin/end; the library no longer stalls the clock. */
     uint32_t toggles_before = toggle_call_count;
-
-    /* Pump ticks during cutout — should NOT toggle */
     pump_tick_isr(&context, 50);
-
-    EXPECT_EQ(toggle_call_count, toggles_before);
+    EXPECT_GT(toggle_call_count, toggles_before);
 
 }

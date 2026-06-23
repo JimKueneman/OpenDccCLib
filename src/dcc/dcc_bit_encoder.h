@@ -94,16 +94,6 @@ typedef struct {
          *  false for a zero-bit (2 ticks per half). Used by tick ISR. */
     bool current_bit_is_one;
 
-        /** @brief Set by the RailCom cutout timer (Timer 2) when cutout
-         *  is complete. Polled by the tick ISR in RAILCOM_CUTOUT state. */
-    volatile bool cutout_complete;
-
-        /** @brief Runtime user option: generate the RailCom cutout after each
-         *  packet. Set via DccApplicationCommandStationMainTrack_set_railcom_enabled().
-         *  Cutout fires only when this is true AND the hardware is capable
-         *  (railcom_cutout_begin non-NULL). Default false. Read in ISR context. */
-    volatile bool railcom_enabled;
-
         /** @brief Look-ahead flag: true = toggle pin on the very first
          *  instruction of the next ISR call. Pre-computed by the state
          *  machine so the toggle has deterministic, minimal latency. */
