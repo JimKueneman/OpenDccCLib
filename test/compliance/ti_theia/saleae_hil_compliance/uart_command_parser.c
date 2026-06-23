@@ -1036,6 +1036,71 @@ static void _cmd_systime(char *tokens[], int count) {
     _respond(_resp_buf);
 }
 
+// MTIME <minutes> <dow> <hours> <update> <accel> -- broadcast model time
+// (S-9.2.1 2.3.6.2, CC=00). dow: 0=Mon .. 6=Sun, 7=not-supported.
+static void _cmd_mtime(char *tokens[], int count) {
+
+    if (count < 6) {
+        _respond("ERR: usage: MTIME <minutes> <dow> <hours> <update> <accel>");
+        return;
+    }
+
+    uint8_t minutes = (uint8_t)atoi(tokens[1]);
+    dcc_day_of_week_enum dow = (dcc_day_of_week_enum)atoi(tokens[2]);
+    uint8_t hours = (uint8_t)atoi(tokens[3]);
+    bool update = (atoi(tokens[4]) != 0);
+    uint8_t accel = (uint8_t)atoi(tokens[5]);
+
+    dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
+
+    if (!DccApplicationCommandStationPacket_load_model_time(&packet, minutes, dow, hours, update, accel)) {
+        _respond("ERR: invalid MTIME parameters");
+        return;
+    }
+    packet.repeat_count = 3;
+
+    if (!_schedule_main_track(&packet, 0, DCC_TAG_SPEED,
+                              DCC_PRIORITY_ESTOP, false)) {
+        _respond("ERR: scheduler full");
+        return;
+    }
+
+    snprintf(_resp_buf, sizeof(_resp_buf), "OK: MTIME %02u:%02u dow=%u", hours, minutes, (unsigned)dow);
+    _respond(_resp_buf);
+}
+
+// MDATE <day> <month> <year> -- broadcast model date (S-9.2.1 2.3.6.2, CC=01).
+static void _cmd_mdate(char *tokens[], int count) {
+
+    if (count < 4) {
+        _respond("ERR: usage: MDATE <day> <month> <year>");
+        return;
+    }
+
+    uint8_t day = (uint8_t)atoi(tokens[1]);
+    uint8_t month = (uint8_t)atoi(tokens[2]);
+    uint16_t year = (uint16_t)atoi(tokens[3]);
+
+    dcc_packet_t packet;
+    memset(&packet, 0, sizeof(packet));
+
+    if (!DccApplicationCommandStationPacket_load_model_date(&packet, day, month, year)) {
+        _respond("ERR: invalid MDATE parameters");
+        return;
+    }
+    packet.repeat_count = 3;
+
+    if (!_schedule_main_track(&packet, 0, DCC_TAG_SPEED,
+                              DCC_PRIORITY_ESTOP, false)) {
+        _respond("ERR: scheduler full");
+        return;
+    }
+
+    snprintf(_resp_buf, sizeof(_resp_buf), "OK: MDATE %u-%02u-%02u", year, month, day);
+    _respond(_resp_buf);
+}
+
 // Clear all auto-refresh entries AND reset the per-loco function/speed state so
 // the track returns to a clean idle-only stream. Used by the HIL harness for
 // test isolation between driven captures (so accumulated function bits don't
@@ -1234,6 +1299,8 @@ static void _cmd_help(void) {
     _respond("  RESET (send one broadcast reset packet 00 00 00)");
     _respond("  STOP  (broadcast controlled stop, baseline S=0)");
     _respond("  SYSTIME <ms>  (broadcast system time, S-9.2.1 2.3.6.3)");
+    _respond("  MTIME <min> <dow> <hours> <update> <accel>  (model time, 2.3.6.2)");
+    _respond("  MDATE <day> <month> <year>  (model date, S-9.2.1 2.3.6.2)");
     _respond("  HELP");
 }
 
@@ -1300,6 +1367,10 @@ void UartCommandParser_process(void) {
         _cmd_stop();
     else if (strcmp(tokens[0], "SYSTIME") == 0)
         _cmd_systime(tokens, count);
+    else if (strcmp(tokens[0], "MTIME") == 0)
+        _cmd_mtime(tokens, count);
+    else if (strcmp(tokens[0], "MDATE") == 0)
+        _cmd_mdate(tokens, count);
     else if (strcmp(tokens[0], "HELP") == 0)
         _cmd_help();
     else {

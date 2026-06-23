@@ -34,7 +34,7 @@
  * All memory is statically allocated at compile time.
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 23 Jun 2026
  */
 
 #ifndef __DCC_TYPES__
@@ -176,6 +176,24 @@ typedef struct {
     uint8_t repeat_count;               /**< Times to send before dropping */
 
 } dcc_packet_t;
+
+// =============================================================================
+// Time / Date types
+// =============================================================================
+
+    /** @brief Day of week for the model Time command (S-9.2.1 §2.3.6.2) */
+typedef enum {
+
+    DCC_DAY_OF_WEEK_MONDAY,         /**< 0 = Monday */
+    DCC_DAY_OF_WEEK_TUESDAY,        /**< 1 */
+    DCC_DAY_OF_WEEK_WEDNESDAY,      /**< 2 */
+    DCC_DAY_OF_WEEK_THURSDAY,       /**< 3 */
+    DCC_DAY_OF_WEEK_FRIDAY,         /**< 4 */
+    DCC_DAY_OF_WEEK_SATURDAY,       /**< 5 */
+    DCC_DAY_OF_WEEK_SUNDAY,         /**< 6 = Sunday */
+    DCC_DAY_OF_WEEK_NOT_SUPPORTED   /**< 7 = not supported */
+
+} dcc_day_of_week_enum;
 
 // =============================================================================
 // Scheduler types (Command Station)

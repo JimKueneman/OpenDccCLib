@@ -1098,4 +1098,57 @@ void DccApplicationCommandStationPacket_load_system_time(dcc_packet_t *packet, u
 
 }
 
+bool DccApplicationCommandStationPacket_load_model_time(dcc_packet_t *packet, uint8_t minutes, dcc_day_of_week_enum day_of_week, uint8_t hours, bool update, uint8_t accel_factor) {
+
+    if (minutes > 59 || hours > 23 || accel_factor > 63 || day_of_week > DCC_DAY_OF_WEEK_NOT_SUPPORTED) {
+
+        return false;
+
+    }
+
+    /* S-9.2.1 §2.3.6.2 Time command: broadcast addr 0, feature-expansion
+     * 110-00001 (0xC1). CC=00 selects the Time sub-format:
+     *   00MMMMMM  WWWHHHHH  U0BBBBBB  */
+    packet->data[0] = DCC_ADDRESS_BROADCAST_VALUE;                          /* 00000000 */
+    packet->data[1] = DCC_FEAT_TIME_DATE;                                   /* 110-00001 */
+    packet->data[2] = (uint8_t)(minutes & 0x3F);                            /* CC=00, MMMMMM */
+    packet->data[3] = (uint8_t)(((day_of_week & 0x07) << 5) | (hours & 0x1F));
+    packet->data[4] = (uint8_t)((update ? 0x80 : 0x00) | (accel_factor & 0x3F));
+    packet->byte_count = 5;
+    _append_xor(packet);
+
+    packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
+    packet->repeat_count = 0;
+
+    return true;
+
+}
+
+bool DccApplicationCommandStationPacket_load_model_date(dcc_packet_t *packet, uint8_t day, uint8_t month, uint16_t year) {
+
+    if (day < 1 || day > 31 || month < 1 || month > 12 || year > 4095) {
+
+        return false;
+
+    }
+
+    /* S-9.2.1 §2.3.6.2 Date command: broadcast addr 0, feature-expansion
+     * 110-00001 (0xC1). CC=01 selects the Date sub-format:
+     *   010TTTTT  MMMMYYYY  YYYYYYYY  (year is 12 bits, MSB nibble packed
+     *   with the month, LSB byte last). */
+    packet->data[0] = DCC_ADDRESS_BROADCAST_VALUE;                          /* 00000000 */
+    packet->data[1] = DCC_FEAT_TIME_DATE;                                   /* 110-00001 */
+    packet->data[2] = (uint8_t)(0x40 | (day & 0x1F));                       /* 010TTTTT (CC=01) */
+    packet->data[3] = (uint8_t)(((month & 0x0F) << 4) | ((year >> 8) & 0x0F));
+    packet->data[4] = (uint8_t)(year & 0xFF);
+    packet->byte_count = 5;
+    _append_xor(packet);
+
+    packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
+    packet->repeat_count = 0;
+
+    return true;
+
+}
+
 #endif /* DCC_COMPILE_COMMAND_STATION */

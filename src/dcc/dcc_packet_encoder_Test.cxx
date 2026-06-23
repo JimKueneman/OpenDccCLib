@@ -1124,6 +1124,106 @@ TEST(DccPacketEncoder, system_time_max_value) {
 }
 
 // ============================================================================
+// Time / Date tests (S-9.2.1 §2.3.6.2)
+// ============================================================================
+
+TEST(DccPacketEncoder, model_time_representative) {
+    dcc_packet_t pkt;
+    /* 14:30 Wednesday, update=0, accel=8 */
+    bool ok = DccApplicationCommandStationPacket_load_model_time(
+        &pkt, 30, DCC_DAY_OF_WEEK_WEDNESDAY, 14, false, 8);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[0], 0x00);              /* broadcast address 0 */
+    EXPECT_EQ(pkt.data[1], DCC_FEAT_TIME_DATE);/* 0xC1, 110-00001 */
+    EXPECT_EQ(pkt.data[2], 0x1E);              /* CC=00, minutes=30 */
+    EXPECT_EQ(pkt.data[3], 0x4E);             /* dow=2<<5 | hours=14 */
+    EXPECT_EQ(pkt.data[4], 0x08);             /* U=0, accel=8 */
+    EXPECT_EQ(pkt.byte_count, 6);
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, model_time_max_fields) {
+    dcc_packet_t pkt;
+    /* minutes=59, dow=not supported (7), hours=23, update=1, accel=63 */
+    bool ok = DccApplicationCommandStationPacket_load_model_time(
+        &pkt, 59, DCC_DAY_OF_WEEK_NOT_SUPPORTED, 23, true, 63);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[2], 0x3B);             /* minutes=59 */
+    EXPECT_EQ(pkt.data[3], 0xF7);             /* 7<<5 | 23 */
+    EXPECT_EQ(pkt.data[4], 0xBF);             /* U=1 | accel=63 */
+    EXPECT_EQ(pkt.byte_count, 6);
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, model_time_min_fields) {
+    dcc_packet_t pkt;
+    bool ok = DccApplicationCommandStationPacket_load_model_time(
+        &pkt, 0, DCC_DAY_OF_WEEK_MONDAY, 0, false, 0);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[2], 0x00);
+    EXPECT_EQ(pkt.data[3], 0x00);
+    EXPECT_EQ(pkt.data[4], 0x00);
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, model_time_rejects_out_of_range) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_model_time(&pkt, 60, DCC_DAY_OF_WEEK_MONDAY, 0, false, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_model_time(&pkt, 0, DCC_DAY_OF_WEEK_MONDAY, 24, false, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_model_time(&pkt, 0, DCC_DAY_OF_WEEK_MONDAY, 0, false, 64));
+}
+
+TEST(DccPacketEncoder, model_date_representative) {
+    dcc_packet_t pkt;
+    /* 23 June 2026: 2026 = 0x7EA -> year MSB nibble 0x7, LSB 0xEA */
+    bool ok = DccApplicationCommandStationPacket_load_model_date(&pkt, 23, 6, 2026);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[0], 0x00);
+    EXPECT_EQ(pkt.data[1], DCC_FEAT_TIME_DATE);
+    EXPECT_EQ(pkt.data[2], 0x57);             /* 010TTTTT, day=23 */
+    EXPECT_EQ(pkt.data[3], 0x67);             /* month=6<<4 | year[11:8]=0x7 */
+    EXPECT_EQ(pkt.data[4], 0xEA);             /* year[7:0] */
+    EXPECT_EQ(pkt.byte_count, 6);
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, model_date_max_fields) {
+    dcc_packet_t pkt;
+    /* day=31, month=12, year=4095 (0xFFF) */
+    bool ok = DccApplicationCommandStationPacket_load_model_date(&pkt, 31, 12, 4095);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[2], 0x5F);             /* day=31 */
+    EXPECT_EQ(pkt.data[3], 0xCF);             /* month=12<<4 | year[11:8]=0xF */
+    EXPECT_EQ(pkt.data[4], 0xFF);             /* year[7:0] */
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, model_date_min_fields) {
+    dcc_packet_t pkt;
+    bool ok = DccApplicationCommandStationPacket_load_model_date(&pkt, 1, 1, 0);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[2], 0x41);             /* day=1 */
+    EXPECT_EQ(pkt.data[3], 0x10);             /* month=1<<4 | year=0 */
+    EXPECT_EQ(pkt.data[4], 0x00);
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, model_date_rejects_out_of_range) {
+    dcc_packet_t pkt;
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_model_date(&pkt, 0, 1, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_model_date(&pkt, 32, 1, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_model_date(&pkt, 1, 0, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_model_date(&pkt, 1, 13, 0));
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_model_date(&pkt, 1, 1, 4096));
+}
+
+// ============================================================================
 // Branch coverage: rejects accessory address type
 // ============================================================================
 

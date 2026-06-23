@@ -58,7 +58,18 @@ typedef struct {
         /** @brief Check if bit encoder is idle (ready for next packet). */
     bool (*is_encoder_idle)(void);
 
-        /** @brief User callback: packet fully transmitted. NULL = no notification. */
+        /**
+         * @brief Application notification that the scheduler has DISPATCHED a
+         *        packet to the bit encoder. NULL = no notification.
+         *
+         * @details Fired by DccScheduler_run() immediately after load_packet(),
+         * i.e. at the START of transmission -- the first bit goes out on the next
+         * encoder tick (~58 us later). It is NOT fired when the packet finishes;
+         * the encoder is single-buffered, so this is the earliest per-packet hook
+         * and is effectively coincident with transmit-start. For the "packet
+         * finished" event use @ref DccScheduler_on_packet_complete instead.
+         * Not called for idle packets (only scheduled one-shot / refresh packets).
+         */
     void (*on_packet_sent)(const dcc_packet_t *packet);
 
         /** @brief Build an idle packet into the provided packet struct. */
@@ -132,8 +143,10 @@ extern void DccScheduler_clear(dcc_scheduler_context_t *context);
      * @brief Notify the scheduler that the bit encoder finished a packet.
      * @param context Pointer to @ref dcc_scheduler_context_t instance.
      *
-     * @details Called from ISR context (via on_packet_complete callback).
-     * Sets a flag that DccScheduler_run() will process.
+     * @details Called from ISR context (via on_packet_complete callback) when a
+     * packet has FINISHED transmitting. Sets a flag that DccScheduler_run() will
+     * process. This is the "packet finished" counterpart to the on_packet_sent
+     * dispatch notification (see @ref interface_dcc_scheduler_t::on_packet_sent).
      */
 extern void DccScheduler_on_packet_complete(dcc_scheduler_context_t *context);
 

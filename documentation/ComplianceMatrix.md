@@ -17,7 +17,7 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 - **Roles:** Command Station, Decoder, Accessory Decoder — `DCC_COMPILE_COMMAND_STATION` / `_DECODER` / `_ACCESSORY_DECODER`.
 - **Service modes:** Direct, Paged, Register, Address — all implemented.
 - **Tests:** 23 host unit-test binaries, ~923 tests passing (host, mocked drivers); ≈99% line coverage. Green host tests inject mock drivers — see **Known defects** (decoder RailCom Tx), which they cannot catch.
-- **Hardware-in-loop:** two-board MSPM0 loopback suite (manual gate, not CI); plus a Saleae logic-analyzer compliance rig ([test/compliance/](../test/compliance/)) that drives the command station over UART and wire-verifies S-9.1/S-9.2/S-9.2.1 packets via a PB3 hardware trigger (34 checks, manual gate).
+- **Hardware-in-loop:** two-board MSPM0 loopback suite (manual gate, not CI); plus a Saleae logic-analyzer compliance rig ([test/compliance/](../test/compliance/)) that drives the command station over UART and wire-verifies S-9.1/S-9.2/S-9.2.1 packets via a PB3 hardware trigger (82 checks: S-9.1 7+1 n/a, S-9.2 8, S-9.2.1 66; manual gate).
 
 ---
 
@@ -34,8 +34,7 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
   - ✅ **Broadcast stop** rebuilt to the S-9.2 baseline `01DC000S` form (was a 128-step speed-1 packet that baseline-only decoders ignore). `load_estop_all(packet, isPanic)` now emits emergency S=1 (`00 51 51`) and controlled stop S=0 (`00 50 50`); wire-verified on the Saleae HIL rig. Deprecated `DccPacketEncoder_estop_all` removed.
 - **Top functional gaps (not implemented):**
   - ❌ **Fail-safe / CV11 packet timeout (S-9.2.4)** — only dead callback declarations + an unused `#define`.
-  - ❌ **XPOM** (S-9.2.1 §2.3.7.4) — no command-station encoder.
-  - ❌ **Time/Date** packet (S-9.2.1 §2.3.6.2) — unused `#define DCC_FEAT_TIME_DATE` only. *(System Time §2.3.6.3 now done — host + HIL verified.)*
+  - ❌ **XPOM** (S-9.2.1 §2.3.7.4) — no command-station encoder. *(Time/Date §2.3.6.2 and System Time §2.3.6.3 now both done — host + HIL verified — leaving XPOM as the only remaining S-9.2.1 gap.)*
   - ❌ **Indexed CVs (CV31/32)** decoder paging — defines only.
   - ❌ **Factory reset (CV8)** — write-permission exception only, no reset-to-defaults logic.
   - ❌ **Logon / Data Spaces (S-9.2.1.1)** — absent. *Released standard (2022), not draft-only — the 2026 draft only expands it.* Out of current scope.
@@ -80,7 +79,7 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 | Analog function (`00111101`) | S-9.2.1 §2.3.2.3 | byte corrected | `CSPacket_analog_function`; decode `_dispatch_advanced_ops` | `analog_function*` | ✅ |
 | Speed restriction (`00111110`) | — | reserved: Zimo East-West | **removed** | — | ✅ removed (byte left reserved) |
 | System Time (broadcast clock) | S-9.2.1 §2.3.6.3 | full layout NEW | `CSPacket_load_system_time` (`00 C2` + 16-bit ms, MSB-first); broadcast to addr 0 | `system_time*` (host) + `SYSTIME` HIL exact-byte | ✅ |
-| Time/Date | S-9.2.1 §2.3.6.2 | full layout NEW | ❌ unused `#define DCC_FEAT_TIME_DATE` only | — | ❌ |
+| Time/Date | S-9.2.1 §2.3.6.2 | full layout NEW | `CSPacket_load_model_time/_model_date` (`00 C1`; Time CC=00 `00MMMMMM WWWHHHHH U0BBBBBB`, Date CC=01 `010TTTTT MMMMYYYY YYYYYYYY`) | `model_time*`/`model_date*` (8 host) + `MTIME`/`MDATE` HIL exact-byte | ✅ |
 
 ## 4. Advanced Extended / Logon (S-9.2.1.1)
 
@@ -164,7 +163,7 @@ conformance gaps**, not draft features. (Per-feature detail is in the §1–8 ta
 | **Fail-safe / packet timeout (CV11)** | Released **S-9.2.4** | Not implemented | Only dead `on_failsafe_entered/exited` callbacks + an unused `DCC_CV_PACKET_TIMEOUT` define; no timeout timer or fail-safe state. |
 | **XPOM (Extended POM)** | Released **S-9.2.1** §2.3.7.4 | Not started | 24-bit indexed CV read/write/bit (`1110GGSS`); exceeds the 6-byte packet limit. |
 | **System Time packet** | Released **S-9.2.1** §2.3.6.3 | **Done** | `load_system_time` (broadcast `00 C2` + 16-bit ms, MSB-first); host gtest + HIL exact-byte verified. |
-| **Time/Date packet** | Released **S-9.2.1** §2.3.6.2 | Not started | Broadcast clock (CC=Time/Date sub-formats); only an unused `#define DCC_FEAT_TIME_DATE`. |
+| **Time/Date packet** | Released **S-9.2.1** §2.3.6.2 | **Done** | `load_model_time/_model_date` (broadcast `00 C1`, Time CC=00 / Date CC=01); host gtest (8) + HIL exact-byte verified (`MTIME`/`MDATE`). |
 | **Accessory NOP packet** | Released **S-9.2.1** §2.4.6 | **Done** | `load_accessory_nop` (basic/extended); host + HIL exact-byte verified. |
 | **Indexed CVs (CV31/32)** | Released **S-9.2.2** | Not started | Page-pointer access to CVs 257-512; defines exist, no paging logic. |
 | **CV29 bits 2/3/4/7 behavior** | Released **S-9.2.2** | Partial | Decoder acts on bits 0/1/5 only; bit 2 (power-source), 3 (RailCom), 4 (speed table), 7 (decoder type) not acted on. |

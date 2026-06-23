@@ -79,10 +79,9 @@ def checks(rep, decoded):
 
 
 def _target(decoded):
-    """Most common non-idle packet (CLEAR isolates it)."""
-    from collections import Counter
-    ni = [tuple(d) for _, d in decoded["packets"] if list(d) != IDLE_PACKET]
-    return list(Counter(ni).most_common(1)[0][0]) if ni else None
+    """Packet under test = first non-idle packet after the trigger (post-trigger
+    capture; the trigger fires at the packet's START). CLEAR isolates it."""
+    return lib.first_non_idle(decoded, IDLE_PACKET)
 
 
 def _hx(bs):

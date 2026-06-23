@@ -618,6 +618,47 @@ extern bool DccApplicationCommandStationPacket_load_analog_function(dcc_packet_t
      */
 extern void DccApplicationCommandStationPacket_load_system_time(dcc_packet_t *packet, uint16_t milliseconds);
 
+// =============================================================================
+// Time / Date (S-9.2.1 §2.3.6.2)
+// =============================================================================
+
+    /**
+     * @brief Build a model Time broadcast packet (S-9.2.1 §2.3.6.2, CC=00).
+     *
+     * @details Broadcasts the model clock time to address 0 using feature-
+     *     expansion sub-instruction 00001 (0xC1). Carries minutes, day of week,
+     *     hours, an update flag, and the clock acceleration factor. Distinct
+     *     from @ref DccApplicationCommandStationPacket_load_system_time, which
+     *     reports raw milliseconds since startup.
+     *
+     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+     * @param minutes Minutes past the hour (0-59).
+     * @param day_of_week Day of week per @ref dcc_day_of_week_enum.
+     * @param hours Hour of day (0-23).
+     * @param update true if the time has changed significantly since the last
+     *     update (sets the U bit); normally false.
+     * @param accel_factor Clock acceleration factor (0-63): 0=stopped,
+     *     1=real time, n=n x real time.
+     * @return true if the packet was built, false if any field is out of range.
+     */
+extern bool DccApplicationCommandStationPacket_load_model_time(dcc_packet_t *packet, uint8_t minutes, dcc_day_of_week_enum day_of_week, uint8_t hours, bool update, uint8_t accel_factor);
+
+    /**
+     * @brief Build a model Date broadcast packet (S-9.2.1 §2.3.6.2, CC=01).
+     *
+     * @details Broadcasts the model calendar date to address 0 using feature-
+     *     expansion sub-instruction 00001 (0xC1). The year is a 12-bit value
+     *     split across two bytes (most-significant 4 bits packed with the month,
+     *     least-significant 8 bits in the final data byte).
+     *
+     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+     * @param day Day of the month (1-31).
+     * @param month Month (1-12, 1=January).
+     * @param year Year (0-4095).
+     * @return true if the packet was built, false if any field is out of range.
+     */
+extern bool DccApplicationCommandStationPacket_load_model_date(dcc_packet_t *packet, uint8_t day, uint8_t month, uint16_t year);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

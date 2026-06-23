@@ -48,9 +48,15 @@ ZERO_BIT_FULL_US       = 232.0   # this DUT's zero bit = 2 x 116us half (S-9.1 v
 _WORST_PACKET_BITS = (DCC_PREAMBLE_MAX_BITS + 1 + 8 * DCC_PACKET_MAX_BYTES
                       + (DCC_PACKET_MAX_BYTES - 1) + 1)            # = 75 bits
 WORST_PACKET_US = _WORST_PACKET_BITS * ZERO_BIT_FULL_US           # ~17.4 ms
-# on_packet_sent fires AFTER the packet, so the packet START is one worst-case
-# packet behind the trigger; add margin for callback dispatch latency.
-PRE_TRIGGER_SECONDS = (WORST_PACKET_US + 10_000) / 1e6            # ~0.027 s
+# Saleae DigitalTriggerCaptureMode geometry (measured, two-channel capture):
+# the retained window is  [ -trim_data_seconds , +after_trigger_seconds ]  with
+# t=0 at the trigger edge -- the two are INDEPENDENT (trim = pre-trigger keep,
+# after = post-trigger keep), NOT a total. The DUT pulses PB3 from on_packet_sent
+# (~transmit-start), so the packet under test sits at t ~= 0. Keep a small pre-roll
+# (catches the target's start; ~1 idle before it) and a post window holding the
+# target + a few repeats (~7 ms apart). first_non_idle() then picks the target.
+PRE_TRIGGER_SECONDS  = 0.008             # -> trim_data_seconds  (pre-trigger keep)
+POST_TRIGGER_SECONDS = 0.030             # -> after_trigger_seconds (post-trigger keep)
 
 REPORTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "reports")
 
@@ -279,17 +285,20 @@ def capture_with_command(commands, capture_seconds=0.20, fires=10, spacing=0.012
 
 
 def capture_triggered(stimulus, trigger_channel=None,
-                      pre_seconds=None, after_seconds=0.02):
+                      pre_seconds=None, after_seconds=None):
     """Hardware-triggered capture: arm on a RISING edge on the trigger channel,
     run `stimulus` (which arms the DUT trigger + sends the command under test so
     the DUT pulses that pin on the packet), then keep a window spanning
     `pre_seconds` BEFORE the trigger to `after_seconds` after. Decodes the DCC
     channel. Returns (decoded, n_transitions).
 
-    The DUT raises the trigger pin from on_packet_sent, i.e. AFTER the packet has
-    been transmitted -- so the packet under test lives just BEFORE the trigger.
-    pre_seconds must therefore be > 0 to capture it (that's what trim_data_seconds
-    retains). Requires the DUT trigger pin (PB3) wired to Saleae TRIGGER_CHANNEL.
+    Geometry (measured): the retained window is [-pre_seconds, +after_seconds]
+    with t=0 at the trigger edge -- pre_seconds maps to trim_data_seconds and
+    after_seconds to after_trigger_seconds, INDEPENDENTLY. The DUT pulses PB3 from
+    on_packet_sent (~transmit-start), so the packet under test sits at t ~= 0: the
+    pre-roll catches its start (~1 idle ahead of it) and the post window holds the
+    target plus a few ~7 ms-spaced repeats. Use first_non_idle() to pick it out.
+    Requires the DUT trigger pin (PB3) wired to Saleae TRIGGER_CHANNEL.
 
     NOTE: blocks in wait() until the trigger fires -- if the pin is unwired or the
     command never produces a non-idle packet, it will hang. The stimulus is built
@@ -298,17 +307,28 @@ def capture_triggered(stimulus, trigger_channel=None,
     from saleae import automation
 
     if pre_seconds is None:
-        pre_seconds = PRE_TRIGGER_SECONDS   # worst-case max packet + margin
+        pre_seconds = PRE_TRIGGER_SECONDS        # pre-trigger keep (-> trim_data_seconds)
+    if after_seconds is None:
+        after_seconds = POST_TRIGGER_SECONDS     # post-trigger keep (-> after_trigger_seconds)
     trig = TRIGGER_CHANNEL if trigger_channel is None else trigger_channel
     chans = sorted({DIGITAL_CHANNEL, trig})
     dev_cfg = automation.LogicDeviceConfiguration(
         enabled_digital_channels=chans, digital_sample_rate=SAMPLE_RATE_HZ)
+    # Window geometry (MEASURED with a two-channel capture, t=0 at the trigger edge):
+    #   retained data = [ -trim_data_seconds , +after_trigger_seconds ]
+    # The two are INDEPENDENT -- trim_data_seconds is the PRE-trigger keep, NOT a
+    # total. The packet under test sits at t~=0 (DUT pulses PB3 at transmit-start),
+    # so a small pre-roll + a post window of a few packet-times is all that's needed;
+    # first_non_idle() then selects it.
+    #   *** DO NOT set trim_data_seconds = pre_seconds + after_seconds. *** That was
+    #   the original bug: with after=80ms it made the pre-window ~82ms of idle packets
+    #   and made the target look ~24ms late (it is NOT -- there is no encoder pipeline).
     cap_cfg = automation.CaptureConfiguration(
         capture_mode=automation.DigitalTriggerCaptureMode(
             trigger_type=automation.DigitalTriggerType.RISING,
             trigger_channel_index=trig,
-            after_trigger_seconds=after_seconds,
-            trim_data_seconds=pre_seconds + after_seconds))
+            after_trigger_seconds=after_seconds,    # post-trigger keep
+            trim_data_seconds=pre_seconds))          # pre-trigger keep (independent!)
 
     with tempfile.TemporaryDirectory() as d:
         with automation.Manager.connect(port=AUTOMATION_PORT) as mgr:
@@ -327,7 +347,7 @@ def capture_triggered(stimulus, trigger_channel=None,
         return decode(rows), len(rows)
 
 
-def trigger_command(command, pre_seconds=None, after_seconds=0.02,
+def trigger_command(command, pre_seconds=None, after_seconds=None,
                     trigger_channel=None):
     """Drive a command under a hardware-triggered capture. Arms the DUT trigger
     (UART 'TRIG') then sends `command` (str or list); the next non-idle packet
@@ -347,6 +367,18 @@ def trigger_command(command, pre_seconds=None, after_seconds=0.02,
     print(f"[uart] CLEAR + TRIG + {cmds} under hardware trigger")
     return capture_triggered(stimulus, trigger_channel=trigger_channel,
                              pre_seconds=pre_seconds, after_seconds=after_seconds)
+
+
+def first_non_idle(decoded, idle):
+    """Packet under test from a post-trigger capture: the first non-idle packet in
+    chronological order. Because the trigger fires at the packet's START, the first
+    real packet after the trigger IS the one under test -- robust for one-shots
+    (no 'most common' vote to lose) and immune to the previous packet bleeding in
+    from a pre-trigger window. Returns the byte list, or None if only idle seen."""
+    for _, data in decoded["packets"]:
+        if list(data) != list(idle):
+            return list(data)
+    return None
 
 
 def stats(xs):

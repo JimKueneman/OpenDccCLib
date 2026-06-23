@@ -21,7 +21,6 @@ Or via:          .venv/bin/python run_all.py
 
 import sys
 import time
-from collections import Counter
 
 import compliance_lib as lib
 
@@ -129,6 +128,24 @@ def system_time(ms):
     # (= 0xC2). 16-bit milliseconds-since-startup, MOST significant byte first
     # (spec: "third byte = MSB, fourth byte = LSB"), then the XOR error byte.
     return framed([0x00, 0xC2, (ms >> 8) & 0xFF, ms & 0xFF])
+
+
+def model_time(minutes, dow, hours, update, accel):
+    # S-9.2.1 §2.3.6.2 Time (CC=00): 00000000 110-00001 00MMMMMM WWWHHHHH U0BBBBBB
+    # broadcast addr 0; 0xC1 feature byte; minutes 0-59, dow 0-7 (0=Mon..6=Sun),
+    # hours 0-23, update bit, accel factor 0-63.
+    return framed([0x00, 0xC1, minutes & 0x3F,
+                   ((dow & 0x07) << 5) | (hours & 0x1F),
+                   (0x80 if update else 0x00) | (accel & 0x3F)])
+
+
+def model_date(day, month, year):
+    # S-9.2.1 §2.3.6.2 Date (CC=01): 00000000 110-00001 010TTTTT MMMMYYYY YYYYYYYY
+    # broadcast addr 0; day 1-31, month 1-12, 12-bit year (high nibble packed
+    # with the month, low byte last).
+    return framed([0x00, 0xC1, 0x40 | (day & 0x1F),
+                   ((month & 0x0F) << 4) | ((year >> 8) & 0x0F),
+                   year & 0xFF])
 
 
 def speed_28(addr, speed, fwd):
@@ -250,6 +267,12 @@ EXACT = [
     ("SYSTIME 1",           system_time(1),       "§2.3.6.3", "system time ms=1 (MSB clear, 00 01)"),
     ("SYSTIME 30000",       system_time(30000),   "§2.3.6.3", "system time ms=30000 (75 30)"),
     ("SYSTIME 65535",       system_time(65535),   "§2.3.6.3", "system time ms=65535 (FF FF, 16-bit max)"),
+    ("MTIME 30 2 14 0 8",   model_time(30, 2, 14, 0, 8),  "§2.3.6.2", "model time 14:30 Wed accel 8"),
+    ("MTIME 0 0 0 0 0",     model_time(0, 0, 0, 0, 0),    "§2.3.6.2", "model time min fields (00:00 Mon)"),
+    ("MTIME 59 6 23 1 63",  model_time(59, 6, 23, 1, 63), "§2.3.6.2", "model time max fields (U=1, accel 63)"),
+    ("MDATE 15 6 2026",     model_date(15, 6, 2026),      "§2.3.6.2", "model date 2026-06-15"),
+    ("MDATE 1 1 0",         model_date(1, 1, 0),          "§2.3.6.2", "model date min fields"),
+    ("MDATE 31 12 4095",    model_date(31, 12, 4095),     "§2.3.6.2", "model date max fields (12-bit year)"),
 ]
 
 
@@ -257,9 +280,9 @@ EXACT = [
 # Checks
 # ----------------------------------------------------------------------------
 def _target(decoded):
-    """The packet under test = most common non-idle packet (CLEAR isolates it)."""
-    ni = [tuple(d) for _, d in decoded["packets"] if list(d) != IDLE]
-    return list(Counter(ni).most_common(1)[0][0]) if ni else None
+    """Packet under test = first non-idle packet after the trigger (post-trigger
+    capture; the trigger fires at the packet's START). CLEAR isolates it."""
+    return lib.first_non_idle(decoded, IDLE)
 
 
 def _reps(decoded, pkt):
