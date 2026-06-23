@@ -239,6 +239,9 @@ TEST(DccBitEncoder, tick_packet_complete_with_railcom_cutout) {
     DccApplicationCommandStationPacket_load_idle(&pkt);
     DccBitEncoder_load_packet(&context, &pkt);
 
+    /* RailCom must be enabled at runtime for the cutout to fire */
+    context.railcom_enabled = true;
+
     /* Pump enough ticks to reach end bit — cutout_begin should fire */
     pump_tick_isr(&context, 400);
 
@@ -251,6 +254,28 @@ TEST(DccBitEncoder, tick_packet_complete_with_railcom_cutout) {
     context.cutout_complete = true;
     pump_tick_isr(&context, 1);
 
+    EXPECT_TRUE(packet_complete_called);
+    EXPECT_TRUE(DccBitEncoder_is_idle(&context));
+
+}
+
+TEST(DccBitEncoder, tick_railcom_wired_but_disabled_skips_cutout) {
+
+    reset_tick_mocks();
+    dcc_bit_encoder_context_t context;
+    interface_dcc_bit_encoder_t interface = make_tick_interface(true);
+    DccBitEncoder_initialize(&context, &interface);
+    DccBitEncoder_start(&context);
+
+    /* Hardware is RailCom-capable (begin hook wired) but railcom_enabled
+     * defaults false, so no cutout is emitted — packet completes normally. */
+    dcc_packet_t pkt;
+    DccApplicationCommandStationPacket_load_idle(&pkt);
+    DccBitEncoder_load_packet(&context, &pkt);
+
+    pump_tick_isr(&context, 400);
+
+    EXPECT_FALSE(cutout_begin_called);
     EXPECT_TRUE(packet_complete_called);
     EXPECT_TRUE(DccBitEncoder_is_idle(&context));
 
@@ -334,6 +359,8 @@ TEST(DccBitEncoder, tick_cutout_no_toggle_during_wait) {
     dcc_packet_t pkt;
     DccApplicationCommandStationPacket_load_idle(&pkt);
     DccBitEncoder_load_packet(&context, &pkt);
+
+    context.railcom_enabled = true;
 
     /* Reach cutout state */
     pump_tick_isr(&context, 400);

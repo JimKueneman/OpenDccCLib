@@ -187,6 +187,19 @@ TEST(DccConfig, main_track_power_off_calls_driver) {
     EXPECT_FALSE(main_power_set_value);
 }
 
+TEST(DccConfig, main_track_railcom_enable_round_trips) {
+    dcc_config_t cfg = make_test_config();
+    DccConfig_initialize(&cfg);
+
+    /* Default off, then set/clear via the public API round-trips through the
+     * wired interface to the bit-encoder flag and back. */
+    EXPECT_FALSE(DccApplicationCommandStationMainTrack_is_railcom_enabled());
+    DccApplicationCommandStationMainTrack_set_railcom_enabled(true);
+    EXPECT_TRUE(DccApplicationCommandStationMainTrack_is_railcom_enabled());
+    DccApplicationCommandStationMainTrack_set_railcom_enabled(false);
+    EXPECT_FALSE(DccApplicationCommandStationMainTrack_is_railcom_enabled());
+}
+
 TEST(DccConfig, main_track_power_on_null_guard) {
     DccConfig_initialize(NULL);
     DccApplicationCommandStationMainTrack_power_on();
@@ -670,6 +683,7 @@ TEST(DccConfig, railcom_cutout_zero_config_uses_spec_defaults) {
     /* All five railcom_cutout_*_us fields are 0 (memset in make_test_config). */
     DccConfig_initialize(&cfg);
     DccApplicationCommandStationMainTrack_power_on();
+    DccApplicationCommandStationMainTrack_set_railcom_enabled(true);  /* runtime enable */
 
     dcc_packet_t pkt = make_idle_packet();
     DccApplicationCommandStationMainTrack_send_packet(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
@@ -706,6 +720,7 @@ TEST(DccConfig, railcom_cutout_nonzero_config_overrides_defaults) {
     cfg.railcom_cutout_start_delay_us = 7;  /* custom DELAY */
     DccConfig_initialize(&cfg);
     DccApplicationCommandStationMainTrack_power_on();
+    DccApplicationCommandStationMainTrack_set_railcom_enabled(true);  /* runtime enable */
 
     dcc_packet_t pkt = make_idle_packet();
     DccApplicationCommandStationMainTrack_send_packet(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);

@@ -80,6 +80,12 @@ typedef struct {
         /** @brief Clear all scheduler slots. */
     void (*scheduler_clear)(void);
 
+        /** @brief Set the runtime RailCom-generate enable on the bit encoder. */
+    void (*set_railcom_enabled)(bool enabled);
+
+        /** @brief Get the runtime RailCom-generate enable. */
+    bool (*is_railcom_enabled)(void);
+
 } interface_dcc_application_command_station_main_track_t;
 
     /**
@@ -93,6 +99,20 @@ extern void DccApplicationCommandStationMainTrack_power_on(void);
 
     /** @brief Disable main track power output and stop DCC signal generation. */
 extern void DccApplicationCommandStationMainTrack_power_off(void);
+
+    /**
+     * @brief Enable or disable RailCom cutout generation on the main track.
+     * @param enabled true = emit the cutout after each packet; false = no cutout.
+     *
+     * @details Runtime user option; takes effect at the next packet boundary. The
+     * cutout is emitted only when enabled AND the hardware is RailCom-capable
+     * (main_track.railcom wired). Default is disabled. Persistence, if any, is the
+     * application's responsibility.
+     */
+extern void DccApplicationCommandStationMainTrack_set_railcom_enabled(bool enabled);
+
+    /** @brief Query whether RailCom cutout generation is enabled (user intent). */
+extern bool DccApplicationCommandStationMainTrack_is_railcom_enabled(void);
 
     /**
      * @brief Send a one-shot packet on the main track (not auto-refreshed).

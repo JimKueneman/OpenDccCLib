@@ -260,6 +260,18 @@ static void _main_encoder_stop(void) {
 
 }
 
+static void _main_set_railcom_enabled(bool enabled) {
+
+    _main_encoder_context.railcom_enabled = enabled;
+
+}
+
+static bool _main_is_railcom_enabled(void) {
+
+    return _main_encoder_context.railcom_enabled;
+
+}
+
 static bool _main_scheduler_insert(const dcc_packet_t *packet, dcc_address_t address, dcc_tag_enum tag, dcc_priority_enum priority, bool auto_refresh) {
 
     return DccScheduler_insert(&_main_scheduler_context, packet, address, tag, priority, auto_refresh);
@@ -521,7 +533,6 @@ void DccConfig_initialize(const dcc_config_t *config) {
     /* Wire main track bit encoder */
     _main_encoder_interface.pin_toggle = config->main_track.pin_toggle;
     _main_encoder_interface.railcom_cutout_begin = (void *)0;
-    _main_encoder_interface.railcom_cutout_end = (void *)0;
     _main_encoder_interface.on_packet_complete = &_main_on_packet_complete;
 
     if (config->main_track.railcom) {
@@ -530,10 +541,9 @@ void DccConfig_initialize(const dcc_config_t *config) {
 
             /* One-shot timer cutout module.
              * The tick ISR enters RAILCOM_CUTOUT state and calls begin().
-             * The cutout module signals completion via cutout_complete flag.
-             * railcom_cutout_end is not used — the cutout module handles it. */
+             * The cutout module signals completion via cutout_complete flag
+             * and handles the H-bridge resume itself. */
             _main_encoder_interface.railcom_cutout_begin = &_railcom_cutout_begin_wrapper;
-            _main_encoder_interface.railcom_cutout_end = (void *)0;
 
         }
 
@@ -607,6 +617,8 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _main_application_interface.scheduler_insert = &_main_scheduler_insert;
     _main_application_interface.scheduler_remove_address = &_main_scheduler_remove_address;
     _main_application_interface.scheduler_clear = &_main_scheduler_clear;
+    _main_application_interface.set_railcom_enabled = &_main_set_railcom_enabled;
+    _main_application_interface.is_railcom_enabled = &_main_is_railcom_enabled;
 
     DccApplicationCommandStationMainTrack_initialize(&_main_application_interface);
 
@@ -617,7 +629,6 @@ void DccConfig_initialize(const dcc_config_t *config) {
     /* Wire service track bit encoder */
     _service_encoder_interface.pin_toggle = config->service_track.pin_toggle;
     _service_encoder_interface.railcom_cutout_begin = (void *)0;
-    _service_encoder_interface.railcom_cutout_end = (void *)0;
     _service_encoder_interface.on_packet_complete = &_service_on_packet_complete;
 
     DccBitEncoder_initialize(&_service_encoder_context, &_service_encoder_interface);

@@ -59,11 +59,9 @@ typedef struct {
          *  Used by the fixed-period tick ISR (DccBitEncoder_tick_isr). */
     void (*pin_toggle)(void);
 
-        /** @brief Tristate H-bridge for RailCom cutout. NULL = skip cutout. */
+        /** @brief Begin the RailCom cutout sequence at the end bit (starts the
+         *  cutout timer). NULL = hardware not RailCom-capable, no cutout. */
     void (*railcom_cutout_begin)(void);
-
-        /** @brief Resume H-bridge after RailCom cutout. NULL = skip cutout. */
-    void (*railcom_cutout_end)(void);
 
         /** @brief Called when packet transmission is complete (ISR context).
          *  Sets a flag for the main loop to process. */
@@ -99,6 +97,12 @@ typedef struct {
         /** @brief Set by the RailCom cutout timer (Timer 2) when cutout
          *  is complete. Polled by the tick ISR in RAILCOM_CUTOUT state. */
     volatile bool cutout_complete;
+
+        /** @brief Runtime user option: generate the RailCom cutout after each
+         *  packet. Set via DccApplicationCommandStationMainTrack_set_railcom_enabled().
+         *  Cutout fires only when this is true AND the hardware is capable
+         *  (railcom_cutout_begin non-NULL). Default false. Read in ISR context. */
+    volatile bool railcom_enabled;
 
         /** @brief Look-ahead flag: true = toggle pin on the very first
          *  instruction of the next ISR call. Pre-computed by the state

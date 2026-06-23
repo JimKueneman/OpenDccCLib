@@ -45,6 +45,7 @@ void DccBitEncoder_initialize(dcc_bit_encoder_context_t *context, const interfac
     context->tick_counter = 0;
     context->current_bit_is_one = true;
     context->cutout_complete = false;
+    context->railcom_enabled = false;
     context->toggle_next = false;
 
 }
@@ -164,7 +165,7 @@ static void _tick_handle_data(dcc_bit_encoder_context_t *context) {
      */
 static void _tick_handle_end_bit(dcc_bit_encoder_context_t *context) {
 
-    if (context->interface->railcom_cutout_begin) {
+    if (context->railcom_enabled && context->interface->railcom_cutout_begin) {
 
         context->state = DCC_BIT_STATE_RAILCOM_CUTOUT;
         context->interface->railcom_cutout_begin();
