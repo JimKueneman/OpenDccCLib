@@ -28,10 +28,6 @@ extern "C" {
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
-// Called when a service mode operation completes (success, no-ack, error, etc.).
-// This demo implementation prints the result string over UART.
-extern void CallbacksDcc_on_service_mode_result(dcc_service_mode_result_t result);
-
 // Called after every DCC packet is fully transmitted on the track.
 // In this HIL-compliance firmware it drives the test-trigger GPIO (PB3): when
 // armed via CallbacksDcc_arm_trigger(), the next NON-idle packet raises PB3 so

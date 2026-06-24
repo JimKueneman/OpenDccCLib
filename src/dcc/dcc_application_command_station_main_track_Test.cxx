@@ -2,7 +2,7 @@
  * Copyright (c) 2026, Jim Kueneman
  * All rights reserved.
  *
- * Test suite for DCC Application Main Track
+ * Test suite for DCC Application Command Station Main Track
  */
 
 #include "test/main_Test.hxx"

@@ -1,11 +1,13 @@
 # DCC Compliance Matrix
 
-> **Generated 2026-06-22.** Maps each DCC feature area to the released NMRA standard, the
+> **Generated 2026-06-23.** Maps each DCC feature area to the released NMRA standard, the
 > draft revision (where applicable), and the library's implementation + test coverage.
 > Scope: DCC core (S-9.1, S-9.2, S-9.2.1, S-9.2.1.1, S-9.2.2, S-9.2.3, S-9.2.4, S-9.3.2).
 > Granularity: feature-area. Spec facts come from the validated [DCC_Spec_Reference.md](specs/DCC_Spec_Reference.md)
 > and [DCC_Draft_Deltas.md](specs/DCC_Draft_Deltas.md); code/test facts from a sweep of
-> `src/dcc/` (verified against the source, commit `c4dc61e`).
+> `src/dcc/` (verified against the source, commit `577f345`). The **S-9.2.3 service-mode
+> task-orchestrator layer, ACK-width boundary tests, and the `s9_2_3` HIL suite** were added
+> after `577f345` and verified against current source + the HIL bench (2026-06-23).
 
 **Legend:** ✅ implemented + tested · ⚠️ implemented but spec-deviation/partial · ❌ not implemented · — n/a
 All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.cxx`).
@@ -15,15 +17,15 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 ## Snapshot
 
 - **Roles:** Command Station, Decoder, Accessory Decoder — `DCC_COMPILE_COMMAND_STATION` / `_DECODER` / `_ACCESSORY_DECODER`.
-- **Service modes:** Direct, Paged, Register, Address — all implemented.
-- **Tests:** 23 host unit-test binaries, ~923 tests passing (host, mocked drivers); ≈99% line coverage. Green host tests inject mock drivers — see **Known defects** (decoder RailCom Tx), which they cannot catch.
-- **Hardware-in-loop:** two-board MSPM0 loopback suite (manual gate, not CI); plus a Saleae logic-analyzer compliance rig ([test/compliance/](../test/compliance/)) that drives the command station over UART and wire-verifies S-9.1/S-9.2/S-9.2.1 packets via a PB3 hardware trigger (82 checks: S-9.1 7+1 n/a, S-9.2 8, S-9.2.1 66; manual gate).
+- **Service modes:** Direct, Paged, Register, Address — primitives **plus a task-orchestrator layer** (read/write CV & bit per mode, decoder mode-detect, register factory-reset) exposed on the service-track façade; ACK detection (6 ms ±1 ms width window) handled in the common module.
+- **Tests:** 28 host unit-test binaries, 1155 tests passing (host, mocked drivers); ≈99% line coverage. Green host tests inject mock drivers — see **Known defects** (decoder RailCom Tx), which they cannot catch.
+- **Hardware-in-loop:** two-board MSPM0 loopback suite (manual gate, not CI); plus a Saleae logic-analyzer compliance rig ([test/compliance/](../test/compliance/)) that drives the command station over UART and wire-verifies S-9.1/S-9.2/S-9.2.1/S-9.2.3/S-9.3.2 packets via PB3 hardware trigger or timed capture (manual gate). Suite counts: S-9.1 7 (+1 n/a), S-9.2 8, S-9.2.1 66, S-9.3.2 4, **S-9.2.3 51 (+3 n/a — ACK boundary pending mock-ACK)**. The S-9.2.3 suite captures the main (ch0) and service (ch3) tracks **simultaneously** and asserts both stay in S-9.1 half-bit tolerance during every service-mode op.
 
 ---
 
 ## Summary
 
-- **Strong, fully-tested core:** packet encoding (speed/function/accessory/CV-POM/consist/binary-state/analog), scheduler, bit encoder, all four service modes, bit/packet decoder, CV storage, RailCom 4/8 encode+decode, decoder-side RailCom responses, accessory-decoder RailCom. ~923 unit tests, ~99% line coverage.
+- **Strong, fully-tested core:** packet encoding (speed/function/accessory/CV-POM/consist/binary-state/analog), scheduler, bit encoder, all four service modes + the service-mode task-orchestrator layer, bit/packet decoder, CV storage, RailCom 4/8 encode+decode, decoder-side RailCom responses, accessory-decoder RailCom. 1155 unit tests, ~99% line coverage.
 - **Compliance deviations — ALL FIXED 2026-06-22** (see [archive/compliance_deviation_fixes.md](archive/compliance_deviation_fixes.md); 923 tests pass):
   - ✅ **RailCom cutout** rebuilt as a 5-state machine (DELAY/SETTLING/CH1/GAP/CH2) with spec timing (T_CS 26 / T_TS1 80 / T_TC1 177 / T_TS2 193 / T_CE 454 µs), now user-configurable via `dcc_config_t` (0 = spec default).
   - ✅ Bit-encoder comment corrected to "single-buffered" (matches the code).
@@ -105,13 +107,16 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 | Feature | Released | Draft | Implemented | Tested | Status |
 |---|---|---|---|---|---|
 | Long preamble ≥20 | S-9.2.3 | — | `DCC_PREAMBLE_BITS_SERVICE=20` | per-mode packet tests | ✅ |
-| Common ACK detect / reset seq / retry | S-9.2.3 | — | `dcc_service_mode_common.c` | `..._common_Test` (53) | ✅ |
-| ACK ≥60 mA for 6 ms ±1 ms | S-9.2.3 | — | threshold + min/max samples (`MIN/MAX_DURATION_US`) | ACK tests | ✅ window [MIN,MAX] enforced |
+| Common ACK detect / reset seq / retry | S-9.2.3 | — | `dcc_service_mode_common.c` | `..._common_Test` (64) | ✅ |
+| ACK ≥60 mA for 6 ms ±1 ms | S-9.2.3 | — | threshold + min/max samples (`MIN/MAX_DURATION_US`); width counted in the 58 µs ISR | `..._common_Test` 9 boundary tests (MIN−1 / MIN / MAX / MAX+1 / overrun / blip-reset / idempotent) | ✅ window [MIN,MAX] enforced; host-verified |
 | Direct write/verify byte & bit | S-9.2.3 | — | `dcc_service_mode_direct.c` (4 fns) | `..._direct_Test` (30) | ✅ |
 | Paged write/verify | S-9.2.3 | — | `dcc_service_mode_paged.c`; CV=`((cv-1)/4)+1`/`((cv-1)%4)+1` | `..._paged_Test` (22) | ✅ |
 | Register write/verify | S-9.2.3 | — | `dcc_service_mode_register.c` | `..._register_Test` (16) | ✅ |
 | Address-only write/verify | S-9.2.3 | — | `dcc_service_mode_address.c` | `..._address_Test` (20) | ✅ (recovery count hardcoded 10) |
+| **Task orchestrator layer** (read_cv / write_cv / read_bit / write_bit per mode; mode-detect; register factory-reset) | S-9.2.3 §E | — | `dcc_service_mode_task_{direct,paged,register,address,detect}.c`; sequences + verifies primitives; ACK derived from primitive result (no app-side ACK timing) | `..._task_direct_Test` (48), `_paged` (53), `_register` (48), `_address` (36), `_detect` (23) | ✅ host; wire-verified on HIL |
+| Decoder-mode detection (Direct→Paged→Register→Address probe, supported-modes bitmask) | S-9.2.3 §A/B | — | `dcc_service_mode_task_detect.c`; CV#8 bit-verify + scans; Address-only **not** assumed universal | `..._task_detect_Test` (23) | ✅ host |
 | Decoder-side service-mode CV ops | S-9.2.3 | — | `dcc_packet_decoder.c:_dispatch_service_mode*` (+`service_mode` flag) | svc_direct/register/verify tests | ✅ |
+| **HIL wire + parallel-track timing** | S-9.2.3 §D/§E | — | `test/compliance/s9_2_3_compliance.py`; spec-derived encoders vs the service track (ch3); main+service captured simultaneously, both checked against S-9.1 half-bit tolerance every op | 51 pass / 3 n/a (ACK boundary pending mock-ACK loopback) | ✅ Direct/Register/Address precise bytes + Paged page-preset; ⚠️ ACK electrical test pending |
 
 ## 7. Fail-Safe (S-9.2.4)
 
@@ -125,8 +130,8 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 
 | Feature | Released | Draft | Implemented | Tested | Status |
 |---|---|---|---|---|---|
-| Cutout timing | S-9.3.2 Tbl 1 (T_CS 26–32, T_CE 454–488) | §4.1 (same) | `dcc_railcom_cutout.c`; defaults 26/54/97/16/261 µs, configurable via `dcc_config_t` | `..._cutout_Test` (25) | ✅ spec timing |
-| Cutout state machine | S-9.3.2 | 5-phase (settling/gap) | 5-state (DELAY/SETTLING/CH1/GAP/CH2) | cutout tests | ✅ |
+| Cutout timing | S-9.3.2 Tbl 1 (T_CS 26–32, T_CE 454–488) | §4.1 (same) | `dcc_railcom_cutout.c`; defaults 26/54/97/16/261 µs, configurable via `dcc_config_t` | `..._cutout_Test` (25); HIL `s9_3_2_compliance.py` (4 checks: T_CS/T_CE/window/count) wire-verified | ✅ spec timing + HIL |
+| Cutout state machine | S-9.3.2 | 5-phase (settling/gap) | 5-state (DELAY/SETTLING/CH1/GAP/CH2) in `dcc_railcom_cutout.c`; bit encoder is **continuous-clock** — fires cutout timer and keeps clocking, `on_packet_complete` fires at end-bit not after cutout | cutout tests | ✅ |
 | 4/8 decode + Ch1/Ch2 + receive buffer | S-9.3.2 §2.5 | — | `dcc_railcom_decoder.c` | `..._decoder_Test` (27) | ✅ |
 | 4/8 encode (decoder responses) | S-9.3.2 | — | `dcc_railcom_encoder.c:encode_byte` | `..._encoder_Test` (13) | ✅ |
 | Address feedback ADR1/ADR2 alternation | S-9.3.2 §3.1 | §4.12 | `DccApplicationDecoderRailcom_send_address_feedback` | alternation tests | ✅ |
@@ -149,7 +154,7 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 | Feature | Released | Draft | Implemented | Tested | Status |
 |---|---|---|---|---|---|
 | Scheduler priority / combining / auto-refresh | (lib design) | — | `dcc_scheduler.c` | `..._scheduler_Test` (22) | ✅ |
-| Bit-encoder buffering | (lib design) | — | single `active_packet` + `packet_loaded` flag | — | ✅ doc corrected |
+| Bit-encoder buffering | (lib design) | — | single `active_packet` + `packet_loaded` flag; **continuous-clock** — encoder keeps clocking next preamble during RailCom cutout window, no stall state | — | ✅ |
 
 ---
 
@@ -182,6 +187,11 @@ conformance gaps**, not draft features. (Per-feature detail is in the §1–8 ta
   one-shot timer (archived Open-Question-#2) — so **no RailCom is transmitted in a real build**.
   Host unit tests cannot catch it (they inject a mock `uart_write`). Needs a bit-bang and/or UART
   backend. Tracked plan context: [archive/compliance_deviation_fixes.md](archive/compliance_deviation_fixes.md).
+
+### Recently resolved (2026-06-23)
+
+- **S-9.3.2 HIL compliance suite** (`s9_3_2_compliance.py`) — Saleae dual-channel capture (ch0 DCC + ch2 cutout strobe) wire-verifies T_CS/T_CE/window/count against spec limits; 4 checks, now part of `run_all.py`. HIL total: 82 → 86.
+- **Continuous-clock RailCom** — bit encoder no longer stalls in a `DCC_BIT_STATE_RAILCOM_CUTOUT` state. It fires the cutout timer and immediately keeps clocking the next preamble; `on_packet_complete` fires at the end-bit (not after the cutout). The cutout 5-state machine (`dcc_railcom_cutout.c`) is unchanged.
 
 ### Recently resolved (2026-06-22)
 

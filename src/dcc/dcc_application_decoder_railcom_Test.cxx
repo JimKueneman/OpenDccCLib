@@ -387,6 +387,21 @@ TEST(DccApplicationDecoderRailcom, send_ack_sends_raw_code_word) {
 
 }
 
+TEST(DccApplicationDecoderRailcom, send_ack_null_code_word_fn_guard) {
+
+    reset_mocks();
+    /* Interface is non-NULL but the send_code_word slot is unwired —
+     * exercises the second term of the guard (!_interface->send_code_word). */
+    interface_dcc_application_decoder_railcom_t iface = make_interface();
+    iface.send_code_word = NULL;
+    DccApplicationDecoderRailcom_initialize(&iface);
+
+    DccApplicationDecoderRailcom_send_ack();
+
+    EXPECT_EQ(send_code_word_count, (uint32_t)0);
+
+}
+
 // --- send_nack ---
 
 TEST(DccApplicationDecoderRailcom, send_nack_null_guard) {
@@ -413,6 +428,21 @@ TEST(DccApplicationDecoderRailcom, send_nack_sends_raw_code_word) {
     EXPECT_EQ(send_code_word_count, (uint32_t)1);
     EXPECT_EQ(last_code_word, (uint8_t)DCC_RAILCOM_CODE_WORD_NACK);
     EXPECT_EQ(last_code_word, (uint8_t)0x3C);
+
+}
+
+TEST(DccApplicationDecoderRailcom, send_nack_null_code_word_fn_guard) {
+
+    reset_mocks();
+    /* Interface is non-NULL but the send_code_word slot is unwired —
+     * exercises the second term of the guard (!_interface->send_code_word). */
+    interface_dcc_application_decoder_railcom_t iface = make_interface();
+    iface.send_code_word = NULL;
+    DccApplicationDecoderRailcom_initialize(&iface);
+
+    DccApplicationDecoderRailcom_send_nack();
+
+    EXPECT_EQ(send_code_word_count, (uint32_t)0);
 
 }
 

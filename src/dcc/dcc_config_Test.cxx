@@ -346,21 +346,21 @@ TEST(DccConfig, service_track_is_active_true) {
 // Group 3: Service mode programming wrappers
 // ============================================================================
 
-#ifdef DCC_COMPILE_SERVICE_MODE_DIRECT
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
 
-TEST(DccConfig, direct_write_byte) {
+TEST(DccConfig, direct_read_cv) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
     DccApplicationCommandStationServiceTrack_enter_service_mode();
-    DccApplicationCommandStationServiceTrack_direct_write_byte(17, 0x42);
+    DccApplicationCommandStationServiceTrack_direct_read_cv(17, NULL, NULL);
     DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
-TEST(DccConfig, direct_verify_byte) {
+TEST(DccConfig, direct_write_cv) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
     DccApplicationCommandStationServiceTrack_enter_service_mode();
-    DccApplicationCommandStationServiceTrack_direct_verify_byte(17, 0x42);
+    DccApplicationCommandStationServiceTrack_direct_write_cv(17, 0x42, NULL, NULL);
     DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
@@ -368,79 +368,83 @@ TEST(DccConfig, direct_write_bit) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
     DccApplicationCommandStationServiceTrack_enter_service_mode();
-    DccApplicationCommandStationServiceTrack_direct_write_bit(17, 3, true);
+    DccApplicationCommandStationServiceTrack_direct_write_bit(17, 3, true, NULL, NULL);
     DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
-TEST(DccConfig, direct_verify_bit) {
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_DIRECT */
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
+
+TEST(DccConfig, paged_read_cv) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
     DccApplicationCommandStationServiceTrack_enter_service_mode();
-    DccApplicationCommandStationServiceTrack_direct_verify_bit(17, 3, true);
+    DccApplicationCommandStationServiceTrack_paged_read_cv(29, NULL, NULL);
     DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
-#endif /* DCC_COMPILE_SERVICE_MODE_DIRECT */
-
-#ifdef DCC_COMPILE_SERVICE_MODE_PAGED
-
-TEST(DccConfig, paged_write) {
+TEST(DccConfig, paged_write_cv) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
     DccApplicationCommandStationServiceTrack_enter_service_mode();
-    DccApplicationCommandStationServiceTrack_paged_write(29, 0x50);
+    DccApplicationCommandStationServiceTrack_paged_write_cv(29, 0x50, NULL, NULL);
     DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
-TEST(DccConfig, paged_verify) {
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_PAGED */
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+
+TEST(DccConfig, register_read_cv) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
     DccApplicationCommandStationServiceTrack_enter_service_mode();
-    DccApplicationCommandStationServiceTrack_paged_verify(29, 0x50);
+    DccApplicationCommandStationServiceTrack_register_read_cv(1, DCC_DECODER_TYPE_MOBILE, NULL, NULL);
     DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
-#endif /* DCC_COMPILE_SERVICE_MODE_PAGED */
-
-#ifdef DCC_COMPILE_SERVICE_MODE_REGISTER
-
-TEST(DccConfig, register_write) {
+TEST(DccConfig, register_write_cv) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
     DccApplicationCommandStationServiceTrack_enter_service_mode();
-    DccApplicationCommandStationServiceTrack_register_write(1, 0x35);
+    DccApplicationCommandStationServiceTrack_register_write_cv(1, 0x35, DCC_DECODER_TYPE_MOBILE, NULL, NULL);
     DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
-TEST(DccConfig, register_verify) {
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_REGISTER */
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
+
+TEST(DccConfig, address_read) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
     DccApplicationCommandStationServiceTrack_enter_service_mode();
-    DccApplicationCommandStationServiceTrack_register_verify(1, 0x35);
+    DccApplicationCommandStationServiceTrack_address_read(NULL, NULL);
     DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
-
-#endif /* DCC_COMPILE_SERVICE_MODE_REGISTER */
-
-#ifdef DCC_COMPILE_SERVICE_MODE_ADDRESS
 
 TEST(DccConfig, address_write) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
     DccApplicationCommandStationServiceTrack_enter_service_mode();
-    DccApplicationCommandStationServiceTrack_address_write(42);
+    DccApplicationCommandStationServiceTrack_address_write(42, NULL, NULL);
     DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
-TEST(DccConfig, address_verify) {
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS */
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DETECT
+
+TEST(DccConfig, detect_mode) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
     DccApplicationCommandStationServiceTrack_enter_service_mode();
-    DccApplicationCommandStationServiceTrack_address_verify(42);
+    DccApplicationCommandStationServiceTrack_detect_mode(NULL);
     DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
-#endif /* DCC_COMPILE_SERVICE_MODE_ADDRESS */
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_DETECT */
 
 // ============================================================================
 // Group 4: Shared timer ref-counting
@@ -792,7 +796,7 @@ TEST(DccConfig, service_load_packet_via_isr) {
     DccConfig_initialize(&cfg);
 
     DccApplicationCommandStationServiceTrack_enter_service_mode();
-    DccApplicationCommandStationServiceTrack_direct_write_byte(1, 0x55);
+    DccApplicationCommandStationServiceTrack_direct_write_cv(1, 0x55, NULL, NULL);
 
     /* Drive state machine: run() loads packets, ISR transmits them */
     pump_service_mode_cycle(10);
@@ -808,7 +812,7 @@ TEST(DccConfig, service_load_packet_with_on_packet_sent) {
 
     on_packet_sent_count = 0;
     DccApplicationCommandStationServiceTrack_enter_service_mode();
-    DccApplicationCommandStationServiceTrack_direct_write_byte(1, 0x55);
+    DccApplicationCommandStationServiceTrack_direct_write_cv(1, 0x55, NULL, NULL);
 
     /* Drive state machine: run() loads packets, ISR transmits them */
     pump_service_mode_cycle(10);

@@ -89,7 +89,6 @@ static const dcc_config_t dcc_config = {
 
     // OPTIONAL application callbacks.
     .on_packet_sent          = &CallbacksDcc_on_packet_sent,
-    .on_service_mode_result  = &CallbacksDcc_on_service_mode_result,
 };
 
 /* ========================================================================== */

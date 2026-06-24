@@ -2,7 +2,7 @@
  * Copyright (c) 2026, Jim Kueneman
  * All rights reserved.
  *
- * Test suite for DCC Packet Encoder (Phase 2 + Phase 3)
+ * Test suite for DCC Application Command Station Packet builder.
  */
 
 #include "test/main_Test.hxx"
@@ -10,6 +10,8 @@
 #include "dcc/dcc_application_command_station_packet.h"
 #include "dcc/dcc_types.h"
 #include "dcc/dcc_defines.h"
+
+#ifdef DCC_COMPILE_COMMAND_STATION
 
 // ============================================================================
 // Helper: verify XOR byte is correct for any packet
@@ -1176,6 +1178,13 @@ TEST(DccPacketEncoder, model_time_rejects_out_of_range) {
     EXPECT_FALSE(DccApplicationCommandStationPacket_load_model_time(&pkt, 0, DCC_DAY_OF_WEEK_MONDAY, 0, false, 64));
 }
 
+TEST(DccPacketEncoder, model_time_rejects_invalid_day_of_week) {
+    dcc_packet_t pkt;
+    /* All other fields valid; only day_of_week is out of range (> NOT_SUPPORTED=7).
+     * Exercises the day_of_week term of the validation guard in isolation. */
+    EXPECT_FALSE(DccApplicationCommandStationPacket_load_model_time(&pkt, 0, (dcc_day_of_week_enum)8, 0, false, 0));
+}
+
 TEST(DccPacketEncoder, model_date_representative) {
     dcc_packet_t pkt;
     /* 23 June 2026: 2026 = 0x7EA -> year MSB nibble 0x7, LSB 0xEA */
@@ -1563,3 +1572,5 @@ TEST(DccPacketEncoder, acc_extended_cv_bit_rejects_cv1025) {
     dcc_packet_t pkt;
     EXPECT_FALSE(DccApplicationCommandStationPacket_load_accessory_extended_cv_bit(&pkt, 0, 1025, 0, true, true));
 }
+
+#endif /* DCC_COMPILE_COMMAND_STATION */

@@ -39,6 +39,16 @@
 #define DCC_COMPILE_SERVICE_MODE_ADDRESS
 
 // =============================================================================
+// Service Mode Task Selection (requires DCC_COMPILE_COMMAND_STATION)
+// =============================================================================
+
+#define DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
+#define DCC_COMPILE_SERVICE_MODE_TASK_PAGED
+#define DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+#define DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
+#define DCC_COMPILE_SERVICE_MODE_TASK_DETECT
+
+// =============================================================================
 // Command Station Buffer & Pool Sizes
 //
 // Tune these for your MCU's available RAM. Larger values support more locos

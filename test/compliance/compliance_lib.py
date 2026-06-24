@@ -145,6 +145,45 @@ def capture_to_csv(out_dir, stimulus=None, capture_seconds=None):
     return os.path.join(out_dir, "digital.csv")
 
 
+def capture_to_csv_multi(channels, out_dir, stimulus=None, capture_seconds=None):
+    """Run a timed capture of SEVERAL digital channels at once; export each to
+    its own subdirectory. Returns {channel: csv_path}.
+
+    Use this to verify two outputs simultaneously (e.g. main track ch0/PB1 and
+    service track ch3/PB4) from one capture, so their timing is compared under
+    the exact same ISR load. stimulus/capture_seconds behave as in capture_to_csv.
+    """
+    from saleae import automation
+
+    secs = CAPTURE_SECONDS if capture_seconds is None else capture_seconds
+    chans = sorted(set(channels))
+    dev_cfg = automation.LogicDeviceConfiguration(
+        enabled_digital_channels=chans,
+        digital_sample_rate=SAMPLE_RATE_HZ,
+    )
+    cap_cfg = automation.CaptureConfiguration(
+        capture_mode=automation.TimedCaptureMode(duration_seconds=secs)
+    )
+    paths = {}
+    with automation.Manager.connect(port=AUTOMATION_PORT) as mgr:
+        print(f"[saleae] {secs*1e3:.0f} ms capture @ "
+              f"{SAMPLE_RATE_HZ/1e6:.0f} MS/s on ch{chans}")
+        with mgr.start_capture(
+            device_id=SALEAE_DEVICE_ID or None,
+            device_configuration=dev_cfg,
+            capture_configuration=cap_cfg,
+        ) as cap:
+            if stimulus is not None:
+                stimulus()          # drive UART command(s) into the live window
+            cap.wait()
+            for ch in chans:
+                sub = os.path.join(out_dir, f"ch{ch}")
+                os.makedirs(sub, exist_ok=True)
+                cap.export_raw_data_csv(directory=sub, digital_channels=[ch])
+                paths[ch] = os.path.join(sub, "digital.csv")
+    return paths
+
+
 # ----------------------------------------------------------------------------
 # Decode: CSV transitions -> half-bit widths -> bits -> packets
 # ----------------------------------------------------------------------------

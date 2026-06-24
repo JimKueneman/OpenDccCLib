@@ -250,10 +250,8 @@ typedef struct {
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
 // =============================================================================
-// Service mode types (Command Station)
+// Service mode types
 // =============================================================================
-
-#ifdef DCC_COMPILE_COMMAND_STATION
 
     /** @brief Service mode operation result */
 typedef enum {
@@ -267,10 +265,57 @@ typedef enum {
 
 } dcc_service_mode_result_t;
 
-    /** @brief Callback for service mode operation step completion. */
+    /** @brief Callback for primitive service mode operation step completion. */
 typedef void (*dcc_service_mode_step_callback_t)(dcc_service_mode_result_t result);
 
-#endif /* DCC_COMPILE_COMMAND_STATION */
+// =============================================================================
+// Service mode task types (task orchestrator layer)
+// =============================================================================
+
+    /** @brief Decoder type for register mode CV mapping (mobile vs accessory). */
+typedef enum {
+
+    DCC_DECODER_TYPE_MOBILE,
+    DCC_DECODER_TYPE_ACCESSORY,
+
+} dcc_decoder_type_enum;
+
+    /** @brief Service mode type identifier (result of decoder mode detection). */
+typedef enum {
+
+    DCC_SERVICE_MODE_TYPE_DIRECT,
+    DCC_SERVICE_MODE_TYPE_PAGED,
+    DCC_SERVICE_MODE_TYPE_REGISTER,
+    DCC_SERVICE_MODE_TYPE_ADDRESS,
+    DCC_SERVICE_MODE_TYPE_UNKNOWN,
+
+} dcc_service_mode_type_enum;
+
+    /** @brief Supported-mode flags returned by detect_mode (bitmask in a uint8_t).
+     *         supported_modes == 0 means no service mode was detected. */
+#define DCC_SERVICE_MODE_SUPPORTED_DIRECT   (1u << 0)
+#define DCC_SERVICE_MODE_SUPPORTED_PAGED    (1u << 1)
+#define DCC_SERVICE_MODE_SUPPORTED_REGISTER (1u << 2)
+#define DCC_SERVICE_MODE_SUPPORTED_ADDRESS  (1u << 3)
+
+    /** @brief Current phase of a task orchestrator operation. */
+typedef enum {
+
+    DCC_TASK_PHASE_READ,
+    DCC_TASK_PHASE_WRITE,
+    DCC_TASK_PHASE_VERIFY,
+
+} dcc_task_phase_enum;
+
+    /** @brief Callback: task CV operation complete. value = CV byte found or validated. */
+typedef void (*dcc_service_mode_task_on_complete_callback_t)(dcc_service_mode_result_t result, uint8_t value);
+
+    /** @brief Callback: detect_mode complete. supported_modes = bitmask of
+     *         DCC_SERVICE_MODE_SUPPORTED_* flags (0 = none detected). */
+typedef void (*dcc_service_mode_task_on_detect_callback_t)(dcc_service_mode_result_t result, uint8_t supported_modes);
+
+    /** @brief Callback: progress notification during a multi-step task operation. */
+typedef void (*dcc_service_mode_task_on_progress_callback_t)(dcc_task_phase_enum phase, uint8_t current_step, uint8_t estimated_steps);
 
 // =============================================================================
 // RailCom types

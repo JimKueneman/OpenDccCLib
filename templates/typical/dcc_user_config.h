@@ -32,6 +32,24 @@
 // #define DCC_COMPILE_SERVICE_MODE_ADDRESS
 
 // =============================================================================
+// Service Mode Task Selection (requires DCC_COMPILE_COMMAND_STATION)
+//
+// Each flag compiles in one task orchestrator module for the corresponding
+// service mode. Disable any you do not need to save flash.
+//   TASK_DIRECT   -- sequences read/write CV and bit operations via direct primitives
+//   TASK_PAGED    -- sequences operations via paged primitives (older decoders)
+//   TASK_REGISTER -- sequences operations via register primitives (very old decoders)
+//   TASK_ADDRESS  -- sequences short-address read/write (legacy)
+//   TASK_DETECT   -- probes decoder to identify which modes it supports
+// =============================================================================
+
+#define DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
+#define DCC_COMPILE_SERVICE_MODE_TASK_PAGED
+// #define DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+// #define DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
+// #define DCC_COMPILE_SERVICE_MODE_TASK_DETECT
+
+// =============================================================================
 // Command Station Buffer & Pool Sizes
 // =============================================================================
 

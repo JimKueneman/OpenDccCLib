@@ -266,9 +266,6 @@ typedef struct {
         /** @brief Packet fully transmitted on the wire. */
     void (*on_packet_sent)(const dcc_packet_t *packet);
 
-        /** @brief Service mode programming operation finished. */
-    void (*on_service_mode_result)(dcc_service_mode_result_t result);
-
         /** @brief Accessory decoder SRQ detected in RailCom Ch1.
          *  The user should respond by sending a stop command
          *  (load_accessory_basic_stop or load_accessory_extended_stop)

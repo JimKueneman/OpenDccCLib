@@ -771,140 +771,201 @@ static void _cmd_cv(char *tokens[], int count) {
     _respond("OK: CV command scheduled");
 }
 
-#ifdef DCC_COMPILE_SERVICE_MODE_DIRECT
+/* Asynchronous result of a service-mode task. The task starts, returns true,
+ * and reports the outcome here once the operation (and recovery) completes. */
+static void _svc_on_complete(dcc_service_mode_result_t result, uint8_t value) {
+
+    switch (result) {
+
+        case DCC_SERVICE_MODE_SUCCESS:
+            snprintf(_resp_buf, sizeof(_resp_buf),
+                     "SVC RESULT: SUCCESS value=%u (0x%02X)", value, value);
+            _respond(_resp_buf);
+            break;
+
+        case DCC_SERVICE_MODE_NO_ACK:
+            _respond("SVC RESULT: NO ACK");
+            break;
+
+        case DCC_SERVICE_MODE_VERIFY_FAIL:
+            _respond("SVC RESULT: VERIFY FAIL");
+            break;
+
+        case DCC_SERVICE_MODE_BUSY:
+            _respond("SVC RESULT: BUSY");
+            break;
+
+        default:
+            _respond("SVC RESULT: ERROR");
+            break;
+
+    }
+}
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DETECT
+static void _svc_on_detect(dcc_service_mode_result_t result, uint8_t modes) {
+
+    if (result != DCC_SERVICE_MODE_SUCCESS || modes == 0) {
+        _respond("SVC DETECT: none");
+        return;
+    }
+
+    snprintf(_resp_buf, sizeof(_resp_buf), "SVC DETECT:%s%s%s%s",
+             (modes & DCC_SERVICE_MODE_SUPPORTED_DIRECT)   ? " DIRECT"   : "",
+             (modes & DCC_SERVICE_MODE_SUPPORTED_PAGED)    ? " PAGED"    : "",
+             (modes & DCC_SERVICE_MODE_SUPPORTED_REGISTER) ? " REGISTER" : "",
+             (modes & DCC_SERVICE_MODE_SUPPORTED_ADDRESS)  ? " ADDRESS"  : "");
+    _respond(_resp_buf);
+}
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_DETECT */
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+static dcc_decoder_type_enum _parse_decoder_type(const char *tok) {
+
+    if (tok && (strcmp(tok, "ACC") == 0 || strcmp(tok, "ACCESSORY") == 0)) {
+        return DCC_DECODER_TYPE_ACCESSORY;
+    }
+
+    return DCC_DECODER_TYPE_MOBILE;
+}
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_REGISTER */
+
+static void _svc_report_start(bool started) {
+
+    _respond(started ? "OK: service mode operation started"
+                     : "ERR: service mode operation failed to start");
+}
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
 static void _cmd_svc_direct(char *tokens[], int count) {
 
-    /* SVC DIRECT WRITE <cv> <value> */
-    /* SVC DIRECT VERIFY <cv> <value> */
-    /* SVC DIRECT BITW <cv> <bit> <0|1> */
-    /* SVC DIRECT BITV <cv> <bit> <0|1> */
-
-    if (count < 5) {
-        _respond("ERR: usage: SVC DIRECT WRITE|VERIFY|BITW|BITV <cv> <value>");
-        return;
-    }
-
-    uint16_t cv = (uint16_t)atoi(tokens[3]);
-    uint8_t value = (uint8_t)atoi(tokens[4]);
-    bool ok = false;
-
-    if (strcmp(tokens[2], "WRITE") == 0) {
-        ok = DccApplicationCommandStationServiceTrack_direct_write_byte(cv, value);
-    } else if (strcmp(tokens[2], "VERIFY") == 0) {
-        ok = DccApplicationCommandStationServiceTrack_direct_verify_byte(cv, value);
-    } else if (strcmp(tokens[2], "BITW") == 0 && count >= 6) {
-        bool bit_val = (atoi(tokens[5]) != 0);
-        ok = DccApplicationCommandStationServiceTrack_direct_write_bit(cv, value, bit_val);
-    } else if (strcmp(tokens[2], "BITV") == 0 && count >= 6) {
-        bool bit_val = (atoi(tokens[5]) != 0);
-        ok = DccApplicationCommandStationServiceTrack_direct_verify_bit(cv, value, bit_val);
-    } else {
-        _respond("ERR: unknown SVC DIRECT subcommand");
-        return;
-    }
-
-    if (!ok) {
-        _respond("ERR: service mode operation failed to start");
-        return;
-    }
-
-    _respond("OK: service mode operation started");
-}
-#endif /* DCC_COMPILE_SERVICE_MODE_DIRECT */
-
-#ifdef DCC_COMPILE_SERVICE_MODE_PAGED
-static void _cmd_svc_paged(char *tokens[], int count) {
-
-    if (count < 5) {
-        _respond("ERR: usage: SVC PAGED WRITE|VERIFY <cv> <value>");
-        return;
-    }
-
-    uint16_t cv = (uint16_t)atoi(tokens[3]);
-    uint8_t value = (uint8_t)atoi(tokens[4]);
-    bool ok = false;
-
-    if (strcmp(tokens[2], "WRITE") == 0) {
-        ok = DccApplicationCommandStationServiceTrack_paged_write(cv, value);
-    } else if (strcmp(tokens[2], "VERIFY") == 0) {
-        ok = DccApplicationCommandStationServiceTrack_paged_verify(cv, value);
-    } else {
-        _respond("ERR: usage: SVC PAGED WRITE|VERIFY <cv> <value>");
-        return;
-    }
-
-    if (!ok) {
-        _respond("ERR: service mode operation failed to start");
-        return;
-    }
-
-    _respond("OK: service mode operation started");
-}
-#endif /* DCC_COMPILE_SERVICE_MODE_PAGED */
-
-#ifdef DCC_COMPILE_SERVICE_MODE_REGISTER
-static void _cmd_svc_register(char *tokens[], int count) {
-
-    if (count < 5) {
-        _respond("ERR: usage: SVC REG WRITE|VERIFY <reg> <value>");
-        return;
-    }
-
-    uint8_t reg = (uint8_t)atoi(tokens[3]);
-    uint8_t value = (uint8_t)atoi(tokens[4]);
-    bool ok = false;
-
-    if (strcmp(tokens[2], "WRITE") == 0) {
-        ok = DccApplicationCommandStationServiceTrack_register_write(reg, value);
-    } else if (strcmp(tokens[2], "VERIFY") == 0) {
-        ok = DccApplicationCommandStationServiceTrack_register_verify(reg, value);
-    } else {
-        _respond("ERR: usage: SVC REG WRITE|VERIFY <reg> <value>");
-        return;
-    }
-
-    if (!ok) {
-        _respond("ERR: service mode operation failed to start");
-        return;
-    }
-
-    _respond("OK: service mode operation started");
-}
-#endif /* DCC_COMPILE_SERVICE_MODE_REGISTER */
-
-#ifdef DCC_COMPILE_SERVICE_MODE_ADDRESS
-static void _cmd_svc_address(char *tokens[], int count) {
+    /* SVC DIRECT WRITE <cv> <value>      */
+    /* SVC DIRECT READ  <cv>              */
+    /* SVC DIRECT BITW  <cv> <bit> <0|1>  */
+    /* SVC DIRECT BITR  <cv> <bit>        */
 
     if (count < 4) {
-        _respond("ERR: usage: SVC ADDR WRITE|VERIFY <addr>");
+        _respond("ERR: usage: SVC DIRECT WRITE|READ|BITW|BITR <cv> ...");
         return;
     }
 
-    uint8_t addr = (uint8_t)atoi(tokens[3]);
-    bool ok = false;
+    uint16_t cv = (uint16_t)atoi(tokens[3]);
+    bool started = false;
 
-    if (strcmp(tokens[2], "WRITE") == 0) {
-        ok = DccApplicationCommandStationServiceTrack_address_write(addr);
-    } else if (strcmp(tokens[2], "VERIFY") == 0) {
-        ok = DccApplicationCommandStationServiceTrack_address_verify(addr);
+    if (strcmp(tokens[2], "READ") == 0) {
+        started = DccApplicationCommandStationServiceTrack_direct_read_cv(cv, _svc_on_complete, NULL);
+    } else if (strcmp(tokens[2], "WRITE") == 0 && count >= 5) {
+        uint8_t value = (uint8_t)atoi(tokens[4]);
+        started = DccApplicationCommandStationServiceTrack_direct_write_cv(cv, value, _svc_on_complete, NULL);
+    } else if (strcmp(tokens[2], "BITR") == 0 && count >= 5) {
+        uint8_t bit = (uint8_t)atoi(tokens[4]);
+        started = DccApplicationCommandStationServiceTrack_direct_read_bit(cv, bit, _svc_on_complete, NULL);
+    } else if (strcmp(tokens[2], "BITW") == 0 && count >= 6) {
+        uint8_t bit = (uint8_t)atoi(tokens[4]);
+        bool bit_val = (atoi(tokens[5]) != 0);
+        started = DccApplicationCommandStationServiceTrack_direct_write_bit(cv, bit, bit_val, _svc_on_complete, NULL);
     } else {
-        _respond("ERR: usage: SVC ADDR WRITE|VERIFY <addr>");
+        _respond("ERR: usage: SVC DIRECT WRITE|READ|BITW|BITR <cv> ...");
         return;
     }
 
-    if (!ok) {
-        _respond("ERR: service mode operation failed to start");
-        return;
-    }
-
-    _respond("OK: service mode operation started");
+    _svc_report_start(started);
 }
-#endif /* DCC_COMPILE_SERVICE_MODE_ADDRESS */
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_DIRECT */
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
+static void _cmd_svc_paged(char *tokens[], int count) {
+
+    /* SVC PAGED WRITE <cv> <value> / SVC PAGED READ <cv> */
+
+    if (count < 4) {
+        _respond("ERR: usage: SVC PAGED WRITE|READ <cv> [value]");
+        return;
+    }
+
+    uint16_t cv = (uint16_t)atoi(tokens[3]);
+    bool started = false;
+
+    if (strcmp(tokens[2], "READ") == 0) {
+        started = DccApplicationCommandStationServiceTrack_paged_read_cv(cv, _svc_on_complete, NULL);
+    } else if (strcmp(tokens[2], "WRITE") == 0 && count >= 5) {
+        uint8_t value = (uint8_t)atoi(tokens[4]);
+        started = DccApplicationCommandStationServiceTrack_paged_write_cv(cv, value, _svc_on_complete, NULL);
+    } else {
+        _respond("ERR: usage: SVC PAGED WRITE|READ <cv> [value]");
+        return;
+    }
+
+    _svc_report_start(started);
+}
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_PAGED */
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+static void _cmd_svc_register(char *tokens[], int count) {
+
+    /* SVC REG WRITE <cv> <value> [MOBILE|ACC] */
+    /* SVC REG READ  <cv> [MOBILE|ACC]         */
+    /* SVC REG RESET                           */
+
+    if (count >= 2 && strcmp(tokens[2], "RESET") == 0) {
+        _svc_report_start(DccApplicationCommandStationServiceTrack_register_factory_reset(_svc_on_complete));
+        return;
+    }
+
+    if (count < 4) {
+        _respond("ERR: usage: SVC REG WRITE|READ|RESET <cv> [value] [MOBILE|ACC]");
+        return;
+    }
+
+    uint16_t cv = (uint16_t)atoi(tokens[3]);
+    bool started = false;
+
+    if (strcmp(tokens[2], "READ") == 0) {
+        dcc_decoder_type_enum dt = _parse_decoder_type(count >= 5 ? tokens[4] : NULL);
+        started = DccApplicationCommandStationServiceTrack_register_read_cv(cv, dt, _svc_on_complete, NULL);
+    } else if (strcmp(tokens[2], "WRITE") == 0 && count >= 5) {
+        uint8_t value = (uint8_t)atoi(tokens[4]);
+        dcc_decoder_type_enum dt = _parse_decoder_type(count >= 6 ? tokens[5] : NULL);
+        started = DccApplicationCommandStationServiceTrack_register_write_cv(cv, value, dt, _svc_on_complete, NULL);
+    } else {
+        _respond("ERR: usage: SVC REG WRITE|READ|RESET <cv> [value] [MOBILE|ACC]");
+        return;
+    }
+
+    _svc_report_start(started);
+}
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_REGISTER */
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
+static void _cmd_svc_address(char *tokens[], int count) {
+
+    /* SVC ADDR WRITE <addr> / SVC ADDR READ */
+
+    if (count < 3) {
+        _respond("ERR: usage: SVC ADDR WRITE <addr> | SVC ADDR READ");
+        return;
+    }
+
+    bool started = false;
+
+    if (strcmp(tokens[2], "READ") == 0) {
+        started = DccApplicationCommandStationServiceTrack_address_read(_svc_on_complete, NULL);
+    } else if (strcmp(tokens[2], "WRITE") == 0 && count >= 4) {
+        uint8_t addr = (uint8_t)atoi(tokens[3]);
+        started = DccApplicationCommandStationServiceTrack_address_write(addr, _svc_on_complete, NULL);
+    } else {
+        _respond("ERR: usage: SVC ADDR WRITE <addr> | SVC ADDR READ");
+        return;
+    }
+
+    _svc_report_start(started);
+}
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS */
 
 static void _cmd_svc(char *tokens[], int count) {
 
     if (count < 2) {
-        _respond("ERR: usage: SVC ENTER|EXIT|DIRECT|PAGED|REG|ADDR ...");
+        _respond("ERR: usage: SVC ENTER|EXIT|DETECT|DIRECT|PAGED|REG|ADDR ...");
         return;
     }
 
@@ -922,28 +983,35 @@ static void _cmd_svc(char *tokens[], int count) {
         return;
     }
 
-#ifdef DCC_COMPILE_SERVICE_MODE_DIRECT
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DETECT
+    if (strcmp(tokens[1], "DETECT") == 0) {
+        _svc_report_start(DccApplicationCommandStationServiceTrack_detect_mode(_svc_on_detect));
+        return;
+    }
+#endif
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
     if (strcmp(tokens[1], "DIRECT") == 0) {
         _cmd_svc_direct(tokens, count);
         return;
     }
 #endif
 
-#ifdef DCC_COMPILE_SERVICE_MODE_PAGED
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
     if (strcmp(tokens[1], "PAGED") == 0) {
         _cmd_svc_paged(tokens, count);
         return;
     }
 #endif
 
-#ifdef DCC_COMPILE_SERVICE_MODE_REGISTER
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
     if (strcmp(tokens[1], "REG") == 0) {
         _cmd_svc_register(tokens, count);
         return;
     }
 #endif
 
-#ifdef DCC_COMPILE_SERVICE_MODE_ADDRESS
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
     if (strcmp(tokens[1], "ADDR") == 0) {
         _cmd_svc_address(tokens, count);
         return;
@@ -1282,11 +1350,12 @@ static void _cmd_help(void) {
     _respond("  CV BIT <addr> <cv> <bit_pos> <0|1>");
     _respond("  SVC ENTER");
     _respond("  SVC EXIT");
-    _respond("  SVC DIRECT WRITE|VERIFY <cv> <value>");
-    _respond("  SVC DIRECT BITW|BITV <cv> <bit> <0|1>");
-    _respond("  SVC PAGED WRITE|VERIFY <cv> <value>");
-    _respond("  SVC REG WRITE|VERIFY <reg> <value>");
-    _respond("  SVC ADDR WRITE|VERIFY <addr>");
+    _respond("  SVC DETECT");
+    _respond("  SVC DIRECT WRITE <cv> <value> | READ <cv>");
+    _respond("  SVC DIRECT BITW <cv> <bit> <0|1> | BITR <cv> <bit>");
+    _respond("  SVC PAGED WRITE <cv> <value> | READ <cv>");
+    _respond("  SVC REG WRITE <cv> <value> [MOBILE|ACC] | READ <cv> [MOBILE|ACC] | RESET");
+    _respond("  SVC ADDR WRITE <addr> | READ");
     _respond("  CONSIST <addr> SET <ca> [NORMAL|REVERSE]");
     _respond("  CONSIST <addr> CLEAR");
     _respond("  BSS <addr> <1-127> <ON|OFF>");

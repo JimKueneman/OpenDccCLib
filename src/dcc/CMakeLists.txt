@@ -23,14 +23,19 @@ set(SOURCES
     dcc_cv_storage.c
     dcc_railcom_encoder.c
     dcc_railcom_cutout.c
+    dcc_service_mode_task_direct.c
+    dcc_service_mode_task_paged.c
+    dcc_service_mode_task_register.c
+    dcc_service_mode_task_address.c
+    dcc_service_mode_task_detect.c
 )
 
 if (${GTEST})
 set(TESTS ${TESTS}
-    ${ROOT_DIR}/src/dcc/dcc_application_main_track_Test.cxx
-    ${ROOT_DIR}/src/dcc/dcc_application_service_track_Test.cxx
+    ${ROOT_DIR}/src/dcc/dcc_application_command_station_main_track_Test.cxx
+    ${ROOT_DIR}/src/dcc/dcc_application_command_station_service_track_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_config_Test.cxx
-    ${ROOT_DIR}/src/dcc/dcc_packet_encoder_Test.cxx
+    ${ROOT_DIR}/src/dcc/dcc_application_command_station_packet_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_bit_encoder_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_scheduler_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_service_mode_common_Test.cxx
@@ -50,6 +55,11 @@ set(TESTS ${TESTS}
     ${ROOT_DIR}/src/dcc/dcc_application_main_track_api_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_application_service_track_api_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_packet_encoder_raw_Test.cxx
+    ${ROOT_DIR}/src/dcc/dcc_service_mode_task_direct_Test.cxx
+    ${ROOT_DIR}/src/dcc/dcc_service_mode_task_paged_Test.cxx
+    ${ROOT_DIR}/src/dcc/dcc_service_mode_task_register_Test.cxx
+    ${ROOT_DIR}/src/dcc/dcc_service_mode_task_address_Test.cxx
+    ${ROOT_DIR}/src/dcc/dcc_service_mode_task_detect_Test.cxx
 
     PARENT_SCOPE
 )

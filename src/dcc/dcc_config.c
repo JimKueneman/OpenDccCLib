@@ -71,6 +71,26 @@
 #include "dcc_service_mode_address.h"
 #endif
 
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
+#include "dcc_service_mode_task_direct.h"
+#endif
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
+#include "dcc_service_mode_task_paged.h"
+#endif
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+#include "dcc_service_mode_task_register.h"
+#endif
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
+#include "dcc_service_mode_task_address.h"
+#endif
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DETECT
+#include "dcc_service_mode_task_detect.h"
+#endif
+
 #ifdef DCC_COMPILE_DECODER
 #include "dcc_bit_decoder.h"
 #include "dcc_packet_decoder.h"
@@ -198,6 +218,31 @@ static dcc_service_mode_address_context_t _service_address_context;
 static interface_dcc_service_mode_address_t _service_address_interface;
 
 #endif /* DCC_COMPILE_SERVICE_MODE_ADDRESS */
+
+/* =========================================================================
+ * Service mode task orchestrators (singletons — interface struct only,
+ * the task module owns its own static context).
+ * ========================================================================= */
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
+static interface_dcc_service_mode_task_direct_t _task_direct_interface;
+#endif
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
+static interface_dcc_service_mode_task_paged_t _task_paged_interface;
+#endif
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+static interface_dcc_service_mode_task_register_t _task_register_interface;
+#endif
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
+static interface_dcc_service_mode_task_address_t _task_address_interface;
+#endif
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DETECT
+static interface_dcc_service_mode_task_detect_t _task_detect_interface;
+#endif
 
 #ifdef DCC_COMPILE_DECODER
 
@@ -493,6 +538,39 @@ static bool _service_address_verify(uint8_t address) {
 
 #endif /* DCC_COMPILE_SERVICE_MODE_ADDRESS */
 
+/* =========================================================================
+ * Service mode task dispatcher
+ *
+ * Every primitive's on_complete slot is wired here. When a primitive finishes
+ * its full operation, this forwards the result to each task orchestrator. Only
+ * the orchestrator that is mid-operation acts on it; the others are IDLE and
+ * treat the call as a no-op. (Just one service track, so at most one task runs.)
+ * The ACK outcome travels inside `result` (SUCCESS = ACK), so no separate ACK
+ * signal is needed.
+ * ========================================================================= */
+
+static void _service_task_primitive_complete(dcc_service_mode_result_t result) {
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
+    DccServiceModeTaskDirect_on_primitive_complete(result);
+#endif
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
+    DccServiceModeTaskPaged_on_primitive_complete(result);
+#endif
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+    DccServiceModeTaskRegister_on_primitive_complete(result);
+#endif
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
+    DccServiceModeTaskAddress_on_primitive_complete(result);
+#endif
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DETECT
+    DccServiceModeTaskDetect_on_primitive_complete(result);
+#endif
+
+    (void)result;
+
+}
+
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
 void DccConfig_initialize(const dcc_config_t *config) {
@@ -633,26 +711,40 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _service_application_interface.exit_service_mode = &_service_exit_service_mode;
     _service_application_interface.is_service_mode_active = &_service_is_service_mode_active;
 
-#ifdef DCC_COMPILE_SERVICE_MODE_DIRECT
-    _service_application_interface.direct_write_byte = &_service_direct_write_byte;
-    _service_application_interface.direct_verify_byte = &_service_direct_verify_byte;
-    _service_application_interface.direct_write_bit = &_service_direct_write_bit;
-    _service_application_interface.direct_verify_bit = &_service_direct_verify_bit;
+    /* Programming surface is the task layer; the façade delegates to the task
+     * singletons. The function pointers match the task public signatures, so they
+     * are assigned directly. */
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
+    _service_application_interface.direct_read_cv = &DccServiceModeTaskDirect_read_cv;
+    _service_application_interface.direct_write_cv = &DccServiceModeTaskDirect_write_cv;
+    _service_application_interface.direct_read_bit = &DccServiceModeTaskDirect_read_bit;
+    _service_application_interface.direct_write_bit = &DccServiceModeTaskDirect_write_bit;
 #endif
 
-#ifdef DCC_COMPILE_SERVICE_MODE_PAGED
-    _service_application_interface.paged_write = &_service_paged_write;
-    _service_application_interface.paged_verify = &_service_paged_verify;
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
+    _service_application_interface.paged_read_cv = &DccServiceModeTaskPaged_read_cv;
+    _service_application_interface.paged_write_cv = &DccServiceModeTaskPaged_write_cv;
+    _service_application_interface.paged_read_bit = &DccServiceModeTaskPaged_read_bit;
+    _service_application_interface.paged_write_bit = &DccServiceModeTaskPaged_write_bit;
 #endif
 
-#ifdef DCC_COMPILE_SERVICE_MODE_REGISTER
-    _service_application_interface.register_write = &_service_register_write;
-    _service_application_interface.register_verify = &_service_register_verify;
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+    _service_application_interface.register_read_cv = &DccServiceModeTaskRegister_read_cv;
+    _service_application_interface.register_write_cv = &DccServiceModeTaskRegister_write_cv;
+    _service_application_interface.register_read_bit = &DccServiceModeTaskRegister_read_bit;
+    _service_application_interface.register_write_bit = &DccServiceModeTaskRegister_write_bit;
+    _service_application_interface.register_factory_reset = &DccServiceModeTaskRegister_factory_reset;
 #endif
 
-#ifdef DCC_COMPILE_SERVICE_MODE_ADDRESS
-    _service_application_interface.address_write = &_service_address_write;
-    _service_application_interface.address_verify = &_service_address_verify;
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
+    _service_application_interface.address_read = &DccServiceModeTaskAddress_read;
+    _service_application_interface.address_write = &DccServiceModeTaskAddress_write;
+    _service_application_interface.address_read_bit = &DccServiceModeTaskAddress_read_bit;
+    _service_application_interface.address_write_bit = &DccServiceModeTaskAddress_write_bit;
+#endif
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DETECT
+    _service_application_interface.detect_mode = &DccServiceModeTaskDetect_detect_mode;
 #endif
 
     DccApplicationCommandStationServiceTrack_initialize(&_service_application_interface);
@@ -664,7 +756,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     /* Wire direct service mode */
     _service_direct_interface.begin_operation = &_service_begin_operation;
     _service_direct_interface.is_common_idle = &_service_is_common_idle;
-    _service_direct_interface.on_complete = config->on_service_mode_result;
+    _service_direct_interface.on_complete = &_service_task_primitive_complete;
 
     DccServiceModeDirect_initialize(&_service_direct_context, &_service_direct_interface);
 
@@ -675,7 +767,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     /* Wire paged service mode */
     _service_paged_interface.begin_operation = &_service_begin_operation;
     _service_paged_interface.is_common_idle = &_service_is_common_idle;
-    _service_paged_interface.on_complete = config->on_service_mode_result;
+    _service_paged_interface.on_complete = &_service_task_primitive_complete;
 
     DccServiceModePaged_initialize(&_service_paged_context, &_service_paged_interface);
 
@@ -686,7 +778,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     /* Wire register service mode */
     _service_register_interface.begin_operation = &_service_begin_operation;
     _service_register_interface.is_common_idle = &_service_is_common_idle;
-    _service_register_interface.on_complete = config->on_service_mode_result;
+    _service_register_interface.on_complete = &_service_task_primitive_complete;
 
     DccServiceModeRegister_initialize(&_service_register_context, &_service_register_interface);
 
@@ -697,11 +789,79 @@ void DccConfig_initialize(const dcc_config_t *config) {
     /* Wire address-only service mode */
     _service_address_interface.begin_operation = &_service_begin_operation;
     _service_address_interface.is_common_idle = &_service_is_common_idle;
-    _service_address_interface.on_complete = config->on_service_mode_result;
+    _service_address_interface.on_complete = &_service_task_primitive_complete;
 
     DccServiceModeAddress_initialize(&_service_address_context, &_service_address_interface);
 
 #endif /* DCC_COMPILE_SERVICE_MODE_ADDRESS */
+
+    /* =================================================================
+     * Service mode task orchestrators
+     *
+     * Each task drives the matching primitive(s) through the same wrapper
+     * functions the application layer used to call directly. is_idle is wired
+     * to the common-idle check; on_start_ack_scan is unused (ACK windowing is
+     * done in the common module) and left NULL.
+     * ================================================================= */
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
+    _task_direct_interface.verify_bit = &_service_direct_verify_bit;
+    _task_direct_interface.verify_byte = &_service_direct_verify_byte;
+    _task_direct_interface.write_byte = &_service_direct_write_byte;
+    _task_direct_interface.write_bit = &_service_direct_write_bit;
+    _task_direct_interface.is_idle = &_service_is_common_idle;
+    _task_direct_interface.on_start_ack_scan = (void *)0;
+
+    DccServiceModeTaskDirect_initialize(&_task_direct_interface);
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_DIRECT */
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
+    _task_paged_interface.paged_verify = &_service_paged_verify;
+    _task_paged_interface.paged_write = &_service_paged_write;
+    _task_paged_interface.is_idle = &_service_is_common_idle;
+    _task_paged_interface.on_start_ack_scan = (void *)0;
+
+    DccServiceModeTaskPaged_initialize(&_task_paged_interface);
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_PAGED */
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+    _task_register_interface.register_verify = &_service_register_verify;
+    _task_register_interface.register_write = &_service_register_write;
+    _task_register_interface.is_idle = &_service_is_common_idle;
+    _task_register_interface.on_start_ack_scan = (void *)0;
+
+    DccServiceModeTaskRegister_initialize(&_task_register_interface);
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_REGISTER */
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
+    _task_address_interface.address_verify = &_service_address_verify;
+    _task_address_interface.address_write = &_service_address_write;
+    _task_address_interface.is_idle = &_service_is_common_idle;
+    _task_address_interface.on_start_ack_scan = (void *)0;
+
+    DccServiceModeTaskAddress_initialize(&_task_address_interface);
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS */
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DETECT
+    /* Detect probes all four modes; it requires the matching primitives to be
+     * compiled in. Unwired probes remain NULL (their stage would never run). */
+    _task_detect_interface.is_idle = &_service_is_common_idle;
+    _task_detect_interface.on_start_ack_scan = (void *)0;
+#ifdef DCC_COMPILE_SERVICE_MODE_DIRECT
+    _task_detect_interface.direct_verify_bit = &_service_direct_verify_bit;
+#endif
+#ifdef DCC_COMPILE_SERVICE_MODE_PAGED
+    _task_detect_interface.paged_verify = &_service_paged_verify;
+#endif
+#ifdef DCC_COMPILE_SERVICE_MODE_REGISTER
+    _task_detect_interface.register_verify = &_service_register_verify;
+#endif
+#ifdef DCC_COMPILE_SERVICE_MODE_ADDRESS
+    _task_detect_interface.address_verify = &_service_address_verify;
+#endif
+
+    DccServiceModeTaskDetect_initialize(&_task_detect_interface);
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_DETECT */
 
 #ifdef DCC_COMPILE_DECODER
 

@@ -9,40 +9,6 @@
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
-void CallbacksDcc_on_service_mode_result(dcc_service_mode_result_t result) {
-
-    switch (result) {
-
-        case DCC_SERVICE_MODE_SUCCESS:
-            TI_UartDriver_write_string("SVC RESULT: SUCCESS\r\n");
-            break;
-
-        case DCC_SERVICE_MODE_NO_ACK:
-            TI_UartDriver_write_string("SVC RESULT: NO ACK\r\n");
-            break;
-
-        case DCC_SERVICE_MODE_VERIFY_FAIL:
-            TI_UartDriver_write_string("SVC RESULT: VERIFY FAIL\r\n");
-            break;
-
-        case DCC_SERVICE_MODE_BUSY:
-            TI_UartDriver_write_string("SVC RESULT: BUSY\r\n");
-            break;
-
-        case DCC_SERVICE_MODE_ERROR:
-            TI_UartDriver_write_string("SVC RESULT: ERROR\r\n");
-            break;
-
-        case DCC_SERVICE_MODE_NOT_IN_SERVICE_MODE:
-            TI_UartDriver_write_string("SVC RESULT: NOT IN SERVICE MODE\r\n");
-            break;
-
-        default:
-            TI_UartDriver_write_string("SVC RESULT: UNKNOWN\r\n");
-            break;
-    }
-}
-
 // Test trigger state. When armed, the next NON-idle packet raises PB3 once so a
 // logic analyzer can hardware-trigger on the exact packet under test.
 static volatile bool _test_trigger_armed = false;

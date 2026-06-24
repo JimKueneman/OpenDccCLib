@@ -1994,3 +1994,172 @@ TEST(DccServiceModeCommon, write_custom_recovery_count) {
     EXPECT_EQ(step_result, DCC_SERVICE_MODE_SUCCESS);
 
 }
+
+// ============================================================================
+// ACK pulse-width window boundary tests (S-9.2.3 §D: 6 ms +/- 1 ms)
+//
+// The width counter accepts a high run as an ACK only when, on the falling
+// edge, the run length is in [ACK_MIN_SAMPLES, ACK_MAX_SAMPLES] (inclusive) and
+// not flagged as over-current. These constants mirror the formulas in
+// dcc_service_mode_common.c so the tests track the configured window.
+// ============================================================================
+
+static const uint16_t ACK_MIN_SAMPLES =
+    (uint16_t)((USER_DEFINED_DCC_ACK_MIN_DURATION_US / DCC_ONE_BIT_HALF_PERIOD_US) - 1);
+static const uint16_t ACK_MAX_SAMPLES =
+    (uint16_t)(USER_DEFINED_DCC_ACK_MAX_DURATION_US / DCC_ONE_BIT_HALF_PERIOD_US);
+
+static interface_dcc_service_mode_common_t _bm_interface;
+static dcc_packet_t _bm_packet;
+
+// Drive the state machine to COMMAND state with the first command packet sent,
+// so subsequent ack_sample() calls are evaluated. ACK counters are reset to 0
+// on the RESET_PRE -> COMMAND transition.
+static void reach_command_first_packet(void) {
+
+    reset_mocks();
+    reset_step_callback();
+    _bm_interface = make_interface();
+    DccServiceModeCommon_initialize(&test_context, &_bm_interface);
+    DccServiceModeCommon_enter(&test_context);
+
+    _bm_packet = make_command_packet();
+    DccServiceModeCommon_begin_operation(&test_context, &_bm_packet, mock_step_callback, false, 0);
+
+    uint8_t packet_index;
+    for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_PRE_COUNT; packet_index++) {
+
+        DccServiceModeCommon_run(&test_context);
+
+    }
+
+    DccServiceModeCommon_run(&test_context);  /* RESET_PRE -> COMMAND */
+    DccServiceModeCommon_run(&test_context);  /* first command packet */
+
+}
+
+// Feed n consecutive above-threshold samples (no falling edge).
+static void feed_high(uint16_t n) {
+
+    uint16_t i;
+    for (i = 0; i < n; i++) {
+
+        DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+
+    }
+
+}
+
+// Feed one below-threshold sample (the falling edge that closes a run).
+static void feed_low(void) {
+
+    DccServiceModeCommon_ack_sample(&test_context, 0);
+
+}
+
+TEST(DccServiceModeCommon, ack_window_min_minus_one_not_detected) {
+
+    reach_command_first_packet();
+    feed_high((uint16_t)(ACK_MIN_SAMPLES - 1));
+    feed_low();
+
+    EXPECT_FALSE(test_context.ack_detected);
+
+}
+
+TEST(DccServiceModeCommon, ack_window_exactly_min_detected) {
+
+    reach_command_first_packet();
+    feed_high(ACK_MIN_SAMPLES);
+    feed_low();
+
+    EXPECT_TRUE(test_context.ack_detected);
+
+}
+
+TEST(DccServiceModeCommon, ack_window_exactly_max_detected) {
+
+    reach_command_first_packet();
+    feed_high(ACK_MAX_SAMPLES);
+    feed_low();
+
+    EXPECT_TRUE(test_context.ack_detected);
+
+}
+
+TEST(DccServiceModeCommon, ack_window_max_plus_one_overrun_not_detected) {
+
+    reach_command_first_packet();
+    feed_high((uint16_t)(ACK_MAX_SAMPLES + 1));
+    feed_low();
+
+    EXPECT_FALSE(test_context.ack_detected);
+
+}
+
+TEST(DccServiceModeCommon, ack_window_sustained_overcurrent_not_detected) {
+
+    reach_command_first_packet();
+    feed_high((uint16_t)(ACK_MAX_SAMPLES * 2));
+    feed_low();
+
+    EXPECT_FALSE(test_context.ack_detected);
+
+}
+
+TEST(DccServiceModeCommon, ack_window_high_run_without_falling_edge_not_detected) {
+
+    reach_command_first_packet();
+    feed_high((uint16_t)(ACK_MIN_SAMPLES + 5));
+    /* No falling edge — detection only happens when the run ends. */
+
+    EXPECT_FALSE(test_context.ack_detected);
+
+}
+
+TEST(DccServiceModeCommon, ack_window_multiple_short_blips_not_detected) {
+
+    reach_command_first_packet();
+
+    uint8_t blip;
+    for (blip = 0; blip < 3; blip++) {
+
+        feed_high((uint16_t)(ACK_MIN_SAMPLES - 20));
+        feed_low();
+
+    }
+
+    EXPECT_FALSE(test_context.ack_detected);
+
+}
+
+TEST(DccServiceModeCommon, ack_window_short_blip_then_valid_run_detected) {
+
+    reach_command_first_packet();
+
+    /* A too-short blip must reset the run counter so a following valid run
+     * is still recognized. */
+    feed_high((uint16_t)(ACK_MIN_SAMPLES - 20));
+    feed_low();
+    feed_high(ACK_MIN_SAMPLES);
+    feed_low();
+
+    EXPECT_TRUE(test_context.ack_detected);
+
+}
+
+TEST(DccServiceModeCommon, ack_window_detection_is_idempotent) {
+
+    reach_command_first_packet();
+
+    feed_high(ACK_MIN_SAMPLES);
+    feed_low();
+    EXPECT_TRUE(test_context.ack_detected);
+
+    /* Once latched, further samples (even an over-current run) are ignored and
+     * the result stays detected. */
+    feed_high((uint16_t)(ACK_MAX_SAMPLES * 2));
+    feed_low();
+    EXPECT_TRUE(test_context.ack_detected);
+
+}
