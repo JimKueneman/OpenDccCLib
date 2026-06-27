@@ -1,0 +1,19 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "CCS Debug",
+            "type": "ccs-debug",
+            "request": "launch"
+        },
+        {
+            "name": "saleae_hil_compliance",
+            "type": "ccs-debug",
+            "request": "launch",
+            "projectInfo": {
+                "name": "saleae_hil_compliance",
+                "resourceId": "/saleae_hil_compliance"
+            }
+        }
+    ]
+}

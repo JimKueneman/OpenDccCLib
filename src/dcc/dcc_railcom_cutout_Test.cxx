@@ -225,6 +225,35 @@ TEST(DccRailcomCutout, per_state_timer_periods_are_correct) {
 
 }
 
+// @compliance DCC-S9.3.2-CS-003
+TEST(DccRailcomCutout, cutout_window_duration_T_CE_minus_T_CS) {
+
+    /* The cutout window T_CE - T_CS is the SUM of the SETTLING + CH1 + GAP + CH2
+     * periods (DELAY expires at T_CS; CH2 expiry is T_CE). Assert the derived window
+     * equals the per-state defaults and sits inside the S-9.3.2 422-462 us band. */
+    reset_mocks();
+    dcc_railcom_cutout_context_t context;
+    interface_dcc_railcom_cutout_t interface = make_interface();
+    init_with_defaults(&context, &interface);
+
+    DccRailcomCutout_begin(&context);            /* load DELAY; T_CS = its expiry */
+    uint32_t window = 0;
+    DccRailcomCutout_timer_isr(&context);        /* DELAY expiry -> SETTLING loaded */
+    window += last_timer_period;
+    DccRailcomCutout_timer_isr(&context);        /* -> CH1 */
+    window += last_timer_period;
+    DccRailcomCutout_timer_isr(&context);        /* -> GAP */
+    window += last_timer_period;
+    DccRailcomCutout_timer_isr(&context);        /* -> CH2 (CH2 expiry would be T_CE) */
+    window += last_timer_period;
+
+    EXPECT_EQ(window, (uint32_t)(DCC_RAILCOM_UART_RX_DELAY_US + DCC_RAILCOM_CH1_WINDOW_US
+                                 + DCC_RAILCOM_CH1_CH2_GAP_US + DCC_RAILCOM_CH2_WINDOW_US));
+    EXPECT_GE(window, 422u);
+    EXPECT_LE(window, 462u);
+
+}
+
 // ============================================================================
 // Full sequence: IDLE -> DELAY -> SETTLING -> CH1 -> GAP -> CH2 -> IDLE
 // ============================================================================

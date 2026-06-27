@@ -973,6 +973,52 @@ TEST(DccPacketDecoder, basic_accessory) {
 
 }
 
+// @compliance DCC-S9.2.2-DEC-006
+TEST(DccPacketDecoder, accessory_cvs_513_521_541_combine_into_address) {
+
+    /* Accessory address is built from CV513 (low 6 bits) + CV521 (high 3 bits), with
+     * CV541 selecting basic vs extended. Existing tests use address 1-2 (CV521=0);
+     * board 200 exercises BOTH bytes: CV513 low6 = 8, CV521 high3 = 3. */
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 200, false);   /* basic */
+
+    /* Basic accessory packet for board 200: low6=8 -> byte0 0x88; high3=3 inverted=4,
+     * D=1 (activate), pair=0 -> byte1 0xC8. */
+    uint8_t data2[] = {0x88, 0xC8, 0x00};
+    data2[2] = xor_bytes(data2, 2);
+    DccPacketDecoder_process_packet(data2, 3);
+
+    EXPECT_EQ(acc_basic_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_acc_board_address, (uint16_t)200);        /* CV513 + CV521 combined */
+}
+
+// @compliance DCC-S9.2.2-DEC-004
+TEST(DccPacketDecoder, cv29_direction_bit_reverses_reported_direction) {
+
+    /* CV29 bit 0 (direction) inverts the decoded travel direction. With the bit clear a
+     * "forward" packet reports forward; with it set, the same packet reports reverse. */
+    interface_dcc_packet_decoder_t interface = make_interface();
+
+    reset_mocks();
+    set_decoder_short_address(&interface, 3);   /* CV29 = SPEED_STEPS only (dir bit clear) */
+    uint8_t fwd[] = {0x03, 0x3F, (uint8_t)(0x80 | 50), 0x00};
+    fwd[3] = xor_bytes(fwd, 3);
+    DccPacketDecoder_process_packet(fwd, 4);
+    EXPECT_EQ(speed_callback_count, (uint32_t)1);
+    EXPECT_TRUE(last_speed_direction);          /* forward */
+
+    reset_mocks();
+    set_decoder_short_address(&interface, 3);
+    mock_cv_values[DCC_CV_CONFIG - 1] |= DCC_CV29_DIRECTION_BIT;
+    DccPacketDecoder_initialize(&interface);    /* re-read CV29 with direction bit set */
+    uint8_t fwd2[] = {0x03, 0x3F, (uint8_t)(0x80 | 50), 0x00};
+    fwd2[3] = xor_bytes(fwd2, 3);
+    DccPacketDecoder_process_packet(fwd2, 4);
+    EXPECT_EQ(speed_callback_count, (uint32_t)1);
+    EXPECT_FALSE(last_speed_direction);         /* reversed by CV29 bit 0 */
+}
+
 // ============================================================================
 // Extended accessory
 // ============================================================================

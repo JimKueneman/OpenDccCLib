@@ -1,0 +1,157 @@
+/**
+ * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
+ * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
+ * @cliArgs --device "MSPM0G350X" --part "Default" --package "LQFP-64(PM)" --product "mspm0_sdk@2.07.00.06"
+ * @v2CliArgs --device "MSPM0G3507" --package "LQFP-64(PM)" --product "mspm0_sdk@2.07.00.06"
+ * @versions {"tool":"1.25.0+4268"}
+ */
+
+/**
+ * Import the modules used in this configuration.
+ */
+const GPIO    = scripting.addModule("/ti/driverlib/GPIO", {}, false);
+const GPIO1   = GPIO.addInstance();
+const GPIO2   = GPIO.addInstance();
+const GPIO3   = GPIO.addInstance();
+const GPIO4   = GPIO.addInstance();
+const SYSCTL  = scripting.addModule("/ti/driverlib/SYSCTL");
+const SYSTICK = scripting.addModule("/ti/driverlib/SYSTICK");
+const TIMER   = scripting.addModule("/ti/driverlib/TIMER", {}, false);
+const TIMER1  = TIMER.addInstance();
+const TIMER2  = TIMER.addInstance();
+const UART    = scripting.addModule("/ti/driverlib/UART", {}, false);
+const UART1   = UART.addInstance();
+
+/**
+ * Write custom configuration values to the imported modules.
+ */
+const divider4       = system.clockTree["PLL_CLK0_DIV"];
+divider4.divideValue = 6;
+
+const divider9       = system.clockTree["UDIV"];
+divider9.divideValue = 2;
+
+const mux4       = system.clockTree["EXHFMUX"];
+mux4.inputSelect = "EXHFMUX_XTAL";
+
+const mux8       = system.clockTree["HSCLKMUX"];
+mux8.inputSelect = "HSCLKMUX_HFCLK";
+
+const mux12       = system.clockTree["SYSPLLMUX"];
+mux12.inputSelect = "zSYSPLLMUX_HFCLK";
+
+const pinFunction4        = system.clockTree["HFXT"];
+pinFunction4.HFXTStartup  = 10;
+pinFunction4.enable       = true;
+pinFunction4.inputFreq    = 40;
+pinFunction4.HFCLKMonitor = true;
+
+GPIO1.$name                         = "GPIO_LEDS";
+GPIO1.port                          = "PORTB";
+GPIO1.associatedPins.create(3);
+GPIO1.associatedPins[0].$name       = "USER_LED_1";
+GPIO1.associatedPins[0].assignedPin = "22";
+GPIO1.associatedPins[1].$name       = "USER_LED_2";
+GPIO1.associatedPins[1].assignedPin = "26";
+GPIO1.associatedPins[2].$name       = "USER_LED_3";
+GPIO1.associatedPins[2].assignedPin = "27";
+
+const Board = scripting.addModule("/ti/driverlib/Board", {}, false);
+
+GPIO2.$name                         = "GPIO_ACK_SENSE";
+GPIO2.port                          = "PORTB";
+GPIO2.associatedPins[0].$name       = "ACK_IN";
+GPIO2.associatedPins[0].direction   = "INPUT";
+GPIO2.associatedPins[0].assignedPin = "12";
+
+GPIO3.port                          = "PORTA";
+GPIO3.$name                         = "GPIO_ISR_TIME";
+GPIO3.associatedPins[0].$name       = "ISR_TIME";
+GPIO3.associatedPins[0].assignedPin = "15";
+
+GPIO4.$name                          = "GPIO_GRP_SALEAE";
+GPIO4.associatedPins.create(7);
+GPIO4.associatedPins[0].$name        = "MAIN_DCC";
+GPIO4.associatedPins[0].assignedPort = "PORTB";
+GPIO4.associatedPins[0].assignedPin  = "1";
+GPIO4.associatedPins[1].$name        = "SERVICE_MODE_DCC";
+GPIO4.associatedPins[1].assignedPin  = "4";
+GPIO4.associatedPins[1].assignedPort = "PORTB";
+GPIO4.associatedPins[2].$name        = "RAILCOM_CUTOUT";
+GPIO4.associatedPins[2].assignedPort = "PORTB";
+GPIO4.associatedPins[2].assignedPin  = "2";
+GPIO4.associatedPins[3].assignedPin  = "3";
+GPIO4.associatedPins[3].assignedPort = "PORTB";
+GPIO4.associatedPins[3].$name        = "PACKET_LOAD";
+GPIO4.associatedPins[4].$name        = "MOCK_ACK";
+GPIO4.associatedPins[4].direction    = "INPUT";
+GPIO4.associatedPins[4].assignedPort = "PORTB";
+GPIO4.associatedPins[4].assignedPin  = "9";
+GPIO4.associatedPins[5].$name        = "MOCK_ACK_DRIVE";
+GPIO4.associatedPins[5].assignedPin  = "24";
+GPIO4.associatedPins[6].$name        = "RAILCOM_RX_WINDOW";
+GPIO4.associatedPins[6].assignedPort = "PORTB";
+GPIO4.associatedPins[6].assignedPin  = "18";
+
+SYSCTL.clockTreeEn = true;
+
+SYSTICK.periodEnable    = true;
+SYSTICK.interruptEnable = true;
+SYSTICK.systickEnable   = true;
+SYSTICK.period          = 4000000;
+
+TIMER1.$name              = "DCC_BIT_TIMER";
+TIMER1.timerClkPrescale   = 40;
+TIMER1.timerPeriod        = "58 us";
+TIMER1.timerMode          = "PERIODIC";
+TIMER1.interrupts         = ["ZERO"];
+TIMER1.interruptPriority  = "0";
+TIMER1.peripheral.$assign = "TIMA1";
+
+TIMER2.timerClkPrescale   = 40;
+TIMER2.$name              = "RAILCOM_TIMER";
+TIMER2.interrupts         = ["ZERO"];
+TIMER2.timerPeriod        = "88 us";
+TIMER2.interruptPriority  = "0";
+TIMER2.peripheral.$assign = "TIMA0";
+
+UART1.$name                            = "UART_CMD";
+UART1.targetBaudRate                   = 230400;
+UART1.enabledInterrupts                = ["RX"];
+UART1.interruptPriority                = "2";
+UART1.peripheral.rxPin.$assign         = "PA11";
+UART1.peripheral.txPin.$assign         = "PA10";
+UART1.txPinConfig.$name                = "ti_driverlib_gpio_GPIOPinGeneric0";
+UART1.txPinConfig.direction            = scripting.forceWrite("OUTPUT");
+UART1.txPinConfig.hideOutputInversion  = scripting.forceWrite(false);
+UART1.txPinConfig.onlyInternalResistor = scripting.forceWrite(false);
+UART1.txPinConfig.passedPeripheralType = scripting.forceWrite("Digital");
+UART1.rxPinConfig.$name                = "ti_driverlib_gpio_GPIOPinGeneric1";
+UART1.rxPinConfig.hideOutputInversion  = scripting.forceWrite(false);
+UART1.rxPinConfig.onlyInternalResistor = scripting.forceWrite(false);
+UART1.rxPinConfig.passedPeripheralType = scripting.forceWrite("Digital");
+
+/**
+ * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future
+ * version of the tool will not impact the pinmux you originally saw.  These lines can be completely deleted in order to
+ * re-solve from scratch.
+ */
+pinFunction4.peripheral.$suggestSolution           = "SYSCTL";
+pinFunction4.peripheral.hfxInPin.$suggestSolution  = "PA5";
+pinFunction4.peripheral.hfxOutPin.$suggestSolution = "PA6";
+GPIO1.associatedPins[0].pin.$suggestSolution       = "PB22";
+GPIO1.associatedPins[1].pin.$suggestSolution       = "PB26";
+GPIO1.associatedPins[2].pin.$suggestSolution       = "PB27";
+Board.peripheral.$suggestSolution                  = "DEBUGSS";
+Board.peripheral.swclkPin.$suggestSolution         = "PA20";
+Board.peripheral.swdioPin.$suggestSolution         = "PA19";
+GPIO2.associatedPins[0].pin.$suggestSolution       = "PB12";
+GPIO3.associatedPins[0].pin.$suggestSolution       = "PA15";
+GPIO4.associatedPins[0].pin.$suggestSolution       = "PB1";
+GPIO4.associatedPins[1].pin.$suggestSolution       = "PB4";
+GPIO4.associatedPins[2].pin.$suggestSolution       = "PB2";
+GPIO4.associatedPins[3].pin.$suggestSolution       = "PB3";
+GPIO4.associatedPins[4].pin.$suggestSolution       = "PB9";
+GPIO4.associatedPins[5].pin.$suggestSolution       = "PB24";
+GPIO4.associatedPins[6].pin.$suggestSolution       = "PB18";
+UART1.peripheral.$suggestSolution                  = "UART0";

@@ -12,7 +12,7 @@ tells you which one is authoritative for what.
 | Document | Purpose |
 |---|---|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | **As-built** design: modules, feature flags, interface-struct DI, execution contexts, scheduler/bit-encoder. The source of truth for how the library is structured today. |
-| [ComplianceMatrix.md](compliance/ComplianceMatrix.md) | **Single source of truth for status:** snapshot, per-feature NMRA spec (released + draft) → implementation → test-coverage tables, the backlog (released-vs-draft tagged), known defects, and recently resolved. |
+| [ComplianceOverview.md](compliance/ComplianceOverview.md) | **Compliance narrative & design memory:** snapshot, per-feature NMRA spec (released + draft) → implementation summary, the backlog (released-vs-draft tagged), known defects, recently resolved, plus the service-mode and RailCom design appendices. *Machine-checked per-feature status lives in `compliance/compliance.data.js`, rendered by `index.html` — that is the status source of truth.* |
 | [PDF_Regeneration_Guide.md](PDF_Regeneration_Guide.md) | How to regenerate the guide/brochure PDFs and what to pull from the current source so a rebuild stays accurate. |
 
 ## Reference material (stable, external truth)
@@ -38,8 +38,8 @@ tells you which one is authoritative for what.
 | Document | Purpose |
 |---|---|
 | [archive/OpenDccCLib_Requirements.md](archive/OpenDccCLib_Requirements.md) | Original design intent / requirements. Superseded by [ARCHITECTURE.md](ARCHITECTURE.md); module and API names here predate the role-first refactor. |
-| [archive/application_api_refactor.md](archive/application_api_refactor.md) | The 10-phase application-API refactor plan, now largely executed. Kept as the record of what shipped. Any still-pending items live in [ComplianceMatrix.md](compliance/ComplianceMatrix.md). |
-| [archive/compliance_deviation_fixes.md](archive/compliance_deviation_fixes.md) | Executed plan for the six "implemented but wrong" deviation fixes (cutout timing, SRQ, ACK, datagram IDs, speed-restriction removal, double-buffer doc). The deferred decoder-RailCom-Tx follow-on lives in [ComplianceMatrix.md](compliance/ComplianceMatrix.md). |
+| [archive/application_api_refactor.md](archive/application_api_refactor.md) | The 10-phase application-API refactor plan, now largely executed. Kept as the record of what shipped. Any still-pending items live in [ComplianceOverview.md](compliance/ComplianceOverview.md). |
+| [archive/compliance_deviation_fixes.md](archive/compliance_deviation_fixes.md) | Executed plan for the six "implemented but wrong" deviation fixes (cutout timing, SRQ, ACK, datagram IDs, speed-restriction removal, double-buffer doc). The deferred decoder-RailCom-Tx follow-on lives in [ComplianceOverview.md](compliance/ComplianceOverview.md). |
 
 ## Guides & generated artifacts
 
@@ -56,5 +56,5 @@ regenerated locally as needed.
 
 Narrative documentation lives as Markdown in this folder. Structural facts have a
 single source of truth in [ARCHITECTURE.md](ARCHITECTURE.md) and
-[ComplianceMatrix.md](compliance/ComplianceMatrix.md) — link to them rather than restating module names, struct
+[ComplianceOverview.md](compliance/ComplianceOverview.md) — link to them rather than restating module names, struct
 fields, or timing values.

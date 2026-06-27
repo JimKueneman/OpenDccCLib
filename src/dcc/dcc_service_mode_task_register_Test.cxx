@@ -362,6 +362,34 @@ TEST(DccServiceModeTaskRegister, read_cv_ack_on_value_42_returns_42) {
 
 }
 
+// @compliance DCC-S9.2.3-CS-024
+TEST(DccServiceModeTaskRegister, write_then_read_back_held_value_round_trip) {
+
+    /* End-to-end held-value round trip: write_cv(V) puts V on the wire, then read_cv
+     * reads it back. The read scan is ACKed at exactly the value the write emitted
+     * (last_register_write_value), so a returned value == written value proves the
+     * full write -> read-back path agrees, not just per-step logic. */
+    setup();
+    const uint8_t HELD = 0x5A;
+
+    DccServiceModeTaskRegister_write_cv(1, HELD, DCC_DECODER_TYPE_MOBILE, mock_on_complete, mock_on_progress);
+    step_no_ack();   /* register_write done -> issues the verify(HELD) */
+    step_ack();      /* verify ACKs -> write SUCCESS */
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_SUCCESS);
+    EXPECT_EQ(last_register_write_value, (uint8_t)HELD);
+
+    DccServiceModeTaskRegister_read_cv(1, DCC_DECODER_TYPE_MOBILE, mock_on_complete, mock_on_progress);
+    int guard = 0;
+    while (last_register_verify_value != last_register_write_value && guard++ < 300) {
+        step_no_ack();
+    }
+    step_ack();      /* ACK at the written value */
+    EXPECT_EQ(on_complete_count, (uint32_t)2);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_SUCCESS);
+    EXPECT_EQ(on_complete_value, (uint8_t)HELD);   /* read back exactly what was written */
+
+}
+
 TEST(DccServiceModeTaskRegister, read_cv_all_256_no_ack_returns_error) {
 
     setup();

@@ -18,18 +18,24 @@
 
 static bool cutout_begin_called = false;
 static bool packet_complete_called = false;
+static uint32_t cutout_begin_count = 0;
+static uint32_t packet_complete_count = 0;
 
 static void mock_railcom_cutout_begin(void) {
     cutout_begin_called = true;
+    cutout_begin_count++;
 }
 
 static void mock_on_packet_complete(void) {
     packet_complete_called = true;
+    packet_complete_count++;
 }
 
 static void reset_mocks(void) {
     cutout_begin_called = false;
     packet_complete_called = false;
+    cutout_begin_count = 0;
+    packet_complete_count = 0;
 }
 
 // ============================================================================
@@ -121,6 +127,33 @@ TEST(DccBitEncoder, tick_idle_toggles_every_tick) {
     pump_tick_isr(&context, 10);
 
     EXPECT_EQ(toggle_call_count, (uint32_t)10);
+
+}
+
+// @compliance DCC-S9.3.2-CS-004
+TEST(DccBitEncoder, one_cutout_begin_per_packet) {
+
+    /* The cutout is armed exactly once per packet, at each packet's end bit
+     * (S-9.3.2 §3.1). Transmit several packets and assert the cutout-begin count
+     * equals the packet-complete count -- the per-packet count invariant. */
+    reset_tick_mocks();
+    dcc_bit_encoder_context_t context;
+    interface_dcc_bit_encoder_t interface = make_tick_interface(true);   /* RailCom wired */
+    DccBitEncoder_initialize(&context, &interface);
+    DccBitEncoder_start(&context);
+
+    dcc_packet_t pkt;
+    DccApplicationCommandStationPacket_load_idle(&pkt);
+
+    const uint32_t N = 4;
+    for (uint32_t i = 0; i < N; i++) {
+        DccBitEncoder_load_packet(&context, &pkt);
+        pump_tick_isr(&context, 400);                  /* transmit one packet to completion */
+        EXPECT_TRUE(DccBitEncoder_is_idle(&context));  /* packet finished before next load */
+    }
+
+    EXPECT_EQ(packet_complete_count, N);                  /* N packets transmitted */
+    EXPECT_EQ(cutout_begin_count, packet_complete_count); /* exactly one cutout per packet */
 
 }
 

@@ -299,7 +299,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "ONE half-bit 55-61 us",
-                "file": "s9_1_compliance.py",
+                "file": "command_station/s9_1_compliance.py",
                 "desc": "Measures every captured one-bit half-period on the wire is within 55–61 µs (nominal 58)."
               }
             ]
@@ -352,12 +352,12 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "ZERO half-bit >= 95 us",
-                "file": "s9_1_compliance.py",
+                "file": "command_station/s9_1_compliance.py",
                 "desc": "Measures every captured zero-bit half-period is ≥95 µs."
               },
               {
                 "label": "ZERO total bit <= 12000 us",
-                "file": "s9_1_compliance.py",
+                "file": "command_station/s9_1_compliance.py",
                 "desc": "Sums each zero-bit's two halves and checks the total ≤12000 µs (stretched-zero limit)."
               }
             ]
@@ -409,7 +409,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "preamble >= 14 ones (CS transmit)",
-                "file": "s9_1_compliance.py",
+                "file": "command_station/s9_1_compliance.py",
                 "desc": "Counts the preamble run per packet and checks the minimum is ≥14 ones (idle-inflated first packet excluded)."
               }
             ]
@@ -448,7 +448,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "intra-bit symmetry <= 3 us",
-                "file": "s9_1_compliance.py",
+                "file": "command_station/s9_1_compliance.py",
                 "desc": "Checks each bit's two captured halves differ by ≤3 µs."
               }
             ]
@@ -487,7 +487,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "signal voltage levels (>=8.5 V out)",
-                "file": "s9_1_compliance.py",
+                "file": "command_station/s9_1_compliance.py",
                 "desc": "Declared n/a (rep.na) — not measurable on a digital logic analyzer; needs a scope/meter."
               }
             ]
@@ -1965,7 +1965,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "idle packet = FF 00 FF",
-                "file": "s9_2_compliance.py",
+                "file": "command_station/s9_2_compliance.py",
                 "desc": "Confirms a decoded packet equals FF 00 FF on the wire"
               }
             ]
@@ -2054,7 +2054,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "reset packet = 00 00 00",
-                "file": "s9_2_compliance.py",
+                "file": "command_station/s9_2_compliance.py",
                 "desc": "Driven RESET yields 00 00 00 on the wire"
               }
             ]
@@ -2142,7 +2142,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "broadcast stop = baseline 01DC000S (emergency S=1)",
-                "file": "s9_2_compliance.py",
+                "file": "command_station/s9_2_compliance.py",
                 "desc": "Driven ESTOP yields 00 51 51"
               }
             ]
@@ -2189,7 +2189,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "broadcast controlled stop = baseline 01DC000S (S=0)",
-                "file": "s9_2_compliance.py",
+                "file": "command_station/s9_2_compliance.py",
                 "desc": "Driven STOP yields 00 50 50"
               }
             ]
@@ -2277,7 +2277,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "packet structure (addr + data* + error byte)",
-                "file": "s9_2_compliance.py",
+                "file": "command_station/s9_2_compliance.py",
                 "desc": "Decoded packets have address + data + error byte structure"
               }
             ]
@@ -2324,7 +2324,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "error-detection byte = XOR of preceding bytes",
-                "file": "s9_2_compliance.py",
+                "file": "command_station/s9_2_compliance.py",
                 "desc": "Every decoded packet XORs to zero"
               }
             ]
@@ -2461,7 +2461,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "refresh: a packet at least every 30 ms",
-                "file": "s9_2_compliance.py",
+                "file": "command_station/s9_2_compliance.py",
                 "desc": "Measures max packet start-to-start gap stays <= 30 ms"
               }
             ]
@@ -2519,7 +2519,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "single short loco 115: idle spacer + >=5 ms same-address gap (control: addr 100 back-to-back)",
-                "file": "s9_2_compliance.py",
+                "file": "command_station/s9_2_compliance.py",
                 "desc": "Drives a single short loco at 115 and captures the wire; asserts the idle spacer is present (no two 115 packets adjacent) and same-address start-to-start >= 5 ms. Control addr 100 (<112) is sent back-to-back."
               }
             ]
@@ -2608,7 +2608,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "128-step speed 64 fwd",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte wire check of 128-step speed"
               }
             ]
@@ -2698,7 +2698,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "28-step speed 11 fwd (c-bit odd)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check of 28-step"
               }
             ]
@@ -2786,7 +2786,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "14-step max (SSSS=15, FL on)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check of 14-step + FL"
               }
             ]
@@ -2874,7 +2874,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "func group 1: FL on",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check of group 1"
               }
             ]
@@ -2962,7 +2962,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "func group 2: F5 on (1011)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check of group 2a"
               }
             ]
@@ -3050,7 +3050,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "func group 2: F9 on (1010)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check of group 2b"
               }
             ]
@@ -3144,12 +3144,12 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "F13-F20 expansion (11011110)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check"
               },
               {
                 "label": "F61-F68 expansion (11011100)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check of high group"
               }
             ]
@@ -3249,12 +3249,12 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "accessory basic (inverted high addr bits)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check"
               },
               {
                 "label": "accessory basic board 511 (9-bit max)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "9-bit max boundary"
               }
             ]
@@ -3351,12 +3351,12 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "accessory extended (inverted high addr bits)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check"
               },
               {
                 "label": "accessory extended board 511 (9-bit max)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "9-bit max boundary"
               }
             ]
@@ -3448,7 +3448,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "basic accessory deactivate/stop byte (D=0)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "ACC OFF wire bytes equal the independent accessory_basic(activate=False) encoder."
               }
             ]
@@ -3497,7 +3497,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "extended accessory all-stop (aspect 0)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "ACCE 0 wire bytes equal accessory_extended(aspect=0)."
               }
             ]
@@ -3549,12 +3549,12 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "accessory NOP basic (0AAA1AAT, T=0)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check of NOP basic"
               },
               {
                 "label": "accessory NOP extended (T=1)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check of NOP extended"
               }
             ]
@@ -3603,7 +3603,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "CV-POM write CV1=8 (1110 11)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check of POM write"
               }
             ]
@@ -3652,7 +3652,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "CV-POM verify CV1=8 (1110 01)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check of POM verify"
               }
             ]
@@ -3701,7 +3701,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "CV-POM bit-manipulation packet (1110 10)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "CV BIT wire bytes equal cv_bit_pom()."
               }
             ]
@@ -3758,7 +3758,7 @@ window.COMPLIANCE =
         {
           "tid": "DCC-S9.2.1-ACC-001",
           "feature": "Encode basic accessory CV access",
-          "role": "acc",
+          "role": "cs",
           "ref": {
             "spec": "S-9.2.1",
             "cite": "Section 2.4 (Basic Accessory CV Access)",
@@ -3796,7 +3796,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "basic accessory CV write/verify/bit",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "ACC CV wire bytes equal accessory_basic_cv()."
               }
             ]
@@ -3805,7 +3805,7 @@ window.COMPLIANCE =
         {
           "tid": "DCC-S9.2.1-ACC-002",
           "feature": "Encode extended accessory CV access",
-          "role": "acc",
+          "role": "cs",
           "ref": {
             "spec": "S-9.2.1",
             "cite": "Section 2.4.2 (Extended Accessory CV Access)",
@@ -3843,7 +3843,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "extended accessory CV write/verify/bit",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "ACCE CV wire bytes equal accessory_extended_cv()."
               }
             ]
@@ -3929,7 +3929,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "consist set addr 5 normal",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check of consist set"
               }
             ]
@@ -3978,7 +3978,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "consist clear (set consist addr 0)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "CONSIST CLEAR wire bytes equal consist_clear()."
               }
             ]
@@ -4070,12 +4070,12 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "binary state short (11011101)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check"
               },
               {
                 "label": "binary state NOT auto-refreshed",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "verifies no auto-refresh of binary state"
               }
             ]
@@ -4167,7 +4167,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "binary state long opcode 0xC0 + state bytes",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "BSL wire bytes equal the independent binary_state_long() encoder (0xC0 long-form opcode)."
               }
             ]
@@ -4259,7 +4259,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "analog function (00111101)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check"
               }
             ]
@@ -4354,7 +4354,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "system time ms=65535 (FF FF, 16-bit max)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte boundary check"
               }
             ]
@@ -4401,7 +4401,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "model time 14:30 Wed accel 8",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check of model time"
               }
             ]
@@ -4448,7 +4448,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "model date max fields (12-bit year)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte boundary check"
               }
             ]
@@ -4495,12 +4495,12 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "long address (11AAAAAA AAAAAAAA)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte wire check of long address"
               },
               {
                 "label": "short address max (7F)",
-                "file": "s9_2_1_compliance.py",
+                "file": "command_station/s9_2_1_compliance.py",
                 "desc": "boundary check of short-address max"
               }
             ]
@@ -4832,7 +4832,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "gtest": {
-            "state": "no",
+            "state": "ok",
             "note": ""
           },
           "hil": {
@@ -4841,7 +4841,7 @@ window.COMPLIANCE =
           },
           "detail": {
             "impl": "_update_address_cv_cache caches direction/speed-step/extended-address from CV29; other bits are ignored. Only bits 0/1/5 acted on; bits 2 (analog), 3 (RailCom), 4 (speed table) not acted on.",
-            "gtest": "No host test covers CV29 bit interpretation. No host test exercises CV29 bit interpretation.",
+            "gtest": "Host test sets CV29 with the direction bit clear vs set and asserts the decoded travel direction inverts (bit 0). Speed-step mode (bit 1) and extended addressing (bit 5) are covered by their own decode tests; bits 2/3/4 are intentionally not acted on (supported=partial).",
             "hil": "Address/speed-mode behavior tested on the wire elsewhere."
           },
           "refs": {
@@ -4850,7 +4850,13 @@ window.COMPLIANCE =
               "DCC_CV29_SPEED_STEPS_BIT",
               "DCC_CV29_EXTENDED_ADDRESS_BIT"
             ],
-            "tests": [],
+            "tests": [
+              {
+                "name": "DccPacketDecoder.cv29_direction_bit_reverses_reported_direction",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "asserts the CV29 direction bit inverts the decoded travel direction"
+              }
+            ],
             "hilChecks": []
           }
         },
@@ -4909,7 +4915,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "gtest": {
-            "state": "no",
+            "state": "ok",
             "note": ""
           },
           "hil": {
@@ -4918,7 +4924,7 @@ window.COMPLIANCE =
           },
           "detail": {
             "impl": "_update_accessory_address parses CV541 mode bits and combines CV513/CV521 into the cached address.",
-            "gtest": "No host test exercises accessory CV513/521/541 decode. No host test for accessory CV decode.",
+            "gtest": "Host test sets an accessory address exercising both CV513 (low 6 bits) and CV521 (high 3 bits) with CV541 basic mode, then confirms the decoder matches a packet to the combined address.",
             "hil": "Accessory CV access on the wire covered under S-9.2.1."
           },
           "refs": {
@@ -4927,7 +4933,13 @@ window.COMPLIANCE =
               "DCC_CV_ACC_ADDRESS_MSB",
               "DCC_CV_ACC_CONFIG"
             ],
-            "tests": [],
+            "tests": [
+              {
+                "name": "DccPacketDecoder.accessory_cvs_513_521_541_combine_into_address",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "asserts CV513 + CV521 combine into the accessory address (CV541 basic mode)"
+              }
+            ],
             "hilChecks": []
           }
         }
@@ -4980,7 +4992,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "MIN (85 samples / 4930us)",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "injects a real 4930 us pulse and expects ACK DETECTED"
               }
             ]
@@ -5028,7 +5040,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "MIN-1 (84 samples / 4872us)",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "injects a 4872 us pulse and expects NO ACK"
               }
             ]
@@ -5076,7 +5088,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "MAX (120 samples / 6960us)",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "injects a 6960 us pulse and expects ACK DETECTED"
               }
             ]
@@ -5124,7 +5136,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "MAX+1 (121 samples / 7018us, overrun)",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "injects a 7018 us pulse and expects NO ACK (overrun)"
               }
             ]
@@ -5172,7 +5184,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "interrupted mock-ACK pulse -> NO ACK (counter reset)",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "glitched pulse (3000us/gap/3000us): NO-ACK verdict + two sub-pulses on D4 prove the width counter resets on the gap rather than summing to an in-window 6000us."
               }
             ]
@@ -5225,7 +5237,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "EARLY",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "injects an in-window vs EARLY pulse and verifies only the in-window one is honored"
               }
             ]
@@ -5273,7 +5285,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "_count_resets",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "counts reset packets on the service wire and asserts >= 3"
               }
             ]
@@ -5321,7 +5333,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "post-operation RESET_POST = 6 packets (wire)",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "trailing reset run before idle = 6."
               }
             ]
@@ -5369,7 +5381,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "ACK cuts recovery short (read timing differential)",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "all-ACK Direct read (CV=0xFF) finishes measurably faster than the no-ACK read (CV=0x00); same packets, only recovery differs."
               }
             ]
@@ -5390,7 +5402,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "gtest": {
-            "state": "nobs",
+            "state": "ok",
             "note": ""
           },
           "hil": {
@@ -5399,18 +5411,24 @@ window.COMPLIANCE =
           },
           "detail": {
             "impl": "All service-mode command and reset packets are emitted with the long-preamble service-mode framing.",
-            "gtest": "Preamble length is a wire property not asserted at host layer. Wire-timing property.",
+            "gtest": "Host test runs a service-mode op and asserts every loaded packet (library-stamped reset packets + the command packet) carries preamble_bits >= 20 (DCC_PREAMBLE_BITS_SERVICE), with the constant pinned to the spec minimum.",
             "hil": "_check_command on all modes."
           },
           "refs": {
             "symbols": [
               "DccServiceModeCommon_run"
             ],
-            "tests": [],
+            "tests": [
+              {
+                "name": "DccServiceModeCommon.service_mode_packets_use_long_preamble",
+                "file": "dcc_service_mode_common_Test.cxx",
+                "desc": "asserts every loaded service-mode packet has preamble_bits >= 20 (DCC_PREAMBLE_BITS_SERVICE)"
+              }
+            ],
             "hilChecks": [
               {
                 "label": "_check_command",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "decodes service packets across all modes and verifies the >=20-bit preamble"
               }
             ]
@@ -5458,7 +5476,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "verify reg1=0",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "checks register verify command repeats >= 7 on the wire"
               }
             ]
@@ -5511,7 +5529,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "register-1 long recovery = 10 packets (wire)",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "between-command reset runs = 13 (RECOVERY_LONG 10 + PRE 3); derived recovery = 10."
               }
             ]
@@ -5559,7 +5577,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "standard write recovery = 6 packets (wire)",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "between-command reset runs = 9 (RECOVERY 6 + PRE 3); derived recovery = 6."
               }
             ]
@@ -5614,7 +5632,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "write-byte CV3=5 (CC=11)",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "decodes Direct write/verify/bit instruction types on the wire"
               }
             ]
@@ -5661,7 +5679,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "write-byte CV1023 (AA=11)",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "decodes high-CV Direct addressing on the wire"
               }
             ]
@@ -5714,7 +5732,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "write reg1=5",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "decodes the register command sequence including the page-preset"
               }
             ]
@@ -5767,7 +5785,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "page-preset (un-ACKed) is followed by the command on the wire",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "register write with no decoder: page-preset packet then the command packet both on ch3, proving the preset is not ACK-gated."
               }
             ]
@@ -5820,7 +5838,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "data-register write CV1=42",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "decodes the paged page-write plus data-register command"
               }
             ]
@@ -5845,13 +5863,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "nobs",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "DccServiceModeTaskRegister maps a CV number to its physical register using separate Mobile and Accessory tables. Decoder_type per-call.",
             "gtest": "",
-            "hil": "The CV-to-register mapping is internal task-layer logic; only the resulting register command byte reaches the wire (covered by the register-mode command vectors). The mapping table itself is host-tested, not separately wire-observable."
+            "hil": "s9_2_3: the CV->register mapping result is on the wire -- every register command byte is 0111 C(reg-1). Sweeping the Mobile (CV1-4->1-4, CV29->5, CV7->7, CV8->8) and Accessory (CV513->1, CV520->8) tables, each SVC REG WRITE <cv> lands on its mapped register on ch3. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -5870,7 +5888,13 @@ window.COMPLIANCE =
                 "desc": "asserts Accessory CV520 maps to register 8"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "each CV lands on its mapped register on the wire",
+                "file": "command_station/s9_2_3_compliance.py",
+                "desc": "sweep of the Mobile + Accessory CV->register tables; register field of the command byte == expected register."
+              }
+            ]
           }
         },
         {
@@ -5914,7 +5938,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "factory reset",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "decodes the register-8 value-8 factory-reset command"
               }
             ]
@@ -5967,7 +5991,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "Direct read: per-bit verify iteration visible + ACK returns the value",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "mock holds CV8=0x5A; >=3 of the 8 verify-bit packets seen on ch3 and the op returns 0x5A via the real ACK path."
               }
             ]
@@ -6015,7 +6039,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "write-byte precedes verify-byte on the wire (phase order)",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "Direct write CV8=51: write-byte packet timestamped before the verify-byte read-back; op returns SUCCESS via the ACK path."
               }
             ]
@@ -6040,13 +6064,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "nobs",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Non-Direct write_bit reads the byte, modifies the bit, writes back, and verifies.",
             "gtest": "",
-            "hil": "Read-modify-write is task-layer; not measured on the wire. Task-layer logic, host-only."
+            "hil": "s9_2_3: a register-aware mock decoder ACKs the byte-verify scan at a held value, so SVC REG BITW's read-modify-write is capturable on ch3 -- the register-verify SCAN (read), then a register WRITE of the modified byte, with no native Direct bit packet. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -6065,7 +6089,13 @@ window.COMPLIANCE =
                 "desc": "asserts address write_bit clears the target bit"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "register bit op shows read scan + modified write (RMW)",
+                "file": "command_station/s9_2_3_compliance.py",
+                "desc": "SVC REG BITW: ch3 shows the register-verify scan then a register write of the modified byte; no Direct bit packet."
+              }
+            ]
           }
         },
         {
@@ -6083,7 +6113,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "gtest": {
-            "state": "partial",
+            "state": "ok",
             "note": ""
           },
           "hil": {
@@ -6092,7 +6122,7 @@ window.COMPLIANCE =
           },
           "detail": {
             "impl": "The mock decoder holds a CV value and ACKs only on a matching verify, so read returns the stored value and write-then-read round-trips.",
-            "gtest": "Host tests assert iteration/verify logic but not a full held-value round-trip. Host tests verify per-step logic, not end-to-end held value.",
+            "gtest": "End-to-end host round trip: write_cv(V) then read_cv reads it back, with the scan ACKed at exactly the value the write emitted -- returns the written value.",
             "hil": "Mock decoder SVC MOCKCV."
           },
           "refs": {
@@ -6105,12 +6135,17 @@ window.COMPLIANCE =
                 "name": "DccServiceModeTaskRegister.read_cv_ack_on_value_42_returns_42",
                 "file": "dcc_service_mode_task_register_Test.cxx",
                 "desc": "asserts read returns the value the decoder ACKs (per-step proxy)"
+              },
+              {
+                "name": "DccServiceModeTaskRegister.write_then_read_back_held_value_round_trip",
+                "file": "dcc_service_mode_task_register_Test.cxx",
+                "desc": "writes a held value then reads it back end-to-end; read returns the written value"
               }
             ],
             "hilChecks": [
               {
                 "label": "SVC MOCKCV",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "holds a CV value on a mock decoder and checks read-back and write-back correctness"
               }
             ]
@@ -6151,7 +6186,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "check_track_timing",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "captures main and service tracks simultaneously during each op and verifies half-bit periods on both"
               }
             ]
@@ -6204,7 +6239,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "write CV#1 addr=5",
-                "file": "s9_2_3_compliance.py",
+                "file": "command_station/s9_2_3_compliance.py",
                 "desc": "decodes the Address-Only CV#1 command on the wire"
               }
             ]
@@ -6302,7 +6337,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "T_CS 26-32 us",
-                "file": "s9_3_2_compliance.py",
+                "file": "command_station/s9_3_2_compliance.py",
                 "desc": "measures end-bit edge to cutout-active rising edge against 26-32 us band"
               }
             ]
@@ -6351,7 +6386,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "T_CE 454-488 us",
-                "file": "s9_3_2_compliance.py",
+                "file": "command_station/s9_3_2_compliance.py",
                 "desc": "measures end-bit edge to cutout-active falling edge against 454-488 us band"
               }
             ]
@@ -6374,7 +6409,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "gtest": {
-            "state": "partial",
+            "state": "ok",
             "note": ""
           },
           "hil": {
@@ -6383,7 +6418,7 @@ window.COMPLIANCE =
           },
           "detail": {
             "impl": "Sum of DELAY..CH2 periods yields the 422-462 us active cutout window.",
-            "gtest": "Host asserts individual state periods; the derived window is checked on the wire. Window implied by per-state period tests.",
+            "gtest": "Host sums the SETTLING+CH1+GAP+CH2 periods and asserts the derived window T_CE-T_CS equals the defaults and sits in the S-9.3.2 422-462 us band.",
             "hil": ""
           },
           "refs": {
@@ -6395,12 +6430,17 @@ window.COMPLIANCE =
                 "name": "DccRailcomCutout.per_state_timer_periods_are_correct",
                 "file": "dcc_railcom_cutout_Test.cxx",
                 "desc": "per-state periods sum to the 422-462 us window"
+              },
+              {
+                "name": "DccRailcomCutout.cutout_window_duration_T_CE_minus_T_CS",
+                "file": "dcc_railcom_cutout_Test.cxx",
+                "desc": "asserts the derived cutout window (sum of interior periods) is in tolerance"
               }
             ],
             "hilChecks": [
               {
                 "label": "window T_CE-T_CS",
-                "file": "s9_3_2_compliance.py",
+                "file": "command_station/s9_3_2_compliance.py",
                 "desc": "derived window 422-462 us"
               }
             ]
@@ -6421,7 +6461,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "gtest": {
-            "state": "partial",
+            "state": "ok",
             "note": ""
           },
           "hil": {
@@ -6430,7 +6470,7 @@ window.COMPLIANCE =
           },
           "detail": {
             "impl": "Cutout is armed once per transmitted packet via the scheduler dispatch hook.",
-            "gtest": "No host count-invariant test; HIL matches cutout count to packet count. Re-arm covered, not the per-packet count invariant.",
+            "gtest": "Host drives several packets through the bit encoder and asserts the cutout-begin count equals the packet-complete count -- one cutout per packet.",
             "hil": ""
           },
           "refs": {
@@ -6442,12 +6482,17 @@ window.COMPLIANCE =
                 "name": "DccRailcomCutout.second_cutout_after_first_succeeds",
                 "file": "dcc_railcom_cutout_Test.cxx",
                 "desc": "a fresh cutout can be armed after the previous one completes"
+              },
+              {
+                "name": "DccBitEncoder.one_cutout_begin_per_packet",
+                "file": "dcc_bit_encoder_Test.cxx",
+                "desc": "asserts cutout-begin fires exactly once per transmitted packet"
               }
             ],
             "hilChecks": [
               {
                 "label": "one cutout window per packet",
-                "file": "s9_3_2_compliance.py",
+                "file": "command_station/s9_3_2_compliance.py",
                 "desc": "matches cutout window count to decoded packet count"
               }
             ]
@@ -6503,7 +6548,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "5-state event order on the wire (PB2 + RAILCOM_RX_WINDOW mirror)",
-                "file": "s9_3_2_compliance.py",
+                "file": "command_station/s9_3_2_compliance.py",
                 "desc": "mirror pin marks Ch1/Ch2 window open/close; suite asserts T_CS<T_TS1<T_TC1<T_TS2<T_CE per cutout."
               }
             ]
@@ -6552,7 +6597,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "per-state periods from the mirror (SETTLING/CH1/GAP/CH2)",
-                "file": "s9_3_2_compliance.py",
+                "file": "command_station/s9_3_2_compliance.py",
                 "desc": "interior periods derived from RAILCOM_RX_WINDOW edges checked against 54/97/16/263 us within tolerance."
               }
             ]
@@ -6604,7 +6649,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "custom CH1 reaches the wire; 0 selects the default",
-                "file": "s9_3_2_compliance.py",
+                "file": "command_station/s9_3_2_compliance.py",
                 "desc": "RAILCOM TIMING sets CH1=150us (measured ~150 on PB18) then CH1=0 (measured ~97, the spec default)."
               }
             ]
@@ -6656,7 +6701,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "one cutout truncated by a mid-cutout cancel (PB2)",
-                "file": "s9_3_2_compliance.py",
+                "file": "command_station/s9_3_2_compliance.py",
                 "desc": "RAILCOM CANCEL produces exactly one short PB2 pulse among ~440us cutouts, confirming the H-bridge is restored early."
               }
             ]
@@ -6665,7 +6710,7 @@ window.COMPLIANCE =
         {
           "tid": "DCC-S9.3.2-CS-009",
           "feature": "4/8 codec encode (64 values + boundaries)",
-          "role": "cs",
+          "role": "dec",
           "ref": {
             "spec": "S-9.3.2",
             "cite": "Section 2.5 (4/8 code, encoding)",
@@ -6681,13 +6726,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "nobs",
+            "state": "planned",
             "note": ""
           },
           "detail": {
             "impl": "encode_byte maps a 6-bit value to a fixed-weight 8-bit 4/8 code word.",
             "gtest": "",
-            "hil": "Codeword content not decoded on the wire; pure logic proven on host. Not wire-observable."
+            "hil": "Decoder-side 4/8 encoder (DCC_COMPILE_DECODER): a decoder uses it to build the codewords it transmits during the cutout. Observable only on a decoder RailCom-Tx HIL rig (capture the cutout Rx line, decode the 4/8 words) -- same prerequisite as the S9.3.2 DEC response items. Rig not built; logic host-tested (all 64 values + round-trip)."
           },
           "refs": {
             "symbols": [
@@ -7826,7 +7871,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "one-shot ESTOP interleaved with refresh on the wire",
-                "file": "library_compliance.py",
+                "file": "command_station/library_compliance.py",
                 "desc": "SPEED slot keeps streaming while a fired one-shot ESTOP also appears on ch0 — priority selection emits the one-shot without starving refresh."
               }
             ]
@@ -7879,7 +7924,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "all 3 refresh slots cycle on the wire",
-                "file": "library_compliance.py",
+                "file": "command_station/library_compliance.py",
                 "desc": "addrs 3/4/5 each appear >=2x in one capture, proving round-robin retransmission of every active slot."
               }
             ]
@@ -7931,7 +7976,7 @@ window.COMPLIANCE =
             "hilChecks": [
               {
                 "label": "second SPEED overwrites the slot (one packet, latest value)",
-                "file": "library_compliance.py",
+                "file": "command_station/library_compliance.py",
                 "desc": "after SPEED addr 10 then 20, ch0 carries exactly one distinct addr packet (the latest); the old value is absent — combined, not duplicated."
               }
             ]

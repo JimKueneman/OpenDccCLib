@@ -20,11 +20,15 @@ static dcc_service_mode_common_context_t test_context;
 static dcc_packet_t last_loaded_packet;
 static uint32_t load_packet_count;
 static bool encoder_idle_value;
+static unsigned min_loaded_preamble;   /* smallest preamble_bits over all loaded packets */
 
 static void mock_load_packet(const dcc_packet_t *packet) {
 
     memcpy(&last_loaded_packet, packet, sizeof(dcc_packet_t));
     load_packet_count++;
+    if (packet->preamble_bits < min_loaded_preamble) {
+        min_loaded_preamble = packet->preamble_bits;
+    }
 
     /* Simulate ISR: packet transmission completes instantly in tests. */
     DccServiceModeCommon_on_packet_complete(&test_context);
@@ -42,6 +46,7 @@ static void reset_mocks(void) {
     memset(&test_context, 0, sizeof(test_context));
     memset(&last_loaded_packet, 0, sizeof(last_loaded_packet));
     load_packet_count = 0;
+    min_loaded_preamble = 0xFFFFu;
     encoder_idle_value = true;
 
 }
@@ -191,6 +196,40 @@ static void drive_full_cycle_with_ack(bool provide_ack) {
     /* Final run to transition to IDLE and fire callback */
     DccServiceModeCommon_run(&test_context);
 
+}
+
+// ============================================================================
+// Long preamble (S-9.2.3 §D)
+// ============================================================================
+
+// @compliance DCC-S9.2.3-CS-010
+TEST(DccServiceModeCommon, service_mode_packets_use_long_preamble) {
+
+    /* S-9.2.3 §D: service-mode packets use a long (>= 20-bit) preamble. Pin the
+     * constant to the spec minimum, then confirm every packet this module loads
+     * during an operation carries it -- the reset packets are stamped here, and the
+     * command packet is supplied with the same DCC_PREAMBLE_BITS_SERVICE the task
+     * modules use. */
+    EXPECT_GE(DCC_PREAMBLE_BITS_SERVICE, 20u);
+
+    reset_mocks();
+    interface_dcc_service_mode_common_t interface = make_interface();
+    DccServiceModeCommon_initialize(&test_context, &interface);
+    DccServiceModeCommon_enter(&test_context);
+
+    dcc_packet_t cmd;
+    memset(&cmd, 0, sizeof(cmd));
+    cmd.data[0] = 0x74;            /* a register verify command (representative) */
+    cmd.data[1] = 0x05;
+    cmd.byte_count = 2;
+    cmd.preamble_bits = DCC_PREAMBLE_BITS_SERVICE;
+    DccServiceModeCommon_begin_operation(&test_context, &cmd, NULL, false,
+                                         DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
+
+    drive_full_cycle_with_ack(false);
+
+    EXPECT_GT(load_packet_count, 0u);
+    EXPECT_GE(min_loaded_preamble, (unsigned)DCC_PREAMBLE_BITS_SERVICE);
 }
 
 // ============================================================================

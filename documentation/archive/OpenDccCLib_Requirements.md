@@ -3,7 +3,7 @@
 > **ARCHIVED / HISTORICAL — frozen original design intent.** Module and API names
 > here predate the role-first naming refactor and no longer match the source.
 > For the current as-built design see [../ARCHITECTURE.md](../ARCHITECTURE.md);
-> for current status see [../ComplianceMatrix.md](../compliance/ComplianceMatrix.md).
+> for current status see [../ComplianceOverview.md](../compliance/ComplianceOverview.md).
 
 ## Context
 

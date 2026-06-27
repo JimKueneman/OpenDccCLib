@@ -4,7 +4,7 @@
 > This document describes the library **as it is implemented today**. For the
 > original design intent (which predates the role-first naming refactor), see
 > [archive/OpenDccCLib_Requirements.md](archive/OpenDccCLib_Requirements.md).
-> For what is done vs. pending, see [ComplianceMatrix.md](compliance/ComplianceMatrix.md).
+> For what is done vs. pending, see [ComplianceOverview.md](compliance/ComplianceOverview.md).
 
 ## 1. Overview
 
@@ -103,7 +103,7 @@ programming from POM.
 > **Migration note:** the pre-refactor modules `dcc_application_main_track`,
 > `dcc_application_service_track`, and `dcc_packet_encoder` still exist and are
 > still compiled/tested alongside the role-first modules above. Retiring them is
-> tracked in [ComplianceMatrix.md](compliance/ComplianceMatrix.md).
+> tracked in [ComplianceOverview.md](compliance/ComplianceOverview.md).
 
 ## 6. Internal modules
 

@@ -105,7 +105,7 @@ def main():
     db_tids = set(by_id)
 
     cxx = {p.name: parse_cxx(p) for p in sorted(SRC.glob("*_Test.cxx"))}
-    hil = {p.name: parse_hil(p) for p in sorted(HIL.glob("*_compliance.py"))}
+    hil = {str(p.relative_to(HIL)): parse_hil(p) for p in sorted(HIL.rglob("*_compliance.py"))}
     src_blob = "\n".join(p.read_text(encoding="utf-8", errors="ignore")
                          for p in list(SRC.glob("*.c")) + list(SRC.glob("*.h")))
 
