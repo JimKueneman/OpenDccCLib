@@ -71,6 +71,12 @@ extern void TI_DccDriver_mock_ack_arm(uint16_t width_us);
 extern void TI_DccDriver_mock_ack_on_command(void);
 extern void TI_DccDriver_mock_ack_tick(void);
 
+// Mock ACK GLITCH (HIL only): arm an INTERRUPTED pulse -- high pre_us, low gap_us,
+// high post_us -- fired by on_command() like arm(). Proves the library's ACK width
+// counter resets on the low gap (S-9.2.3 CS-005): two sub-pulses each below the
+// 6ms window, so a NO-ACK verdict means the counter did not accumulate across it.
+extern void TI_DccDriver_mock_ack_arm_glitch(uint16_t pre_us, uint16_t gap_us, uint16_t post_us);
+
 // Mock decoder (HIL only): immediately start a mock-ACK pulse of the given width.
 // Used to ACK a verify command the moment a held-value match is detected.
 extern void TI_DccDriver_mock_ack_fire(uint16_t width_us);
@@ -101,6 +107,12 @@ extern void TI_DccDriver_main_pin_toggle(void);
 // the .railcom begin/end hooks, called by the cutout timer.
 extern void TI_DccDriver_main_cutout_begin(void);
 extern void TI_DccDriver_main_cutout_end(void);
+
+// RailCom channel-window marker (RAILCOM_RX_WINDOW pin): high while a Ch1/Ch2 window
+// is open, low when closed. Wired to the cutout .uart_rx_enable / .uart_rx_disable
+// hooks so the Saleae can time the interior sub-windows (S-9.3.2 CS-005/006).
+extern void TI_DccDriver_railcom_window_open(void);
+extern void TI_DccDriver_railcom_window_close(void);
 
 // Toggle the service track DCC signal GPIO pin. Called from ISR context by the
 // bit encoder's tick_isr.

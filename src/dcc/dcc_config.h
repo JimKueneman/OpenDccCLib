@@ -409,6 +409,31 @@ extern void DccConfig_58us_timer_isr(void);
 extern void DccConfig_railcom_oneshot_timer_isr(void);
 
     /**
+     * @brief Reconfigure the RailCom cutout per-state timing at runtime.
+     * @details Overwrites the active cutout context's five period fields; a 0 in
+     *  any field selects that field's spec default (DCC_RAILCOM_* in dcc_defines.h),
+     *  matching DccConfig_initialize. State and interface are left untouched, so an
+     *  in-flight cutout completes on its old timing and the new values take effect
+     *  from the next cutout. Periods are in microseconds.
+     */
+extern void DccConfig_set_railcom_cutout_timing(uint16_t start_delay_us, uint16_t uart_rx_delay_us,
+                                                uint16_t ch1_window_us, uint16_t ch1_ch2_gap_us,
+                                                uint16_t ch2_window_us);
+
+    /**
+     * @brief Cancel an in-progress RailCom cutout, restoring the H-bridge.
+     * @details Stops the cutout one-shot timer and, if the cutout was active
+     *  (past DELAY), calls end_railcom_cutout to restore normal drive. No-op when
+     *  idle. Safe to call from a same-or-lower-priority ISR than the cutout timer.
+     */
+extern void DccConfig_cancel_railcom_cutout(void);
+
+    /**
+     * @brief True while a RailCom cutout is in progress (state != IDLE).
+     */
+extern bool DccConfig_railcom_cutout_is_active(void);
+
+    /**
      * @brief 100ms timer tick. Call from a 100ms periodic timer or main loop.
      * @details Used for timeout checking and periodic housekeeping.
      */

@@ -60,8 +60,11 @@
 static const dcc_railcom_hw_t _main_railcom_hw = {
     .begin_railcom_cutout       = &TI_DccDriver_main_cutout_begin,
     .end_railcom_cutout         = &TI_DccDriver_main_cutout_end,
-    .uart_rx_enable             = NULL,
-    .uart_rx_disable            = NULL,
+    /* Mirror the channel-window open/close edges to the RAILCOM_RX_WINDOW probe pin so
+     * the Saleae can time the interior sub-windows (Ch1/Ch2) -- S-9.3.2 CS-005/006.
+     * Not a real Rx path; this bench has no RailCom receiver. */
+    .uart_rx_enable             = &TI_DccDriver_railcom_window_open,
+    .uart_rx_disable            = &TI_DccDriver_railcom_window_close,
     .uart_read                  = NULL,
     .on_railcom_datagram_result = NULL,
 };
@@ -135,6 +138,7 @@ void DCC_BIT_TIMER_INST_IRQHandler(void) {
             TI_DccDriver_timestamp_tick();
             TI_DccDriver_mock_ack_tick();   /* drive mock ACK before ack sample */
             DccConfig_58us_timer_isr();
+            CallbacksDcc_railcom_cancel_tick();  /* fire an armed mid-cutout cancel (same-priority, no nesting) */
             break;
 
         default:

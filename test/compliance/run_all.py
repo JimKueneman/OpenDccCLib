@@ -18,6 +18,7 @@ import s9_2_compliance
 import s9_2_1_compliance
 import s9_2_3_compliance
 import s9_3_2_compliance
+import library_compliance
 
 SUITES = [
     s9_1_compliance,
@@ -25,6 +26,7 @@ SUITES = [
     s9_2_1_compliance,
     s9_2_3_compliance,
     s9_3_2_compliance,
+    library_compliance,
 ]
 
 

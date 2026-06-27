@@ -78,6 +78,7 @@ TEST(DccScheduler, initialize_does_not_crash) {
 // Idle behavior tests
 // ============================================================================
 
+// @compliance DCC-S9.2-CS-007
 TEST(DccScheduler, run_sends_idle_when_empty) {
     reset_mocks();
     dcc_scheduler_context_t context;
@@ -182,6 +183,86 @@ TEST(DccScheduler, one_shot_repeat_count_2) {
 
     /* Third run — should be idle (exhausted after 2 repeats) */
     DccScheduler_run(&context);
+}
+
+// ============================================================================
+// 5 ms same-address spacing (S-9.2 Section C fn.11) — short addr 112-127
+// ============================================================================
+
+// @compliance DCC-S9.2-CS-008
+TEST(DccScheduler, run_inserts_idle_spacer_between_same_short_addr_112_127) {
+    reset_mocks();
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface = make_interface();
+    DccScheduler_initialize(&context, &interface);
+
+    dcc_packet_t pkt;
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 115, DCC_ADDRESS_SHORT, 50, true);
+    pkt.repeat_count = 2;
+    DccScheduler_insert(&context, &pkt, 115, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
+
+    /* Run 1: real packet to short address 115 (first byte 0x73) */
+    DccScheduler_run(&context);
+    EXPECT_EQ(last_loaded_packet.data[0], (uint8_t)115);
+    EXPECT_EQ(on_packet_sent_count, (uint32_t)1);
+
+    /* Run 2: the same address would be <5 ms away -> idle spacer, not the packet,
+     * and the spacer must NOT fire on_packet_sent */
+    DccScheduler_on_packet_complete(&context);
+    DccScheduler_run(&context);
+    EXPECT_EQ(last_loaded_packet.data[0], (uint8_t)DCC_IDLE_ADDR_BYTE);
+    EXPECT_EQ(on_packet_sent_count, (uint32_t)1);
+
+    /* Run 3: guard cleared by the idle -> deferred repeat goes out (repeat_count preserved) */
+    DccScheduler_on_packet_complete(&context);
+    DccScheduler_run(&context);
+    EXPECT_EQ(last_loaded_packet.data[0], (uint8_t)115);
+    EXPECT_EQ(on_packet_sent_count, (uint32_t)2);
+}
+
+// @compliance DCC-S9.2-CS-008
+TEST(DccScheduler, run_no_spacer_for_short_addr_below_112) {
+    reset_mocks();
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface = make_interface();
+    DccScheduler_initialize(&context, &interface);
+
+    dcc_packet_t pkt;
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 100, DCC_ADDRESS_SHORT, 50, true);
+    pkt.repeat_count = 2;
+    DccScheduler_insert(&context, &pkt, 100, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
+
+    DccScheduler_run(&context);
+    EXPECT_EQ(last_loaded_packet.data[0], (uint8_t)100);
+
+    /* Address 100 (0x64) does not alias a service-mode byte -> consecutive send, no spacer */
+    DccScheduler_on_packet_complete(&context);
+    DccScheduler_run(&context);
+    EXPECT_EQ(last_loaded_packet.data[0], (uint8_t)100);
+    EXPECT_EQ(on_packet_sent_count, (uint32_t)2);
+}
+
+// @compliance DCC-S9.2-CS-008
+TEST(DccScheduler, run_no_spacer_for_long_address) {
+    reset_mocks();
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface = make_interface();
+    DccScheduler_initialize(&context, &interface);
+
+    dcc_packet_t pkt;
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 1000, DCC_ADDRESS_LONG, 50, true);
+    pkt.repeat_count = 2;
+    DccScheduler_insert(&context, &pkt, 1000, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
+
+    DccScheduler_run(&context);
+    uint8_t first = last_loaded_packet.data[0];
+    EXPECT_NE(first, (uint8_t)DCC_IDLE_ADDR_BYTE);
+
+    /* Long-address first byte is 0xC0-0xFF, never 0x70-0x7F -> no spacer */
+    DccScheduler_on_packet_complete(&context);
+    DccScheduler_run(&context);
+    EXPECT_EQ(last_loaded_packet.data[0], first);
+    EXPECT_EQ(on_packet_sent_count, (uint32_t)2);
 }
 
 // ============================================================================

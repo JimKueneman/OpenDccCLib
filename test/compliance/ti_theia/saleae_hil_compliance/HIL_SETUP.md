@@ -38,10 +38,15 @@ LaunchPad flash) and the Python venv (in this repo). To bring it back up:
    - **D2 → PB2** (RailCom cutout-active strobe / DCC_MIRROR)
    - **D3 → PB4** (service-track DCC out)
    - **D4 → PB9** (mock-ACK pin; for the S-9.2.3 ACK width cross-check)
+   - **D5 → PB18** (RailCom Rx-window mirror / RAILCOM_RX_WINDOW; for the S-9.3.2 cutout sub-windows)
    - **GND → GND**
 3. **Logic 2:** launch it; Preferences → **Automation** → enable the API (port **10430**). Leave it running.
 4. **Firmware:** already flashed. If the board was wiped, re-flash the `saleae_hil_compliance`
    Debug build from CCS. (After any service-mode test, tap **RESET** to clear singleton state.)
+   - **Rebuild + reflash required** for the newest checks: the S-9.3.2 cutout sub-window
+     timing (D5/PB18 mirror), the S-9.2.3 interrupted-ACK test (`SVC MOCKACK <us> GLITCH
+     <gap>`), and the `SVC REG/PAGED BITW|BITR` commands. The `RAILCOM_RX_WINDOW` pin is
+     already in the SysConfig; CCS regenerates the pin config on build.
 5. **Run:** `cd test/compliance && .venv/bin/python run_all.py`
    (single suite, e.g. `.venv/bin/python s9_2_1_compliance.py`). If the venv is missing, recreate it — §3c.
 
@@ -67,13 +72,23 @@ Connect the Saleae digital channels to the LaunchPad pins and tie grounds togeth
 | **D2 (ch 2)**  | **PB2**       | RailCom cutout-active strobe (DCC_MIRROR) | S-9.3.2 cutout timing |
 | **D3 (ch 3)**  | **PB4**       | DCC service-track output       | S-9.2.3 service mode            |
 | **D4 (ch 4)**  | **PB9**       | Mock-ACK pin (PB24→PB9 loopback) | S-9.2.3 ACK width cross-check |
+| **D5 (ch 5)**  | **PB18**      | RailCom Rx-window mirror (RAILCOM_RX_WINDOW) | S-9.3.2 cutout sub-windows |
 | **GND**        | **GND**       | common ground                  | always                          |
 
-These six (D0, D1, D2, D3, D4, GND) are the **current working setup** — wire all of them on
+These seven (D0, D1, D2, D3, D4, D5, GND) are the **current working setup** — wire all of them on
 re-assembly. The channel-to-pin map lives at the top of `test/compliance/compliance_lib.py`
-(`DIGITAL_CHANNEL`=0, `TRIGGER_CHANNEL`=1); the S-9.3.2 cutout channel (2) is set in
-`s9_3_2_compliance.py` (`CUTOUT_CHANNEL`), and the S-9.2.3 service channel (3) and mock-ACK
-channel (4) in `s9_2_3_compliance.py` (`SERVICE_CHANNEL`, `ACK_CHANNEL`).
+(`DIGITAL_CHANNEL`=0, `TRIGGER_CHANNEL`=1); the S-9.3.2 cutout channel (2) and Rx-window
+channel (5) are set in `s9_3_2_compliance.py` (`CUTOUT_CHANNEL`, `WINDOW_CHANNEL`), and the
+S-9.2.3 service channel (3) and mock-ACK channel (4) in `s9_2_3_compliance.py`
+(`SERVICE_CHANNEL`, `ACK_CHANNEL`).
+
+> **RailCom Rx-window mirror (D5/PB18).** PB2 (D2) marks only the cutout envelope
+> (begin T_CS / end T_CE). PB18 mirrors the cutout's `uart_rx_enable`/`uart_rx_disable`
+> hooks — it goes high while each RailCom channel window (Ch1, Ch2) is open — so the
+> Saleae can time the three interior boundaries (T_TS1/T_TC1/T_TS2). Together with D2 the
+> suite reconstructs all five cutout states (S-9.3.2 CS-005/006). The pin is defined as
+> **RAILCOM_RX_WINDOW** in the `GPIO_GRP_SALEAE` group in SysConfig; until it exists the
+> firmware mirror compiles as a no-op and the sub-window checks report the pin as absent.
 
 > The **mock-ACK loopback** for the S-9.2.3 ACK test is an on-board **jumper**
 > **MOCK_ACK_DRIVE (PB24) → MOCK_ACK (PB9)**; **D4 taps PB9** so the suite independently

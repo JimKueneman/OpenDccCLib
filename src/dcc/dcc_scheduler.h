@@ -90,6 +90,12 @@ typedef struct {
     volatile bool packet_complete_flag;
     bool first_packet_sent;
 
+        /** @brief First byte (address byte) of the last non-idle packet loaded.
+         *  Used to enforce the S-9.2 Section C footnote 11 >=5 ms gap between two
+         *  same-address short-address (112-127) packets. 0x00 = none / last load
+         *  was an idle packet. */
+    uint8_t last_addr_byte;
+
 } dcc_scheduler_context_t;
 
     /**

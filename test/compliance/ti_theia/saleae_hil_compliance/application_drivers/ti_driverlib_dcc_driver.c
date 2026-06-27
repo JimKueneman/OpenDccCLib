@@ -105,42 +105,84 @@ uint16_t TI_DccDriver_current_sense_read(void) {
 #define MOCK_ACK_TICK_US 58u   /* fixed DCC bit-timer ISR period */
 
 static volatile uint16_t _mock_ack_width_ticks = 0;   /* armed width; 0 = not armed */
-static volatile uint16_t _mock_ack_remaining   = 0;   /* pulse countdown; >0 = high */
+static volatile uint16_t _mock_ack_remaining   = 0;   /* high-phase countdown; >0 = high */
+
+/* Optional GLITCH (interrupted-pulse) extension: after the first high phase, drop
+ * low for _gap, then go high again for _post. Proves the library's ACK width
+ * counter RESETS on the interruption (S-9.2.3 CS-005) -- two sub-pulses each
+ * shorter than the 6 ms window, whose sum is in-window only if the counter
+ * (wrongly) accumulated across the gap. _ticks = armed (latched by on_command);
+ * _run = live countdown in tick(). All zero = a plain single pulse (unchanged). */
+static volatile uint16_t _mock_ack_gap_ticks   = 0;
+static volatile uint16_t _mock_ack_post_ticks  = 0;
+static volatile uint16_t _mock_ack_gap_run     = 0;
+static volatile uint16_t _mock_ack_post_run    = 0;
 
 void TI_DccDriver_mock_ack_arm(uint16_t width_us) {
 
-    /* Arm a one-shot pulse. Fired by on_command() at the next service command. */
+    /* Arm a one-shot single pulse. Fired by on_command() at the next service command. */
     _mock_ack_width_ticks = (uint16_t)(width_us / MOCK_ACK_TICK_US);
     _mock_ack_remaining = 0;
+    _mock_ack_gap_ticks = 0;
+    _mock_ack_post_ticks = 0;
+}
+
+void TI_DccDriver_mock_ack_arm_glitch(uint16_t pre_us, uint16_t gap_us, uint16_t post_us) {
+
+    /* Arm an INTERRUPTED pulse: high pre_us, low gap_us, high post_us. Fired by
+     * on_command() like the plain pulse; tick() inserts the low gap between them. */
+    _mock_ack_width_ticks = (uint16_t)(pre_us / MOCK_ACK_TICK_US);
+    _mock_ack_gap_ticks   = (uint16_t)(gap_us / MOCK_ACK_TICK_US);
+    _mock_ack_post_ticks  = (uint16_t)(post_us / MOCK_ACK_TICK_US);
+    _mock_ack_remaining = 0;
+    _mock_ack_gap_run = 0;
+    _mock_ack_post_run = 0;
 }
 
 void TI_DccDriver_mock_ack_on_command(void) {
 
     /* Called when a service-mode command packet starts transmitting. If armed,
      * begin the pulse now (so it lands inside the common module's COMMAND-state
-     * ACK-sample window) and disarm so it fires exactly once. */
+     * ACK-sample window) and disarm so it fires exactly once. Latches any armed
+     * glitch (gap/post) into the live countdowns too. */
     if (_mock_ack_width_ticks > 0) {
 
         _mock_ack_remaining = _mock_ack_width_ticks;
+        _mock_ack_gap_run   = _mock_ack_gap_ticks;
+        _mock_ack_post_run  = _mock_ack_post_ticks;
         _mock_ack_width_ticks = 0;
+        _mock_ack_gap_ticks = 0;
+        _mock_ack_post_ticks = 0;
     }
 }
 
 void TI_DccDriver_mock_ack_fire(uint16_t width_us) {
 
-    /* Immediately start a pulse of the given width. Used by the mock decoder to
-     * ACK a verify command the instant a value match is detected (the width-test
+    /* Immediately start a single pulse of the given width. Used by the mock decoder
+     * to ACK a verify command the instant a value match is detected (the width-test
      * arm/on_command path above is left untouched). */
     _mock_ack_remaining = (uint16_t)(width_us / MOCK_ACK_TICK_US);
+    _mock_ack_gap_run = 0;
+    _mock_ack_post_run = 0;
 }
 
 void TI_DccDriver_mock_ack_tick(void) {
 
-    /* Called every 58 us ISR, BEFORE the library reads current_sense_read(). */
+    /* Called every 58 us ISR, BEFORE the library reads current_sense_read().
+     * Phase order: high (remaining) -> low gap (gap_run) -> high (post_run) -> low. */
     if (_mock_ack_remaining > 0) {
 
         DL_GPIO_setPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_MOCK_ACK_DRIVE_PIN);
         _mock_ack_remaining--;
+
+    } else if (_mock_ack_gap_run > 0) {
+
+        DL_GPIO_clearPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_MOCK_ACK_DRIVE_PIN);
+        _mock_ack_gap_run--;
+        if (_mock_ack_gap_run == 0 && _mock_ack_post_run > 0) {
+            _mock_ack_remaining = _mock_ack_post_run;   /* begin the 2nd high phase */
+            _mock_ack_post_run = 0;
+        }
 
     } else {
 
@@ -201,6 +243,30 @@ void TI_DccDriver_main_cutout_begin(void) {
 void TI_DccDriver_main_cutout_end(void) {
 
     DL_GPIO_clearPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_RAILCOM_CUTOUT_PIN);
+}
+
+/* Channel-window marker (RAILCOM_RX_WINDOW pin). The cutout state machine calls
+ * uart_rx_enable when a RailCom channel window OPENS (T_TS1 Ch1, T_TS2 Ch2) and
+ * uart_rx_disable when it CLOSES (T_TC1 Ch1, T_CE Ch2). Mirroring those to a probe
+ * pin makes the interior sub-windows externally visible: combined with the PB2
+ * cutout strobe (T_CS / T_CE) the Saleae times all five states (S-9.3.2 CS-005/006).
+ * Pure marker -- there is no real RailCom Rx on this bench. */
+/* The pin macro only exists once a GPIO named RAILCOM_RX_WINDOW is added to the
+ * GPIO_GRP_SALEAE group in SysConfig. Until then these are no-ops so the firmware
+ * still builds (and the rest of the bench is unaffected); the cutout sub-window
+ * HIL checks simply report the pin as not yet present. */
+void TI_DccDriver_railcom_window_open(void) {
+
+#ifdef GPIO_GRP_SALEAE_RAILCOM_RX_WINDOW_PIN
+    DL_GPIO_setPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_RAILCOM_RX_WINDOW_PIN);
+#endif
+}
+
+void TI_DccDriver_railcom_window_close(void) {
+
+#ifdef GPIO_GRP_SALEAE_RAILCOM_RX_WINDOW_PIN
+    DL_GPIO_clearPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_RAILCOM_RX_WINDOW_PIN);
+#endif
 }
 
 void TI_DccDriver_svc_pin_toggle(void) {

@@ -175,4 +175,50 @@ void CallbacksDcc_on_packet_sent(const dcc_packet_t *packet) {
     _mock_decoder_handle(packet, window_open);
 }
 
+// RailCom cutout cancel (HIL only, S-9.3.2 CS-008). `RAILCOM CANCEL` arms this; the
+// 58us bit-timer ISR (same priority as the cutout one-shot ISR, so no nesting) calls
+// cancel_tick() each tick. To make the cancel land deterministically EARLY in a
+// cutout (during SETTLING/CH1, past DELAY so the H-bridge is tristated), we wait for
+// a cutout that BEGINS after arming -- detected as a rising edge of "cutout active" --
+// then fire ~2 ticks (~58-116us) in. PB2 then shows one short pulse instead of the
+// full ~440us. One-shot: disarms after firing.
+static volatile bool    _railcom_cancel_armed    = false;
+static volatile bool    _railcom_prev_active     = false;
+static volatile bool    _railcom_cancel_counting = false;
+static volatile uint8_t _railcom_cancel_ticks    = 0;
+
+void CallbacksDcc_arm_railcom_cancel(void) {
+
+    _railcom_cancel_armed = true;
+    _railcom_cancel_counting = false;
+}
+
+void CallbacksDcc_railcom_cancel_tick(void) {
+
+    bool active = DccConfig_railcom_cutout_is_active();
+
+    if (_railcom_cancel_armed) {
+
+        if (active && !_railcom_prev_active) {   /* a NEW cutout just began */
+
+            _railcom_cancel_counting = true;
+            _railcom_cancel_ticks = 0;
+        }
+
+        if (_railcom_cancel_counting && active) {
+
+            _railcom_cancel_ticks++;
+
+            if (_railcom_cancel_ticks >= 2) {    /* ~SETTLING/CH1: past DELAY, H-bridge tristated */
+
+                DccConfig_cancel_railcom_cutout();
+                _railcom_cancel_armed = false;
+                _railcom_cancel_counting = false;
+            }
+        }
+    }
+
+    _railcom_prev_active = active;
+}
+
 #endif /* DCC_COMPILE_COMMAND_STATION */

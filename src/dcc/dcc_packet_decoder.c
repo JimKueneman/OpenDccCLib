@@ -943,7 +943,7 @@ static void _dispatch_feature_expansion(uint16_t address, const uint8_t *instruc
 
     } else if (first == DCC_FEAT_BINARY_STATE_LONG && instruction_byte_count >= 3) {
 
-        /* Binary state long: 0xDC + DLLLLLLL + HHHHHHHH (3 bytes) */
+        /* Binary state long: 0xC0 + DLLLLLLL + HHHHHHHH (3 bytes) — S-9.2.1 §2.3.6.1 */
         uint16_t state_num = (uint16_t)(instruction_bytes[2] << 7) | (instruction_bytes[1] & 0x7F);
         bool active = (instruction_bytes[1] & 0x80) ? true : false;
 
@@ -955,7 +955,7 @@ static void _dispatch_feature_expansion(uint16_t address, const uint8_t *instruc
 
     } else if (first == DCC_FEAT_F61_F68) {
 
-        /* F61-F68: 0xDC + data (2 bytes only — same opcode as BSL) */
+        /* F61-F68: 0xDC + data (2 bytes) — distinct opcode from binary state long (0xC0) */
         _dispatch_functions(address, 61, 8, instruction_bytes[1]);
 
     }

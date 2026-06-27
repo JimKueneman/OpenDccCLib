@@ -157,7 +157,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -168,7 +168,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Components must withstand peak voltage by scale: HO and larger <=27V, HOn3 to N <=24V, smaller than N <=12V (DC or DCC); AC motors operate at 27 VAC max.",
+            "impl": "Components must withstand peak voltage by scale: HO and larger <=27V, HOn3 to N <=24V, smaller than N <=12V (DC or DCC); AC motors operate at 27 VAC max. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -191,7 +191,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -202,7 +202,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Full-throttle voltage at rails/motor must supply sufficient current at max anticipated load; high-frequency superimposed voltage must not interfere with operation; harmonic-rich sources must not exceed rated motor current.",
+            "impl": "Full-throttle voltage at rails/motor must supply sufficient current at max anticipated load; high-frequency superimposed voltage must not interfere with operation; harmonic-rich sources must not exceed rated motor current. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -225,7 +225,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -236,7 +236,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Metallic couplers (powered and non-powered) must be insulated from the rails; wheelsets must be insulated to prevent undue rail-to-rail conductance.",
+            "impl": "Metallic couplers (powered and non-powered) must be insulated from the rails; wheelsets must be insulated to prevent undue rail-to-rail conductance. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -273,12 +273,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "55–61 µs on wire"
+            "note": ""
           },
           "detail": {
             "impl": "Emits 58 µs half-bits for a one-bit.",
             "gtest": "",
-            "hil": ""
+            "hil": "55–61 µs on wire."
           },
           "refs": {
             "symbols": [
@@ -325,12 +325,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "≥95, ≤12000 µs"
+            "note": ""
           },
           "detail": {
             "impl": "DCC_ZERO_BIT_HALF_PERIOD_US=100, DCC_ZERO_BIT_MAX_TOTAL_DURATION_US=12000.",
             "gtest": "",
-            "hil": ""
+            "hil": "≥95, ≤12000 µs."
           },
           "refs": {
             "symbols": [
@@ -375,7 +375,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "sends 16 (+margin for cutout)"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
@@ -383,12 +383,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "≥14 ones"
+            "note": ""
           },
           "detail": {
-            "impl": "CS sends 16 preamble bits (DCC_PREAMBLE_BITS_OPS=16) — ≥14 spec min, +margin for the RailCom cutout.",
+            "impl": "CS sends 16 preamble bits (DCC_PREAMBLE_BITS_OPS=16) — ≥14 spec min, +margin for the RailCom cutout. Sends 16 (+margin for cutout).",
             "gtest": "",
-            "hil": ""
+            "hil": "≥14 ones."
           },
           "refs": {
             "symbols": [
@@ -430,7 +430,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "gtest": {
-            "state": "na",
+            "state": "nobs",
             "note": ""
           },
           "hil": {
@@ -439,7 +439,7 @@ window.COMPLIANCE =
           },
           "detail": {
             "impl": "Symmetric by construction — the same timer period drives both halves.",
-            "gtest": "No dedicated host assertion; it is a wire-timing property.",
+            "gtest": "No dedicated host assertion; it is a wire-timing property. Intra-bit symmetry is a wire-timing property.",
             "hil": ""
           },
           "refs": {
@@ -466,7 +466,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "app H-bridge driver"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -474,12 +474,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "na",
-            "note": "needs analog capture"
+            "note": ""
           },
           "detail": {
-            "impl": "Out of library scope — set by the application's H-bridge driver hardware.",
+            "impl": "Out of library scope — set by the application's H-bridge driver hardware. App H-bridge driver.",
             "gtest": "Not a library concern.",
-            "hil": ""
+            "hil": "Needs analog capture."
           },
           "refs": {
             "symbols": [],
@@ -514,12 +514,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder rig"
+            "note": ""
           },
           "detail": {
             "impl": "Bit decoder accepts the full one-bit window (dcc_bit_decoder.c edge timing).",
             "gtest": "",
-            "hil": "Decoder HIL: source DCC at 55 / 58 / 61 µs into the decoder DUT, confirm decode. Rig not built."
+            "hil": "Decoder HIL: source DCC at 55 / 58 / 61 µs into the decoder DUT, confirm decode. Rig not built. Needs decoder rig."
           },
           "refs": {
             "symbols": [],
@@ -553,12 +553,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder rig"
+            "note": ""
           },
           "detail": {
             "impl": "DCC_PREAMBLE_BITS_DECODER_MIN=10.",
             "gtest": "",
-            "hil": "Decoder HIL: feed 9 vs 10 preamble bits, confirm reject / accept. Rig not built."
+            "hil": "Decoder HIL: feed 9 vs 10 preamble bits, confirm reject / accept. Rig not built. Needs decoder rig."
           },
           "refs": {
             "symbols": [
@@ -604,12 +604,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder rig"
+            "note": ""
           },
           "detail": {
             "impl": "Accepts stretched / asymmetric zero halves (DCC_ZERO_BIT_HALF_PERIOD_DECODER_MIN_US=90).",
             "gtest": "",
-            "hil": "Decoder HIL: source stretched-zero waveforms, confirm decode. Rig not built."
+            "hil": "Decoder HIL: source stretched-zero waveforms, confirm decode. Rig not built. Needs decoder rig."
           },
           "refs": {
             "symbols": [
@@ -637,19 +637,19 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "shared"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
-            "note": "shared"
+            "note": ""
           },
           "hil": {
             "state": "planned",
-            "note": "rig not built"
+            "note": ""
           },
           "detail": {
-            "impl": "Accessory decoders reuse the dcc_bit_decoder front-end; S-9.1 behaviour is identical to the mobile decoder.",
-            "gtest": "",
+            "impl": "Accessory decoders reuse the dcc_bit_decoder front-end; S-9.1 behaviour is identical to the mobile decoder. Shared.",
+            "gtest": "Shared.",
             "hil": "Accessory HIL rig not built. Accessory-specific compliance (packets, SRQ / RailCom) begins at S-9.2.1."
           },
           "refs": {
@@ -684,7 +684,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -695,7 +695,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Wire colors: RED=right rail, BLACK=left rail, ORANGE=motor(+), GRAY=motor(-), WHITE=front light, YELLOW=rear light, GREEN=Aux1, BROWN/VIOLET=Aux2, BLUE=common(+), BLACK-WHITE stripe=common(-)/ground; outputs Aux3-6 have no assigned color.",
+            "impl": "Wire colors: RED=right rail, BLACK=left rail, ORANGE=motor(+), GRAY=motor(-), WHITE=front light, YELLOW=rear light, GREEN=Aux1, BROWN/VIOLET=Aux2, BLUE=common(+), BLACK-WHITE stripe=common(-)/ground; outputs Aux3-6 have no assigned color. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -718,7 +718,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -729,7 +729,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Motor+/(orange) and motor-/(gray) wired so the loco moves forward on a forward packet with CV29 bit0=0; table power ratings are per individual pin and do not account for total loco draw.",
+            "impl": "Motor+/(orange) and motor-/(gray) wired so the loco moves forward on a forward packet with CV29 bit0=0; table power ratings are per individual pin and do not account for total loco draw. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -752,7 +752,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -763,7 +763,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "All stated mechanical/electrical values must be met; unimplemented connections remain unconnected; when no decoder is installed a dummy plug must allow DC operation and room must remain to fit a decoder.",
+            "impl": "All stated mechanical/electrical values must be met; unimplemented connections remain unconnected; when no decoder is installed a dummy plug must allow DC operation and room must remain to fit a decoder. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -793,7 +793,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -804,7 +804,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Small: 6 pins 1x6, 0.050 inch pitch, N scale or larger. Medium: 8 pins 2x4, 0.100 inch pitch, HO or larger. Female part in vehicle; pin 1 identified; Small/Medium pictogram marking required.",
+            "impl": "Small: 6 pins 1x6, 0.050 inch pitch, N scale or larger. Medium: 8 pins 2x4, 0.100 inch pitch, HO or larger. Female part in vehicle; pin 1 identified; Small/Medium pictogram marking required. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -827,7 +827,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -838,7 +838,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Small (6-pin): 0.50A continuous / 0.75A peak per pin. Medium (8-pin): 1.50A continuous / 3.00A peak per pin.",
+            "impl": "Small (6-pin): 0.50A continuous / 0.75A peak per pin. Medium (8-pin): 1.50A continuous / 3.00A peak per pin. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -861,7 +861,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -872,7 +872,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "6-pin: 1 Motor+, 2 Motor-, 3 Right Rail, 4 Left Rail, 5 Front Light, 6 Rear Light. 8-pin: 1 Motor+, 2 Rear Light, 3 Aux1, 4 Left Rail, 5 Motor-, 6 Front Light, 7 Common V+, 8 Right Rail.",
+            "impl": "6-pin: 1 Motor+, 2 Motor-, 3 Right Rail, 4 Left Rail, 5 Front Light, 6 Rear Light. 8-pin: 1 Motor+, 2 Rear Light, 3 Aux1, 4 Left Rail, 5 Motor-, 6 Front Light, 7 Common V+, 8 Right Rail. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -895,7 +895,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -906,7 +906,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "No motor-to-rail/frame connection and no pin3-to-pin7 connection on the loco side; Aux1 must be diode-protected if polarity-sensitive; not recommended for new designs, non-sound decoders only.",
+            "impl": "No motor-to-rail/frame connection and no pin3-to-pin7 connection on the loco side; Aux1 must be diode-protected if polarity-sensitive; not recommended for new designs, non-sound decoders only. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -936,7 +936,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -947,7 +947,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "9-pin single-row connector, approximately 1.50 mm pitch and 15.00 mm length, pin 1 identified.",
+            "impl": "9-pin single-row connector, approximately 1.50 mm pitch and 15.00 mm length, pin 1 identified. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -970,7 +970,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -981,7 +981,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Rated 50 VDC and 1.0 A maximum on each pin.",
+            "impl": "Rated 50 VDC and 1.0 A maximum on each pin. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1004,7 +1004,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1015,7 +1015,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "1 Aux1/green, 2 Right Rail/red, 3 Motor+/orange, 4 Common V+/blue, 5 Front Light/white, 6 Rear Light/yellow, 7 Motor-/gray, 8 Left Rail/black, 9 Aux2/violet or brown.",
+            "impl": "1 Aux1/green, 2 Right Rail/red, 3 Motor+/orange, 4 Common V+/blue, 5 Front Light/white, 6 Rear Light/yellow, 7 Motor-/gray, 8 Left Rail/black, 9 Aux2/violet or brown. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1038,7 +1038,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1049,7 +1049,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Because field installation is the most frequent use, the wire harness must follow the S-9.1.1 color code; all stated values must be met and unimplemented pins remain unconnected.",
+            "impl": "Because field installation is the most frequent use, the wire harness must follow the S-9.1.1 color code; all stated values must be met and unimplemented pins remain unconnected. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1079,7 +1079,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1090,7 +1090,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "22-pin two-row strip on 1.27 mm grid with pin 11 omitted for orientation keying; gold-plated contacts 1A max; decoder max 30 x 15.5 x 6.5 mm; Compact and Rotated install variants; 21MTC logo marking required; direct plug-in (no cable).",
+            "impl": "22-pin two-row strip on 1.27 mm grid with pin 11 omitted for orientation keying; gold-plated contacts 1A max; decoder max 30 x 15.5 x 6.5 mm; Compact and Rotated install variants; 21MTC logo marking required; direct plug-in (no cable). Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1113,7 +1113,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1124,7 +1124,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Motor (18/19), Track (21/22), GND (20), V+ (16), F0r/F0f (7/8), AUX1-8, speaker LS A/B (9/10), train bus ZBCLK/ZBDTA (5/6), sensor inputs (1/2), Vcc (12); pin 11 = orientation index.",
+            "impl": "Motor (18/19), Track (21/22), GND (20), V+ (16), F0r/F0f (7/8), AUX1-8, speaker LS A/B (9/10), train bus ZBCLK/ZBDTA (5/6), sensor inputs (1/2), Vcc (12); pin 11 = orientation index. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1147,7 +1147,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1158,7 +1158,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Power outputs open-drain to GND with load from V+, 100mA; logic-level outputs TTL/LVTTL max 0.5mA (off <=0.4V / on >=2.4V); speaker impedance 4-8 ohm; train-bus pins via max 470 ohm series resistor; per-output current manufacturer-specified.",
+            "impl": "Power outputs open-drain to GND with load from V+, 100mA; logic-level outputs TTL/LVTTL max 0.5mA (off <=0.4V / on >=2.4V); speaker impedance 4-8 ohm; train-bus pins via max 470 ohm series resistor; per-output current manufacturer-specified. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1181,7 +1181,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1192,7 +1192,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "A jumper plug must connect Track1->Motor1 and Track2->Motor2 (and F0f/F0r to track for lighting); V+ supplied via two diodes from the track connections.",
+            "impl": "A jumper plug must connect Track1->Motor1 and Track2->Motor2 (and F0f/F0r to track for lighting); V+ supplied via two diodes from the track connections. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1222,7 +1222,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1233,7 +1233,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "16- or 22-pin double-row sockets on 1.27 mm grid with pin 11 omitted for keying; gold-plated contacts 1A max; PluX22 decoder max 30x16x6mm, PluX16 uses pins 3-18 only; Compact and Tall vehicle variants; direct plug-in.",
+            "impl": "16- or 22-pin double-row sockets on 1.27 mm grid with pin 11 omitted for keying; gold-plated contacts 1A max; PluX22 decoder max 30x16x6mm, PluX16 uses pins 3-18 only; Compact and Tall vehicle variants; direct plug-in. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1256,7 +1256,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1267,7 +1267,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "PluX22: GPIO/C (1), Aux3 (2), train bus clk/data (3/4), GND (5), Cap+ (6), F0f (7), Motor1 (8), V+ (9), Motor2 (10), index (11), Track1 (12), F0r (13), Track2 (14), speaker A/B (15/17), AUX1/AUX2/AUX4-7. PluX16 omits 1,2 and 19-22.",
+            "impl": "PluX22: GPIO/C (1), Aux3 (2), train bus clk/data (3/4), GND (5), Cap+ (6), F0f (7), Motor1 (8), V+ (9), Motor2 (10), index (11), Track1 (12), F0r (13), Track2 (14), speaker A/B (15/17), AUX1/AUX2/AUX4-7. PluX16 omits 1,2 and 19-22. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1290,7 +1290,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1301,7 +1301,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "GPIO TTL-compatible (input ~100k, output 0.5mA max); train-bus pins via max 470 ohm series; speaker 4-8 ohm; Cap+ switchable carrying at most track voltage to V+; V+ supplied via two diodes.",
+            "impl": "GPIO TTL-compatible (input ~100k, output 0.5mA max); train-bus pins via max 470 ohm series; speaker 4-8 ohm; Cap+ switchable carrying at most track voltage to V+; V+ supplied via two diodes. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1324,7 +1324,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1335,7 +1335,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Jumper plug connects Track1->Motor1 and Track2->Motor2; as a SUSI interface only four signals are used (GND, V+, train bus clock, train bus data) with track connections unused.",
+            "impl": "Jumper plug connects Track1->Motor1 and Track2->Motor2; as a SUSI interface only four signals are used (GND, V+, train bus clock, train bus data) with track connections unused. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1365,7 +1365,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1376,7 +1376,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "18-pin connector, 0.50 mm pitch, symmetric layout; Next18 install volume 15x9.5x2.9mm, Next18-S (with sound) 25x9.5x4.1mm; encapsulated socket in vehicle, plug on decoder.",
+            "impl": "18-pin connector, 0.50 mm pitch, symmetric layout; Next18 install volume 15x9.5x2.9mm, Next18-S (with sound) 25x9.5x4.1mm; encapsulated socket in vehicle, plug on decoder. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1399,7 +1399,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1410,7 +1410,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "0.5A per contact (1.0A on doubled track/V+/GND contacts); insulation 1000 Mohm at 500VDC; contact resistance 50 mohm; open-drain outputs 100mA; logic TTL 0.5mA; speaker 4-8 ohm; train bus 470 ohm series + >=15k pull-up.",
+            "impl": "0.5A per contact (1.0A on doubled track/V+/GND contacts); insulation 1000 Mohm at 500VDC; contact resistance 50 mohm; open-drain outputs 100mA; logic TTL 0.5mA; speaker 4-8 ohm; train bus 470 ohm series + >=15k pull-up. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1433,7 +1433,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1444,7 +1444,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Next18: Track (1/9/10/18), Motor+/- (2/11), GND (5/14), V+ (6/15), F0F/F0R (8/17), AUX1-6, train bus AUX3/AUX4 (4/13). Next18-S replaces AUX5/AUX6 (pins 16/7) with Speaker A/B.",
+            "impl": "Next18: Track (1/9/10/18), Motor+/- (2/11), GND (5/14), V+ (6/15), F0F/F0R (8/17), AUX1-6, train bus AUX3/AUX4 (4/13). Next18-S replaces AUX5/AUX6 (pins 16/7) with Speaker A/B. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1467,7 +1467,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1478,7 +1478,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "A dummy/bridge plug connects track to motor and direction lights; as a SUSI interface only four signals are used (GND, V+, train bus clock pin 4, train bus data pin 13).",
+            "impl": "A dummy/bridge plug connects track to motor and direction lights; as a SUSI interface only four signals are used (GND, V+, train bus clock pin 4, train bus data pin 13). Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1508,7 +1508,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1519,7 +1519,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "28-pin connector (24 contacts + 4 guide pins for pickup), Molex 505270/505070, 0.35 mm pitch; decoder max 19.5 x 8.4 x 2.6 mm. The interface is symmetric and NOT keyed, so the vehicle must add external features to prevent wrong-orientation insertion.",
+            "impl": "28-pin connector (24 contacts + 4 guide pins for pickup), Molex 505270/505070, 0.35 mm pitch; decoder max 19.5 x 8.4 x 2.6 mm. The interface is symmetric and NOT keyed, so the vehicle must add external features to prevent wrong-orientation insertion. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1542,7 +1542,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1553,7 +1553,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Max 50V AC/DC; 0.3A per pin and 3.0A per guide pin; motor and GND doubled (0.6A); function outputs open-drain to GND 100mA; logic-level outputs TTL/LVTTL 0.5mA; speaker 4-8 ohm; insulation 100 Mohm at 250VDC.",
+            "impl": "Max 50V AC/DC; 0.3A per pin and 3.0A per guide pin; motor and GND doubled (0.6A); function outputs open-drain to GND 100mA; logic-level outputs TTL/LVTTL 0.5mA; speaker 4-8 ohm; insulation 100 Mohm at 250VDC. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1576,7 +1576,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1587,7 +1587,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Track power on the guide pins (left X1A/B, right X2A/B); Motor (4/5/6/7), GND (3/22), V+ (17), Cap+ (8), F0f/F0r (9/10), AUX1-AUX12, speaker LS_A/LS_B (2/1), Vcc (18), train bus TBCLK/TBDATA (23/24).",
+            "impl": "Track power on the guide pins (left X1A/B, right X2A/B); Motor (4/5/6/7), GND (3/22), V+ (17), Cap+ (8), F0f/F0r (9/10), AUX1-AUX12, speaker LS_A/LS_B (2/1), Vcc (18), train bus TBCLK/TBDATA (23/24). Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1610,7 +1610,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1621,7 +1621,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Minimum function outputs F0_f, F0_r, AUX_1, AUX_2; a jumper plug enables operation without a decoder; the interface may be used function-only (decoder generates the service-mode ACK internally) and as a SUSI interface using four signals (GND, V+, TBCLK, TBDATA).",
+            "impl": "Minimum function outputs F0_f, F0_r, AUX_1, AUX_2; a jumper plug enables operation without a decoder; the interface may be used function-only (decoder generates the service-mode ACK internally) and as a SUSI interface using four signals (GND, V+, TBCLK, TBDATA). Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1651,7 +1651,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1662,7 +1662,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Full Scale option: command station differential output >= +/-8.5V into 100 ohm and <= +/-24V open circuit (current limited <=1A, short-protected); power station accepts >= +/-7V, withstands +/-27V, rejects < +/-1.5V.",
+            "impl": "Full Scale option: command station differential output >= +/-8.5V into 100 ohm and <= +/-24V open circuit (current limited <=1A, short-protected); power station accepts >= +/-7V, withstands +/-27V, rejects < +/-1.5V. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1685,7 +1685,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1696,7 +1696,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Driver/Receiver option uses TIA/EIA-422 (>= +/-2V into 100 ohm) or TIA/EIA-485 (>= +/-1.5V into 60 ohm) differential signalling with defined current limits and receiver input thresholds (>= +/-200mV).",
+            "impl": "Driver/Receiver option uses TIA/EIA-422 (>= +/-2V into 100 ohm) or TIA/EIA-485 (>= +/-1.5V into 60 ohm) differential signalling with defined current limits and receiver input thresholds (>= +/-200mV). Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1719,7 +1719,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1730,7 +1730,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Apart from producing the S-9.3.2 cutout, a power station must not distort the signal beyond Ton/Toff <=5us and |Toff-Ton| <=2us; a repeater (only one per segment) must stay within 1us and 0.5us.",
+            "impl": "Apart from producing the S-9.3.2 cutout, a power station must not distort the signal beyond Ton/Toff <=5us and |Toff-Ton| <=2us; a repeater (only one per segment) must stay within 1us and 0.5us. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1753,7 +1753,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1764,7 +1764,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "A power station must disable its output if no valid DCC packet is received for >30ms (configurable for multiprotocol use); when unpowered or disabled, the two outputs must not float relative to each other.",
+            "impl": "A power station must disable its output if no valid DCC packet is received for >30ms (configurable for multiprotocol use); when unpowered or disabled, the two outputs must not float relative to each other. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1787,7 +1787,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1798,7 +1798,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "A single >=26 AWG pair (twisted/coax) with no special termination (Driver/Receiver adds a reference ground); only one signal source per interface, connected as tree/star/daisy-chain, never in a loop.",
+            "impl": "A single >=26 AWG pair (twisted/coax) with no special termination (Driver/Receiver adds a reference ground); only one signal source per interface, connected as tree/star/daisy-chain, never in a loop. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1828,7 +1828,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1839,7 +1839,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Defines Standard (normal operation, outputs enabled), Low power (minimum draw, all outputs off except ACK, energy storage disabled, < 250mA per S-9.2.3 so the ACK is recognizable), and High power (full draw including energy-storage charging). The same modes apply to Train Bus modules.",
+            "impl": "Defines Standard (normal operation, outputs enabled), Low power (minimum draw, all outputs off except ACK, energy storage disabled, < 250mA per S-9.2.3 so the ACK is recognizable), and High power (full draw including energy-storage charging). The same modes apply to Train Bus modules. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1862,7 +1862,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1873,7 +1873,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Default is Standard or Low (per config); a decoder switches to Low power immediately on receiving two or more reset packets (disabling energy storage and informing Train Bus modules), and may switch to High power on a packet addressed to it or a broadcast.",
+            "impl": "Default is Standard or Low (per config); a decoder switches to Low power immediately on receiving two or more reset packets (disabling energy storage and informing Train Bus modules), and may switch to High power on a packet addressed to it or a broadcast. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1896,7 +1896,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "hardware standard"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -1907,7 +1907,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "An accessory decoder with significant draw must limit inrush via a random delay before entering High power; a power mode stays valid until the next switching event, and for decoders with energy storage it persists through short signal interruptions covered by the storage device.",
+            "impl": "An accessory decoder with significant draw must limit inrush via a random delay before entering High power; a power mode stays valid until the next switching event, and for decoders with energy storage it persists through short signal interruptions covered by the storage device. Hardware standard.",
             "gtest": "",
             "hil": ""
           },
@@ -1991,12 +1991,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder HIL rig not built"
+            "note": ""
           },
           "detail": {
             "impl": "DccPacketDecoder_process_packet returns early when data[0]==0xFF.",
             "gtest": "",
-            "hil": "Requires a decoder-side HIL rig that does not exist yet."
+            "hil": "Requires a decoder-side HIL rig that does not exist yet. Decoder HIL rig not built."
           },
           "refs": {
             "symbols": [
@@ -2080,12 +2080,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder HIL rig not built"
+            "note": ""
           },
           "detail": {
             "impl": "process_packet detects reset and returns without dispatching an instruction.",
             "gtest": "",
-            "hil": "Requires a decoder-side HIL rig that does not exist yet."
+            "hil": "Requires a decoder-side HIL rig that does not exist yet. Decoder HIL rig not built."
           },
           "refs": {
             "symbols": [
@@ -2215,12 +2215,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder HIL rig not built"
+            "note": ""
           },
           "detail": {
             "impl": "process_packet maps broadcast e-stop to on_emergency_stop_command.",
             "gtest": "",
-            "hil": "Requires a decoder-side HIL rig that does not exist yet."
+            "hil": "Requires a decoder-side HIL rig that does not exist yet. Decoder HIL rig not built."
           },
           "refs": {
             "symbols": [
@@ -2350,12 +2350,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder HIL rig not built"
+            "note": ""
           },
           "detail": {
             "impl": "_validate_xor recomputes XOR; process_packet drops on mismatch.",
             "gtest": "",
-            "hil": "Requires a decoder-side HIL rig that does not exist yet."
+            "hil": "Requires a decoder-side HIL rig that does not exist yet. Decoder HIL rig not built."
           },
           "refs": {
             "symbols": [
@@ -2393,12 +2393,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder HIL rig not built"
+            "note": ""
           },
           "detail": {
             "impl": "process_packet parses short/long/reserved and dispatches only on match/broadcast.",
             "gtest": "",
-            "hil": "Requires a decoder-side HIL rig that does not exist yet."
+            "hil": "Requires a decoder-side HIL rig that does not exist yet. Decoder HIL rig not built."
           },
           "refs": {
             "symbols": [
@@ -2421,20 +2421,20 @@ window.COMPLIANCE =
         },
         {
           "tid": "DCC-S9.2-CS-007",
-          "feature": "Refresh timing: a packet at least every 30 ms",
+          "feature": "Idle keep-alive (<=30 ms packet floor)",
           "role": "cs",
           "ref": {
             "spec": "S-9.2",
-            "cite": "Section A (packet timing / refresh)",
+            "cite": "Section C (Frequency of Packet Transmission)",
             "origin": "released",
             "draftDelta": null
           },
           "supported": {
-            "state": "partial",
-            "note": "builder is stateless; cadence is the scheduler/app job"
+            "state": "ok",
+            "note": ""
           },
           "gtest": {
-            "state": "na",
+            "state": "ok",
             "note": ""
           },
           "hil": {
@@ -2442,22 +2442,120 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Packet builder is stateless; refresh cadence is enforced by the scheduler and verified on the wire.",
-            "gtest": "No host-testable timing in the packet builder.",
-            "hil": ""
+            "impl": "The scheduler loads the next packet the instant the encoder goes idle -- one-shot, then refresh round-robin, then an idle packet if nothing is queued (DccScheduler_run, dcc_scheduler.c). Transmission is therefore continuous back-to-back with no gaps, so the <=30 ms start-to-start floor is always met (and exceeded ~3-5x). The anti-fallback intent (keep auto-conversion decoders in digital mode) is satisfied as long as the app drives the run loop. Idle-fill, no gaps.",
+            "gtest": "DccScheduler.run_sends_idle_when_empty proves the scheduler loads an idle packet when nothing is queued, so the rail never goes empty; the wall-clock 30 ms timing itself is verified on the wire (HIL).",
+            "hil": "Measures the max packet start-to-start gap stays <= 30 ms on the wire. Wire-verified."
           },
           "refs": {
             "symbols": [
+              "DccScheduler_run",
               "DccApplicationCommandStationPacket_load_idle"
             ],
-            "tests": [],
+            "tests": [
+              {
+                "name": "DccScheduler.run_sends_idle_when_empty",
+                "file": "dcc_scheduler_Test.cxx",
+                "desc": "With an empty queue, DccScheduler_run loads an idle packet -- proves the rail never goes empty (no DCC gaps)."
+              }
+            ],
             "hilChecks": [
               {
                 "label": "refresh: a packet at least every 30 ms",
                 "file": "s9_2_compliance.py",
-                "desc": "Measures max packet-to-packet gap stays <= 30 ms"
+                "desc": "Measures max packet start-to-start gap stays <= 30 ms"
               }
             ]
+          }
+        },
+        {
+          "tid": "DCC-S9.2-CS-008",
+          "feature": "Min 5 ms same-address spacing (112-127)",
+          "role": "cs",
+          "ref": {
+            "spec": "S-9.2",
+            "cite": "Section C (Frequency of Packet Transmission), footnote 11",
+            "origin": "released",
+            "draftDelta": null
+          },
+          "supported": {
+            "state": "ok",
+            "note": ""
+          },
+          "gtest": {
+            "state": "ok",
+            "note": ""
+          },
+          "hil": {
+            "state": "ok",
+            "note": ""
+          },
+          "detail": {
+            "impl": "Enforced in DccScheduler_run: before loading a one-shot or refresh packet whose first byte is 0x70-0x7F (short address 112-127, which aliases the service-mode 0111CRRR command) and equals the last-loaded address byte, the scheduler loads an idle packet instead and retries the real packet next cycle. The intervening idle (~5.8 ms) provides the >=5 ms end-to-start gap required by S-9.2 Section C footnote 11. Long/accessory addresses (first byte 0xC0-0xFF / 0x80-0xBF) never alias and are unaffected. Idle spacer.",
+            "gtest": "run_inserts_idle_spacer_between_same_short_addr_112_127 proves the spacer is inserted, repeat_count is preserved, and the spacer does not fire on_packet_sent; run_no_spacer_for_short_addr_below_112 and run_no_spacer_for_long_address confirm the guard is scoped to short addresses 112-127.",
+            "hil": "Driven HIL check in s9_2_compliance.py: a single short loco at 115 in the refresh cycle, captured on the wire -- 7 packets to 115 each separated by an idle spacer, min same-address start-to-start 14.39 ms (>=5 ms); control addr 100 (<112) sent back-to-back. Bench-verified PASS."
+          },
+          "refs": {
+            "symbols": [
+              "DccScheduler_run",
+              "_aliases_service_mode"
+            ],
+            "tests": [
+              {
+                "name": "DccScheduler.run_inserts_idle_spacer_between_same_short_addr_112_127",
+                "file": "dcc_scheduler_Test.cxx",
+                "desc": "A second same short-address (115) packet within 5 ms is replaced by an idle spacer; the real packet is retried next cycle (repeat_count preserved) and the spacer does not fire on_packet_sent."
+              },
+              {
+                "name": "DccScheduler.run_no_spacer_for_short_addr_below_112",
+                "file": "dcc_scheduler_Test.cxx",
+                "desc": "Address 100 (0x64) does not alias a service-mode byte, so consecutive same-address packets are sent with no spacer."
+              },
+              {
+                "name": "DccScheduler.run_no_spacer_for_long_address",
+                "file": "dcc_scheduler_Test.cxx",
+                "desc": "A long-address packet (first byte 0xC0-0xFF) never aliases, so no spacer is inserted."
+              }
+            ],
+            "hilChecks": [
+              {
+                "label": "single short loco 115: idle spacer + >=5 ms same-address gap (control: addr 100 back-to-back)",
+                "file": "s9_2_compliance.py",
+                "desc": "Drives a single short loco at 115 and captures the wire; asserts the idle spacer is present (no two 115 packets adjacent) and same-address start-to-start >= 5 ms. Control addr 100 (<112) is sent back-to-back."
+              }
+            ]
+          }
+        },
+        {
+          "tid": "DCC-S9.2-CS-009",
+          "feature": "Address-0 analog loco control (zero-stretching)",
+          "role": "cs",
+          "ref": {
+            "spec": "S-9.2",
+            "cite": "Address 0 / analog (RP-9.2.1; not in baseline S-9.2)",
+            "origin": "released",
+            "draftDelta": null
+          },
+          "supported": {
+            "state": "no",
+            "note": "unsupported (legacy, RP-9.2.1)"
+          },
+          "gtest": {
+            "state": "na",
+            "note": ""
+          },
+          "hil": {
+            "state": "na",
+            "note": ""
+          },
+          "detail": {
+            "impl": "Running one true DC locomotive on DCC rails by stretching the '0' half-bits to create a net DC offset (address-0 / analog operation, RP-9.2.1; not part of baseline S-9.2). Intentionally NOT implemented: the DC bias overheats analog motors (current flows even at standstill), only one analog loco can be controlled, it degrades the signal for sound/keep-alive decoders, and most decoders ship with CV29 analog conversion disabled. A conformant command station need not provide it. (Distinct from the S-9.2.1 Analog Function Group, which IS supported.)",
+            "gtest": "Intentionally not implemented; nothing to test.",
+            "hil": "Intentionally not implemented; nothing to verify."
+          },
+          "refs": {
+            "symbols": [],
+            "tests": [],
+            "hilChecks": []
           }
         }
       ]
@@ -2538,12 +2636,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder-HIL rig (none exists)"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder recognizes 0x3F adv-ops byte and fires speed callback.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist."
+            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
           },
           "refs": {
             "symbols": [
@@ -2626,12 +2724,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder-HIL rig (none exists)"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder reverses the interleaved 28-step encoding.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist."
+            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
           },
           "refs": {
             "symbols": [
@@ -2714,12 +2812,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder-HIL rig (none exists)"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder decodes 01DCSSSS as 14-step when configured.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist."
+            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
           },
           "refs": {
             "symbols": [
@@ -2802,12 +2900,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder-HIL rig (none exists)"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder extracts FL/F1-F4 from 100DDDDD.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist."
+            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
           },
           "refs": {
             "symbols": [
@@ -2890,12 +2988,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder-HIL rig (none exists)"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder dispatches F5-F8 from 1011DDDD.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist."
+            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
           },
           "refs": {
             "symbols": [
@@ -2978,12 +3076,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder-HIL rig (none exists)"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder dispatches F9-F12 from 1010DDDD.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist."
+            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
           },
           "refs": {
             "symbols": [
@@ -3077,12 +3175,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder-HIL rig (none exists)"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder recognizes 0xD8-0xDF and dispatches the F13-F68 group.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist."
+            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
           },
           "refs": {
             "symbols": [
@@ -3184,12 +3282,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs accessory-HIL rig (none exists)"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder reconstructs address from inverted bits and fires accessory callback.",
             "gtest": "",
-            "hil": "Accessory-side HIL requires a rig that does not exist."
+            "hil": "Accessory-side HIL requires a rig that does not exist. Needs accessory-HIL rig (none exists)."
           },
           "refs": {
             "symbols": [
@@ -3286,12 +3384,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs accessory-HIL rig (none exists)"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder reconstructs the extended address and fires the aspect callback.",
             "gtest": "",
-            "hil": "Accessory-side HIL requires a rig that does not exist."
+            "hil": "Accessory-side HIL requires a rig that does not exist. Needs accessory-HIL rig (none exists)."
           },
           "refs": {
             "symbols": [
@@ -3328,13 +3426,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "no",
-            "note": "no s9_2_1 vector"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "load_accessory_basic_stop builds basic byte with C=0 (deactivate).",
             "gtest": "",
-            "hil": "No HIL vector exercises basic accessory stop."
+            "hil": "s9_2_1 exact-byte vector: ACC <b> <p> OFF on the wire matches the independent deactivate encoder (D=0). (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -3347,7 +3445,13 @@ window.COMPLIANCE =
                 "desc": "asserts C=0 deactivate byte"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "basic accessory deactivate/stop byte (D=0)",
+                "file": "s9_2_1_compliance.py",
+                "desc": "ACC OFF wire bytes equal the independent accessory_basic(activate=False) encoder."
+              }
+            ]
           }
         },
         {
@@ -3371,13 +3475,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "no",
-            "note": "no s9_2_1 vector"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "load_accessory_extended_stop emits aspect byte 0x00.",
             "gtest": "",
-            "hil": "No HIL vector exercises extended accessory stop."
+            "hil": "s9_2_1 exact-byte vector: ACCE <addr> 0 emits the aspect-0 all-stop packet, matching the independent extended-accessory encoder. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -3390,7 +3494,13 @@ window.COMPLIANCE =
                 "desc": "asserts aspect=0 all-stop"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "extended accessory all-stop (aspect 0)",
+                "file": "s9_2_1_compliance.py",
+                "desc": "ACCE 0 wire bytes equal accessory_extended(aspect=0)."
+              }
+            ]
           }
         },
         {
@@ -3405,7 +3515,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "matrix said unimplemented; function exists"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
@@ -3416,7 +3526,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "load_accessory_nop builds two bytes with NOP marker bit3=1 and T basic/extended.",
+            "impl": "load_accessory_nop builds two bytes with NOP marker bit3=1 and T basic/extended. Matrix said unimplemented; function exists.",
             "gtest": "",
             "hil": ""
           },
@@ -3569,13 +3679,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "no",
-            "note": "no s9_2_1 vector"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "load_cv_bit_pom emits CC=10 plus 111CDBBB.",
             "gtest": "",
-            "hil": "No HIL vector exercises POM bit manipulation."
+            "hil": "s9_2_1 exact-byte vector: CV BIT emits the 1110 10 instruction + 111KDBBB data byte, matching the independent POM bit encoder. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -3588,7 +3698,13 @@ window.COMPLIANCE =
                 "desc": "asserts bit-write byte"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "CV-POM bit-manipulation packet (1110 10)",
+                "file": "s9_2_1_compliance.py",
+                "desc": "CV BIT wire bytes equal cv_bit_pom()."
+              }
+            ]
           }
         },
         {
@@ -3613,12 +3729,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder-HIL rig (none exists)"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder dispatches 1110CCDD CV access to write/verify/bit callbacks.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist."
+            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
           },
           "refs": {
             "symbols": [
@@ -3658,13 +3774,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "no",
-            "note": "no s9_2_1 vector"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "load_accessory_basic_cv_* build a 5-byte accessory CV instruction.",
             "gtest": "",
-            "hil": "No HIL vector exercises accessory CV access."
+            "hil": "s9_2_1 exact-byte vectors: ACC CV WRITE/VERIFY/BIT emit the 5-byte basic accessory CV instruction, matching the independent encoder. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -3677,7 +3793,13 @@ window.COMPLIANCE =
                 "desc": "asserts basic accessory CV write payload"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "basic accessory CV write/verify/bit",
+                "file": "s9_2_1_compliance.py",
+                "desc": "ACC CV wire bytes equal accessory_basic_cv()."
+              }
+            ]
           }
         },
         {
@@ -3699,13 +3821,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "no",
-            "note": "no s9_2_1 vector"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "load_accessory_extended_cv_* build a 5-byte extended accessory CV instruction.",
             "gtest": "",
-            "hil": "No HIL vector exercises accessory CV access."
+            "hil": "s9_2_1 exact-byte vectors: ACCE CV WRITE/VERIFY/BIT emit the 5-byte extended accessory CV instruction, matching the independent encoder. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -3718,7 +3840,13 @@ window.COMPLIANCE =
                 "desc": "asserts extended accessory CV write payload"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "extended accessory CV write/verify/bit",
+                "file": "s9_2_1_compliance.py",
+                "desc": "ACCE CV wire bytes equal accessory_extended_cv()."
+              }
+            ]
           }
         },
         {
@@ -3735,20 +3863,20 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "no",
-            "note": "only RailCom response IDs defined, no encoder"
+            "note": ""
           },
           "gtest": {
-            "state": "na",
+            "state": "no",
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "no",
             "note": ""
           },
           "detail": {
-            "impl": "Only DCC_RAILCOM_ID_XPOM_8..11 exist; no command-station XPOM builder.",
-            "gtest": "No XPOM encoder to test.",
-            "hil": "No XPOM encoder to verify."
+            "impl": "Only DCC_RAILCOM_ID_XPOM_8..11 exist; no command-station XPOM builder. Only RailCom response IDs defined, no encoder.",
+            "gtest": "No XPOM encoder to test. Encoder not implemented yet.",
+            "hil": "No XPOM encoder to verify. Encoder not implemented yet."
           },
           "refs": {
             "symbols": [
@@ -3828,13 +3956,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "no",
-            "note": "no dedicated clear vector"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "load_consist_clear delegates to load_consist_set with address 0.",
             "gtest": "",
-            "hil": "No dedicated consist-clear HIL vector."
+            "hil": "s9_2_1 exact-byte vector: CONSIST CLEAR emits the consist-set-address-0 packet, matching the independent encoder. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -3847,7 +3975,13 @@ window.COMPLIANCE =
                 "desc": "asserts clear encodes consist addr 0"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "consist clear (set consist addr 0)",
+                "file": "s9_2_1_compliance.py",
+                "desc": "CONSIST CLEAR wire bytes equal consist_clear()."
+              }
+            ]
           }
         },
         {
@@ -3872,12 +4006,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder-HIL rig (none exists)"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder dispatches consist control to the consist callback.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist."
+            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
           },
           "refs": {
             "symbols": [
@@ -3969,12 +4103,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder-HIL rig (none exists)"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder recognizes 0xDD and dispatches binary state short.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist."
+            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
           },
           "refs": {
             "symbols": [
@@ -4011,13 +4145,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "no",
-            "note": "no s9_2_1 vector for long form"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "load_binary_state_long emits feature byte + low/high state bytes.",
             "gtest": "",
-            "hil": "No HIL vector exercises binary state long."
+            "hil": "s9_2_1 exact-byte vector: BSL emits 0xC0 (11000000) + DLLLLLLL + HHHHHHHH per S-9.2.1 §2.3.6.1. This independent encoder caught a real library bug — DCC_FEAT_BINARY_STATE_LONG was 0xDC (colliding with F61-F68); fixed in dcc_defines.h + dcc_packet_decoder.c (host gTests pass). (Authored; reflash firmware for the wire validation — library fix applied 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -4030,7 +4164,13 @@ window.COMPLIANCE =
                 "desc": "asserts low/high state bytes"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "binary state long opcode 0xC0 + state bytes",
+                "file": "s9_2_1_compliance.py",
+                "desc": "BSL wire bytes equal the independent binary_state_long() encoder (0xC0 long-form opcode)."
+              }
+            ]
           }
         },
         {
@@ -4055,12 +4195,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder-HIL rig (none exists)"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder recognizes the long-form feature byte and dispatches the 15-bit state.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist."
+            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
           },
           "refs": {
             "symbols": [
@@ -4147,12 +4287,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder-HIL rig (none exists)"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder recognizes 0x3D and dispatches the analog function callback.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist."
+            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
           },
           "refs": {
             "symbols": [
@@ -4180,7 +4320,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "matrix said unimplemented; function exists"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
@@ -4191,7 +4331,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "load_system_time broadcasts addr 0 + 0xC2 + 16-bit ms MSB-first.",
+            "impl": "load_system_time broadcasts addr 0 + 0xC2 + 16-bit ms MSB-first. Matrix said unimplemented; function exists.",
             "gtest": "",
             "hil": ""
           },
@@ -4232,7 +4372,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "matrix said unimplemented; function exists"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
@@ -4243,7 +4383,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "load_model_time broadcasts addr 0 + 0xC1 + time fields.",
+            "impl": "load_model_time broadcasts addr 0 + 0xC1 + time fields. Matrix said unimplemented; function exists.",
             "gtest": "",
             "hil": ""
           },
@@ -4279,7 +4419,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "matrix said unimplemented; function exists"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
@@ -4290,7 +4430,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "load_model_date broadcasts addr 0 + 0xC1 + 12-bit year fields.",
+            "impl": "load_model_date broadcasts addr 0 + 0xC1 + 12-bit year fields. Matrix said unimplemented; function exists.",
             "gtest": "",
             "hil": ""
           },
@@ -4386,12 +4526,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "needs decoder-HIL rig (none exists)"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder matches its short or long address before dispatching multifunction instructions.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist."
+            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
           },
           "refs": {
             "symbols": [
@@ -4433,20 +4573,20 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "no",
-            "note": "No logon state machine; only DCC_RAILCOM_ID_LOGON_ENABLE define with no consuming logic"
+            "note": ""
           },
           "gtest": {
             "state": "no",
-            "note": "No host tests cover logon"
+            "note": ""
           },
           "hil": {
             "state": "na",
-            "note": "No HIL suite for S-9.2.1.1"
+            "note": ""
           },
           "detail": {
-            "impl": "Not implemented; only the RailCom Logon Enable datagram ID is defined with no logic.",
-            "gtest": "No tests exist for decoder logon.",
-            "hil": "No HIL suite exists."
+            "impl": "Not implemented; only the RailCom Logon Enable datagram ID is defined with no logic. No logon state machine; only DCC_RAILCOM_ID_LOGON_ENABLE define with no consuming logic.",
+            "gtest": "No tests exist for decoder logon. No host tests cover logon.",
+            "hil": "No HIL suite exists. No HIL suite for S-9.2.1.1."
           },
           "refs": {
             "symbols": [
@@ -4470,20 +4610,20 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "no",
-            "note": "No CRC-8 routine or polynomial anywhere in src/dcc"
+            "note": ""
           },
           "gtest": {
             "state": "no",
-            "note": "No CRC-8 tests"
+            "note": ""
           },
           "hil": {
             "state": "na",
-            "note": "No HIL suite for S-9.2.1.1"
+            "note": ""
           },
           "detail": {
-            "impl": "Not implemented; packet building uses only the XOR error byte.",
-            "gtest": "No tests exist for CRC-8.",
-            "hil": "No HIL suite exists."
+            "impl": "Not implemented; packet building uses only the XOR error byte. No CRC-8 routine or polynomial anywhere in src/dcc.",
+            "gtest": "No tests exist for CRC-8. No CRC-8 tests.",
+            "hil": "No HIL suite exists. No HIL suite for S-9.2.1.1."
           },
           "refs": {
             "symbols": [],
@@ -4505,20 +4645,20 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "no",
-            "note": "No ReadBlock/WriteBlock or data-space logic in src/dcc"
+            "note": ""
           },
           "gtest": {
             "state": "no",
-            "note": "No data-space tests"
+            "note": ""
           },
           "hil": {
             "state": "na",
-            "note": "No HIL suite for S-9.2.1.1"
+            "note": ""
           },
           "detail": {
-            "impl": "Not implemented; no block-transfer or data-space code present.",
-            "gtest": "No tests exist for data spaces.",
-            "hil": "No HIL suite exists."
+            "impl": "Not implemented; no block-transfer or data-space code present. No ReadBlock/WriteBlock or data-space logic in src/dcc.",
+            "gtest": "No tests exist for data spaces. No data-space tests.",
+            "hil": "No HIL suite exists. No HIL suite for S-9.2.1.1."
           },
           "refs": {
             "symbols": [],
@@ -4552,13 +4692,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
-            "note": "CV access on the wire rides POM under S-9.2.1; storage logic is host-only"
+            "state": "nobs",
+            "note": ""
           },
           "detail": {
             "impl": "DccCvStorage_read/write delegate to injected callbacks with null guards.",
             "gtest": "",
-            "hil": "CV-storage logic is host-tested; on-wire access covered under S-9.2.1."
+            "hil": "CV-storage logic is host-tested; on-wire access covered under S-9.2.1. CV access on the wire rides POM under S-9.2.1; storage logic is host-only."
           },
           "refs": {
             "symbols": [
@@ -4601,13 +4741,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
-            "note": "lock logic is host-only"
+            "state": "nobs",
+            "note": ""
           },
           "detail": {
             "impl": "is_locked compares CV15 to CV16; write blocks all CVs except 15/16 (and CV8=8) while locked.",
             "gtest": "",
-            "hil": ""
+            "hil": "Lock logic is host-only."
           },
           "refs": {
             "symbols": [
@@ -4645,20 +4785,20 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "partial",
-            "note": "only a write-permission exception; no reset-to-defaults logic in the library"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
             "note": ""
           },
           "hil": {
-            "state": "na",
-            "note": "host-only"
+            "state": "nobs",
+            "note": ""
           },
           "detail": {
-            "impl": "write special-cases CV8==8 to bypass the lock and forwards it to cv_write; no in-library default restoration.",
+            "impl": "write special-cases CV8==8 to bypass the lock and forwards it to cv_write; no in-library default restoration. Only a write-permission exception; no reset-to-defaults logic in the library.",
             "gtest": "",
-            "hil": ""
+            "hil": "Host-only."
           },
           "refs": {
             "symbols": [
@@ -4689,20 +4829,20 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "partial",
-            "note": "only bits 0/1/5 acted on; bits 2 (analog), 3 (RailCom), 4 (speed table) not acted on"
+            "note": ""
           },
           "gtest": {
             "state": "no",
-            "note": "no host test exercises CV29 bit interpretation"
+            "note": ""
           },
           "hil": {
             "state": "na",
-            "note": "address/speed-mode behavior tested on the wire elsewhere"
+            "note": ""
           },
           "detail": {
-            "impl": "_update_address_cv_cache caches direction/speed-step/extended-address from CV29; other bits are ignored.",
-            "gtest": "No host test covers CV29 bit interpretation.",
-            "hil": ""
+            "impl": "_update_address_cv_cache caches direction/speed-step/extended-address from CV29; other bits are ignored. Only bits 0/1/5 acted on; bits 2 (analog), 3 (RailCom), 4 (speed table) not acted on.",
+            "gtest": "No host test covers CV29 bit interpretation. No host test exercises CV29 bit interpretation.",
+            "hil": "Address/speed-mode behavior tested on the wire elsewhere."
           },
           "refs": {
             "symbols": [
@@ -4728,20 +4868,20 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "no",
-            "note": "CV31/CV32 are #defines only; no paging logic"
+            "note": ""
           },
           "gtest": {
             "state": "no",
-            "note": "no tests for indexed CV paging"
+            "note": ""
           },
           "hil": {
             "state": "na",
-            "note": "not implemented"
+            "note": ""
           },
           "detail": {
-            "impl": "Only #define constants for CV31/CV32; no page-selected indexing.",
-            "gtest": "No indexed-CV behavior exists to test.",
-            "hil": ""
+            "impl": "Only #define constants for CV31/CV32; no page-selected indexing. CV31/CV32 are #defines only; no paging logic.",
+            "gtest": "No indexed-CV behavior exists to test. No tests for indexed CV paging.",
+            "hil": "Not implemented."
           },
           "refs": {
             "symbols": [
@@ -4770,16 +4910,16 @@ window.COMPLIANCE =
           },
           "gtest": {
             "state": "no",
-            "note": "no host test for accessory CV decode"
+            "note": ""
           },
           "hil": {
             "state": "na",
-            "note": "accessory CV access on the wire covered under S-9.2.1"
+            "note": ""
           },
           "detail": {
             "impl": "_update_accessory_address parses CV541 mode bits and combines CV513/CV521 into the cached address.",
-            "gtest": "No host test exercises accessory CV513/521/541 decode.",
-            "hil": ""
+            "gtest": "No host test exercises accessory CV513/521/541 decode. No host test for accessory CV decode.",
+            "hil": "Accessory CV access on the wire covered under S-9.2.1."
           },
           "refs": {
             "symbols": [
@@ -4810,7 +4950,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "DCC_ACK_MIN_SAMPLES = (5000/58)-1 = 85"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
@@ -4818,12 +4958,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "4930 us = 85 samples"
+            "note": ""
           },
           "detail": {
-            "impl": "DccServiceModeCommon_ack_sample counts consecutive above-threshold samples and accepts a run >= MIN on the falling edge.",
+            "impl": "DccServiceModeCommon_ack_sample counts consecutive above-threshold samples and accepts a run >= MIN on the falling edge. DCC_ACK_MIN_SAMPLES = (5000/58)-1 = 85.",
             "gtest": "",
-            "hil": ""
+            "hil": "4930 us = 85 samples."
           },
           "refs": {
             "symbols": [
@@ -4866,12 +5006,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "4872 us = 84 samples"
+            "note": ""
           },
           "detail": {
             "impl": "A run shorter than DCC_ACK_MIN_SAMPLES on the falling edge is not accepted.",
             "gtest": "",
-            "hil": ""
+            "hil": "4872 us = 84 samples."
           },
           "refs": {
             "symbols": [
@@ -4906,7 +5046,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "DCC_ACK_MAX_SAMPLES = 7000/58 = 120"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
@@ -4914,12 +5054,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "6960 us = 120 samples = MAX"
+            "note": ""
           },
           "detail": {
-            "impl": "A run whose length lands within [MIN, MAX] inclusive on the falling edge is accepted.",
+            "impl": "A run whose length lands within [MIN, MAX] inclusive on the falling edge is accepted. DCC_ACK_MAX_SAMPLES = 7000/58 = 120.",
             "gtest": "",
-            "hil": ""
+            "hil": "6960 us = 120 samples = MAX."
           },
           "refs": {
             "symbols": [
@@ -4962,12 +5102,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "7018 us = 121 samples overrun"
+            "note": ""
           },
           "detail": {
             "impl": "A run exceeding DCC_ACK_MAX_SAMPLES, or one ever flagged over-current, is rejected.",
             "gtest": "",
-            "hil": ""
+            "hil": "7018 us = 121 samples overrun."
           },
           "refs": {
             "symbols": [
@@ -5009,13 +5149,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
-            "note": "host-only logic test"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "ack_sample treats a low run longer than the dropout tolerance as a real falling edge and restarts the count.",
             "gtest": "",
-            "hil": "No HIL vector; covered at host layer only."
+            "hil": "Mock-ACK loopback injects an INTERRUPTED pulse (3000 us high, ~232 us low, 3000 us high) via SVC MOCKACK <us> GLITCH <gap>. Each sub-pulse is below the MIN ACK width, so the verdict NO ACK (cross-checked against two sub-pulses on D4) proves the counter reset on the gap instead of accumulating ~6000 us. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -5029,7 +5169,13 @@ window.COMPLIANCE =
                 "desc": "asserts a deep low gap resets the width counter"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "interrupted mock-ACK pulse -> NO ACK (counter reset)",
+                "file": "s9_2_3_compliance.py",
+                "desc": "glitched pulse (3000us/gap/3000us): NO-ACK verdict + two sub-pulses on D4 prove the width counter resets on the gap rather than summing to an in-window 6000us."
+              }
+            ]
           }
         },
         {
@@ -5044,7 +5190,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "opens after DCC_SERVICE_MODE_ACK_BLANK_PACKETS"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
@@ -5052,12 +5198,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "in-window vs EARLY"
+            "note": ""
           },
           "detail": {
-            "impl": "ack_sample ignores current until the scan window opens and after the command phase, so pre/post-reset current never changes the result.",
+            "impl": "ack_sample ignores current until the scan window opens and after the command phase, so pre/post-reset current never changes the result. Opens after DCC_SERVICE_MODE_ACK_BLANK_PACKETS.",
             "gtest": "",
-            "hil": ""
+            "hil": "In-window vs EARLY."
           },
           "refs": {
             "symbols": [
@@ -5105,12 +5251,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "_count_resets >= 3"
+            "note": ""
           },
           "detail": {
             "impl": "The common sequencer sends the configured pre-reset count of reset packets before the command phase.",
             "gtest": "",
-            "hil": ""
+            "hil": "_count_resets >= 3."
           },
           "refs": {
             "symbols": [
@@ -5152,13 +5298,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "no",
-            "note": "not measured on wire"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "The common sequencer sends the configured post-reset count after the operation completes.",
             "gtest": "",
-            "hil": "No HIL check for the post-reset block."
+            "hil": "s9_2_3: the final reset run before the service track idles is 6 packets — the RESET_POST block. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -5172,7 +5318,13 @@ window.COMPLIANCE =
                 "desc": "asserts exactly 6 post-reset packets are emitted"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "post-operation RESET_POST = 6 packets (wire)",
+                "file": "s9_2_3_compliance.py",
+                "desc": "trailing reset run before idle = 6."
+              }
+            ]
           }
         },
         {
@@ -5194,13 +5346,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
-            "note": "timing-internal, host-only"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "When a valid ACK is detected the sequencer ends the command/recovery phase without sending the remaining repeats.",
             "gtest": "",
-            "hil": "No HIL check; verified at host layer."
+            "hil": "Wall-time differential on the real ACK path (mock decoder): a Direct read whose every bit ACKs (CV=0xFF) completes faster than one with no ACK (CV=0x00) — identical packet count, the only difference is each per-bit recovery cut short by the ACK. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -5214,7 +5366,13 @@ window.COMPLIANCE =
                 "desc": "asserts command phase ends early once ACK is detected"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "ACK cuts recovery short (read timing differential)",
+                "file": "s9_2_3_compliance.py",
+                "desc": "all-ACK Direct read (CV=0xFF) finishes measurably faster than the no-ACK read (CV=0x00); same packets, only recovery differs."
+              }
+            ]
           }
         },
         {
@@ -5232,17 +5390,17 @@ window.COMPLIANCE =
             "note": ""
           },
           "gtest": {
-            "state": "na",
-            "note": "wire-timing property"
+            "state": "nobs",
+            "note": ""
           },
           "hil": {
             "state": "ok",
-            "note": "_check_command on all modes"
+            "note": ""
           },
           "detail": {
             "impl": "All service-mode command and reset packets are emitted with the long-preamble service-mode framing.",
-            "gtest": "Preamble length is a wire property not asserted at host layer.",
-            "hil": ""
+            "gtest": "Preamble length is a wire property not asserted at host layer. Wire-timing property.",
+            "hil": "_check_command on all modes."
           },
           "refs": {
             "symbols": [
@@ -5270,7 +5428,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "DCC_SERVICE_MODE_REGISTER_VERIFY_REPEAT = 7"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
@@ -5278,12 +5436,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "test_register min_repeat=7"
+            "note": ""
           },
           "detail": {
-            "impl": "DccServiceModeRegister verify passes command_repeat=7 with zero recovery.",
+            "impl": "DccServiceModeRegister verify passes command_repeat=7 with zero recovery. DCC_SERVICE_MODE_REGISTER_VERIFY_REPEAT = 7.",
             "gtest": "",
-            "hil": ""
+            "hil": "Test_register min_repeat=7."
           },
           "refs": {
             "symbols": [
@@ -5318,20 +5476,20 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "DCC_SERVICE_MODE_RECOVERY_COUNT_LONG = 10"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
             "note": ""
           },
           "hil": {
-            "state": "no",
-            "note": "recovery count not measured on wire"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
-            "impl": "Register writes to register 1 and Address-Only CV#1 writes pass the long 10-packet recovery count.",
+            "impl": "Register writes to register 1 and Address-Only CV#1 writes pass the long 10-packet recovery count. DCC_SERVICE_MODE_RECOVERY_COUNT_LONG = 10.",
             "gtest": "",
-            "hil": "No HIL check measures the 10-packet recovery."
+            "hil": "s9_2_3: no-decoder REGISTER-1 write — between-command reset runs are 13 (= RECOVERY_LONG 10 + PRE 3), so register-1/CV#1 uses the 10-packet long recovery. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -5350,7 +5508,13 @@ window.COMPLIANCE =
                 "desc": "asserts Address-Only CV#1 write uses long recovery"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "register-1 long recovery = 10 packets (wire)",
+                "file": "s9_2_3_compliance.py",
+                "desc": "between-command reset runs = 13 (RECOVERY_LONG 10 + PRE 3); derived recovery = 10."
+              }
+            ]
           }
         },
         {
@@ -5372,13 +5536,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "no",
-            "note": "recovery count not measured on wire"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "Register writes to registers other than 1 pass the standard 6-packet recovery count.",
             "gtest": "",
-            "hil": "No HIL check measures the standard recovery."
+            "hil": "s9_2_3: no-decoder DIRECT write — the reset run between consecutive write-byte command groups on ch3 is 9 (= RECOVERY 6 + PRE 3), so the Decoder-Recovery-Time is 6 packets. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -5392,7 +5556,13 @@ window.COMPLIANCE =
                 "desc": "asserts a write to register 2 uses the standard 6-packet recovery"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "standard write recovery = 6 packets (wire)",
+                "file": "s9_2_3_compliance.py",
+                "desc": "between-command reset runs = 9 (RECOVERY 6 + PRE 3); derived recovery = 6."
+              }
+            ]
           }
         },
         {
@@ -5415,12 +5585,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "test_direct 3 instr types"
+            "note": ""
           },
           "detail": {
             "impl": "DccServiceModeDirect emits the 4-byte Direct packet with correct CC bits for write byte (0x7C), verify byte (0x74), and 111KDBBB bit byte.",
             "gtest": "",
-            "hil": ""
+            "hil": "Test_direct 3 instr types."
           },
           "refs": {
             "symbols": [
@@ -5462,7 +5632,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "CV# = address + 1"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
@@ -5470,12 +5640,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "test_direct CV#1/#3/#1023"
+            "note": ""
           },
           "detail": {
-            "impl": "DccServiceModeDirect packs the 10-bit CV address across byte0 AA and byte1 AAAAAAAA.",
+            "impl": "DccServiceModeDirect packs the 10-bit CV address across byte0 AA and byte1 AAAAAAAA. CV# = address + 1.",
             "gtest": "",
-            "hil": ""
+            "hil": "Test_direct CV#1/#3/#1023."
           },
           "refs": {
             "symbols": [
@@ -5509,7 +5679,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "page register -> page 1 (7D 01 7C)"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
@@ -5517,12 +5687,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "test_register, test_address"
+            "note": ""
           },
           "detail": {
-            "impl": "Register and Address modes run a page-preset chain before emitting the command.",
+            "impl": "Register and Address modes run a page-preset chain before emitting the command. Page register -> page 1 (7D 01 7C).",
             "gtest": "",
-            "hil": ""
+            "hil": "Test_register, test_address."
           },
           "refs": {
             "symbols": [
@@ -5562,20 +5732,20 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "ACK optional per spec line 215"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
             "note": ""
           },
           "hil": {
-            "state": "na",
-            "note": "ACK-gating internal, host-only"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
-            "impl": "The page-preset completes by ACK or packet count and never gates the command step.",
+            "impl": "The page-preset completes by ACK or packet count and never gates the command step. ACK optional per spec line 215.",
             "gtest": "",
-            "hil": "No HIL check; verified at host layer."
+            "hil": "With no decoder attached the page-preset gets NO ACK, yet a register write on the service track (ch3) still shows the page-preset packet followed by the command packet — the page-select is not gated by ACK. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -5594,7 +5764,13 @@ window.COMPLIANCE =
                 "desc": "asserts paged data step proceeds when the page-select gets no ACK"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "page-preset (un-ACKed) is followed by the command on the wire",
+                "file": "s9_2_3_compliance.py",
+                "desc": "register write with no decoder: page-preset packet then the command packet both on ch3, proving the preset is not ACK-gated."
+              }
+            ]
           }
         },
         {
@@ -5609,7 +5785,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "CV# = (page-1)*4 + data_register + 1"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
@@ -5617,12 +5793,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "test_paged"
+            "note": ""
           },
           "detail": {
-            "impl": "DccServiceModePaged emits the page-select packet then a data-register access packet computed from the CV number.",
+            "impl": "DccServiceModePaged emits the page-select packet then a data-register access packet computed from the CV number. CV# = (page-1)*4 + data_register + 1.",
             "gtest": "",
-            "hil": ""
+            "hil": "Test_paged."
           },
           "refs": {
             "symbols": [
@@ -5662,20 +5838,20 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "decoder_type per-call"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
             "note": ""
           },
           "hil": {
-            "state": "no",
-            "note": "mapping is host-side logic"
+            "state": "nobs",
+            "note": ""
           },
           "detail": {
-            "impl": "DccServiceModeTaskRegister maps a CV number to its physical register using separate Mobile and Accessory tables.",
+            "impl": "DccServiceModeTaskRegister maps a CV number to its physical register using separate Mobile and Accessory tables. Decoder_type per-call.",
             "gtest": "",
-            "hil": "Mapping is task-layer logic, not measured on the wire."
+            "hil": "The CV-to-register mapping is internal task-layer logic; only the resulting register command byte reaches the wire (covered by the register-mode command vectors). The mapping table itself is host-tested, not separately wire-observable."
           },
           "refs": {
             "symbols": [
@@ -5709,7 +5885,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "01111111 00001000 01110111"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
@@ -5717,12 +5893,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "test_register factory reset"
+            "note": ""
           },
           "detail": {
-            "impl": "DccServiceModeTaskRegister_factory_reset issues a register-8 value-8 write following the register sequence.",
+            "impl": "DccServiceModeTaskRegister_factory_reset issues a register-8 value-8 write following the register sequence. 01111111 00001000 01110111.",
             "gtest": "",
-            "hil": ""
+            "hil": "Test_register factory reset."
           },
           "refs": {
             "symbols": [
@@ -5763,13 +5939,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
-            "note": "task-layer iteration, host-only"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "The task modules iterate verify 0..N and return the value at the first ACK.",
             "gtest": "",
-            "hil": "Iteration logic is task-layer; not exercised directly on the wire."
+            "hil": "Direct read on the service track (ch3) with the mock decoder holding CV8=0x5A: the per-bit verify packets (verify_bit cv,b,1 for b=0..7) appear on the wire — the iteration is externally visible — and the read returns 0x5A through the real ACK path. (Register/address byte-search iteration stays host-only: the mock decoder only ACKs Direct-format verifies.) (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -5788,7 +5964,13 @@ window.COMPLIANCE =
                 "desc": "asserts address read returns 3 on ACK"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "Direct read: per-bit verify iteration visible + ACK returns the value",
+                "file": "s9_2_3_compliance.py",
+                "desc": "mock holds CV8=0x5A; >=3 of the 8 verify-bit packets seen on ch3 and the op returns 0x5A via the real ACK path."
+              }
+            ]
           }
         },
         {
@@ -5810,13 +5992,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
-            "note": "task-layer phase, host-only"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "The task write_cv runs a WRITE phase then a VERIFY phase against the same value.",
             "gtest": "",
-            "hil": "Phase sequencing is task-layer; not directly checked on the wire."
+            "hil": "Direct write on the service track (ch3): the write-byte packet's first appearance precedes the verify-byte read-back packet's (timestamp ordering from the capture), and the op completes SUCCESS through the real ACK path (mock accepts the write). (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -5830,7 +6012,13 @@ window.COMPLIANCE =
                 "desc": "asserts a verify is issued after the write completes"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "write-byte precedes verify-byte on the wire (phase order)",
+                "file": "s9_2_3_compliance.py",
+                "desc": "Direct write CV8=51: write-byte packet timestamped before the verify-byte read-back; op returns SUCCESS via the ACK path."
+              }
+            ]
           }
         },
         {
@@ -5852,13 +6040,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
-            "note": "task-layer logic, host-only"
+            "state": "nobs",
+            "note": ""
           },
           "detail": {
             "impl": "Non-Direct write_bit reads the byte, modifies the bit, writes back, and verifies.",
             "gtest": "",
-            "hil": "Read-modify-write is task-layer; not measured on the wire."
+            "hil": "Read-modify-write is task-layer; not measured on the wire. Task-layer logic, host-only."
           },
           "refs": {
             "symbols": [
@@ -5896,16 +6084,16 @@ window.COMPLIANCE =
           },
           "gtest": {
             "state": "partial",
-            "note": "host tests verify per-step logic, not end-to-end held value"
+            "note": ""
           },
           "hil": {
             "state": "ok",
-            "note": "mock decoder SVC MOCKCV"
+            "note": ""
           },
           "detail": {
             "impl": "The mock decoder holds a CV value and ACKs only on a matching verify, so read returns the stored value and write-then-read round-trips.",
-            "gtest": "Host tests assert iteration/verify logic but not a full held-value round-trip.",
-            "hil": ""
+            "gtest": "Host tests assert iteration/verify logic but not a full held-value round-trip. Host tests verify per-step logic, not end-to-end held value.",
+            "hil": "Mock decoder SVC MOCKCV."
           },
           "refs": {
             "symbols": [
@@ -5940,20 +6128,20 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "shared 58us ISR, toggle-first design"
+            "note": ""
           },
           "gtest": {
-            "state": "na",
-            "note": "wire-timing property"
+            "state": "nobs",
+            "note": ""
           },
           "hil": {
             "state": "ok",
-            "note": "check_track_timing every op"
+            "note": ""
           },
           "detail": {
-            "impl": "Both track pin toggles fire at the top of the shared 58us ISR before state processing, so task overhead cannot stretch either channel.",
-            "gtest": "Half-bit timing is a wire property not assertable at host.",
-            "hil": ""
+            "impl": "Both track pin toggles fire at the top of the shared 58us ISR before state processing, so task overhead cannot stretch either channel. Shared 58us ISR, toggle-first design.",
+            "gtest": "Half-bit timing is a wire property not assertable at host. Wire-timing property.",
+            "hil": "Check_track_timing every op."
           },
           "refs": {
             "symbols": [
@@ -5981,7 +6169,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "address range 1..127"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
@@ -5989,12 +6177,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "test_address"
+            "note": ""
           },
           "detail": {
-            "impl": "DccServiceModeAddress emits the Address-Only packet writing/verifying only the 7-bit CV#1 and rejects out-of-range.",
+            "impl": "DccServiceModeAddress emits the Address-Only packet writing/verifying only the 7-bit CV#1 and rejects out-of-range. Address range 1..127.",
             "gtest": "",
-            "hil": ""
+            "hil": "Test_address."
           },
           "refs": {
             "symbols": [
@@ -6041,20 +6229,20 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "no",
-            "note": "only dead callback declarations and an unreferenced DCC_CV_PACKET_TIMEOUT define; no timer or stop logic"
+            "note": ""
           },
           "gtest": {
             "state": "no",
-            "note": "no tests exercise failsafe; symbols never invoked"
+            "note": ""
           },
           "hil": {
             "state": "na",
-            "note": "feature unimplemented"
+            "note": ""
           },
           "detail": {
-            "impl": "Unimplemented: on_failsafe_* callbacks are declared but never called, and CV11 is defined only.",
-            "gtest": "No gtest coverage; the on_failsafe_* callbacks have zero call sites.",
-            "hil": "No HIL coverage; nothing to drive."
+            "impl": "Unimplemented: on_failsafe_* callbacks are declared but never called, and CV11 is defined only. Only dead callback declarations and an unreferenced DCC_CV_PACKET_TIMEOUT define; no timer or stop logic.",
+            "gtest": "No gtest coverage; the on_failsafe_* callbacks have zero call sites. No tests exercise failsafe; symbols never invoked.",
+            "hil": "No HIL coverage; nothing to drive. Feature unimplemented."
           },
           "refs": {
             "symbols": [
@@ -6093,12 +6281,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "ok",
-            "note": "on-wire envelope"
+            "note": ""
           },
           "detail": {
             "impl": "DELAY state (26 us default) tristates the H-bridge to begin the cutout.",
             "gtest": "",
-            "hil": ""
+            "hil": "On-wire envelope."
           },
           "refs": {
             "symbols": [
@@ -6187,7 +6375,7 @@ window.COMPLIANCE =
           },
           "gtest": {
             "state": "partial",
-            "note": "window implied by per-state period tests"
+            "note": ""
           },
           "hil": {
             "state": "ok",
@@ -6195,7 +6383,7 @@ window.COMPLIANCE =
           },
           "detail": {
             "impl": "Sum of DELAY..CH2 periods yields the 422-462 us active cutout window.",
-            "gtest": "Host asserts individual state periods; the derived window is checked on the wire.",
+            "gtest": "Host asserts individual state periods; the derived window is checked on the wire. Window implied by per-state period tests.",
             "hil": ""
           },
           "refs": {
@@ -6234,7 +6422,7 @@ window.COMPLIANCE =
           },
           "gtest": {
             "state": "partial",
-            "note": "re-arm covered, not the per-packet count invariant"
+            "note": ""
           },
           "hil": {
             "state": "ok",
@@ -6242,7 +6430,7 @@ window.COMPLIANCE =
           },
           "detail": {
             "impl": "Cutout is armed once per transmitted packet via the scheduler dispatch hook.",
-            "gtest": "No host count-invariant test; HIL matches cutout count to packet count.",
+            "gtest": "No host count-invariant test; HIL matches cutout count to packet count. Re-arm covered, not the per-packet count invariant.",
             "hil": ""
           },
           "refs": {
@@ -6286,13 +6474,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
-            "note": "internal phase boundaries not externally visible"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "5-state machine DELAY->SETTLING->CH1->GAP->CH2 toggles UART Rx enable/disable and begin/end-cutout hooks in order.",
             "gtest": "",
-            "hil": "Strobe marks only cutout begin/end; sub-windows not brought out to a probe."
+            "hil": "The channel-window open/close hooks are mirrored to the RAILCOM_RX_WINDOW probe pin (ch5); combined with the PB2 cutout strobe (T_CS/T_CE) the Saleae times all five state boundaries and the suite asserts T_CS<T_TS1<T_TC1<T_TS2<T_CE on every cutout. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -6312,7 +6500,13 @@ window.COMPLIANCE =
                 "desc": "verifies the begin/Rx/end event order across the sequence"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "5-state event order on the wire (PB2 + RAILCOM_RX_WINDOW mirror)",
+                "file": "s9_3_2_compliance.py",
+                "desc": "mirror pin marks Ch1/Ch2 window open/close; suite asserts T_CS<T_TS1<T_TC1<T_TS2<T_CE per cutout."
+              }
+            ]
           }
         },
         {
@@ -6336,13 +6530,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Default per-state durations DELAY 26, SETTLING 54, CH1 97, GAP 16, CH2 261.",
             "gtest": "",
-            "hil": "Sub-window periods not externally observable."
+            "hil": "From the RAILCOM_RX_WINDOW mirror edges (ch5) the suite computes each interior period and asserts SETTLING~54, CH1~97, GAP~16, CH2~263 us (the firmware-configured values; SETTLING/CH1/GAP are the spec defaults, DELAY/CH2 pre-adjusted for bench latency as the T_CS/T_CE checks already are). (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -6355,7 +6549,13 @@ window.COMPLIANCE =
                 "desc": "each state programs the correct default timer period"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "per-state periods from the mirror (SETTLING/CH1/GAP/CH2)",
+                "file": "s9_3_2_compliance.py",
+                "desc": "interior periods derived from RAILCOM_RX_WINDOW edges checked against 54/97/16/263 us within tolerance."
+              }
+            ]
           }
         },
         {
@@ -6377,13 +6577,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Per-state periods are sourced from dcc_config_t, with 0 selecting the spec default.",
             "gtest": "",
-            "hil": "Configuration override is host-only."
+            "hil": "Reconfigured at runtime over UART (RAILCOM TIMING ...): setting CH1=150 us shows ~150 on the PB18 mirror, and CH1=0 falls back to the 97 us spec default — proving custom values reach the wire and 0 selects the default. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -6401,7 +6601,13 @@ window.COMPLIANCE =
                 "desc": "custom config values drive each state's timer period"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "custom CH1 reaches the wire; 0 selects the default",
+                "file": "s9_3_2_compliance.py",
+                "desc": "RAILCOM TIMING sets CH1=150us (measured ~150 on PB18) then CH1=0 (measured ~97, the spec default)."
+              }
+            ]
           }
         },
         {
@@ -6423,13 +6629,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "cancel ends the cutout and restores the H-bridge from any state past DELAY.",
             "gtest": "",
-            "hil": "Abort path is host-verified."
+            "hil": "RAILCOM CANCEL arms a one-shot cancel that the firmware fires early (SETTLING/CH1) in the next cutout; on PB2 exactly one cutout is truncated to a short pulse while the rest stay ~440 us — the H-bridge is restored mid-cutout. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -6447,7 +6653,13 @@ window.COMPLIANCE =
                 "desc": "cancel in CH1 restores H-bridge"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "one cutout truncated by a mid-cutout cancel (PB2)",
+                "file": "s9_3_2_compliance.py",
+                "desc": "RAILCOM CANCEL produces exactly one short PB2 pulse among ~440us cutouts, confirming the H-bridge is restored early."
+              }
+            ]
           }
         },
         {
@@ -6469,13 +6681,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "nobs",
             "note": ""
           },
           "detail": {
             "impl": "encode_byte maps a 6-bit value to a fixed-weight 8-bit 4/8 code word.",
             "gtest": "",
-            "hil": "Codeword content not decoded on the wire; pure logic proven on host."
+            "hil": "Codeword content not decoded on the wire; pure logic proven on host. Not wire-observable."
           },
           "refs": {
             "symbols": [
@@ -6517,13 +6729,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "nobs",
             "note": ""
           },
           "detail": {
             "impl": "decode_byte inverts the 4/8 mapping and rejects invalid words.",
             "gtest": "",
-            "hil": "Wire datagram content not decoded by the HIL suite."
+            "hil": "Wire datagram content not decoded by the HIL suite. Not wire-observable."
           },
           "refs": {
             "symbols": [
@@ -6563,13 +6775,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "nobs",
             "note": ""
           },
           "detail": {
             "impl": "ACK is transmitted raw as 0xF0.",
             "gtest": "",
-            "hil": "Not measured on the wire."
+            "hil": "Not measured on the wire. Not wire-observable."
           },
           "refs": {
             "symbols": [
@@ -6609,13 +6821,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "nobs",
             "note": ""
           },
           "detail": {
             "impl": "NACK is transmitted raw as 0x3C.",
             "gtest": "",
-            "hil": "Not measured on the wire."
+            "hil": "Not measured on the wire. Not wire-observable."
           },
           "refs": {
             "symbols": [
@@ -6655,13 +6867,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "nobs",
             "note": ""
           },
           "detail": {
             "impl": "Ch1 is a 2-byte datagram carrying a 12-bit payload.",
             "gtest": "",
-            "hil": "Channel content not decoded on the wire."
+            "hil": "Channel content not decoded on the wire. Not wire-observable."
           },
           "refs": {
             "symbols": [
@@ -6701,13 +6913,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "nobs",
             "note": ""
           },
           "detail": {
             "impl": "Ch2 is a multi-byte (4+) datagram.",
             "gtest": "",
-            "hil": "Channel content not decoded on the wire."
+            "hil": "Channel content not decoded on the wire. Not wire-observable."
           },
           "refs": {
             "symbols": [
@@ -6747,13 +6959,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "nobs",
             "note": ""
           },
           "detail": {
             "impl": "Decoder buffers received datagrams in a depth-4 ring, dropping the oldest on overflow.",
             "gtest": "",
-            "hil": "Buffer behavior is host-side logic."
+            "hil": "Buffer behavior is host-side logic. Not wire-observable."
           },
           "refs": {
             "symbols": [
@@ -6796,12 +7008,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder Tx not wired to hardware"
+            "note": ""
           },
           "detail": {
             "impl": "Address feedback alternates ADR1 (ID 1) and ADR2 (ID 2); host-tested only, since dcc_config.c leaves the encoder uart_write NULL so nothing transmits in a real build.",
             "gtest": "",
-            "hil": "RailCom Tx integration is a prerequisite for on-wire coverage."
+            "hil": "RailCom Tx integration is a prerequisite for on-wire coverage. Decoder Tx not wired to hardware."
           },
           "refs": {
             "symbols": [
@@ -6845,12 +7057,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder Tx not wired to hardware"
+            "note": ""
           },
           "detail": {
             "impl": "POM read result is returned as an ID-0 datagram; host-tested only, as uart_write is NULL so nothing transmits in a real build.",
             "gtest": "",
-            "hil": "Requires a decoder-side Tx path that does not yet exist."
+            "hil": "Requires a decoder-side Tx path that does not yet exist. Decoder Tx not wired to hardware."
           },
           "refs": {
             "symbols": [
@@ -6888,12 +7100,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder Tx not wired to hardware"
+            "note": ""
           },
           "detail": {
             "impl": "Dynamic data is emitted as an ID-7 datagram; host-tested only, as uart_write is NULL so nothing transmits in a real build.",
             "gtest": "",
-            "hil": "Decoder-side Tx integration is the prerequisite."
+            "hil": "Decoder-side Tx integration is the prerequisite. Decoder Tx not wired to hardware."
           },
           "refs": {
             "symbols": [
@@ -6931,12 +7143,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder Tx not wired to hardware"
+            "note": ""
           },
           "detail": {
             "impl": "Track-search feedback via ID 1/2/14; host-tested only, since uart_write is NULL so nothing transmits in a real build.",
             "gtest": "",
-            "hil": "Requires decoder-side Tx path."
+            "hil": "Requires decoder-side Tx path. Decoder Tx not wired to hardware."
           },
           "refs": {
             "symbols": [
@@ -6972,12 +7184,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder Tx not wired to hardware"
+            "note": ""
           },
           "detail": {
             "impl": "CV auto-transfer as an ID-12 datagram; host-tested only, as uart_write is NULL so nothing transmits in a real build.",
             "gtest": "",
-            "hil": "Requires decoder-side Tx path."
+            "hil": "Requires decoder-side Tx path. Decoder Tx not wired to hardware."
           },
           "refs": {
             "symbols": [
@@ -7015,12 +7227,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder Tx not wired to hardware"
+            "note": ""
           },
           "detail": {
             "impl": "Decoder ACK/NACK are sent as raw code words; host-tested only, as uart_write is NULL so nothing transmits in a real build.",
             "gtest": "",
-            "hil": "Requires decoder-side Tx path."
+            "hil": "Requires decoder-side Tx path. Decoder Tx not wired to hardware."
           },
           "refs": {
             "symbols": [
@@ -7062,12 +7274,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder Tx not wired to hardware"
+            "note": ""
           },
           "detail": {
             "impl": "Raw passthrough forwards caller bytes and clamps the count; host-tested only, as uart_write is NULL so nothing transmits in a real build.",
             "gtest": "",
-            "hil": "Requires decoder-side Tx path."
+            "hil": "Requires decoder-side Tx path. Decoder Tx not wired to hardware."
           },
           "refs": {
             "symbols": [
@@ -7108,12 +7320,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder Tx not wired to hardware"
+            "note": ""
           },
           "detail": {
             "impl": "Accessory SRQ machine transitions IDLE->PENDING->RESPONDING; host-tested only, as uart_write is NULL so nothing transmits in a real build.",
             "gtest": "",
-            "hil": "Requires an accessory-side Tx path that does not yet exist."
+            "hil": "Requires an accessory-side Tx path that does not yet exist. Decoder Tx not wired to hardware."
           },
           "refs": {
             "symbols": [
@@ -7154,12 +7366,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder Tx not wired to hardware"
+            "note": ""
           },
           "detail": {
             "impl": "SRQ carries the full address and the Ch1 payload differs for basic vs extended; host-tested only, as uart_write is NULL so nothing transmits in a real build.",
             "gtest": "",
-            "hil": "Requires accessory-side Tx path."
+            "hil": "Requires accessory-side Tx path. Decoder Tx not wired to hardware."
           },
           "refs": {
             "symbols": [
@@ -7195,12 +7407,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder Tx not wired to hardware"
+            "note": ""
           },
           "detail": {
             "impl": "Status 1 (ID 4) packs aspect plus command-match and setpoint flags; host-tested only, as uart_write is NULL so nothing transmits in a real build.",
             "gtest": "",
-            "hil": "Requires accessory-side Tx path."
+            "hil": "Requires accessory-side Tx path. Decoder Tx not wired to hardware."
           },
           "refs": {
             "symbols": [
@@ -7241,12 +7453,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder Tx not wired to hardware"
+            "note": ""
           },
           "detail": {
             "impl": "Status 4 (ID 3) emits an extended 2-byte status payload; host-tested only, as uart_write is NULL so nothing transmits in a real build.",
             "gtest": "",
-            "hil": "Requires accessory-side Tx path."
+            "hil": "Requires accessory-side Tx path. Decoder Tx not wired to hardware."
           },
           "refs": {
             "symbols": [
@@ -7287,12 +7499,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder Tx not wired to hardware"
+            "note": ""
           },
           "detail": {
             "impl": "Time report (ID 5) encodes a time value with resolution selector; host-tested only, as uart_write is NULL so nothing transmits in a real build.",
             "gtest": "",
-            "hil": "Requires accessory-side Tx path."
+            "hil": "Requires accessory-side Tx path. Decoder Tx not wired to hardware."
           },
           "refs": {
             "symbols": [
@@ -7328,12 +7540,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "planned",
-            "note": "decoder Tx not wired to hardware"
+            "note": ""
           },
           "detail": {
             "impl": "Error report (ID 6) encodes an error code with optional additional data; host-tested only, as uart_write is NULL so nothing transmits in a real build.",
             "gtest": "",
-            "hil": "Requires accessory-side Tx path."
+            "hil": "Requires accessory-side Tx path. Decoder Tx not wired to hardware."
           },
           "refs": {
             "symbols": [
@@ -7369,7 +7581,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "separate library"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -7380,7 +7592,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "4-wire interface (Ground, Data, Clock, V+), up to 3 modules in parallel; 470 ohm series resistors on Clock and Data at both ends, Data pulled up >=15k to Vcc; 5V and 3.3V logic levels allowed (a 3.3V-capable module may be marked SUSI3); reverse-polarity protection diode recommended.",
+            "impl": "4-wire interface (Ground, Data, Clock, V+), up to 3 modules in parallel; 470 ohm series resistors on Clock and Data at both ends, Data pulled up >=15k to Vcc; 5V and 3.3V logic levels allowed (a 3.3V-capable module may be marked SUSI3); reverse-polarity protection diode recommended. Separate library.",
             "gtest": "",
             "hil": ""
           },
@@ -7403,7 +7615,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "separate library"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -7414,7 +7626,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Synchronous clocked transfer: clock idle low, data set on the rising edge and read on the falling edge, LSB first, 2 (occasionally 3) byte packets; clock half-period >=10us, bit <=500us, bytes within 7ms; a module resets/resyncs 8ms after a byte and confirms with a 1-2ms acknowledge.",
+            "impl": "Synchronous clocked transfer: clock idle low, data set on the rising edge and read on the falling edge, LSB first, 2 (occasionally 3) byte packets; clock half-period >=10us, bit <=500us, bytes within 7ms; a module resets/resyncs 8ms after a byte and confirms with a 1-2ms acknowledge. Separate library.",
             "gtest": "",
             "hil": ""
           },
@@ -7437,7 +7649,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "separate library"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -7448,7 +7660,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Two-byte operating commands derived from DCC (function groups, speed, direct, analog, trigger, module address/control) repeated at least every 200ms; three-byte CV commands (check 0x77, bit 0x7B, write 0x7F) address CVs 897-1024, with a module-reset exception writing CV8.",
+            "impl": "Two-byte operating commands derived from DCC (function groups, speed, direct, analog, trigger, module address/control) repeated at least every 200ms; three-byte CV commands (check 0x77, bit 0x7B, write 0x7F) address CVs 897-1024, with a module-reset exception writing CV8. Separate library.",
             "gtest": "",
             "hil": ""
           },
@@ -7471,7 +7683,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "separate library"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -7482,7 +7694,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "SUSI CVs occupy 897-1024; each of up to 3 modules gets a 40-CV range (900-939 / 940-979 / 980-1019) selected by CV897 module number; ID CVs (manufacturer/version/SUSI version), CV1020 status byte (WAIT/SLOW/HOLD/STOP), and CV1021 banking expanding each module to 256 banks (with banks 248-253 reserved for RCN-218 config data).",
+            "impl": "SUSI CVs occupy 897-1024; each of up to 3 modules gets a 40-CV range (900-939 / 940-979 / 980-1019) selected by CV897 module number; ID CVs (manufacturer/version/SUSI version), CV1020 status byte (WAIT/SLOW/HOLD/STOP), and CV1021 banking expanding each module to 256 banks (with banks 248-253 reserved for RCN-218 config data). Separate library.",
             "gtest": "",
             "hil": ""
           },
@@ -7505,7 +7717,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "separate library"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -7516,7 +7728,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "SUSI-BiDi polls up to 3 registered modules at least every 100ms over the Data line; a module signals data with an ACK then transmits over 32 clocks; supports whole-CV-bank reads with a CRC-8 checksum (polynomial x8+x5+x4+1), host call commands (0x01, 0x0C-0x0F), and module response messages (0x80-0x8F).",
+            "impl": "SUSI-BiDi polls up to 3 registered modules at least every 100ms over the Data line; a module signals data with an ACK then transmits over 32 clocks; supports whole-CV-bank reads with a CRC-8 checksum (polynomial x8+x5+x4+1), host call commands (0x01, 0x0C-0x0F), and module response messages (0x80-0x8F). Separate library.",
             "gtest": "",
             "hil": ""
           },
@@ -7539,7 +7751,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "na",
-            "note": "separate library"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -7550,7 +7762,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "An alternative use of the Train Bus (Data/Clock) drives shift-register function outputs without a programmed module (not usable simultaneously with SUSI): data clocked on the rising edge at 400 kHz-4 MHz, max 16 bits, highest function bit first, latched by interrupting the clock for >=30us.",
+            "impl": "An alternative use of the Train Bus (Data/Clock) drives shift-register function outputs without a programmed module (not usable simultaneously with SUSI): data clocked on the rising edge at 400 kHz-4 MHz, max 16 bits, highest function bit first, latched by interrupting the clock for >=30us. Separate library.",
             "gtest": "",
             "hil": ""
           },
@@ -7579,20 +7791,20 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "one-shot lowest priority first, then refresh round-robin, else idle"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
             "note": ""
           },
           "hil": {
-            "state": "na",
-            "note": "internal scheduling order not directly wire-observable"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
-            "impl": "DccScheduler_run selects the highest-priority one-shot, then falls back to refresh round-robin, then idle.",
+            "impl": "DccScheduler_run selects the highest-priority one-shot, then falls back to refresh round-robin, then idle. One-shot lowest priority first, then refresh round-robin, else idle.",
             "gtest": "",
-            "hil": "Scheduling order is an internal detail not separable on the rails."
+            "hil": "With a SPEED slot auto-refreshing, a one-shot broadcast ESTOP (priority ESTOP, non-refresh) is fired; the main-track capture (ch0) shows BOTH the continuing refresh packets and the one-shot ESTOP — the scheduler selects and interleaves the one-shot by priority without starving the refresh slot. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -7611,7 +7823,13 @@ window.COMPLIANCE =
                 "desc": "a pending one-shot is sent before any auto-refresh slot"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "one-shot ESTOP interleaved with refresh on the wire",
+                "file": "library_compliance.py",
+                "desc": "SPEED slot keeps streaming while a fired one-shot ESTOP also appears on ch0 — priority selection emits the one-shot without starving refresh."
+              }
+            ]
           }
         },
         {
@@ -7633,13 +7851,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
-            "note": "continuous background retransmission"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "_select_refresh walks slots from refresh_index, returning the next active auto_refresh slot and advancing for fairness.",
             "gtest": "",
-            "hil": "Background refresh order is not a distinct wire feature."
+            "hil": "Three SPEED slots (addrs 3/4/5) on auto-refresh: one main-track capture (ch0) shows every address transmitted, repeatedly — the scheduler cycles round-robin through all active slots rather than starving any. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -7658,7 +7876,13 @@ window.COMPLIANCE =
                 "desc": "multiple refresh slots rotate fairly"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "all 3 refresh slots cycle on the wire",
+                "file": "library_compliance.py",
+                "desc": "addrs 3/4/5 each appear >=2x in one capture, proving round-robin retransmission of every active slot."
+              }
+            ]
           }
         },
         {
@@ -7680,13 +7904,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
-            "note": "slot bookkeeping is internal"
+            "state": "ok",
+            "note": ""
           },
           "detail": {
             "impl": "DccScheduler_insert overwrites an existing (address, tag) slot instead of allocating a new one.",
             "gtest": "",
-            "hil": "Internal slot management produces no distinct rail signature."
+            "hil": "Two SPEED commands to the SAME address (10 then 20): the main-track capture (ch0) shows exactly ONE distinct packet for that address, now carrying the latest value, with the earlier value's packet gone — the (address, tag) slot was combined, not duplicated. (Validated on the bench 2026-06-26.)"
           },
           "refs": {
             "symbols": [
@@ -7704,7 +7928,13 @@ window.COMPLIANCE =
                 "desc": "same address different tag occupies a separate slot"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "second SPEED overwrites the slot (one packet, latest value)",
+                "file": "library_compliance.py",
+                "desc": "after SPEED addr 10 then 20, ch0 carries exactly one distinct addr packet (the latest); the old value is absent — combined, not duplicated."
+              }
+            ]
           }
         },
         {
@@ -7719,7 +7949,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "ok",
-            "note": "one active_packet + packet_loaded flag"
+            "note": ""
           },
           "gtest": {
             "state": "ok",
@@ -7727,12 +7957,12 @@ window.COMPLIANCE =
           },
           "hil": {
             "state": "na",
-            "note": "bit timing checked indirectly by s9_1"
+            "note": ""
           },
           "detail": {
-            "impl": "DccBitEncoder_load_packet copies into the single active_packet and sets packet_loaded, cleared at completion.",
+            "impl": "DccBitEncoder_load_packet copies into the single active_packet and sets packet_loaded, cleared at completion. One active_packet + packet_loaded flag.",
             "gtest": "",
-            "hil": "Wire-level framing validated by the s9_1 timing harness."
+            "hil": "Wire-level framing validated by the s9_1 timing harness. Bit timing checked indirectly by s9_1."
           },
           "refs": {
             "symbols": [

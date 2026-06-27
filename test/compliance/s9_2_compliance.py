@@ -15,6 +15,7 @@ Or via:          .venv/bin/python run_all.py
 """
 
 import sys
+import time
 import compliance_lib as lib
 
 SPEC_DOC   = "S-9.2"
@@ -118,6 +119,62 @@ def driven_checks(rep):
               got == [0x00, 0x00, 0x00], f"RESET -> [{_hx(got)}] expected [00 00 00]")
 
 
+def same_address_spacing_check(rep):
+    """CS-008 (S-9.2 Section C fn.11): two packets for the SAME short address
+    112-127 must not be < 5 ms apart -- their first byte (0x70-0x7F) aliases a
+    service-mode register/paged command. With a single such loco in the refresh
+    cycle the scheduler inserts an idle spacer, so the wire shows
+    <addr>, idle, <addr>, idle ... Addresses below 112 (and long addresses) are
+    sent back-to-back."""
+    spc = SPEC_DOC + " Section C fn.11"
+    port = lib.find_dut_port()
+    if not port:
+        rep.check(spc, "DUT present for same-address spacing test", False,
+                  "no DUT UART found")
+        return
+
+    def _addr_stream(addr):
+        lib.send_command(port, "CLEAR")
+        lib.send_command(port, "SPEED %d 50 FWD" % addr)
+        time.sleep(0.3)
+        decoded, _ = lib.capture_and_decode()
+        pkts = [d for _, d in decoded["packets"]]
+        times = decoded["packet_times"]
+        idx = [i for i, p in enumerate(pkts) if p and p[0] == addr]
+        return times, idx
+
+    # --- short address 115 (0x73, aliases service mode) -> idle spacer required ---
+    times, idx = _addr_stream(115)
+    if len(idx) < 2:
+        # @compliance DCC-S9.2-CS-008
+        rep.check(spc, "short addr 115 present on the wire (>=2 packets)", False,
+                  "captured only %d packet(s) addressed to 115" % len(idx))
+    else:
+        adjacent = any(idx[k + 1] == idx[k] + 1 for k in range(len(idx) - 1))
+        # @compliance DCC-S9.2-CS-008
+        rep.check(spc, "short addr 115: idle spacer between repeats (no two adjacent)",
+                  not adjacent,
+                  "two 115 packets were sent back-to-back" if adjacent
+                  else "%d packets to 115, each separated by an idle" % len(idx))
+        gaps = [(times[idx[k + 1]] - times[idx[k]]) * 1000.0
+                for k in range(len(idx) - 1)]
+        # @compliance DCC-S9.2-CS-008
+        rep.check(spc, "short addr 115: same-address start-to-start >= 5 ms",
+                  min(gaps) >= 5.0, "min same-address gap = %.2f ms" % min(gaps))
+
+    # --- control: short address 100 (<112) -> back-to-back, no spacer ---
+    times, idx = _addr_stream(100)
+    if len(idx) >= 2:
+        adjacent = any(idx[k + 1] == idx[k] + 1 for k in range(len(idx) - 1))
+        # @compliance DCC-S9.2-CS-008
+        rep.check(spc, "control: addr 100 (<112) sent back-to-back (no spacer)",
+                  adjacent,
+                  "addr 100 was unexpectedly spaced" if not adjacent
+                  else "addr 100 repeats are adjacent, as expected")
+
+    lib.send_command(port, "CLEAR")   # restore the idle-only stream
+
+
 def run():
     """Capture, decode, run S-9.2 checks. Returns the finished Report."""
     if lib.DRIVE_UART:
@@ -129,6 +186,7 @@ def run():
     checks(rep, decoded)
     if lib.DRIVE_UART:
         driven_checks(rep)
+        same_address_spacing_check(rep)
     return rep.finish()
 
 

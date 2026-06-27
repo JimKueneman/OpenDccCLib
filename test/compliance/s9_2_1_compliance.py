@@ -199,6 +199,51 @@ def accessory_nop(addr, is_extended):
     return framed([b1, b2])
 
 
+def _cv_bit_byte(bit, val, write=True):
+    # CV bit-manipulation data byte 111KDBBB: K=1 write / 0 verify, D=value, BBB=bit.
+    return (0xF0 if write else 0xE0) | ((val & 1) << 3) | (bit & 0x07)
+
+
+def cv_bit_pom(addr, cv, bit, val, write=True):
+    # 1110 10 VV  VVVVVVVV  111KDBBB  (GG=10 bit-manip; S-9.2.1 2.3.7.3)
+    n = cv - 1
+    return framed(addr_bytes(addr) + [0xE8 | ((n >> 8) & 0x03), n & 0xFF,
+                                      _cv_bit_byte(bit, val, write)])
+
+
+def consist_clear(addr):
+    # Clear = set consist address 0, normal direction (S-9.2.1 2.3.1.4): 00010010 00000000
+    return consist_set(addr, 0, normal=True)
+
+
+def binary_state_long(addr, state, on):
+    # 11000000 DLLLLLLL HHHHHHHH : 15-bit state number, D=output state (S-9.2.1 2.3.6.1)
+    return framed(addr_bytes(addr) + [0xC0, ((0x80 if on else 0) | (state & 0x7F)),
+                                      (state >> 7) & 0xFF])
+
+
+# CV-access long-form instruction prefixes (1110CCDD): write / verify / bit-manip.
+CV_WRITE, CV_VERIFY, CV_BIT = 0xEC, 0xE4, 0xE8
+
+
+def accessory_basic_cv(board, pair, cv, data, prefix):
+    # 10AAAAAA 1AAA1AA0 1110CCDD VVVVVVVV DDDDDDDD : basic accessory CV access (S-9.2.1 2.4).
+    # byte1: bit7=1, high-3 addr INVERTED, bit3=1, output pair, bit0=0.
+    n = cv - 1
+    b0 = 0x80 | (board & 0x3F)
+    b1 = 0x80 | ((~(board >> 6) & 0x07) << 4) | 0x08 | ((pair & 0x03) << 1)
+    return framed([b0, b1, prefix | ((n >> 8) & 0x03), n & 0xFF, data & 0xFF])
+
+
+def accessory_extended_cv(address, cv, data, prefix):
+    # 10AAAAAA 0AAA0AA1 1110CCDD VVVVVVVV DDDDDDDD : extended accessory CV access (S-9.2.1 2.4.2).
+    # byte1: bit7=0, high-3 addr INVERTED, bit3=0, next-2 addr bits, bit0=1.
+    n = cv - 1
+    b0 = 0x80 | (address & 0x3F)
+    b1 = 0x01 | ((~(address >> 6) & 0x07) << 4) | (((address >> 9) & 0x03) << 1)
+    return framed([b0, b1, prefix | ((n >> 8) & 0x03), n & 0xFF, data & 0xFF])
+
+
 # ----------------------------------------------------------------------------
 # Test vectors
 # ----------------------------------------------------------------------------
@@ -297,6 +342,37 @@ EXACT = [
     ("MDATE 1 1 0",         model_date(1, 1, 0),          "§2.3.6.2", "model date min fields"),
     # @compliance DCC-S9.2.1-CS-024
     ("MDATE 31 12 4095",    model_date(31, 12, 4095),     "§2.3.6.2", "model date max fields (12-bit year)"),
+    # --- accessory stop / all-stop ---
+    # @compliance DCC-S9.2.1-CS-010
+    ("ACC 1 0 OFF",         accessory_basic(1, 0, False),       "§2.4",     "basic accessory deactivate / stop (D=0)"),
+    ("ACC 511 0 OFF",       accessory_basic(511, 0, False),     "§2.4",     "basic accessory stop board 511 (D=0)"),
+    # @compliance DCC-S9.2.1-CS-011
+    ("ACCE 1 0",            accessory_extended(1, 0),           "§2.4.2",   "extended accessory all-stop (aspect 0)"),
+    # --- CV-POM bit manipulation (1110 10) ---
+    # @compliance DCC-S9.2.1-CS-015
+    ("CV BIT 3 1 5 1",      cv_bit_pom(3, 1, 5, 1),             "§2.3.7.3", "CV-POM bit write CV1 b5=1 (1110 10, 111KDBBB)"),
+    ("CV BIT 3 1 0 0",      cv_bit_pom(3, 1, 0, 0),             "§2.3.7.3", "CV-POM bit write CV1 b0=0"),
+    # --- consist clear (consist address 0) ---
+    # @compliance DCC-S9.2.1-CS-018
+    ("CONSIST 3 CLEAR",     consist_clear(3),                   "§2.3.1.4", "consist clear (set consist addr 0)"),
+    # --- binary state long form (11000000 = 0xC0, S-9.2.1 §2.3.6.1) ---
+    # This independent encoder uses the spec long-form opcode 0xC0. It originally
+    # caught a real library bug -- DCC_FEAT_BINARY_STATE_LONG was 0xDC (colliding with
+    # F61-F68); fixed 2026-06-26 in dcc_defines.h + dcc_packet_decoder.c. Needs the
+    # reflashed firmware to pass on the wire.
+    # @compliance DCC-S9.2.1-CS-020
+    ("BSL 3 1 ON",          binary_state_long(3, 1, True),      "§2.3.6.1", "binary state long on (11000000 DLLLLLLL HHHHHHHH)"),
+    ("BSL 3 32767 OFF",     binary_state_long(3, 32767, False), "§2.3.6.1", "binary state long max state 32767 off (15-bit)"),
+    # --- basic accessory CV access (S-9.2.1 2.4) ---
+    # @compliance DCC-S9.2.1-ACC-001
+    ("ACC CV WRITE 1 0 7 42",  accessory_basic_cv(1, 0, 7, 42, CV_WRITE),               "§2.4", "basic accessory CV write CV7=42"),
+    ("ACC CV VERIFY 1 0 7 42", accessory_basic_cv(1, 0, 7, 42, CV_VERIFY),              "§2.4", "basic accessory CV verify CV7=42"),
+    ("ACC CV BIT 1 0 7 3 1",   accessory_basic_cv(1, 0, 7, _cv_bit_byte(3, 1), CV_BIT), "§2.4", "basic accessory CV bit write CV7 b3=1"),
+    # --- extended accessory CV access (S-9.2.1 2.4.2) ---
+    # @compliance DCC-S9.2.1-ACC-002
+    ("ACCE CV WRITE 1 7 42",   accessory_extended_cv(1, 7, 42, CV_WRITE),               "§2.4.2", "extended accessory CV write CV7=42"),
+    ("ACCE CV VERIFY 1 7 42",  accessory_extended_cv(1, 7, 42, CV_VERIFY),              "§2.4.2", "extended accessory CV verify CV7=42"),
+    ("ACCE CV BIT 1 7 3 1",    accessory_extended_cv(1, 7, _cv_bit_byte(3, 1), CV_BIT), "§2.4.2", "extended accessory CV bit write CV7 b3=1"),
 ]
 
 

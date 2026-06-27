@@ -164,6 +164,7 @@ void DccScheduler_initialize(dcc_scheduler_context_t *context, const interface_d
     context->refresh_index = 0;
     context->packet_complete_flag = false;
     context->first_packet_sent = false;
+    context->last_addr_byte = 0x00;
 
     for (slot_index = 0; slot_index < USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT; slot_index++) {
 
@@ -250,6 +251,34 @@ void DccScheduler_on_packet_complete(dcc_scheduler_context_t *context) {
 
 }
 
+    /**
+     * @brief True if a packet's first byte aliases a service-mode command byte.
+     *
+     * @details S-9.2 Section C footnote 11: a short-address ops packet for
+     * addresses 112-127 has a first byte of 0x70-0x7F, which is bit-identical to
+     * the service-mode register/paged command byte (0111CRRR). Two such packets
+     * to the same address within 5 ms can be misread as service-mode programming
+     * by older decoders. Long (0xC0-0xFF) and accessory (0x80-0xBF) first bytes
+     * never alias, so only short addresses 112-127 are affected.
+     */
+static bool _aliases_service_mode(uint8_t first_byte) {
+
+    return first_byte >= 0x70 && first_byte <= 0x7F;
+
+}
+
+    /**
+     * @brief Load an idle packet and clear the same-address guard state.
+     */
+static void _load_idle(dcc_scheduler_context_t *context, dcc_packet_t *idle_packet) {
+
+    context->interface->build_idle_packet(idle_packet);
+    context->interface->load_packet(idle_packet);
+    context->last_addr_byte = 0x00;
+    context->first_packet_sent = true;
+
+}
+
 void DccScheduler_run(dcc_scheduler_context_t *context) {
 
     int16_t slot_index;
@@ -287,7 +316,21 @@ void DccScheduler_run(dcc_scheduler_context_t *context) {
 
     if (slot_index >= 0) {
 
+        uint8_t first_byte = context->slots[slot_index].packet.data[0];
+
+        /* S-9.2 Section C fn.11: do not follow a short-address 112-127 packet
+         * (first byte 0x70-0x7F, which aliases a service-mode command) with the
+         * SAME address inside 5 ms. Emit an idle spacer (~5.8 ms) and retry the
+         * real packet next cycle; repeat_count is left untouched. */
+        if (_aliases_service_mode(first_byte) && first_byte == context->last_addr_byte) {
+
+            _load_idle(context, &idle_packet);
+            return;
+
+        }
+
         context->interface->load_packet(&context->slots[slot_index].packet);
+        context->last_addr_byte = first_byte;
         context->first_packet_sent = true;
 
         if (context->interface->on_packet_sent) {
@@ -313,7 +356,18 @@ void DccScheduler_run(dcc_scheduler_context_t *context) {
 
     if (slot_index >= 0) {
 
+        uint8_t first_byte = context->slots[slot_index].packet.data[0];
+
+        /* Same 5 ms same-address guard as above (S-9.2 Section C fn.11). */
+        if (_aliases_service_mode(first_byte) && first_byte == context->last_addr_byte) {
+
+            _load_idle(context, &idle_packet);
+            return;
+
+        }
+
         context->interface->load_packet(&context->slots[slot_index].packet);
+        context->last_addr_byte = first_byte;
         context->first_packet_sent = true;
 
         if (context->interface->on_packet_sent) {
@@ -327,9 +381,7 @@ void DccScheduler_run(dcc_scheduler_context_t *context) {
     }
 
     /* 3. Nothing to send — idle */
-    context->interface->build_idle_packet(&idle_packet);
-    context->interface->load_packet(&idle_packet);
-    context->first_packet_sent = true;
+    _load_idle(context, &idle_packet);
 
 }
 

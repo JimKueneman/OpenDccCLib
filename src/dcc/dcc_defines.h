@@ -156,12 +156,12 @@ extern "C" {
 #define DCC_FEAT_BINARY_STATE_SHORT         0xDD
 
     /**
-     * @brief Binary state control long form (full instruction byte: 110 11100).
-     * @note Same value as DCC_FEAT_F61_F68 (0xDC). Per NMRA S-9.2.1, the
-     *       decoder distinguishes them by byte count: 3 bytes = F61-F68,
-     *       4 bytes = binary state long form.
+     * @brief Binary state control long form (full instruction byte: 110 00000).
+     * @note S-9.2.1 §2.3.6.1: feature-expansion sub-code GGGGG = 00000, i.e.
+     *       11000000 = 0xC0 — a distinct opcode from F61-F68 (0xDC). The two do
+     *       NOT share a code; they are told apart by their opcode, not byte count.
      */
-#define DCC_FEAT_BINARY_STATE_LONG          0xDC
+#define DCC_FEAT_BINARY_STATE_LONG          0xC0
 
     /** @brief F13-F20 expansion */
 #define DCC_FEAT_F13_F20                    0xDE

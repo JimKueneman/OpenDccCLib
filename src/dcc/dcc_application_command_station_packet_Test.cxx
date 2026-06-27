@@ -1034,6 +1034,29 @@ TEST(DccPacketEncoder, binary_state_short_rejects_invalid_state) {
 // Binary state long form tests
 // ============================================================================
 
+// Pin the feature-expansion sub-instruction opcodes (110GGGGG) to their S-9.2.1
+// §2.3.6 spec values as LITERALS, independent of the #defines. The per-encoder
+// opcode tests assert against the DCC_FEAT_* constants -- the same symbols the
+// encoder emits -- so they are circular and cannot catch a wrong constant value.
+// That is exactly how DCC_FEAT_BINARY_STATE_LONG sat at 0xDC (colliding with
+// F61-F68) with every gTest green; the HIL suite caught it. This guard would have
+// failed on the old value (EXPECT_EQ(0xDC, 0xC0)).
+TEST(DccDefines, feature_expansion_opcodes_match_spec) {
+    EXPECT_EQ(DCC_FEAT_BINARY_STATE_LONG,  0xC0);  /* GGGGG=00000  §2.3.6.1 */
+    EXPECT_EQ(DCC_FEAT_TIME_DATE,          0xC1);  /* GGGGG=00001 */
+    EXPECT_EQ(DCC_FEAT_SYSTEM_TIME,        0xC2);  /* GGGGG=00010 */
+    EXPECT_EQ(DCC_FEAT_F29_F36,            0xD8);  /* GGGGG=11000 */
+    EXPECT_EQ(DCC_FEAT_F37_F44,            0xD9);  /* GGGGG=11001 */
+    EXPECT_EQ(DCC_FEAT_F45_F52,            0xDA);  /* GGGGG=11010 */
+    EXPECT_EQ(DCC_FEAT_F53_F60,            0xDB);  /* GGGGG=11011 */
+    EXPECT_EQ(DCC_FEAT_F61_F68,            0xDC);  /* GGGGG=11100 */
+    EXPECT_EQ(DCC_FEAT_BINARY_STATE_SHORT, 0xDD);  /* GGGGG=11101  §2.3.6.4 */
+    EXPECT_EQ(DCC_FEAT_F13_F20,            0xDE);  /* GGGGG=11110 */
+    EXPECT_EQ(DCC_FEAT_F21_F28,            0xDF);  /* GGGGG=11111 */
+    /* The bug the HIL suite caught: these two MUST be distinct opcodes. */
+    EXPECT_NE(DCC_FEAT_BINARY_STATE_LONG, DCC_FEAT_F61_F68);
+}
+
 // @compliance DCC-S9.2.1-CS-020
 TEST(DccPacketEncoder, binary_state_long_activate) {
     dcc_packet_t pkt;
@@ -1042,7 +1065,7 @@ TEST(DccPacketEncoder, binary_state_long_activate) {
 
     EXPECT_TRUE(ok);
     EXPECT_EQ(pkt.data[0], 3);
-    EXPECT_EQ(pkt.data[1], DCC_FEAT_BINARY_STATE_LONG);  /* 0xDC */
+    EXPECT_EQ(pkt.data[1], DCC_FEAT_BINARY_STATE_LONG);  /* 0xC0 */
     /* Low byte: 1 1101000 = 0x80 | 104 = 0xE8 */
     EXPECT_EQ(pkt.data[2], 0x80 | 104);
     /* High byte: 7 */

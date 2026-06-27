@@ -893,11 +893,24 @@ static void _svc_on_mockack(dcc_service_mode_result_t result, uint8_t value) {
 static void _cmd_svc_mockack(char *tokens[], int count) {
 
     if (count < 3) {
-        _respond("ERR: usage: SVC MOCKACK <width_us> [EARLY]");
+        _respond("ERR: usage: SVC MOCKACK <width_us> [EARLY | GLITCH <gap_us>]");
         return;
     }
 
     uint16_t width_us = (uint16_t)atoi(tokens[2]);
+
+    /* SVC MOCKACK <us> GLITCH <gap_us>: an INTERRUPTED pulse (high us, low gap_us,
+     * high us). Each sub-pulse is < the 6ms window, so a correct width counter that
+     * RESETS on the gap reports NO ACK (S-9.2.3 CS-005). EARLY blanking is N/A here. */
+    if (count >= 5 && strcmp(tokens[3], "GLITCH") == 0) {
+
+        uint16_t gap_us = (uint16_t)atoi(tokens[4]);
+        CallbacksDcc_set_mock_ack_early(false);
+        TI_DccDriver_mock_ack_arm_glitch(width_us, gap_us, width_us);
+        _svc_report_start(
+            DccApplicationCommandStationServiceTrack_direct_read_bit(8, 0, _svc_on_mockack, NULL));
+        return;
+    }
 
     /* Optional EARLY: fire the pulse on the first (blanked) command packet so the
      * suite can confirm the library masks it. Default = fire in-window. */
@@ -940,10 +953,11 @@ static void _cmd_svc_mockcv(char *tokens[], int count) {
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
 static void _cmd_svc_paged(char *tokens[], int count) {
 
-    /* SVC PAGED WRITE <cv> <value> / SVC PAGED READ <cv> */
+    /* SVC PAGED WRITE <cv> <value> / SVC PAGED READ <cv>      */
+    /* SVC PAGED BITW  <cv> <bit> <0|1> / SVC PAGED BITR <cv> <bit>  */
 
     if (count < 4) {
-        _respond("ERR: usage: SVC PAGED WRITE|READ <cv> [value]");
+        _respond("ERR: usage: SVC PAGED WRITE|READ|BITW|BITR <cv> ...");
         return;
     }
 
@@ -955,8 +969,17 @@ static void _cmd_svc_paged(char *tokens[], int count) {
     } else if (strcmp(tokens[2], "WRITE") == 0 && count >= 5) {
         uint8_t value = (uint8_t)atoi(tokens[4]);
         started = DccApplicationCommandStationServiceTrack_paged_write_cv(cv, value, _svc_on_complete, NULL);
+    } else if (strcmp(tokens[2], "BITR") == 0 && count >= 5) {
+        /* Paged bit READ = full-byte read, extract the bit (read-modify side). */
+        uint8_t bit = (uint8_t)atoi(tokens[4]);
+        started = DccApplicationCommandStationServiceTrack_paged_read_bit(cv, bit, _svc_on_complete, NULL);
+    } else if (strcmp(tokens[2], "BITW") == 0 && count >= 6) {
+        /* Paged bit WRITE = read-modify-write the byte (S-9.2.3 non-Direct bit op). */
+        uint8_t bit = (uint8_t)atoi(tokens[4]);
+        bool bit_val = (atoi(tokens[5]) != 0);
+        started = DccApplicationCommandStationServiceTrack_paged_write_bit(cv, bit, bit_val, _svc_on_complete, NULL);
     } else {
-        _respond("ERR: usage: SVC PAGED WRITE|READ <cv> [value]");
+        _respond("ERR: usage: SVC PAGED WRITE|READ|BITW|BITR <cv> ...");
         return;
     }
 
@@ -967,9 +990,11 @@ static void _cmd_svc_paged(char *tokens[], int count) {
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
 static void _cmd_svc_register(char *tokens[], int count) {
 
-    /* SVC REG WRITE <cv> <value> [MOBILE|ACC] */
-    /* SVC REG READ  <cv> [MOBILE|ACC]         */
-    /* SVC REG RESET                           */
+    /* SVC REG WRITE <cv> <value> [MOBILE|ACC]      */
+    /* SVC REG READ  <cv> [MOBILE|ACC]              */
+    /* SVC REG BITW  <cv> <bit> <0|1> [MOBILE|ACC]  */
+    /* SVC REG BITR  <cv> <bit> [MOBILE|ACC]        */
+    /* SVC REG RESET                                */
 
     if (count >= 2 && strcmp(tokens[2], "RESET") == 0) {
         _svc_report_start(DccApplicationCommandStationServiceTrack_register_factory_reset(_svc_on_complete));
@@ -977,7 +1002,7 @@ static void _cmd_svc_register(char *tokens[], int count) {
     }
 
     if (count < 4) {
-        _respond("ERR: usage: SVC REG WRITE|READ|RESET <cv> [value] [MOBILE|ACC]");
+        _respond("ERR: usage: SVC REG WRITE|READ|VERIFY|BITW|BITR|RESET <cv> [value] [MOBILE|ACC]");
         return;
     }
 
@@ -995,8 +1020,19 @@ static void _cmd_svc_register(char *tokens[], int count) {
         uint8_t value = (uint8_t)atoi(tokens[4]);
         dcc_decoder_type_enum dt = _parse_decoder_type(count >= 6 ? tokens[5] : NULL);
         started = DccApplicationCommandStationServiceTrack_register_verify_value(cv, value, dt, _svc_on_complete, NULL);
+    } else if (strcmp(tokens[2], "BITR") == 0 && count >= 5) {
+        /* Register bit READ = full-byte read, extract the bit. */
+        uint8_t bit = (uint8_t)atoi(tokens[4]);
+        dcc_decoder_type_enum dt = _parse_decoder_type(count >= 6 ? tokens[5] : NULL);
+        started = DccApplicationCommandStationServiceTrack_register_read_bit(cv, bit, dt, _svc_on_complete, NULL);
+    } else if (strcmp(tokens[2], "BITW") == 0 && count >= 6) {
+        /* Register bit WRITE = read-modify-write the byte (S-9.2.3 non-Direct bit op). */
+        uint8_t bit = (uint8_t)atoi(tokens[4]);
+        bool bit_val = (atoi(tokens[5]) != 0);
+        dcc_decoder_type_enum dt = _parse_decoder_type(count >= 7 ? tokens[6] : NULL);
+        started = DccApplicationCommandStationServiceTrack_register_write_bit(cv, bit, bit_val, dt, _svc_on_complete, NULL);
     } else {
-        _respond("ERR: usage: SVC REG WRITE|READ|VERIFY|RESET <cv> [value] [MOBILE|ACC]");
+        _respond("ERR: usage: SVC REG WRITE|READ|VERIFY|BITW|BITR|RESET <cv> [value] [MOBILE|ACC]");
         return;
     }
 
@@ -1122,6 +1158,37 @@ static void _cmd_trig(void) {
     CallbacksDcc_arm_trigger();
     _respond("OK: trigger armed (next non-idle packet pulses PB3)");
 }
+
+#ifdef DCC_COMPILE_COMMAND_STATION
+// RailCom cutout runtime control (HIL: S-9.3.2 CS-007 / CS-008).
+//   RAILCOM TIMING <delay> <settling> <ch1> <gap> <ch2>  -- reconfigure per-state
+//       periods (us); a 0 in any field selects that field's spec default.
+//   RAILCOM CANCEL  -- cancel the next in-progress cutout (restores the H-bridge).
+static void _cmd_railcom(char *tokens[], int count) {
+
+    if (count >= 2 && strcmp(tokens[1], "CANCEL") == 0) {
+        CallbacksDcc_arm_railcom_cancel();
+        _respond("OK: RailCom cutout cancel armed (fires mid next cutout)");
+        return;
+    }
+
+    if (count >= 7 && strcmp(tokens[1], "TIMING") == 0) {
+        uint16_t delay    = (uint16_t)atoi(tokens[2]);
+        uint16_t settling = (uint16_t)atoi(tokens[3]);
+        uint16_t ch1      = (uint16_t)atoi(tokens[4]);
+        uint16_t gap      = (uint16_t)atoi(tokens[5]);
+        uint16_t ch2      = (uint16_t)atoi(tokens[6]);
+        DccConfig_set_railcom_cutout_timing(delay, settling, ch1, gap, ch2);
+        snprintf(_resp_buf, sizeof(_resp_buf),
+                 "OK: RailCom timing set (delay=%u settling=%u ch1=%u gap=%u ch2=%u; 0=default)",
+                 delay, settling, ch1, gap, ch2);
+        _respond(_resp_buf);
+        return;
+    }
+
+    _respond("ERR: usage: RAILCOM TIMING <delay> <settling> <ch1> <gap> <ch2> | RAILCOM CANCEL");
+}
+#endif /* DCC_COMPILE_COMMAND_STATION */
 
 // Send a broadcast reset packet (00 00 00) once on the main track. Exposed so
 // the HIL harness can verify the S-9.2 reset-packet encoding on the wire.
@@ -1523,6 +1590,10 @@ void UartCommandParser_process(void) {
         _cmd_mtime(tokens, count);
     else if (strcmp(tokens[0], "MDATE") == 0)
         _cmd_mdate(tokens, count);
+#ifdef DCC_COMPILE_COMMAND_STATION
+    else if (strcmp(tokens[0], "RAILCOM") == 0)
+        _cmd_railcom(tokens, count);
+#endif
     else if (strcmp(tokens[0], "HELP") == 0)
         _cmd_help();
     else {

@@ -46,6 +46,13 @@
   tr.row:hover td{background:var(--bg2);}
   tr.row.open td{background:var(--bg2);}
   .feat{display:flex; gap:7px;}
+  td.featcell{position:relative; padding-right:30px;}
+  .copybtn{position:absolute; top:7px; right:7px; width:24px; height:24px; display:inline-flex; align-items:center; justify-content:center; padding:0; border:.5px solid var(--border2); border-radius:6px; background:var(--bg); color:var(--text3); cursor:pointer; opacity:0; transition:opacity .12s,color .12s,border-color .12s;}
+  tr.row:hover .copybtn{opacity:1;}
+  .copybtn:hover{color:var(--text); background:var(--bg2);}
+  .copybtn:focus{opacity:1; outline:none; border-color:var(--info); color:var(--info);}
+  .copybtn svg{width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2;}
+  .copybtn.copied{color:var(--ok); border-color:var(--ok);}
   .tid{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10.5px; color:var(--text3);}
   .ref{display:block; color:var(--text3); font-size:11px; margin-top:1px;}
   .cite{color:var(--text2);}
@@ -125,12 +132,13 @@
     planned:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
     partial:'<path d="M12 4 2 20h20z"/><path d="M12 10v4"/><path d="M12 17v.5"/>',
     no:'<path d="M6 6l12 12M18 6 6 18"/>',
-    na:'<path d="M6 12h12"/>'
+    na:'<path d="M6 12h12"/>',
+    nobs:'<circle cx="12" cy="12" r="8"/><path d="M6.5 6.5l11 11"/>'
   };
   var COLOR = {
     ok:['var(--ok)','var(--ok-bg)'], planned:['var(--warn)','var(--warn-bg)'],
     partial:['var(--warn)','var(--warn-bg)'], no:['var(--bad)','var(--bad-bg)'],
-    na:['var(--text3)','var(--bg2)']
+    na:['var(--text3)','var(--bg2)'], nobs:['var(--info)','var(--info-bg)']
   };
   var RLAB = {cs:'CS', dec:'Dec', acc:'Acc', hw:'HW'};
   function rc(role){ return (M.roleColor && M.roleColor[role]) || 'var(--text2)'; }
@@ -147,12 +155,17 @@
   function glyph(s){ return '<svg viewBox="0 0 24 24" aria-hidden="true">'+(GLYPH[s]||GLYPH.na)+'</svg>'; }
   function badge(o){
     var s=o.state, c=COLOR[s]||COLOR.na;
-    var label={ok:'yes',planned:'planned',partial:'partial',no:'no',na:'n/a'}[s]||s;
+    var label={ok:'yes',planned:'planned',partial:'partial',no:'no',na:'n/a',nobs:'not observable'}[s]||s;
     var h='<span class="badge" style="color:'+c[0]+';background:'+c[1]+'">'+glyph(s)+label+'</span>';
     if(o.note) h+='<span class="note">'+esc(o.note)+'</span>';
     return h;
   }
   function esc(t){ return (t==null?'':String(t)).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function copyText(t){
+    var fb=function(){ return new Promise(function(res,rej){ try{ var a=document.createElement('textarea'); a.value=t; a.style.position='fixed'; a.style.opacity='0'; document.body.appendChild(a); a.select(); var ok=document.execCommand('copy'); document.body.removeChild(a); ok?res():rej(new Error('copy failed')); }catch(e){ rej(e); } }); };
+    if(navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(t).catch(fb);
+    return fb();
+  }
   function chips(a){ return a&&a.length ? a.map(function(x){return '<code class="chip">'+esc(x)+'</code>';}).join('') : '<span style="color:var(--text3)">none</span>'; }
   function cases(items, kind){
     if(!items||!items.length) return '';
@@ -173,8 +186,8 @@
     return '<button class="role" data-role="'+r[0]+'" aria-pressed="'+(r[0]===cur)+'">'+esc(r[1])+'</button>';
   }).join('');
 
-  document.getElementById('legend').innerHTML = ['ok','planned','partial','no','na'].map(function(s){
-    var c=COLOR[s], lbl={ok:'covered / yes',planned:'planned',partial:'partial',no:'no',na:'n/a'}[s];
+  document.getElementById('legend').innerHTML = ['ok','planned','partial','no','na','nobs'].map(function(s){
+    var c=COLOR[s], lbl={ok:'covered / yes',planned:'planned',partial:'partial',no:'no',na:'n/a',nobs:'not observable'}[s];
     return '<span><span class="badge" style="color:'+c[0]+';background:'+c[1]+';padding:2px 6px">'+glyph(s)+'</span> '+lbl+'</span>';
   }).join('');
 
@@ -206,13 +219,14 @@
         var accent = showRole ? 'border-left:4px solid '+col+';padding-left:10px;' : '';
         var tint = showRole ? ' style="background:'+hexA(col,0.07)+'"' : '';
         var s = '<tr class="row'+(isOpen?' open':'')+'"'+tint+' data-tid="'+f.tid+'" tabindex="0" role="button" aria-expanded="'+isOpen+'">'+
-          '<td style="'+accent+'"><div class="feat"><span>'+(isOpen?'&#9662;':'&#9656;')+'</span><span>'+esc(f.feature)+
-            '<span class="ref"><span class="tid">'+esc(f.tid)+'</span> · <span class="cite">'+esc(f.ref.cite||'')+'</span></span></span></div></td>'+
+          '<td class="featcell" style="'+accent+'"><div class="feat"><span>'+(isOpen?'&#9662;':'&#9656;')+'</span><span>'+esc(f.feature)+
+            '<span class="ref"><span class="tid">'+esc(f.tid)+'</span> · <span class="cite">'+esc(f.ref.cite||'')+'</span></span></span></div>'+
+            '<button class="copybtn" data-copy="'+esc(f.tid)+'" title="Copy '+esc(f.tid)+'" aria-label="Copy test ID '+esc(f.tid)+'"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg></button></td>'+
           (showRole?'<td><span class="roletag" style="background:'+col+'">'+esc(RLAB[f.role]||f.role)+'</span></td>':'')+
           '<td>'+badge(f.supported)+'</td>'+testCells(f)+'</tr>';
         if(isOpen){
-          var gB = f.refs.tests.length ? cases(f.refs.tests,'gtest') : '<div class="prose">'+esc(f.detail.gtest||'—')+'</div>';
-          var hB = f.refs.hilChecks.length ? cases(f.refs.hilChecks,'hil') : '<div class="prose">'+esc(f.detail.hil||'—')+'</div>';
+          var gB = (f.detail.gtest ? '<div class="prose">'+esc(f.detail.gtest)+'</div>' : '') + (f.refs.tests.length ? cases(f.refs.tests,'gtest') : (f.detail.gtest ? '' : '<div class="prose">—</div>'));
+          var hB = (f.detail.hil ? '<div class="prose">'+esc(f.detail.hil)+'</div>' : '') + (f.refs.hilChecks.length ? cases(f.refs.hilChecks,'hil') : (f.detail.hil ? '' : '<div class="prose">—</div>'));
           s += '<tr><td colspan="'+span+'" style="border-top:none;padding-top:0">'+
             '<div class="detail" style="border-left:3px solid '+col+'">'+
             '<div class="dgrid">'+
@@ -258,8 +272,26 @@
     });
     board.querySelectorAll('tr.row').forEach(function(tr){
       var go=function(){ var t=tr.getAttribute('data-tid'); open[t]=!open[t]; render(); };
-      tr.addEventListener('click', function(e){ if(e.target.closest('details')) return; go(); });
+      tr.addEventListener('mousedown', function(e){ tr._mx=e.clientX; tr._my=e.clientY; });
+      tr.addEventListener('click', function(e){
+        if(e.target.closest('details')||e.target.closest('.copybtn')) return;
+        var sel=window.getSelection&&window.getSelection();
+        if(sel&&!sel.isCollapsed) return;                                  // text selected -> don't toggle
+        if(tr._mx!=null&&(Math.abs(e.clientX-tr._mx)>5||Math.abs(e.clientY-tr._my)>5)) return; // dragged -> don't toggle
+        go();
+      });
       tr.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
+    });
+    board.querySelectorAll('.copybtn').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        copyText(btn.getAttribute('data-copy')).then(function(){
+          if(!btn._orig) btn._orig=btn.innerHTML;
+          btn.classList.add('copied');
+          btn.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>';
+          setTimeout(function(){ btn.classList.remove('copied'); btn.innerHTML=btn._orig; }, 1000);
+        });
+      });
     });
   }
   document.getElementById('roles').addEventListener('click', function(e){

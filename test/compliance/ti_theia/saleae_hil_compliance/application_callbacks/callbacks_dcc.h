@@ -51,6 +51,12 @@ extern void CallbacksDcc_mock_decoder_off(void);
 // library masks it; false restores normal in-window firing.
 extern void CallbacksDcc_set_mock_ack_early(bool early);
 
+// RailCom cutout cancel (HIL only, S-9.3.2 CS-008). arm() requests a cancel of the
+// next in-progress cutout; the 58us bit-ISR must call cancel_tick() each tick to
+// fire it mid-cutout (restoring the H-bridge early). One-shot; disarms after firing.
+extern void CallbacksDcc_arm_railcom_cancel(void);
+extern void CallbacksDcc_railcom_cancel_tick(void);
+
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
 #ifdef __cplusplus

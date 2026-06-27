@@ -1485,7 +1485,7 @@ TEST(DccPacketDecoder, binary_state_long) {
     interface_dcc_packet_decoder_t interface = make_interface();
     set_decoder_short_address(&interface, 3);
 
-    /* Binary state long: 0xDC, DLLLLLLL, HHHHHHHH (3 instruction bytes)
+    /* Binary state long: 0xC0, DLLLLLLL, HHHHHHHH (3 instruction bytes)
      * state_num = (H << 7) | L, active = D
      * L=0x05 (low 7 = 5, D=0 inactive), H=0x02 → state = (2<<7)|5 = 261 */
     uint8_t data[] = {0x03, DCC_FEAT_BINARY_STATE_LONG, 0x05, 0x02, 0x00};
@@ -1524,7 +1524,7 @@ TEST(DccPacketDecoder, func_f61_f68) {
     interface_dcc_packet_decoder_t interface = make_interface();
     set_decoder_short_address(&interface, 3);
 
-    /* F61-F68: 0xDC with exactly 2 instruction bytes (no 3rd byte → not BSL) */
+    /* F61-F68: 0xDC + 1 data byte — distinct opcode from binary state long (0xC0) */
     uint8_t data[] = {0x03, DCC_FEAT_F61_F68, 0x03, 0x00};
     data[3] = xor_bytes(data, 3);
     DccPacketDecoder_process_packet(data, 4);
@@ -2129,8 +2129,9 @@ TEST(DccPacketDecoder, unrecognized_feature_expansion) {
     interface_dcc_packet_decoder_t interface = make_interface();
     set_decoder_short_address(&interface, 3);
 
-    /* Feature expansion range (110xxxxx) with unknown opcode 0xC0 */
-    uint8_t data[] = {0x03, 0xC0, 0x00, 0x00};
+    /* Feature expansion range (110xxxxx) with an unallocated opcode 0xC7
+     * (GGGGG=00111; 0xC0 is now binary state long, so use a genuinely unknown one). */
+    uint8_t data[] = {0x03, 0xC7, 0x00, 0x00};
     data[3] = xor_bytes(data, 3);
     DccPacketDecoder_process_packet(data, 4);
 

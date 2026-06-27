@@ -1008,6 +1008,39 @@ void DccConfig_railcom_oneshot_timer_isr(void) {
 
 }
 
+void DccConfig_set_railcom_cutout_timing(uint16_t start_delay_us, uint16_t uart_rx_delay_us,
+                                         uint16_t ch1_window_us, uint16_t ch1_ch2_gap_us,
+                                         uint16_t ch2_window_us) {
+
+    /* 0 in any field selects that field's spec default, same as DccConfig_initialize.
+     * Write the period fields directly (not via _initialize) so the cutout state
+     * machine is NOT reset: an in-flight cutout finishes on its old timing and the
+     * new periods apply from the next cutout. */
+    _railcom_cutout_context.start_delay_us = start_delay_us
+        ? start_delay_us : DCC_RAILCOM_CUTOUT_START_DELAY_US;
+    _railcom_cutout_context.uart_rx_delay_us = uart_rx_delay_us
+        ? uart_rx_delay_us : DCC_RAILCOM_UART_RX_DELAY_US;
+    _railcom_cutout_context.ch1_window_us = ch1_window_us
+        ? ch1_window_us : DCC_RAILCOM_CH1_WINDOW_US;
+    _railcom_cutout_context.ch1_ch2_gap_us = ch1_ch2_gap_us
+        ? ch1_ch2_gap_us : DCC_RAILCOM_CH1_CH2_GAP_US;
+    _railcom_cutout_context.ch2_window_us = ch2_window_us
+        ? ch2_window_us : DCC_RAILCOM_CH2_WINDOW_US;
+
+}
+
+void DccConfig_cancel_railcom_cutout(void) {
+
+    DccRailcomCutout_cancel(&_railcom_cutout_context);
+
+}
+
+bool DccConfig_railcom_cutout_is_active(void) {
+
+    return _railcom_cutout_context.state != DCC_RAILCOM_CUTOUT_IDLE;
+
+}
+
 void DccConfig_100ms_timer_tick(void) {
 
     /* NOP auto-scheduling: insert accessory NOP every 5 seconds when main

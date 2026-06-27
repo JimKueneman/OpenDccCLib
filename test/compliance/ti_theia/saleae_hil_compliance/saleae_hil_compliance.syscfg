@@ -70,7 +70,7 @@ GPIO3.associatedPins[0].$name       = "ISR_TIME";
 GPIO3.associatedPins[0].assignedPin = "15";
 
 GPIO4.$name                          = "GPIO_GRP_SALEAE";
-GPIO4.associatedPins.create(6);
+GPIO4.associatedPins.create(7);
 GPIO4.associatedPins[0].$name        = "MAIN_DCC";
 GPIO4.associatedPins[0].assignedPort = "PORTB";
 GPIO4.associatedPins[0].assignedPin  = "1";
@@ -89,6 +89,9 @@ GPIO4.associatedPins[4].assignedPort = "PORTB";
 GPIO4.associatedPins[4].assignedPin  = "9";
 GPIO4.associatedPins[5].$name        = "MOCK_ACK_DRIVE";
 GPIO4.associatedPins[5].assignedPin  = "24";
+GPIO4.associatedPins[6].$name        = "RAILCOM_RX_WINDOW";
+GPIO4.associatedPins[6].assignedPort = "PORTB";
+GPIO4.associatedPins[6].assignedPin  = "18";
 
 SYSCTL.clockTreeEn = true;
 
@@ -150,4 +153,5 @@ GPIO4.associatedPins[2].pin.$suggestSolution       = "PB2";
 GPIO4.associatedPins[3].pin.$suggestSolution       = "PB3";
 GPIO4.associatedPins[4].pin.$suggestSolution       = "PB9";
 GPIO4.associatedPins[5].pin.$suggestSolution       = "PB24";
+GPIO4.associatedPins[6].pin.$suggestSolution       = "PB18";
 UART1.peripheral.$suggestSolution                  = "UART0";

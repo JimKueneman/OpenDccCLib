@@ -226,6 +226,21 @@ def _measure_high_us(rows):
     return best
 
 
+def _high_pulses_us(rows, min_us=500.0):
+    """All logic-high runs (start_s, width_us) wider than min_us, in order.
+    Used to see an INTERRUPTED ACK as two separate sub-pulses on D4."""
+    out, t_rise = [], None
+    for t, v in rows:
+        if v == 1 and t_rise is None:
+            t_rise = t
+        elif v == 0 and t_rise is not None:
+            w = (t - t_rise) * 1e6
+            if w >= min_us:
+                out.append((t_rise, w))
+            t_rise = None
+    return out
+
+
 def _svc_op_dual(s, svc_cmd, seconds=CAPTURE_SECONDS):
     """Send `svc_cmd` into one capture of both the main (ch0) and service (ch3)
     channels, then wait for the op to finish. Return (main_decoded, svc_decoded)."""
@@ -372,6 +387,13 @@ def test_register(rep, s):
               "page-register write to page 1 precedes the command")
     # @compliance DCC-S9.2.3-CS-016
     _check_command(rep, R, svc_dec, register_cmd(1, 5, write=True), "write reg1=5", min_repeat=5)
+    # No decoder is attached, so the page-preset receives NO ACK -- yet the command
+    # step still follows it on the wire. That is the page-select-not-gated-by-ACK rule.
+    # @compliance DCC-S9.2.3-CS-017
+    rep.check(R, "page-preset NO_ACK still proceeds to the command",
+              _has_packet(svc_dec, lambda d: d == page_preset(1)) and
+              _find(svc_dec, register_cmd(1, 5, write=True))[0] >= 1,
+              "preset (un-ACKed, no decoder) is followed by the command on the wire")
     rep.check(R, "write reg1: >= 3 reset packets", _count_resets(svc_dec) >= 3,
               f"{_count_resets(svc_dec)} reset packets")
     _check_timing_both(rep, main_dec, svc_dec, "REG WRITE 1 5")
@@ -536,6 +558,238 @@ def ack_width_tests(rep, s):
     time.sleep(0.2)
 
 
+# @compliance DCC-S9.2.3-CS-005
+def ack_interrupted_test(rep, s):
+    """Interrupted current pulse RESETS the ACK width counter (S-9.2.3 §D). The
+    mock-ACK loopback injects a GLITCHED pulse: high 3000 us, low ~232 us, high
+    3000 us. Each sub-pulse (3000 us) is below the MIN ACK width (4930 us), so a
+    counter that correctly RESETS on the low gap reports NO ACK -- whereas one that
+    wrongly accumulated across the gap would see ~6000 us (in-window) and ACK. The
+    verdict NO ACK, cross-checked against two separate sub-pulses on D4, proves the
+    reset."""
+    clause = SPEC_DOC + " §D (interrupted pulse resets ACK counter)"
+    PRE_US, GAP_US = 3000, 232           # each sub-pulse < MIN(4930); sum 6000 in-window
+    s.reset_input_buffer()
+
+    def stim():
+        s.write((f"SVC MOCKACK {PRE_US} GLITCH {GAP_US}\r").encode())
+
+    with tempfile.TemporaryDirectory() as d:
+        paths = lib.capture_to_csv_multi([ACK_CHANNEL], d, stimulus=stim,
+                                         capture_seconds=CAPTURE_SECONDS)
+        ack_rows = lib.read_transitions(paths[ACK_CHANNEL])
+
+    resp = _wait_mockack(s)
+    got_ack = "ACK DETECTED" in resp
+    last = resp.strip().splitlines()[-1] if resp.strip() else "(timeout)"
+    pulses = _high_pulses_us(ack_rows)
+
+    # The counter must RESET on the interruption -> NO ACK despite the 6 ms sum.
+    rep.check(clause, "interrupted pulse -> NO ACK (counter reset, not accumulated)",
+              got_ack is False, f"reported: {last}")
+
+    # D4 cross-check: the injected pulse really is two sub-pulses with a gap.
+    two = len(pulses) >= 2
+    rep.check(clause, "D4 shows two sub-pulses separated by a low gap", two,
+              f"sub-pulses (us): {[f'{w:.0f}' for _, w in pulses]}")
+    if two:
+        each_ok = all(abs(w - PRE_US) <= 300 for _, w in pulses[:2])
+        gap_us = (pulses[1][0] - (pulses[0][0] + pulses[0][1] / 1e6)) * 1e6
+        rep.check(clause, "each sub-pulse ~3000us and below the MIN ACK width", each_ok,
+                  f"widths {[f'{w:.0f}' for _, w in pulses[:2]]} us (MIN ACK = 4930us)")
+        rep.check(clause, "low gap present between the sub-pulses", gap_us > 50,
+                  f"measured gap {gap_us:.0f} us (asked {GAP_US} us)")
+    time.sleep(0.2)
+
+
+# ----------------------------------------------------------------------------
+# Wire-observable read/verify behaviour via the mock decoder (Direct mode).
+# The mock (SVC MOCKCV) only ACKs DIRECT-format verifies, so these run in Direct.
+# ----------------------------------------------------------------------------
+def _first_time(dec, expected):
+    """Absolute start time (s) of the first packet whose bytes == expected, or None."""
+    for (pre, data), t in zip(dec["packets"], dec["packet_times"]):
+        if list(data) == expected:
+            return t
+    return None
+
+
+def _svc_capture_service(s, svc_cmd, seconds):
+    """Fire one SVC op into a service-track (ch3) capture; return (svc_decoded,
+    uart_result_text). The capture spans `seconds`; the op's SVC RESULT is read
+    afterwards so the singleton task is IDLE before the next op."""
+    s.reset_input_buffer()
+
+    def stim():
+        s.write((svc_cmd + "\r").encode())
+
+    with tempfile.TemporaryDirectory() as d:
+        paths = lib.capture_to_csv_multi([SERVICE_CHANNEL], d, stimulus=stim,
+                                         capture_seconds=seconds)
+        svc_dec = lib.decode(lib.read_transitions(paths[SERVICE_CHANNEL]))
+    result = _wait_result(s)
+    return svc_dec, result
+
+
+# @compliance DCC-S9.2.3-CS-021
+def test_read_iteration(rep, s):
+    """Direct read_cv ITERATES a verify per bit (verify_bit cv,b,1 for b=0..7) and
+    the ACK pattern assembles the returned value (S-9.2.3 sec E, 'read via Verify,
+    iterate to find value'). With the mock decoder holding CV8 = 0x5A, the read's
+    per-bit verify packets are visible on the service track, and the op returns the
+    held value through the real ACK path -- the iteration is shown ON THE WIRE, not
+    just inferred from the result."""
+    clause = SPEC_DOC + " sec E (read iterates verify)"
+    HELD = 0x5A                                   # 0101 1010 -> bits 1,3,4,6 set
+    _send_ok(s, f"SVC MOCKCV 8 {HELD}")
+
+    # Capture the read on the service track. The 8 per-bit verifies run in sequence,
+    # so a wide window catches the leading bits of the iteration.
+    svc_dec, result = _svc_capture_service(s, "SVC DIRECT READ 8", seconds=2.0)
+
+    # Each iteration step is a Direct bit-manip verify of "is bit b == 1".
+    expected_bits = [direct_verify_bit(8, b, 1) for b in range(8)]
+    seen = [b for b, pkt in enumerate(expected_bits) if _find(svc_dec, pkt)[0] >= 1]
+    rep.check(clause, "read emits a per-bit verify (iteration on the wire)",
+              len(seen) >= 3,
+              f"distinct verify-bit positions seen on the wire: {seen} "
+              f"(>=3 of 8 proves the read iterates, not a single shot)")
+
+    rep.check(clause, "verify-bit packets carry the >=20-bit long preamble",
+              all(_find(svc_dec, expected_bits[b])[1] >= 20 for b in seen) if seen else False,
+              "each iteration packet is a service-mode (long-preamble) command")
+
+    # ACK pattern returns the held value end-to-end through the real ACK path.
+    rep.check(clause, f"read returns the ACK-found value 0x{HELD:02X}",
+              f"(0x{HELD:02X})" in result,
+              f"SVC RESULT: {result.strip().splitlines()[-1] if result.strip() else '(timeout)'}")
+    _send_ok(s, "SVC MOCKCV OFF")
+    time.sleep(0.2)
+
+
+# @compliance DCC-S9.2.3-CS-022
+def test_write_then_verify_order(rep, s):
+    """write_cv runs a WRITE phase THEN a VERIFY read-back of the same value
+    (S-9.2.3 sec E). On the service track the write-byte packet must appear BEFORE
+    the verify-byte packet -- the phase ordering is shown on the wire, not just at
+    the host. The mock decoder accepts the write and ACKs the matching verify."""
+    clause = SPEC_DOC + " sec E (write then verify)"
+    _send_ok(s, "SVC MOCKCV 8 0")                 # mock present; write updates it
+
+    svc_dec, result = _svc_capture_service(s, "SVC DIRECT WRITE 8 51", seconds=1.5)
+
+    w = direct_write_byte(8, 51)                  # write-byte phase (CC=11)
+    v = direct_verify_byte(8, 51)                 # verify-byte read-back (CC=01)
+    tw, tv = _first_time(svc_dec, w), _first_time(svc_dec, v)
+
+    rep.check(clause, "write-byte then verify-byte both on the wire [%s | %s]"
+              % (_hx(w), _hx(v)), tw is not None and tv is not None,
+              f"write seen={tw is not None}, verify seen={tv is not None}")
+    if tw is not None and tv is not None:
+        rep.check(clause, "WRITE phase precedes VERIFY phase on the wire", tw < tv,
+                  f"write at {tw*1e3:.1f} ms, verify at {tv*1e3:.1f} ms")
+    rep.check(clause, "write+verify completes SUCCESS via the real ACK path",
+              "SUCCESS" in result,
+              f"SVC RESULT: {result.strip().splitlines()[-1] if result.strip() else '(timeout)'}")
+    _send_ok(s, "SVC MOCKCV OFF")
+    time.sleep(0.2)
+
+
+# @compliance DCC-S9.2.3-CS-009
+def test_ack_ends_recovery_early(rep, s):
+    """Decoder-Recovery-Time ends early on ACK (S-9.2.3 sec E): when a bit-verify
+    is ACKed, the sequencer stops the recovery wait and moves on. A Direct read of
+    a CV the mock ACKs on EVERY bit (0xFF) must therefore complete measurably FASTER
+    than a read the mock NEVER ACKs (0x00) -- same packet count, the only difference
+    is the recovery cut short by each ACK. Pure wall-time differential, no decoder
+    iteration involved (read always walks all 8 bits)."""
+    clause = SPEC_DOC + " sec E (ACK ends recovery early)"
+
+    def read_seconds(held):
+        _send_ok(s, f"SVC MOCKCV 8 {held}")
+        t0 = time.time()
+        r = _svc_result(s, "SVC DIRECT READ 8", timeout=60.0)
+        return time.time() - t0, r
+
+    t_ack, r_ack = read_seconds(0xFF)             # every bit ACKs -> recovery cut short
+    time.sleep(0.3)
+    t_noack, r_noack = read_seconds(0x00)         # no bit ACKs -> full recovery each bit
+    _send_ok(s, "SVC MOCKCV OFF")
+
+    rep.check(clause, "both reads complete (SUCCESS)",
+              "SUCCESS" in r_ack and "SUCCESS" in r_noack,
+              f"all-ACK: {r_ack.strip().splitlines()[-1] if r_ack.strip() else '(timeout)'} | "
+              f"no-ACK: {r_noack.strip().splitlines()[-1] if r_noack.strip() else '(timeout)'}")
+    rep.check(clause, "ACK on every bit finishes faster than no ACK (recovery cut short)",
+              t_noack > t_ack,
+              f"all-ACK read {t_ack*1e3:.0f} ms vs no-ACK read {t_noack*1e3:.0f} ms "
+              f"(delta {(t_noack - t_ack)*1e3:.0f} ms)")
+    time.sleep(0.2)
+
+
+# @compliance DCC-S9.2.3-CS-008, DCC-S9.2.3-CS-012, DCC-S9.2.3-CS-013
+def recovery_count_tests(rep, s):
+    """Decoder-Recovery-Time and reset-block packet counts on the service track
+    (S-9.2.3 §E), with NO decoder so the full counts appear on the wire. Each no-ACK
+    cycle is PRE(3 resets) -> COMMAND(5x) -> RECOVERY(N resets), retried 3x, then a
+    final RESET_POST(6). So the reset run BETWEEN consecutive command groups =
+    RECOVERY + PRE, and the last reset run before the track idles = RESET_POST. The
+    recovery count is derived as (between-run - PRE) and checked against the spec
+    value (6 standard / 10 for register-1)."""
+    clause = SPEC_DOC + " §E (recovery / reset counts)"
+    PRE, POST, REC_STD, REC_LONG = 3, 6, 6, 10
+
+    def _between_runs(dec, target):
+        pkts = [list(d) for _, d in dec["packets"]]
+        groups, i = [], 0
+        while i < len(pkts):
+            if pkts[i] == target:
+                j = i
+                while j < len(pkts) and pkts[j] == target:
+                    j += 1
+                groups.append((i, j)); i = j
+            else:
+                i += 1
+        between = [sum(1 for p in pkts[groups[k][1]:groups[k + 1][0]] if p == RESET)
+                   for k in range(len(groups) - 1)]
+        return between, pkts
+
+    def _trailing_run(pkts):
+        last = max((i for i, p in enumerate(pkts) if p not in (RESET, IDLE)), default=-1)
+        run = 0
+        for p in pkts[last + 1:]:
+            if p == RESET:
+                run += 1
+            elif p == IDLE:
+                break
+            else:
+                run = 0
+        return run
+
+    # --- standard write: recovery = 6 (CS-013) + post-op reset = 6 (CS-008) ---
+    _, svc = _svc_op_dual(s, "SVC DIRECT WRITE 5 10", seconds=3.0)
+    between, pkts = _between_runs(svc, direct_write_byte(5, 10))
+    recs = [b - PRE for b in between]
+    # @compliance DCC-S9.2.3-CS-013
+    rep.check(clause, "standard write Decoder-Recovery-Time = 6 packets",
+              len(between) >= 1 and all(b == REC_STD + PRE for b in between),
+              f"between-command reset runs {between} (= RECOVERY+PRE); derived recovery {recs} (spec 6)")
+    trailing = _trailing_run(pkts)
+    # @compliance DCC-S9.2.3-CS-008
+    rep.check(clause, "post-operation RESET_POST = 6 packets",
+              trailing == POST,
+              f"final reset run before idle = {trailing} packets (spec 6)")
+
+    # --- register-1 write: long recovery = 10 (CS-012) ---
+    _, svc = _svc_op_dual(s, "SVC REG WRITE 1 100 MOBILE", seconds=3.0)
+    between, _ = _between_runs(svc, register_cmd(1, 100, write=True))
+    recs = [b - PRE for b in between]
+    # @compliance DCC-S9.2.3-CS-012
+    rep.check(clause, "register-1 write long recovery = 10 packets",
+              len(between) >= 1 and all(b == REC_LONG + PRE for b in between),
+              f"between-command reset runs {between} (= RECOVERY_LONG+PRE); derived recovery {recs} (spec 10)")
+
+
 # ----------------------------------------------------------------------------
 # Suite
 # ----------------------------------------------------------------------------
@@ -569,8 +823,20 @@ def run():
         # Read-back / write+verify value correctness via the mock decoder.
         test_readback(rep, s)
 
+        # Wire-observable read iteration, write->verify ordering, and ACK ending
+        # the recovery wait early (all Direct mode, mock decoder on the real ACK path).
+        test_read_iteration(rep, s)
+        test_write_then_verify_order(rep, s)
+        test_ack_ends_recovery_early(rep, s)
+
         # ACK pulse-width detection via the mock-ACK loopback (PB24 -> PB9, D4).
         ack_width_tests(rep, s)
+
+        # Interrupted pulse resets the ACK width counter (glitched mock-ACK).
+        ack_interrupted_test(rep, s)
+
+        # Decoder-Recovery-Time + reset-block packet counts (no decoder, full counts).
+        recovery_count_tests(rep, s)
 
         send("SVC EXIT"); time.sleep(0.3)
         send("POWER OFF"); time.sleep(0.3)

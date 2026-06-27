@@ -148,7 +148,7 @@ def main():
                 elif tid not in hil[fn]:
                     errors.append(f"{tid}: HIL check in {fn} is not tagged @compliance {tid}")
 
-        if f["hil"]["state"] in ("no", "planned") and tid in hil_tids:
+        if f["hil"]["state"] in ("no", "planned", "nobs") and tid in hil_tids:
             warns.append(f"{tid}: HIL state is '{f['hil']['state']}' yet a HIL check is tagged")
 
         if f["supported"]["state"] == "ok":
@@ -193,8 +193,8 @@ def main():
           f"{len(host_tids)} gTest tid(s) tagged, {len(hil_tids)} HIL tid(s) tagged\n")
     for tid in sorted(db_tids):
         f = by_id[tid]
-        g = "gtest" if tid in host_tids else ("—" if f["gtest"]["state"] in ("na", "no") else "MISSING")
-        h = "hil" if tid in hil_tids else ("—" if f["hil"]["state"] in ("na", "no", "planned") else "MISSING")
+        g = "gtest" if tid in host_tids else ("—" if f["gtest"]["state"] in ("na", "no", "nobs") else "MISSING")
+        h = "hil" if tid in hil_tids else ("—" if f["hil"]["state"] in ("na", "no", "planned", "nobs") else "MISSING")
         print(f"  {tid:<20} sup={f['supported']['state']:<7} gTest={f['gtest']['state']:<7}[{g}] HIL={f['hil']['state']:<8}[{h}]")
 
     if warns:
