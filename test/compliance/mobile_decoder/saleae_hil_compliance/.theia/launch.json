@@ -1,0 +1,16 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "saleae_hil_compliance",
+      "type": "ccs-debug",
+      "request": "launch",
+      "projectInfo": {
+        "name": "saleae_hil_compliance",
+        "resourceId": "/saleae_hil_compliance"
+      }
+    }
+  ]
+}

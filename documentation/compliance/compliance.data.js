@@ -513,13 +513,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Bit decoder accepts the full one-bit window (dcc_bit_decoder.c edge timing).",
             "gtest": "",
-            "hil": "Decoder HIL: source DCC at 55 / 58 / 61 µs into the decoder DUT, confirm decode. Rig not built. Needs decoder rig."
+            "hil": "Covered by mobile_decoder/s9_1_compliance.py: player sources the '1' half-bit at 55/58/61 us into the decoder DUT, confirms each decodes (RECV SPEED)."
           },
           "refs": {
             "symbols": [],
@@ -530,7 +530,13 @@ window.COMPLIANCE =
                 "desc": "Feeds an over-long half-period and confirms the decoder resets rather than mis-decoding (timing upper bound)."
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "ONE half-bit 55/58/61 us accepted",
+                "file": "mobile_decoder/s9_1_compliance.py",
+                "desc": "Player sources DCC with the '1' half-bit at 55/58/61 us into the decoder; each decodes (RECV SPEED)."
+              }
+            ]
           }
         },
         {
@@ -552,13 +558,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "DCC_PREAMBLE_BITS_DECODER_MIN=10.",
             "gtest": "",
-            "hil": "Decoder HIL: feed 9 vs 10 preamble bits, confirm reject / accept. Rig not built. Needs decoder rig."
+            "hil": "Covered by mobile_decoder/s9_1_compliance.py: player sources preamble=10 (accept -> RECV) vs preamble=5 (reject -> no RECV) on real edges."
           },
           "refs": {
             "symbols": [
@@ -581,7 +587,13 @@ window.COMPLIANCE =
                 "desc": "Pins the decoder minimum-preamble constant (DCC_PREAMBLE_BITS_DECODER_MIN == 10)."
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "preamble >=10 accept / short reject",
+                "file": "mobile_decoder/s9_1_compliance.py",
+                "desc": "Player sources preamble=10 (decoder accepts -> RECV SPEED) vs preamble=5 (decoder rejects -> no RECV), on real edge timing."
+              }
+            ]
           }
         },
         {
@@ -603,13 +615,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Accepts stretched / asymmetric zero halves (DCC_ZERO_BIT_HALF_PERIOD_DECODER_MIN_US=90).",
             "gtest": "",
-            "hil": "Decoder HIL: source stretched-zero waveforms, confirm decode. Rig not built. Needs decoder rig."
+            "hil": "Covered by mobile_decoder/s9_1_compliance.py: player sources zero-bit halves at 90 and 200 us, confirms the decoder still decodes (RECV SPEED)."
           },
           "refs": {
             "symbols": [
@@ -622,7 +634,13 @@ window.COMPLIANCE =
                 "desc": "Feeds a zero-bit with asymmetric / stretched halves and confirms the decoder still accepts it."
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "stretched zero (90/200 us half) accepted",
+                "file": "mobile_decoder/s9_1_compliance.py",
+                "desc": "Player sources zero-bit halves at 90 and 200 us; confirms the decoder still accepts and decodes (RECV SPEED)."
+              }
+            ]
           }
         },
         {
@@ -1990,13 +2008,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "DccPacketDecoder_process_packet returns early when data[0]==0xFF.",
             "gtest": "",
-            "hil": "Requires a decoder-side HIL rig that does not exist yet. Decoder HIL rig not built."
+            "hil": "Covered by mobile_decoder/s9_2_compliance.py: idle-only stream into the decoder produces zero RECV callbacks."
           },
           "refs": {
             "symbols": [
@@ -2009,7 +2027,13 @@ window.COMPLIANCE =
                 "desc": "Asserts idle packet fires no decoder callbacks"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "idle packet ignored",
+                "file": "mobile_decoder/s9_2_compliance.py",
+                "desc": "Player loops idle packets into the decoder; confirms zero RECV callbacks."
+              }
+            ]
           }
         },
         {
@@ -2079,13 +2103,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "process_packet detects reset and returns without dispatching an instruction.",
             "gtest": "",
-            "hil": "Requires a decoder-side HIL rig that does not exist yet. Decoder HIL rig not built."
+            "hil": "Covered by mobile_decoder/s9_2_compliance.py: reset-only stream produces no instruction callback (accepted, not dispatched)."
           },
           "refs": {
             "symbols": [
@@ -2098,7 +2122,13 @@ window.COMPLIANCE =
                 "desc": "Asserts reset packet fires no operating callbacks"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "reset packet accepted (no dispatch)",
+                "file": "mobile_decoder/s9_2_compliance.py",
+                "desc": "Player loops reset packets (00 00 00); confirms the decoder dispatches no instruction callback."
+              }
+            ]
           }
         },
         {
@@ -2214,13 +2244,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "process_packet maps broadcast e-stop to on_emergency_stop_command.",
             "gtest": "",
-            "hil": "Requires a decoder-side HIL rig that does not exist yet. Decoder HIL rig not built."
+            "hil": "Covered by mobile_decoder/s9_2_compliance.py: broadcast e-stop (00 51 51) yields RECV ESTOP addr=0."
           },
           "refs": {
             "symbols": [
@@ -2233,7 +2263,13 @@ window.COMPLIANCE =
                 "desc": "Asserts a broadcast packet is accepted regardless of short address"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "broadcast e-stop -> ESTOP",
+                "file": "mobile_decoder/s9_2_compliance.py",
+                "desc": "Player sources broadcast e-stop; confirms the decoder fires the emergency-stop callback (RECV ESTOP addr=0)."
+              }
+            ]
           }
         },
         {
@@ -2349,13 +2385,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "_validate_xor recomputes XOR; process_packet drops on mismatch.",
             "gtest": "",
-            "hil": "Requires a decoder-side HIL rig that does not exist yet. Decoder HIL rig not built."
+            "hil": "Covered by mobile_decoder/s9_2_compliance.py: valid-XOR packet decodes; corrupt-XOR packet yields no callback."
           },
           "refs": {
             "symbols": [
@@ -2368,7 +2404,13 @@ window.COMPLIANCE =
                 "desc": "Asserts a wrong error byte fires no callbacks"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "corrupt XOR rejected",
+                "file": "mobile_decoder/s9_2_compliance.py",
+                "desc": "Player sources a valid packet (decodes) and the same packet with a wrong error byte (no RECV)."
+              }
+            ]
           }
         },
         {
@@ -2392,13 +2434,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "process_packet parses short/long/reserved and dispatches only on match/broadcast.",
             "gtest": "",
-            "hil": "Requires a decoder-side HIL rig that does not exist yet. Decoder HIL rig not built."
+            "hil": "Covered by mobile_decoder/s9_2_compliance.py: packet to the decoder address decodes; packet to a foreign address is ignored."
           },
           "refs": {
             "symbols": [
@@ -2416,7 +2458,13 @@ window.COMPLIANCE =
                 "desc": "Asserts a non-matching short address is ignored"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "address match dispatch / foreign ignore",
+                "file": "mobile_decoder/s9_2_compliance.py",
+                "desc": "Player sources a packet to the decoder's address (RECV) and to a foreign address (no RECV)."
+              }
+            ]
           }
         },
         {
