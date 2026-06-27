@@ -21,6 +21,12 @@ PREAMBLE_OPS       = 16      # DCC_PREAMBLE_BITS_OPS
 PREAMBLE_SERVICE   = 20      # DCC_PREAMBLE_BITS_SERVICE
 PREAMBLE_DEC_MIN   = 10      # DCC_PREAMBLE_BITS_DECODER_MIN
 
+# Player reload-latency calibration. Each segment plays ~CALIBRATION_L_US longer than
+# loaded (the constant one-shot restart latency). Measured on-wire at M1 on the Saleae
+# (58->60, 100->102 us => L=2). Per-board -- re-measure if you change boards or the timer
+# clock. load(calibrate=True) pre-subtracts it so on-wire timing matches the request. 0=off.
+CALIBRATION_L_US   = 2
+
 MAX_SEG_US         = 0xFFFF  # firmware honors <= 65535 us per segment
 LEVEL_BIT          = 1 << 31
 DUR_MASK           = (1 << 31) - 1
@@ -191,6 +197,18 @@ def asym_bit(segments, bit_index, first_us, second_us):
 
 
 # =============================================================================
+# Player calibration  (compensate the constant reload latency -- see CALIBRATION_L_US)
+# =============================================================================
+
+def apply_calibration(segments, us=CALIBRATION_L_US):
+    """Subtract the player's constant reload latency from each segment duration so the
+    on-wire timing matches the requested one. Clamped to >= 1 us; us=0 is a no-op."""
+    if not us:
+        return list(segments)
+    return [(lvl, max(1, dur - us)) for (lvl, dur) in segments]
+
+
+# =============================================================================
 # UART framing helpers
 # =============================================================================
 
@@ -233,9 +251,12 @@ class WaveformPlayer:
     def trig_off(self):
         return self._cmd("TRIG OFF")
 
-    def load(self, segments, per_line=32, verify_crc=True):
-        """Clear, stream the buffer, and (optionally) verify the board's CRC
-        matches the host's before returning."""
+    def load(self, segments, per_line=32, verify_crc=True, calibrate=True):
+        """Clear, stream the buffer, and (optionally) verify the board's CRC matches
+        the host's. With calibrate=True the player's reload latency is pre-subtracted
+        (apply_calibration) so on-wire timing matches the requested durations."""
+        if calibrate:
+            segments = apply_calibration(segments)
         self.clear()
         for line in seg_lines(segments, per_line):
             self._cmd(line)

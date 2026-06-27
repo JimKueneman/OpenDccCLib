@@ -89,7 +89,7 @@ Implementation properties that matter:
 ## 4. Firmware modules & bench
 
 ```
-saleae_hil_waveform_player.c   main loop: WfEngine_service(); UartDriver; CmdParser
+saleae_hil_compliance.c        main loop: WfEngine_take_done()/OK DONE; UartDriver; CmdParser
 wfplayer_engine.[ch]           buffer + ISR above + CRC + play/stop/state/trig
 wfplayer_command_parser.[ch]   UART line → verb → OK/ERR   (PROTOCOL.md)
 ti_driverlib_uart_driver.[ch]  reused

@@ -135,8 +135,11 @@ the playback ISR never touches UART.**
 ## Build & test
 
 - **Firmware:** build the Debug config in CCS (SysConfig regenerates `ti_msp_dl_config.h`).
-- **Host contract:** `python3 -m unittest discover -s test` (pure, no hardware — must be green).
-- **Hardware smoke:** `WFPLAYER_PORT=/dev/cu.usbmodemXXXX ../.venv/bin/python -m unittest test.test_hw_smoke`.
+- **Host contract (pure, no hardware):** `python3 -m unittest discover -s test -p 'test_wfplayer.py'`
+  — codec/CRC/composition + per-pulse overrides + calibration + the P1–P5 composition coverage. Must be green.
+- **Hardware smoke:** `WFPLAYER_PORT=/dev/cu.usbmodemXXXX ../.venv/bin/python -m unittest discover -s test -p 'test_hw_smoke.py'`.
+- **Spec coverage (P1–P5 on the wire):** `WFPLAYER_PORT=… ../.venv/bin/python -m unittest discover -s test -p 'test_hw_spec.py'`
+  — composes each requirement, plays it, captures D0 (and D1 for P5), and asserts the decoded result. Needs the Saleae wired (D0→PB1, D1→PB3) + Logic2 Automation API.
 - **Fidelity certification (M1):** capture `DCC_OUT` on the Saleae and run the existing
   `s9_1` / `s9_2` wire-decode suites against it — proves the player emits spec-faithful DCC
   before it is trusted to stimulate a decoder.

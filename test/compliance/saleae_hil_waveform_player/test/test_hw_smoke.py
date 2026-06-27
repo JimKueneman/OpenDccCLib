@@ -2,7 +2,7 @@
 Hardware smoke test for the Waveform Player board. SKIPPED unless WFPLAYER_PORT
 is set to the board's serial device, e.g.:
 
-    WFPLAYER_PORT=/dev/cu.usbmodemXXXX ../.venv/bin/python -m unittest -v test.test_hw_smoke
+    WFPLAYER_PORT=/dev/cu.usbmodemXXXX ../.venv/bin/python -m unittest discover -s test -p 'test_hw_smoke.py' -v
 
 Needs pyserial + a flashed board. Does not need the Saleae (that's the separate
 fidelity-certification step using the s9_1/s9_2 suites on DCC_OUT).

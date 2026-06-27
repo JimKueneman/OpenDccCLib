@@ -23,7 +23,7 @@
 #include <ti/driverlib/driverlib.h>
 #include <ti/driverlib/m0p/dl_interrupt.h>
 
-#define UART_RX_RING_SIZE 256
+#define UART_RX_RING_SIZE 512   /* holds a full SEG line (host per_line=32 -> 260 chars) */
 
 static volatile uint8_t _rx_ring[UART_RX_RING_SIZE];
 static volatile uint16_t _rx_head = 0;  /* ISR writes here */

@@ -183,5 +183,42 @@ class PerPulseOverrides(unittest.TestCase):
         self.assertEqual(got, data + [wf.xor_checksum(data)])
 
 
+class Calibration(unittest.TestCase):
+    def test_subtracts_and_clamps(self):
+        segs = [(1, 58), (0, 100), (1, 2)]
+        self.assertEqual(wf.apply_calibration(segs, us=2), [(1, 56), (0, 98), (1, 1)])
+
+    def test_zero_is_noop(self):
+        segs = [(1, 58), (0, 100)]
+        self.assertEqual(wf.apply_calibration(segs, us=0), segs)
+
+
+class SpecComposition(unittest.TestCase):
+    """Composition-side coverage of SPEC.md P1-P5 (on-wire coverage is in test_hw_spec.py)."""
+
+    def test_P2_exact_preamble_count(self):
+        for pre in (9, 16, 20):                       # below-min / ops / service
+            bits = wf.packet_bits([0x03, 0x40], preamble=pre)
+            self.assertTrue(bits.startswith("1" * pre + "0"))   # exactly `pre` ones, then start bit
+            self.assertEqual(bits[pre - 1:pre + 1], "10")       # not pre+1 ones
+
+    def test_P3_error_byte_independently_settable(self):
+        data = [0x03, 0x3F, 0x40]
+        segs = wf.packet_segs(data + [0x00], append_xor=False)  # force a WRONG error byte
+        _pre, got = decode_segments(segs)
+        self.assertEqual(got, data + [0x00])                    # emitted verbatim, not the XOR
+        self.assertNotEqual(0x00, wf.xor_checksum(data))
+
+    def test_P3_long_packet_round_trips(self):
+        long_data = [0x03, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66]  # 7 bytes > 6-byte baseline
+        _pre, got = decode_segments(wf.packet_segs(long_data))
+        self.assertEqual(got, long_data + [wf.xor_checksum(long_data)])
+
+    def test_P4_gap_inserts_idle_packets(self):
+        none_ = wf.compose([[0x03, 0x40], [0x05, 0x60]], lead_idle=0, gap_idle=0, trail_idle=0)
+        gapped = wf.compose([[0x03, 0x40], [0x05, 0x60]], lead_idle=0, gap_idle=2, trail_idle=0)
+        self.assertGreater(len(gapped), len(none_))             # gap added idle packets
+
+
 if __name__ == "__main__":
     unittest.main()
