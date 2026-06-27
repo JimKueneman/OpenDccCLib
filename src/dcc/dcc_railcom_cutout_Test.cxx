@@ -156,6 +156,7 @@ TEST(DccRailcomCutout, initialize_sets_idle) {
 
 }
 
+// @compliance DCC-S9.3.2-CS-007
 TEST(DccRailcomCutout, initialize_stores_timing_fields) {
 
     reset_mocks();
@@ -175,6 +176,7 @@ TEST(DccRailcomCutout, initialize_stores_timing_fields) {
 // Begin starts DELAY one-shot (start_delay_us)
 // ============================================================================
 
+// @compliance DCC-S9.3.2-CS-001
 TEST(DccRailcomCutout, begin_starts_delay_timer) {
 
     reset_mocks();
@@ -195,6 +197,7 @@ TEST(DccRailcomCutout, begin_starts_delay_timer) {
 // Per-state one-shot periods: 26 / 54 / 97 / 16 / 261
 // ============================================================================
 
+// @compliance DCC-S9.3.2-CS-002, DCC-S9.3.2-CS-003, DCC-S9.3.2-CS-006
 TEST(DccRailcomCutout, per_state_timer_periods_are_correct) {
 
     reset_mocks();
@@ -226,6 +229,7 @@ TEST(DccRailcomCutout, per_state_timer_periods_are_correct) {
 // Full sequence: IDLE -> DELAY -> SETTLING -> CH1 -> GAP -> CH2 -> IDLE
 // ============================================================================
 
+// @compliance DCC-S9.3.2-CS-005
 TEST(DccRailcomCutout, full_sequence_state_transitions_and_actions) {
 
     reset_mocks();
@@ -276,6 +280,7 @@ TEST(DccRailcomCutout, full_sequence_state_transitions_and_actions) {
 // Full sequence: exact event ordering (incl. UART enable/disable across gap)
 // ============================================================================
 
+// @compliance DCC-S9.3.2-CS-005
 TEST(DccRailcomCutout, full_sequence_event_order) {
 
     reset_mocks();
@@ -360,6 +365,7 @@ TEST(DccRailcomCutout, cancel_during_delay_stops_timer_no_restore) {
 
 }
 
+// @compliance DCC-S9.3.2-CS-008
 TEST(DccRailcomCutout, cancel_during_settling_ends_cutout) {
 
     reset_mocks();
@@ -379,6 +385,7 @@ TEST(DccRailcomCutout, cancel_during_settling_ends_cutout) {
 
 }
 
+// @compliance DCC-S9.3.2-CS-008
 TEST(DccRailcomCutout, cancel_during_ch1_ends_cutout) {
 
     reset_mocks();
@@ -664,6 +671,7 @@ TEST(DccRailcomCutout, cancel_during_ch1_with_null_callbacks) {
 // Second cutout after first completes
 // ============================================================================
 
+// @compliance DCC-S9.3.2-CS-004
 TEST(DccRailcomCutout, second_cutout_after_first_succeeds) {
 
     reset_mocks();
@@ -705,6 +713,7 @@ TEST(DccRailcomCutout, second_cutout_after_first_succeeds) {
 // caller passing custom (non-default) timings drives those periods.
 // ============================================================================
 
+// @compliance DCC-S9.3.2-CS-007
 TEST(DccRailcomCutout, custom_timings_drive_each_state_period) {
 
     reset_mocks();

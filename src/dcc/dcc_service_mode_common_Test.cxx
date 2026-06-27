@@ -107,9 +107,17 @@ static dcc_packet_t make_command_packet(void) {
     /**
      * @brief Feed N consecutive above-threshold samples to simulate an ACK pulse.
      */
+/* Trailing low samples needed to cross the dropout filter and end a run. */
+#define TEST_ACK_END_LOWS \
+    ((USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US / DCC_ONE_BIT_HALF_PERIOD_US) + 1)
+
 static void feed_ack_samples(uint16_t count) {
 
     uint16_t sample_index;
+
+    /* Tests inject the ACK directly via ack_sample(); open the scan window so
+     * the samples are counted (window-opening logic is tested separately). */
+    test_context.ack_window_open = true;
 
     for (sample_index = 0; sample_index < count; sample_index++) {
 
@@ -117,8 +125,12 @@ static void feed_ack_samples(uint16_t count) {
 
     }
 
-    /* End of pulse — one below-threshold sample */
-    DccServiceModeCommon_ack_sample(&test_context, 0);
+    /* End of pulse -- enough below-threshold samples to pass the dropout filter. */
+    for (sample_index = 0; sample_index < TEST_ACK_END_LOWS; sample_index++) {
+
+        DccServiceModeCommon_ack_sample(&test_context, 0);
+
+    }
 
 }
 
@@ -244,7 +256,7 @@ TEST(DccServiceModeCommon, begin_operation_fails_not_in_service_mode) {
     DccServiceModeCommon_initialize(&test_context, &interface);
 
     dcc_packet_t packet = make_command_packet();
-    EXPECT_FALSE(DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0));
+    EXPECT_FALSE(DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0));
 
 }
 
@@ -257,7 +269,7 @@ TEST(DccServiceModeCommon, begin_operation_succeeds_when_ready) {
     DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    EXPECT_TRUE(DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0));
+    EXPECT_TRUE(DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0));
     EXPECT_FALSE(DccServiceModeCommon_is_idle(&test_context));
 
 }
@@ -275,7 +287,7 @@ TEST(DccServiceModeCommon, pre_reset_sends_reset_packets) {
     DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
     /* First run should send a reset packet */
     DccServiceModeCommon_run(&test_context);
@@ -288,6 +300,7 @@ TEST(DccServiceModeCommon, pre_reset_sends_reset_packets) {
 
 }
 
+// @compliance DCC-S9.2.3-CS-007
 TEST(DccServiceModeCommon, pre_reset_sends_correct_count) {
 
     reset_mocks();
@@ -297,7 +310,7 @@ TEST(DccServiceModeCommon, pre_reset_sends_correct_count) {
     DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_PRE_COUNT; packet_index++) {
@@ -323,7 +336,7 @@ TEST(DccServiceModeCommon, command_phase_sends_command_packets) {
     DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
     /* Drive through pre-reset */
     uint8_t packet_index;
@@ -360,7 +373,7 @@ TEST(DccServiceModeCommon, ack_detected_returns_success) {
     DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
     drive_full_cycle_with_ack(true);
 
@@ -369,6 +382,7 @@ TEST(DccServiceModeCommon, ack_detected_returns_success) {
 
 }
 
+// @compliance DCC-S9.2.3-CS-009
 TEST(DccServiceModeCommon, ack_detected_terminates_command_phase_early) {
 
     reset_mocks();
@@ -378,7 +392,7 @@ TEST(DccServiceModeCommon, ack_detected_terminates_command_phase_early) {
     DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
     /* Drive through pre-reset */
     uint8_t packet_index;
@@ -430,7 +444,7 @@ TEST(DccServiceModeCommon, no_ack_retries_then_fails) {
     DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
     /* Drive through initial attempt + retries, all without ACK */
     uint8_t attempt;
@@ -465,7 +479,7 @@ TEST(DccServiceModeCommon, ack_too_short_not_detected) {
     DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
     /* Drive through pre-reset to command phase */
     uint8_t packet_index;
@@ -518,7 +532,7 @@ TEST(DccServiceModeCommon, idle_after_successful_operation) {
     DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
     drive_full_cycle_with_ack(true);
 
@@ -555,7 +569,7 @@ TEST(DccServiceModeCommon, encoder_not_idle_blocks_progress) {
     DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
     /* First run sends reset packet */
     DccServiceModeCommon_run(&test_context);
@@ -586,7 +600,7 @@ TEST(DccServiceModeCommon, exit_blocked_while_busy) {
     DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
     DccServiceModeCommon_exit(&test_context);
     EXPECT_TRUE(DccServiceModeCommon_is_active(&test_context));
@@ -606,10 +620,10 @@ TEST(DccServiceModeCommon, begin_operation_fails_when_busy) {
     DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    EXPECT_TRUE(DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0));
+    EXPECT_TRUE(DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0));
 
     /* Second call while first operation is in progress */
-    EXPECT_FALSE(DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0));
+    EXPECT_FALSE(DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0));
 
 }
 
@@ -626,7 +640,7 @@ TEST(DccServiceModeCommon, null_step_callback_completes_without_crash) {
     DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_context, &packet, NULL, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, NULL, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
     drive_full_cycle_with_ack(true);
 
@@ -706,7 +720,7 @@ static void setup_and_begin(void) {
     DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
 }
 
@@ -746,6 +760,7 @@ static void drive_one_no_ack_attempt(void) {
 // ACK boundary: exact min-sample count (87) → SUCCESS
 // ============================================================================
 
+// @compliance DCC-S9.2.3-CS-001
 TEST(DccServiceModeCommon, ack_exact_min_samples_detected) {
 
     setup_and_begin();
@@ -754,8 +769,8 @@ TEST(DccServiceModeCommon, ack_exact_min_samples_detected) {
     /* Send first command packet */
     DccServiceModeCommon_run(&test_context);
 
-    /* Feed exactly ACK_MIN_SAMPLES (87) above-threshold samples */
-    feed_ack_samples(87);
+    /* Feed exactly ACK_MIN_SAMPLES (85 = 5000/58 - 1) above-threshold samples */
+    feed_ack_samples(85);
 
     /* Next run detects ACK → RESET_POST */
     DccServiceModeCommon_run(&test_context);
@@ -770,6 +785,7 @@ TEST(DccServiceModeCommon, ack_exact_min_samples_detected) {
 // ACK boundary: one below min-sample count (84) → NO_ACK
 // ============================================================================
 
+// @compliance DCC-S9.2.3-CS-002
 TEST(DccServiceModeCommon, ack_one_below_min_samples_not_detected) {
 
     setup_and_begin();
@@ -822,6 +838,7 @@ TEST(DccServiceModeCommon, ack_at_exact_threshold_detected) {
     drive_to_command_phase();
 
     DccServiceModeCommon_run(&test_context);  /* first command packet */
+    test_context.ack_window_open = true;      /* isolate detection: force the scan window open */
 
     /* Feed samples at exactly the threshold value */
     uint16_t sample_index;
@@ -831,7 +848,12 @@ TEST(DccServiceModeCommon, ack_at_exact_threshold_detected) {
 
     }
 
-    DccServiceModeCommon_ack_sample(&test_context, 0);
+    /* Falling edge: enough lows to pass the dropout filter. */
+    for (sample_index = 0; sample_index < TEST_ACK_END_LOWS; sample_index++) {
+
+        DccServiceModeCommon_ack_sample(&test_context, 0);
+
+    }
 
     DccServiceModeCommon_run(&test_context);  /* detect ACK → RESET_POST */
     drive_post_reset_to_idle();
@@ -888,6 +910,7 @@ TEST(DccServiceModeCommon, ack_one_below_threshold_not_detected) {
 // (S-9.2.3 p.2: ACK is 6 ms +/- 1 ms, a two-sided window. MIN=85, MAX=120.)
 // ============================================================================
 
+// @compliance DCC-S9.2.3-CS-003
 TEST(DccServiceModeCommon, ack_within_max_window_detected) {
 
     setup_and_begin();
@@ -895,17 +918,9 @@ TEST(DccServiceModeCommon, ack_within_max_window_detected) {
 
     DccServiceModeCommon_run(&test_context);  /* first command packet */
 
-    /* Feed 110 above-threshold samples: within [MIN(85), MAX(120)].
-     * Detection is deferred until the falling edge below. */
-    uint16_t sample_index;
-    for (sample_index = 0; sample_index < 110; sample_index++) {
-
-        DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
-
-    }
-
-    /* Falling edge: a valid-length run latches as ACK here. */
-    DccServiceModeCommon_ack_sample(&test_context, 0);
+    /* 110 samples within [MIN(85), MAX(120)] -> valid ACK (helper opens the scan
+     * window and ends the run past the dropout filter). */
+    feed_ack_samples(110);
 
     DccServiceModeCommon_run(&test_context);  /* detect ACK → RESET_POST */
     drive_post_reset_to_idle();
@@ -920,6 +935,7 @@ TEST(DccServiceModeCommon, ack_within_max_window_detected) {
 // (S-9.2.3 p.3: a run longer than the upper bound is over-current, not an ACK.)
 // ============================================================================
 
+// @compliance DCC-S9.2.3-CS-004
 TEST(DccServiceModeCommon, ack_beyond_max_window_not_detected) {
 
     setup_and_begin();
@@ -1115,6 +1131,7 @@ TEST(DccServiceModeCommon, ack_after_last_command_packet_loads_all) {
 // ACK samples during pre-reset phase → ignored
 // ============================================================================
 
+// @compliance DCC-S9.2.3-CS-006
 TEST(DccServiceModeCommon, ack_during_pre_reset_ignored) {
 
     setup_and_begin();
@@ -1153,6 +1170,7 @@ TEST(DccServiceModeCommon, ack_during_pre_reset_ignored) {
 // ACK samples during post-reset phase → do not change result
 // ============================================================================
 
+// @compliance DCC-S9.2.3-CS-006
 TEST(DccServiceModeCommon, ack_during_post_reset_does_not_change_result) {
 
     setup_and_begin();
@@ -1189,6 +1207,7 @@ TEST(DccServiceModeCommon, ack_during_post_reset_does_not_change_result) {
 // Interrupted pulse (gap resets high counter) → NO_ACK
 // ============================================================================
 
+// @compliance DCC-S9.2.3-CS-005
 TEST(DccServiceModeCommon, interrupted_pulse_resets_counter) {
 
     setup_and_begin();
@@ -1257,7 +1276,7 @@ TEST(DccServiceModeCommon, second_operation_after_completion_succeeds) {
     /* Start second operation */
     reset_step_callback();
     dcc_packet_t packet = make_command_packet();
-    EXPECT_TRUE(DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0));
+    EXPECT_TRUE(DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0));
 
     /* Complete second operation with ACK */
     drive_full_cycle_with_ack(true);
@@ -1283,7 +1302,7 @@ TEST(DccServiceModeCommon, second_operation_no_ack_after_first_succeeded) {
     /* Second operation: no ACK → NO_ACK */
     reset_step_callback();
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
     uint8_t attempt;
     for (attempt = 0; attempt <= USER_DEFINED_DCC_SERVICE_MODE_RETRIES; attempt++) {
@@ -1310,7 +1329,7 @@ TEST(DccServiceModeCommon, null_callback_no_ack_completes_without_crash) {
     DccServiceModeCommon_enter(&test_context);
 
     dcc_packet_t packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_context, &packet, NULL, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &packet, NULL, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
     /* Drive all attempts with no ACK */
     uint8_t attempt;
@@ -1388,6 +1407,7 @@ TEST(DccServiceModeCommon, encoder_stall_mid_command_ack_still_detected) {
 // Post-reset sends correct packet count
 // ============================================================================
 
+// @compliance DCC-S9.2.3-CS-008
 TEST(DccServiceModeCommon, post_reset_sends_correct_packet_count) {
 
     setup_and_begin();
@@ -1459,6 +1479,7 @@ TEST(DccServiceModeCommon, ack_spanning_command_packets_detected) {
 
     /* Send first command packet */
     DccServiceModeCommon_run(&test_context);
+    test_context.ack_window_open = true;   /* isolate detection: force the scan window open */
 
     /* Start ACK pulse — 50 samples (not enough yet) */
     uint16_t sample_index;
@@ -1471,14 +1492,19 @@ TEST(DccServiceModeCommon, ack_spanning_command_packets_detected) {
     /* Second command packet loads while ACK pulse continues */
     DccServiceModeCommon_run(&test_context);
 
-    /* Continue ACK pulse — 50 more samples (total 100, above 87 min) */
+    /* Continue ACK pulse — 50 more samples (total 100, above min) */
     for (sample_index = 0; sample_index < 50; sample_index++) {
 
         DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
 
     }
 
-    DccServiceModeCommon_ack_sample(&test_context, 0);
+    /* Falling edge: enough lows to pass the dropout filter. */
+    for (sample_index = 0; sample_index < TEST_ACK_END_LOWS; sample_index++) {
+
+        DccServiceModeCommon_ack_sample(&test_context, 0);
+
+    }
 
     /* Next run detects ACK → RESET_POST */
     DccServiceModeCommon_run(&test_context);
@@ -1503,7 +1529,7 @@ static void setup_and_begin_write(void) {
 
     dcc_packet_t packet = make_command_packet();
     DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback,
-                                         true, DCC_SERVICE_MODE_RECOVERY_COUNT);
+                                         true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT);
 
 }
 
@@ -1909,7 +1935,12 @@ TEST(DccServiceModeCommon, write_ack_spanning_command_into_recovery) {
 
     }
 
-    DccServiceModeCommon_ack_sample(&test_context, 0);
+    /* Falling edge: enough lows to pass the dropout filter. */
+    for (sample_index = 0; sample_index < TEST_ACK_END_LOWS; sample_index++) {
+
+        DccServiceModeCommon_ack_sample(&test_context, 0);
+
+    }
 
     DccServiceModeCommon_run(&test_context);  /* detect ACK → RESET_POST */
     drive_post_reset_to_idle();
@@ -1963,7 +1994,7 @@ TEST(DccServiceModeCommon, write_custom_recovery_count) {
 
     dcc_packet_t packet = make_command_packet();
     DccServiceModeCommon_begin_operation(&test_context, &packet, mock_step_callback,
-                                         true, 10);
+                                         true, DCC_SERVICE_MODE_COMMAND_REPEAT, 10);
 
     drive_to_command_phase();
 
@@ -2024,7 +2055,7 @@ static void reach_command_first_packet(void) {
     DccServiceModeCommon_enter(&test_context);
 
     _bm_packet = make_command_packet();
-    DccServiceModeCommon_begin_operation(&test_context, &_bm_packet, mock_step_callback, false, 0);
+    DccServiceModeCommon_begin_operation(&test_context, &_bm_packet, mock_step_callback, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
     uint8_t packet_index;
     for (packet_index = 0; packet_index < DCC_SERVICE_MODE_RESET_PRE_COUNT; packet_index++) {
@@ -2035,6 +2066,11 @@ static void reach_command_first_packet(void) {
 
     DccServiceModeCommon_run(&test_context);  /* RESET_PRE -> COMMAND */
     DccServiceModeCommon_run(&test_context);  /* first command packet */
+
+    /* These tests inject the ACK directly via ack_sample() to unit-test the
+     * width/dropout detection in isolation; force the scan window open (the
+     * blanking/window-opening logic is covered by the packet-position tests). */
+    test_context.ack_window_open = true;
 
 }
 
@@ -2050,10 +2086,29 @@ static void feed_high(uint16_t n) {
 
 }
 
-// Feed one below-threshold sample (the falling edge that closes a run).
+// Close a run: feed enough below-threshold samples to pass the dropout filter
+// (a single dip is bridged, so a real falling edge needs > DROPOUT_SAMPLES lows).
 static void feed_low(void) {
 
-    DccServiceModeCommon_ack_sample(&test_context, 0);
+    uint16_t i;
+    for (i = 0; i < TEST_ACK_END_LOWS; i++) {
+
+        DccServiceModeCommon_ack_sample(&test_context, 0);
+
+    }
+
+}
+
+// Feed a single sub-threshold dip (bridged by the dropout filter, does NOT end
+// the run unless it pushes the consecutive-low count past DROPOUT_SAMPLES).
+static void feed_dip(uint16_t n) {
+
+    uint16_t i;
+    for (i = 0; i < n; i++) {
+
+        DccServiceModeCommon_ack_sample(&test_context, 0);
+
+    }
 
 }
 
@@ -2160,6 +2215,83 @@ TEST(DccServiceModeCommon, ack_window_detection_is_idempotent) {
      * the result stays detected. */
     feed_high((uint16_t)(ACK_MAX_SAMPLES * 2));
     feed_low();
+    EXPECT_TRUE(test_context.ack_detected);
+
+}
+
+// ============================================================================
+// Dropout filter: a brief sub-threshold dip is bridged (the noisy-motor case);
+// a dip longer than the tolerance is a real falling edge that splits the run.
+// ============================================================================
+
+TEST(DccServiceModeCommon, ack_window_brief_dropout_is_bridged) {
+
+    reach_command_first_packet();
+
+    /* 50 high, a tolerated dip, 50 high -> one ~100-sample span (in [MIN,MAX]). */
+    feed_high(50);
+    feed_dip((uint16_t)(TEST_ACK_END_LOWS - 1));   /* DROPOUT_SAMPLES lows: bridged */
+    feed_high(50);
+    feed_low();
+
+    EXPECT_TRUE(test_context.ack_detected);
+
+}
+
+TEST(DccServiceModeCommon, ack_window_deep_dropout_splits_run) {
+
+    reach_command_first_packet();
+
+    /* Same samples but the dip exceeds the tolerance, so it ends the first run
+     * (50 < MIN) and the second 50-run is also too short -> not detected. */
+    feed_high(50);
+    feed_dip(TEST_ACK_END_LOWS);                   /* > DROPOUT_SAMPLES: real falling edge */
+    feed_high(50);
+    feed_low();
+
+    EXPECT_FALSE(test_context.ack_detected);
+
+}
+
+// ============================================================================
+// ACK scan-window blanking (S-9.2.3 line 55): a full valid ACK injected during
+// the first BLANK_PACKETS command packets is ignored; only from the next packet
+// on is it detected. Uses the REAL packet-count gating (no forced window).
+// ============================================================================
+
+TEST(DccServiceModeCommon, ack_blanked_until_window_opens) {
+
+    setup_and_begin();
+    drive_to_command_phase();
+
+    uint16_t i;
+    uint8_t pkt;
+
+    /* During each blanked command packet, a full valid ACK must be ignored. */
+    for (pkt = 0; pkt < DCC_SERVICE_MODE_ACK_BLANK_PACKETS; pkt++) {
+
+        DccServiceModeCommon_run(&test_context);   /* load command packet (1..BLANK) */
+
+        for (i = 0; i < 100; i++) {
+            DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+        }
+        for (i = 0; i < TEST_ACK_END_LOWS; i++) {
+            DccServiceModeCommon_ack_sample(&test_context, 0);
+        }
+
+        EXPECT_FALSE(test_context.ack_detected);   /* blanked */
+
+    }
+
+    /* Next command packet opens the window -> the same ACK is now detected. */
+    DccServiceModeCommon_run(&test_context);
+    for (i = 0; i < 100; i++) {
+        DccServiceModeCommon_ack_sample(&test_context, USER_DEFINED_DCC_ACK_THRESHOLD_MA + 10);
+    }
+    for (i = 0; i < TEST_ACK_END_LOWS; i++) {
+        DccServiceModeCommon_ack_sample(&test_context, 0);
+    }
+
     EXPECT_TRUE(test_context.ack_detected);
 
 }

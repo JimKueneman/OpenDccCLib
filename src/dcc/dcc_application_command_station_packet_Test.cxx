@@ -36,6 +36,7 @@ static void verify_xor(const dcc_packet_t *pkt) {
 // Idle packet tests
 // ============================================================================
 
+// @compliance DCC-S9.2-CS-001
 TEST(DccPacketEncoder, idle_packet_bytes) {
     dcc_packet_t pkt;
     DccApplicationCommandStationPacket_load_idle(&pkt);
@@ -46,6 +47,7 @@ TEST(DccPacketEncoder, idle_packet_bytes) {
     EXPECT_EQ(pkt.byte_count, 3);
 }
 
+// @compliance DCC-S9.2-CS-005
 TEST(DccPacketEncoder, idle_packet_preamble) {
     dcc_packet_t pkt;
     DccApplicationCommandStationPacket_load_idle(&pkt);
@@ -53,6 +55,7 @@ TEST(DccPacketEncoder, idle_packet_preamble) {
     EXPECT_EQ(pkt.preamble_bits, DCC_PREAMBLE_BITS_OPS);
 }
 
+// @compliance DCC-S9.2-CS-006
 TEST(DccPacketEncoder, idle_packet_xor_valid) {
     dcc_packet_t pkt;
     DccApplicationCommandStationPacket_load_idle(&pkt);
@@ -63,6 +66,7 @@ TEST(DccPacketEncoder, idle_packet_xor_valid) {
 // Reset packet tests
 // ============================================================================
 
+// @compliance DCC-S9.2-CS-002
 TEST(DccPacketEncoder, reset_packet_bytes) {
     dcc_packet_t pkt;
     DccApplicationCommandStationPacket_load_reset(&pkt);
@@ -84,6 +88,7 @@ TEST(DccPacketEncoder, reset_packet_preamble) {
 // 128-step speed packet tests
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-001
 TEST(DccPacketEncoder, speed128_short_addr_forward) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
@@ -104,6 +109,7 @@ TEST(DccPacketEncoder, speed128_short_addr_reverse) {
     EXPECT_EQ(pkt.data[2], 50);  /* direction=reverse (bit 7 = 0), speed=50 */
 }
 
+// @compliance DCC-S9.2.1-CS-025
 TEST(DccPacketEncoder, speed128_long_addr) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_speed_128(&pkt, 1234, DCC_ADDRESS_LONG, 100, true);
@@ -176,6 +182,7 @@ TEST(DccPacketEncoder, speed128_preamble_is_ops_mode) {
 // Emergency stop broadcast tests
 // ============================================================================
 
+// @compliance DCC-S9.2-CS-003
 TEST(DccPacketEncoder, estop_all_packet) {
     dcc_packet_t pkt;
     /* isPanic=true -> S-9.2 baseline broadcast stop, S=1 (stop delivering energy) */
@@ -188,6 +195,7 @@ TEST(DccPacketEncoder, estop_all_packet) {
     verify_xor(&pkt);
 }
 
+// @compliance DCC-S9.2-CS-004
 TEST(DccPacketEncoder, estop_all_controlled) {
     dcc_packet_t pkt;
     /* isPanic=false -> baseline broadcast stop, S=0 (bring to a controlled stop) */
@@ -244,6 +252,7 @@ TEST(DccPacketEncoder, speed28_step1_forward) {
     verify_xor(&pkt);
 }
 
+// @compliance DCC-S9.2.1-CS-002
 TEST(DccPacketEncoder, speed28_step2_forward) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 3, true);
@@ -329,6 +338,7 @@ TEST(DccPacketEncoder, speed14_stop_forward_headlight_off) {
     EXPECT_EQ(pkt.data[1], 0x60);
 }
 
+// @compliance DCC-S9.2.1-CS-003
 TEST(DccPacketEncoder, speed14_speed5_reverse_headlight_on) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_speed_14(&pkt, 3, DCC_ADDRESS_SHORT, 5, false, true);
@@ -372,6 +382,7 @@ TEST(DccPacketEncoder, func_group1_all_off) {
     verify_xor(&pkt);
 }
 
+// @compliance DCC-S9.2.1-CS-004
 TEST(DccPacketEncoder, func_group1_all_on) {
     dcc_packet_t pkt;
     /* FL=1, F4=1, F3=1, F2=1, F1=1 → bits = 11111 = 0x1F */
@@ -427,6 +438,7 @@ TEST(DccPacketEncoder, func_group2a_all_off) {
     verify_xor(&pkt);
 }
 
+// @compliance DCC-S9.2.1-CS-005
 TEST(DccPacketEncoder, func_group2a_all_on) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_func_group_2a(&pkt, 3, DCC_ADDRESS_SHORT, 0x0F);
@@ -451,6 +463,7 @@ TEST(DccPacketEncoder, func_group2b_all_off) {
     verify_xor(&pkt);
 }
 
+// @compliance DCC-S9.2.1-CS-006
 TEST(DccPacketEncoder, func_group2b_all_on) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_func_group_2b(&pkt, 3, DCC_ADDRESS_SHORT, 0x0F);
@@ -465,6 +478,7 @@ TEST(DccPacketEncoder, func_group2b_all_on) {
 // Function expansion tests (F13-F68)
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-007
 TEST(DccPacketEncoder, func_f13_f20_short_addr) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_func_f13_f20(&pkt, 3, DCC_ADDRESS_SHORT, 0xA5);
@@ -528,6 +542,7 @@ TEST(DccPacketEncoder, func_f53_f60_instruction_byte) {
     verify_xor(&pkt);
 }
 
+// @compliance DCC-S9.2.1-CS-007
 TEST(DccPacketEncoder, func_f61_f68_instruction_byte) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_func_f61_f68(&pkt, 3, DCC_ADDRESS_SHORT, 0xAA);
@@ -549,6 +564,7 @@ TEST(DccPacketEncoder, func_expansion_rejects_accessory) {
 // Basic accessory tests
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-008
 TEST(DccPacketEncoder, accessory_basic_addr5_output2_activate) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_accessory_basic(&pkt, 5, 2, true);
@@ -572,6 +588,7 @@ TEST(DccPacketEncoder, accessory_basic_addr5_output2_deactivate) {
     verify_xor(&pkt);
 }
 
+// @compliance DCC-S9.2.1-CS-008
 TEST(DccPacketEncoder, accessory_basic_high_address) {
     dcc_packet_t pkt;
     /* Address 100: low 6 = 100 & 0x3F = 36 = 0x24, high 3 = 100 >> 6 = 1 */
@@ -615,6 +632,7 @@ TEST(DccPacketEncoder, accessory_basic_rejects_invalid_output) {
 // Extended accessory tests
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-009
 TEST(DccPacketEncoder, accessory_extended_addr0_aspect5) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_accessory_extended(&pkt, 0, 5);
@@ -654,6 +672,7 @@ TEST(DccPacketEncoder, accessory_extended_rejects_invalid_address) {
 // Accessory NOP tests (S-9.2.1 2.4.6: 10AAAAAA 0 0AAA1AAT)
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-012
 TEST(DccPacketEncoder, accessory_nop_addr1_basic) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_accessory_nop(&pkt, 1, false);
@@ -665,6 +684,7 @@ TEST(DccPacketEncoder, accessory_nop_addr1_basic) {
     verify_xor(&pkt);
 }
 
+// @compliance DCC-S9.2.1-CS-012
 TEST(DccPacketEncoder, accessory_nop_addr1_extended) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_accessory_nop(&pkt, 1, true);
@@ -706,6 +726,7 @@ TEST(DccPacketEncoder, accessory_nop_rejects_invalid_address) {
 // Basic accessory stop tests
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-010
 TEST(DccPacketEncoder, accessory_basic_stop_valid) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_accessory_basic_stop(&pkt, 5, 2);
@@ -748,6 +769,7 @@ TEST(DccPacketEncoder, accessory_basic_stop_rejects_invalid_output) {
 // Extended accessory stop tests
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-011
 TEST(DccPacketEncoder, accessory_extended_stop_valid) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_accessory_extended_stop(&pkt, 100);
@@ -773,6 +795,7 @@ TEST(DccPacketEncoder, accessory_extended_stop_rejects_invalid_address) {
 // CV ops-mode write tests
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-013
 TEST(DccPacketEncoder, cv_write_ops_short_addr) {
     dcc_packet_t pkt;
     /* Write value 200 to CV 1 of decoder at short address 3 */
@@ -834,6 +857,7 @@ TEST(DccPacketEncoder, cv_write_ops_rejects_accessory) {
 // CV ops-mode verify tests
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-014
 TEST(DccPacketEncoder, cv_verify_ops_short_addr) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_cv_verify_pom(&pkt, 3, DCC_ADDRESS_SHORT, 29, 0x25);
@@ -853,6 +877,7 @@ TEST(DccPacketEncoder, cv_verify_ops_short_addr) {
 // CV ops-mode bit manipulation tests
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-015
 TEST(DccPacketEncoder, cv_bit_ops_write_bit3_high) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_cv_bit_pom(&pkt, 3, DCC_ADDRESS_SHORT, 29, 3, true, true);
@@ -907,6 +932,7 @@ TEST(DccPacketEncoder, cv_bit_ops_long_addr) {
 // Consist tests
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-017
 TEST(DccPacketEncoder, consist_set_normal) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_consist_set(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
@@ -945,6 +971,7 @@ TEST(DccPacketEncoder, consist_set_rejects_invalid_consist_addr) {
     EXPECT_FALSE(ok);
 }
 
+// @compliance DCC-S9.2.1-CS-018
 TEST(DccPacketEncoder, consist_clear) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_consist_clear(&pkt, 3, DCC_ADDRESS_SHORT);
@@ -972,6 +999,7 @@ TEST(DccPacketEncoder, consist_set_long_addr) {
 // Binary state short form tests
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-019
 TEST(DccPacketEncoder, binary_state_short_activate) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_binary_state_short(&pkt, 3, DCC_ADDRESS_SHORT, 42, true);
@@ -1006,6 +1034,7 @@ TEST(DccPacketEncoder, binary_state_short_rejects_invalid_state) {
 // Binary state long form tests
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-020
 TEST(DccPacketEncoder, binary_state_long_activate) {
     dcc_packet_t pkt;
     /* State 1000: low 7 = 1000 & 0x7F = 104, high 8 = 1000 >> 7 = 7 */
@@ -1047,6 +1076,7 @@ TEST(DccPacketEncoder, binary_state_long_deactivate) {
 // Analog function tests
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-021
 TEST(DccPacketEncoder, analog_function_volume) {
     dcc_packet_t pkt;
     /* Output 1 = volume, value = 128 */
@@ -1079,6 +1109,7 @@ TEST(DccPacketEncoder, analog_function_long_addr) {
 // System Time tests (S-9.2.1 §2.3.6.3)
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-022
 TEST(DccPacketEncoder, system_time_zero) {
     dcc_packet_t pkt;
     DccApplicationCommandStationPacket_load_system_time(&pkt, 0);
@@ -1114,6 +1145,7 @@ TEST(DccPacketEncoder, system_time_small_value_clears_msb) {
     verify_xor(&pkt);
 }
 
+// @compliance DCC-S9.2.1-CS-022
 TEST(DccPacketEncoder, system_time_max_value) {
     dcc_packet_t pkt;
     /* 65535 = 0xFFFF: both bytes 0xFF */
@@ -1129,6 +1161,7 @@ TEST(DccPacketEncoder, system_time_max_value) {
 // Time / Date tests (S-9.2.1 §2.3.6.2)
 // ============================================================================
 
+// @compliance DCC-S9.2.1-CS-023
 TEST(DccPacketEncoder, model_time_representative) {
     dcc_packet_t pkt;
     /* 14:30 Wednesday, update=0, accel=8 */
@@ -1185,6 +1218,7 @@ TEST(DccPacketEncoder, model_time_rejects_invalid_day_of_week) {
     EXPECT_FALSE(DccApplicationCommandStationPacket_load_model_time(&pkt, 0, (dcc_day_of_week_enum)8, 0, false, 0));
 }
 
+// @compliance DCC-S9.2.1-CS-024
 TEST(DccPacketEncoder, model_date_representative) {
     dcc_packet_t pkt;
     /* 23 June 2026: 2026 = 0x7EA -> year MSB nibble 0x7, LSB 0xEA */
@@ -1308,6 +1342,7 @@ TEST(DccPacketEncoder, binary_state_long_rejects_state_too_large) {
 // Basic accessory CV ops-mode write
 // ============================================================================
 
+// @compliance DCC-S9.2.1-ACC-001
 TEST(DccPacketEncoder, acc_basic_cv_write_addr5_pair2_cv1) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_accessory_basic_cv_write(&pkt, 5, 2, 1, 200);
@@ -1413,6 +1448,7 @@ TEST(DccPacketEncoder, acc_basic_cv_bit_rejects_bit8) {
 // Extended accessory CV ops-mode write
 // ============================================================================
 
+// @compliance DCC-S9.2.1-ACC-002
 TEST(DccPacketEncoder, acc_extended_cv_write_addr0_cv1) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_accessory_extended_cv_write(&pkt, 0, 1, 200);

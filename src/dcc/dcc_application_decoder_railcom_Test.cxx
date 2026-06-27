@@ -137,6 +137,7 @@ TEST(DccApplicationDecoderRailcom, send_address_feedback_null_guard) {
 
 }
 
+// @compliance DCC-S9.3.2-DEC-001
 TEST(DccApplicationDecoderRailcom, send_address_feedback_first_call_sends_adr1) {
 
     reset_mocks();
@@ -170,6 +171,7 @@ TEST(DccApplicationDecoderRailcom, send_address_feedback_second_call_sends_adr2)
 
 }
 
+// @compliance DCC-S9.3.2-DEC-001
 TEST(DccApplicationDecoderRailcom, send_address_feedback_alternates) {
 
     reset_mocks();
@@ -226,6 +228,7 @@ TEST(DccApplicationDecoderRailcom, send_track_search_null_guard) {
 
 }
 
+// @compliance DCC-S9.3.2-DEC-004
 TEST(DccApplicationDecoderRailcom, send_track_search_delegates) {
 
     reset_mocks();
@@ -270,6 +273,7 @@ TEST(DccApplicationDecoderRailcom, send_cv_auto_transfer_null_guard) {
 
 }
 
+// @compliance DCC-S9.3.2-DEC-005
 TEST(DccApplicationDecoderRailcom, send_cv_auto_transfer_delegates) {
 
     reset_mocks();
@@ -309,6 +313,7 @@ TEST(DccApplicationDecoderRailcom, send_pom_response_null_guard) {
 
 }
 
+// @compliance DCC-S9.3.2-DEC-002
 TEST(DccApplicationDecoderRailcom, send_pom_response_delegates) {
 
     reset_mocks();
@@ -340,6 +345,7 @@ TEST(DccApplicationDecoderRailcom, send_dynamic_data_null_guard) {
 
 }
 
+// @compliance DCC-S9.3.2-DEC-003
 TEST(DccApplicationDecoderRailcom, send_dynamic_data_delegates) {
 
     reset_mocks();
@@ -371,6 +377,7 @@ TEST(DccApplicationDecoderRailcom, send_ack_null_guard) {
 
 }
 
+// @compliance DCC-S9.3.2-DEC-006
 TEST(DccApplicationDecoderRailcom, send_ack_sends_raw_code_word) {
 
     reset_mocks();
@@ -415,6 +422,7 @@ TEST(DccApplicationDecoderRailcom, send_nack_null_guard) {
 
 }
 
+// @compliance DCC-S9.3.2-DEC-006
 TEST(DccApplicationDecoderRailcom, send_nack_sends_raw_code_word) {
 
     reset_mocks();
@@ -460,6 +468,7 @@ TEST(DccApplicationDecoderRailcom, send_raw_null_guard) {
 
 }
 
+// @compliance DCC-S9.3.2-DEC-007
 TEST(DccApplicationDecoderRailcom, send_raw_delegates) {
 
     reset_mocks();
@@ -478,6 +487,7 @@ TEST(DccApplicationDecoderRailcom, send_raw_delegates) {
 
 }
 
+// @compliance DCC-S9.3.2-DEC-007
 TEST(DccApplicationDecoderRailcom, send_raw_clamps_count) {
 
     reset_mocks();

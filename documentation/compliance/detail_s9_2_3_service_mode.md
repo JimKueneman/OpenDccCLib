@@ -74,6 +74,85 @@ Register and Address-Only modes additionally allow an optional power-off/on cycl
 the page preset recovery and the pre-CV resets (footnote 3 — see Spec Constraints below).
 Paged mode does NOT allow a power cycle at this point.
 
+### Implementation status — these sequences are enforced in the library
+
+As of the service-mode sequence work, the primitives produce the full §E sequences above:
+
+- **Register** and **Address-Only** prepend a **page-preset** (write page register → page 1,
+  `7D 01 7C`) before the command — a two-step chain mirroring Paged (`begin_operation`
+  page-preset → on complete → command). Previously they emitted the command directly.
+- **Register VERIFY** uses **7** command packets (`DCC_SERVICE_MODE_REGISTER_VERIFY_REPEAT`);
+  a write to **Register 1** (and to **CV #1** in Address-Only) uses the **10**-packet recovery
+  (`DCC_SERVICE_MODE_RECOVERY_COUNT_LONG`). `begin_operation` gained a per-op `command_repeat`
+  parameter to support this (recovery was already per-op).
+- **Paged** proceeds from the page-select to the data step **unconditionally** — the page-write
+  phase completes by ACK *or* by packet count, and ACK is optional (§D), so requiring the
+  page-select to ACK would break paged on decoders that never assert one (S-9.2.3 line 215).
+- The preset/page-select's own ACK result does **not** gate the command step in any mode.
+
+Every one of these sequences is verified at both layers; the **Test Coverage Matrix** below
+lists the exact host (`*_Test.cxx`) and HIL (`s9_2_3_compliance.py`) test per requirement.
+The bench wiring for the HIL checks is in
+[HIL_SETUP.md](../../test/compliance/ti_theia/saleae_hil_compliance/HIL_SETUP.md).
+
+---
+
+## Test Coverage Matrix
+
+> WHAT each spec requirement is verified by, and WHERE. The *how the bench is wired* —
+> pins, Saleae channels, jumpers, UART commands — lives in
+> [HIL_SETUP.md](../../test/compliance/ti_theia/saleae_hil_compliance/HIL_SETUP.md), not here.
+>
+> **Host** = `src/dcc/*_Test.cxx` (gTest, mocked drivers). **HIL** =
+> `test/compliance/s9_2_3_compliance.py` (Saleae, on-wire). A blank cell means "not covered
+> at that layer," not "untested."
+
+### ACK detection (§D — 6 ms ±1 ms window)
+
+| Requirement | Host (gTest) | HIL (s9_2_3) |
+|---|---|---|
+| ACK accepted at exact min sample count (85) | `common.ack_exact_min_samples_detected` | `ack_width_tests` (4930 µs = MIN) |
+| ACK rejected one below min (84) | `common.ack_one_below_min_samples_not_detected` | `ack_width_tests` (4872 µs) |
+| ACK accepted within max window | `common.ack_within_max_window_detected` | `ack_width_tests` (6960 µs = MAX) |
+| ACK rejected over max / over-current | `common.ack_beyond_max_window_not_detected` | `ack_width_tests` (7018 µs) |
+| Interrupted pulse resets the width counter | `common.interrupted_pulse_resets_counter` | — |
+| ACK sampled only in COMMAND state (scan window) | `common.ack_during_pre_reset_ignored`, `common.ack_during_post_reset_does_not_change_result` | `ack_width_tests` (in-window vs EARLY) |
+| Injected pulse width measured independently | — | `ack_width_tests` (D4 tap, `_measure_high_us`) |
+
+### Packet sequence (§E)
+
+| Requirement | Host (gTest) | HIL (s9_2_3) |
+|---|---|---|
+| Pre-reset = 3 packets | `common.pre_reset_sends_correct_count` | `_count_resets ≥ 3` |
+| Post-reset = 6 packets | `common.post_reset_sends_correct_packet_count` | — |
+| ACK terminates command phase early | `common.ack_detected_terminates_command_phase_early` | — |
+| ≥20-bit preamble (service packets) | — | `_check_command` (all modes) |
+| Register VERIFY = 7 command repeats | `register.verify_uses_seven_repeats_zero_recovery` | `test_register` (`min_repeat`) |
+| Register 1 / CV#1 write = 10-packet recovery | `register.write_register1_uses_long_recovery`, `address.write_passes_write_flag_and_long_recovery` | — |
+| Standard write recovery = 6 packets | `register.write_register2_uses_standard_recovery` | — |
+
+### Per-mode encoding & behavior
+
+| Requirement | Host (gTest) | HIL (s9_2_3) |
+|---|---|---|
+| Direct exact bytes (write 0x7C / verify 0x74 / bit) | `direct.write_byte_cv1_value_0x55`, `direct.verify_byte_cv1_value_0x55`, `direct.write_bit_cv1_bit3_high`, `direct.verify_bit_cv1_bit5_high` | `test_direct` (3 instr types) |
+| Direct 10-bit CV addressing | `direct.write_byte_cv1024_value_0xAA` | `test_direct` (CV#1/#3/#1023) |
+| Page-preset before Register/Address command | `register.write_starts_with_page_preset`, `address.write_starts_with_page_preset` | `test_register`, `test_address` |
+| Page-preset NO_ACK still proceeds | `register.command_proceeds_even_if_preset_no_ack`, `paged.write_page_select_no_ack_still_proceeds` | — |
+| Paged page-write + data-register command | `paged.write_cv1_page_select_packet`, `paged.write_cv1_data_access_after_page_select_success` | `test_paged` |
+| Register↔CV mapping (Mobile + Accessory) | `task_register` mapping tests (CV1→Reg1 … CV520→Reg8) | — |
+| Factory reset = value 8 → Register 8 (`7F 08 77`) | `task_register.factory_reset_writes_8_to_register_8` | `test_register` |
+
+### Task orchestrator (iteration / read-modify-write / verify)
+
+| Requirement | Host (gTest) | HIL (s9_2_3) |
+|---|---|---|
+| read_cv iterates; ACK returns the found value | `task_register.read_cv_ack_on_value_42_returns_42`, `task_address.read_ack_on_address_3_returns_3` | — |
+| write_cv = write → verify | `task_register.write_cv_verifies_after_write_complete`, `task_address.write_verifies_after_write_complete` | — |
+| Bit op = read-modify-write | `task_register.write_bit_scans_then_writes_with_bit_set`, `task_address.write_bit_clears_bit` | — |
+| Read-back / write-back value correctness | — | `test_readback` (mock decoder, `SVC MOCKCV`) |
+| Parallel-track timing (main + service) | — | `check_track_timing` / `_check_timing_both` (every op) |
+
 ---
 
 ## Conformance Groups (§F)
@@ -128,9 +207,10 @@ functions take no context).
 
 ### HIL Timing Requirement — Parallel Track Operation
 
-The HIL compliance suite for service mode **must** run both the main DCC track output
-(ch0/PB1) and the service track output (ch3/PB4) simultaneously and verify that neither
-drops a bit or stretches a half-bit period beyond spec tolerance.
+The HIL compliance suite for service mode **must** run both the main DCC track output and the
+service track output simultaneously and verify that neither drops a bit or stretches a
+half-bit period beyond spec tolerance. (Channel/pin assignments are in
+[HIL_SETUP.md](../../test/compliance/ti_theia/saleae_hil_compliance/HIL_SETUP.md).)
 
 **What to verify:**
 - Main track continues producing correctly timed DCC packets (preamble, bits, error byte)
@@ -167,11 +247,11 @@ The continuous-encoder + toggle-first-ISR design decouples both tracks from cuto
 and from each other's state-machine load. This is why the main track holds ~58.0 µs ± ~0.05 µs
 half-bits even while a service-mode operation runs (measured on the HIL rig).
 
-**The parallel-track timing check guards this property.** `s9_2_3_compliance.py` captures the
-main (ch0) and service (ch3) tracks *simultaneously* during every service-mode operation and
-runs `check_track_timing()` on both — so a future change that reintroduces software blanking
-(or otherwise stretches/drops a bit on either track) would **fail the suite** instead of
-silently corrupting service-mode timing.
+**The parallel-track timing check guards this property** (see the **Test Coverage Matrix**).
+`s9_2_3_compliance.py` captures the main and service tracks *simultaneously* during every
+service-mode operation and runs `check_track_timing()` on both — so a future change that
+reintroduces software blanking (or otherwise stretches/drops a bit on either track) would
+**fail the suite** instead of silently corrupting service-mode timing.
 
 ### ACK Pulse-Width Verification (6 ms ±1 ms window, S-9.2.3 §D)
 
@@ -186,54 +266,41 @@ against the configured window. Window constants (typical config):
 A run is accepted as an ACK only when, on the falling edge, its length is in
 `[MIN, MAX]` (inclusive) and was never flagged over-current.
 
-**Host coverage — DONE.** `dcc_service_mode_common_Test.cxx` has 9 boundary tests on the
-width counter: MIN−1 rejected, exactly MIN accepted, exactly MAX accepted, MAX+1 (overrun)
-rejected, sustained over-current rejected, high-run-without-falling-edge rejected, multiple
-short blips rejected, short-blip-then-valid-run accepted (counter resets), and idempotent
-latch. These verify the *logic* on the host.
+**Scan-window blanking (S-9.2.3 line 55).** `ack_sample` ignores current until the ACK scan
+window opens — set once more than `DCC_SERVICE_MODE_ACK_BLANK_PACKETS` (2) command packets
+have been sent. This masks the first two command packets, where a decoder switching into
+service-mode code can glitch its motor-drive pins and put a transient on the same
+current-sense line the ACK uses. It is lossless for a conformant decoder, which per §E cannot
+ACK until it has received two identical packets anyway (a two-sided contract: decoder
+won't ACK early, programmer won't look early). The window opens on the packet-complete event,
+so it is packet-accurate; the `−1` in `MIN_SAMPLES` absorbs the one-sample edge quantization,
+so an ACK that legitimately begins right at the 2nd packet's end is not clipped.
 
-**HIL coverage — TO IMPLEMENT (mock ACK).** The Saleae rig is capture-only and cannot
-source a pulse on the ACK sense pin (PB12), so the electrical path is verified with a
-firmware-generated **mock ACK** (loopback):
+**Dropout filter (noisy loads).** Because the ACK *is* the decoder pulsing its motor, the
+sensed current is noisy — commutation/PWM ripple can drop the comparator below threshold for
+a sample or two mid-pulse. `ack_sample` bridges up to `DCC_ACK_DROPOUT_SAMPLES` consecutive
+low samples into the run (measuring the elevated-current *span*, not strict-high time); only a
+longer low run is a real falling edge. Tunable via **`USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US`**
+(default 116 µs ≈ 2 samples; `0` = strict consecutive-high, the original behavior). Keep it a
+small fraction of the 6 ms ACK or it defeats the width discrimination.
 
-```
-HIL firmware mock-out GPIO ──jumper──► PB12 (ACK sense in) ──► current_sense_read() ──► ack_sample()
-```
+**Coverage** is in the **Test Coverage Matrix** (host width-counter / dropout-filter /
+window-blanking tests, and the HIL `ack_width_tests` vectors). The host tests verify the
+*logic*; the HIL suite injects a **real electrical pulse** (a firmware mock-ACK looped back
+on-board) and checks both the UART verdict **and** the Saleae-measured pulse width against
+these boundary vectors — widths chosen so `width_us / 58` lands on an exact sample count:
 
-- A spare GPIO (output) is jumpered to PB12. **Pin: TBD** (board-specific, choose at
-  implementation).
-- New HIL-only UART command `SVC MOCKACK <width_us>` arms a one-shot pulse. Gate it to the
-  `saleae_hil_compliance` build only — it must never ship in the normal command station.
-- When the next service-mode op enters its ACK window (COMMAND/RECOVERY), the firmware
-  raises the mock pin for `width_us` (counted in the 58 µs ISR so it lands on sample
-  boundaries), then lowers it. `ack_sample` reads it back through PB12 and the real width
-  counter decides.
-- The op completes and the firmware reports `SVC RESULT: SUCCESS` (ACK) or `NO ACK`.
-- `s9_2_3_compliance.py` runs the boundary vectors and checks **both** the UART verdict and
-  the Saleae-measured pulse width (mock-out captured on a spare channel, e.g. ch2):
+| width_us | samples (=width/58) | expected verdict   |
+|:--------:|:-------------------:|:------------------:|
+| 4872     | 84 (< MIN 85)       | NO ACK             |
+| 4930     | 85 (= MIN)          | ACK DETECTED       |
+| 6000     | 103                 | ACK DETECTED       |
+| 6960     | 120 (= MAX)         | ACK DETECTED       |
+| 7018     | 121 (> MAX 120)     | NO ACK (overrun)   |
 
-  | width_us | samples (≈width/58) | expected verdict |
-  |:--------:|:-------------------:|:----------------:|
-  | ~4800    | ~83 (< MIN 85)      | NO ACK           |
-  | 5000     | ~86                 | SUCCESS          |
-  | 6000     | ~103                | SUCCESS          |
-  | 7000     | ~120 (= MAX)        | SUCCESS          |
-  | ~7200    | ~124 (> MAX 120)    | NO ACK (overrun) |
-
-  Exact `width_us` for the MIN−1 / MAX+1 edges is pinned to the on-target sample math at
-  implementation so each vector lands just outside the window.
-
-This makes the test exercise the whole real path — a genuine electrical pulse, the real
-PB12 input, on-target 58 µs sampling, and the config-derived window — not a synthetic value
-injected behind the driver. The independent Saleae width measurement confirms the firmware
-saw the pulse we asked for.
-
-**Implementation checklist (tomorrow):**
-1. Pick the mock-out GPIO pin; add it to the HIL SysConfig and jumper it to PB12.
-2. Add the mock-pulse driver + `SVC MOCKACK <width_us>` command in the HIL firmware (gated
-   HIL-only); arm-and-fire during the ACK window.
-3. Optionally route mock-out to a spare Saleae channel for independent width capture.
-4. Write `s9_2_3_compliance.py` with the boundary vectors above.
+This makes ACK-width an on-hardware check, not a synthetic value injected behind the driver.
+The loopback wiring (the PB24→PB9 jumper, the D4 tap, and the `SVC MOCKACK` command) is
+documented in [HIL_SETUP.md](../../test/compliance/ti_theia/saleae_hil_compliance/HIL_SETUP.md).
 
 ### API per Module
 

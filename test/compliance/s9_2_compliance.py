@@ -40,6 +40,7 @@ def checks(rep, decoded):
 
     # 1. General packet format: address byte + data* + error byte (>= 2 bytes)
     malformed = [d for d in packets if len(d) < 2]
+    # @compliance DCC-S9.2-CS-005
     rep.check("S-9.2 §A", "packet structure (addr + data* + error byte)",
               not malformed,
               f"{len(packets)} packets, all >= 2 bytes (addr+error); "
@@ -47,11 +48,13 @@ def checks(rep, decoded):
 
     # 2. Error-detection byte = XOR of all preceding bytes (S-9.2's mechanism)
     bad = [d for d in packets if _xor(d) != 0]
+    # @compliance DCC-S9.2-CS-006
     rep.check("S-9.2", "error-detection byte = XOR of preceding bytes",
               not bad, f"{len(packets)} packets, {len(bad)} XOR mismatches")
 
     # 3. Idle packet present & exact: 11111111 00000000 11111111
     idles = [d for d in packets if d == IDLE_PACKET]
+    # @compliance DCC-S9.2-CS-001
     rep.check("S-9.2", "idle packet = FF 00 FF",
               len(idles) > 0,
               f"{len(idles)}/{len(packets)} packets are idle "
@@ -71,6 +74,7 @@ def checks(rep, decoded):
     if len(times) >= 2:
         gaps_ms = [(times[i + 1] - times[i]) * 1000.0 for i in range(len(times) - 1)]
         maxgap = max(gaps_ms)
+        # @compliance DCC-S9.2-CS-007
         rep.check("S-9.2", "refresh: a packet at least every 30 ms", maxgap <= 30.0,
                   f"max start-to-start gap = {maxgap:.2f} ms over {len(times)} packets")
     else:
@@ -95,18 +99,21 @@ def driven_checks(rep):
     # Broadcast emergency stop -- baseline 01DC000S, S=1.
     dec, _ = lib.trigger_command("ESTOP")
     got = _target(dec)
+    # @compliance DCC-S9.2-CS-003
     rep.check("S-9.2", "broadcast stop = baseline 01DC000S (emergency S=1)",
               got == [0x00, 0x51, 0x51], f"ESTOP -> [{_hx(got)}] expected [00 51 51]")
 
     # Broadcast controlled stop -- baseline 01DC000S, S=0.
     dec, _ = lib.trigger_command("STOP")
     got = _target(dec)
+    # @compliance DCC-S9.2-CS-004
     rep.check("S-9.2", "broadcast controlled stop = baseline 01DC000S (S=0)",
               got == [0x00, 0x50, 0x50], f"STOP -> [{_hx(got)}] expected [00 50 50]")
 
     # Broadcast reset packet -- 00 00 00.
     dec, _ = lib.trigger_command("RESET")
     got = _target(dec)
+    # @compliance DCC-S9.2-CS-002
     rep.check("S-9.2", "reset packet = 00 00 00",
               got == [0x00, 0x00, 0x00], f"RESET -> [{_hx(got)}] expected [00 00 00]")
 

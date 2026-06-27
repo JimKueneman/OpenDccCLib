@@ -36,7 +36,9 @@ static uint8_t captured_recovery_count[8];
 static bool mock_begin_operation(const dcc_packet_t *packet,
                                   dcc_service_mode_step_callback_t callback,
                                   bool is_write_operation,
-                                  uint8_t recovery_count) {
+                                  uint8_t command_repeat, uint8_t recovery_count) {
+
+    (void)command_repeat;
 
     if (begin_operation_count < 8) {
 
@@ -130,6 +132,7 @@ TEST(DccServiceModePaged, initialize_does_not_crash) {
 // Write tests
 // ============================================================================
 
+// @compliance DCC-S9.2.3-CS-018
 TEST(DccServiceModePaged, write_cv1_page_select_packet) {
 
     reset_mocks();
@@ -151,6 +154,7 @@ TEST(DccServiceModePaged, write_cv1_page_select_packet) {
 
 }
 
+// @compliance DCC-S9.2.3-CS-018
 TEST(DccServiceModePaged, write_cv1_data_access_after_page_select_success) {
 
     reset_mocks();
@@ -195,7 +199,8 @@ TEST(DccServiceModePaged, write_cv1_complete_callback_fires) {
 
 }
 
-TEST(DccServiceModePaged, write_page_select_failure_aborts) {
+// @compliance DCC-S9.2.3-CS-017
+TEST(DccServiceModePaged, write_page_select_no_ack_still_proceeds) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
@@ -203,13 +208,15 @@ TEST(DccServiceModePaged, write_page_select_failure_aborts) {
 
     DccServiceModePaged_write(&test_context, 1, 0x55);
 
-    /* Page select fails */
+    /* Page select returns NO_ACK. Per S-9.2.3 the data step still follows --
+     * the page-write phase completes by packet count and ACK is optional. */
     captured_callbacks[0](DCC_SERVICE_MODE_NO_ACK);
 
-    /* Should NOT start data access step */
-    EXPECT_EQ(begin_operation_count, (uint32_t)1);
-    EXPECT_EQ(complete_count, (uint32_t)1);
-    EXPECT_EQ(complete_result, DCC_SERVICE_MODE_NO_ACK);
+    /* Data access step starts; op is not finished yet. */
+    EXPECT_EQ(begin_operation_count, (uint32_t)2);
+    EXPECT_EQ(complete_count, (uint32_t)0);
+    EXPECT_EQ(captured_packets[1].data[0], (uint8_t)(DCC_SERVICE_REGISTER_WRITE_PREFIX | 0));
+    EXPECT_EQ(captured_packets[1].data[1], (uint8_t)0x55);
 
 }
 
@@ -377,7 +384,7 @@ TEST(DccServiceModePaged, verify_rejected_when_not_idle) {
 
 }
 
-TEST(DccServiceModePaged, page_select_failure_null_on_complete) {
+TEST(DccServiceModePaged, page_select_no_ack_proceeds_null_on_complete) {
 
     reset_mocks();
     interface_dcc_service_mode_paged_t interface = make_interface();
@@ -386,10 +393,11 @@ TEST(DccServiceModePaged, page_select_failure_null_on_complete) {
 
     DccServiceModePaged_write(&test_context, 1, 0x55);
 
-    /* Page select fails with on_complete = NULL — should not crash */
+    /* Page select NO_ACK with on_complete = NULL -- proceeds to the data step
+     * and does not crash. */
     captured_callbacks[0](DCC_SERVICE_MODE_NO_ACK);
 
-    EXPECT_EQ(begin_operation_count, (uint32_t)1);
+    EXPECT_EQ(begin_operation_count, (uint32_t)2);
     EXPECT_EQ(complete_count, (uint32_t)0);
 
 }

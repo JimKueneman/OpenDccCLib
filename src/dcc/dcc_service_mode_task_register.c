@@ -48,6 +48,7 @@ typedef enum {
     DCC_TASK_REGISTER_STATE_WRITE_BIT_WRITE,
     DCC_TASK_REGISTER_STATE_WRITE_BIT_VERIFY,
     DCC_TASK_REGISTER_STATE_FACTORY_RESET,
+    DCC_TASK_REGISTER_STATE_VERIFY_VALUE,
 
 } dcc_task_register_state_enum;
 
@@ -361,6 +362,46 @@ bool DccServiceModeTaskRegister_write_bit(uint16_t cv, uint8_t bit, bool bit_val
 
 }
 
+static void _advance_verify_value(void) {
+
+    /* Single register verify: ACK = the held value matched (SUCCESS); otherwise
+     * the value did not verify (VERIFY_FAIL). */
+    _complete(_context.ack_result ? DCC_SERVICE_MODE_SUCCESS : DCC_SERVICE_MODE_VERIFY_FAIL,
+              _context.value);
+
+}
+
+bool DccServiceModeTaskRegister_verify_value(uint16_t cv, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+
+    uint8_t reg = _cv_to_register(cv, decoder_type);
+
+    if (reg == 0) {
+
+        return false;
+
+    }
+
+    if (_context.state != DCC_TASK_REGISTER_STATE_IDLE) {
+
+        return false;
+
+    }
+
+    _context.reg          = reg;
+    _context.value        = value;
+    _context.decoder_type = decoder_type;
+    _context.current_step = 0;
+    _context.ack_result   = false;
+    _context.on_complete  = on_complete;
+    _context.on_progress  = on_progress;
+    _context.state        = DCC_TASK_REGISTER_STATE_VERIFY_VALUE;
+
+    _context.interface->register_verify(reg, value);
+
+    return true;
+
+}
+
 bool DccServiceModeTaskRegister_factory_reset(dcc_service_mode_task_on_complete_callback_t on_complete) {
 
     if (_context.state != DCC_TASK_REGISTER_STATE_IDLE) {
@@ -427,6 +468,11 @@ void DccServiceModeTaskRegister_on_primitive_complete(dcc_service_mode_result_t 
         case DCC_TASK_REGISTER_STATE_FACTORY_RESET:
 
             _advance_factory_reset();
+            break;
+
+        case DCC_TASK_REGISTER_STATE_VERIFY_VALUE:
+
+            _advance_verify_value();
             break;
 
         default:

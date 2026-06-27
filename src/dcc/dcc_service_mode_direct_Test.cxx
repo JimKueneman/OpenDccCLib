@@ -32,7 +32,9 @@ static uint8_t last_recovery_count;
 static bool mock_begin_operation(const dcc_packet_t *packet,
                                   dcc_service_mode_step_callback_t callback,
                                   bool is_write_operation,
-                                  uint8_t recovery_count) {
+                                  uint8_t command_repeat, uint8_t recovery_count) {
+
+    (void)command_repeat;
 
     memcpy(&last_begin_packet, packet, sizeof(dcc_packet_t));
     last_begin_callback = callback;
@@ -121,6 +123,7 @@ TEST(DccServiceModeDirect, initialize_does_not_crash) {
 // write_byte tests
 // ============================================================================
 
+// @compliance DCC-S9.2.3-CS-014
 TEST(DccServiceModeDirect, write_byte_cv1_value_0x55) {
 
     reset_mocks();
@@ -141,6 +144,7 @@ TEST(DccServiceModeDirect, write_byte_cv1_value_0x55) {
 
 }
 
+// @compliance DCC-S9.2.3-CS-015
 TEST(DccServiceModeDirect, write_byte_cv1024_value_0xAA) {
 
     reset_mocks();
@@ -348,6 +352,7 @@ TEST(DccServiceModeDirect, write_bit_busy_rejected) {
 // verify_bit tests
 // ============================================================================
 
+// @compliance DCC-S9.2.3-CS-014
 TEST(DccServiceModeDirect, verify_bit_cv1_bit5_high) {
 
     reset_mocks();

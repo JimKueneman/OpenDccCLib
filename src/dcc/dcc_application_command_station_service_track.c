@@ -62,7 +62,6 @@ void DccApplicationCommandStationServiceTrack_power_on(void) {
 
     }
 
-    _interface->track_power_set(true);
     _interface->timer_start(DCC_ONE_BIT_HALF_PERIOD_US);
     _interface->encoder_start();
 
@@ -78,7 +77,6 @@ void DccApplicationCommandStationServiceTrack_power_off(void) {
 
     _interface->encoder_stop();
     _interface->timer_stop();
-    _interface->track_power_set(false);
 
 }
 
@@ -94,7 +92,6 @@ bool DccApplicationCommandStationServiceTrack_enter_service_mode(void) {
 
     }
 
-    _interface->track_power_set(true);
     _interface->timer_start(DCC_ONE_BIT_HALF_PERIOD_US);
     _interface->encoder_start();
 
@@ -113,7 +110,6 @@ void DccApplicationCommandStationServiceTrack_exit_service_mode(void) {
     _interface->exit_service_mode();
     _interface->encoder_stop();
     _interface->timer_stop();
-    _interface->track_power_set(false);
 
 }
 
@@ -307,6 +303,18 @@ bool DccApplicationCommandStationServiceTrack_register_factory_reset(dcc_service
 
 }
 
+bool DccApplicationCommandStationServiceTrack_register_verify_value(uint16_t cv, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+
+    if (!_interface || !_interface->register_verify_value) {
+
+        return false;
+
+    }
+
+    return _interface->register_verify_value(cv, value, decoder_type, on_complete, on_progress);
+
+}
+
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_REGISTER */
 
 /* =========================================================================
@@ -336,6 +344,18 @@ bool DccApplicationCommandStationServiceTrack_address_write(uint8_t address, dcc
     }
 
     return _interface->address_write(address, on_complete, on_progress);
+
+}
+
+bool DccApplicationCommandStationServiceTrack_address_verify(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+
+    if (!_interface || !_interface->address_verify) {
+
+        return false;
+
+    }
+
+    return _interface->address_verify(address, on_complete, on_progress);
 
 }
 

@@ -463,6 +463,7 @@ TEST(DccPacketDecoder, initialize_does_not_crash) {
 // XOR validation
 // ============================================================================
 
+// @compliance DCC-S9.2-DEC-004
 TEST(DccPacketDecoder, bad_xor_ignored) {
 
     reset_mocks();
@@ -480,6 +481,7 @@ TEST(DccPacketDecoder, bad_xor_ignored) {
 // Idle packet ignored
 // ============================================================================
 
+// @compliance DCC-S9.2-DEC-001
 TEST(DccPacketDecoder, idle_packet_ignored) {
 
     reset_mocks();
@@ -497,6 +499,7 @@ TEST(DccPacketDecoder, idle_packet_ignored) {
 // Broadcast reset ignored
 // ============================================================================
 
+// @compliance DCC-S9.2-DEC-002
 TEST(DccPacketDecoder, broadcast_reset_ignored) {
 
     reset_mocks();
@@ -514,6 +517,7 @@ TEST(DccPacketDecoder, broadcast_reset_ignored) {
 // Address matching
 // ============================================================================
 
+// @compliance DCC-S9.2-DEC-005
 TEST(DccPacketDecoder, wrong_address_ignored) {
 
     reset_mocks();
@@ -529,6 +533,7 @@ TEST(DccPacketDecoder, wrong_address_ignored) {
 
 }
 
+// @compliance DCC-S9.2-DEC-005
 TEST(DccPacketDecoder, matching_address_dispatched) {
 
     reset_mocks();
@@ -550,6 +555,7 @@ TEST(DccPacketDecoder, matching_address_dispatched) {
 // 128-step speed
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-001
 TEST(DccPacketDecoder, speed_128_forward) {
 
     reset_mocks();
@@ -623,6 +629,7 @@ TEST(DccPacketDecoder, speed_128_stop) {
 // 28-step speed
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-002
 TEST(DccPacketDecoder, speed_28_forward_step_5) {
 
     reset_mocks();
@@ -679,6 +686,7 @@ TEST(DccPacketDecoder, speed_28_estop) {
 // 14-step speed (CV 29 bit 1 cleared)
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-003
 TEST(DccPacketDecoder, speed_14_step) {
 
     reset_mocks();
@@ -704,6 +712,7 @@ TEST(DccPacketDecoder, speed_14_step) {
 // Function group 1 (FL, F1-F4)
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-004
 TEST(DccPacketDecoder, func_group1_fl_on_f1_f2_on) {
 
     reset_mocks();
@@ -737,6 +746,7 @@ TEST(DccPacketDecoder, func_group1_fl_on_f1_f2_on) {
 // Function group 2a (F5-F8)
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-005
 TEST(DccPacketDecoder, func_group2a_f5_f6_on) {
 
     reset_mocks();
@@ -765,6 +775,7 @@ TEST(DccPacketDecoder, func_group2a_f5_f6_on) {
 // Function group 2b (F9-F12)
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-006
 TEST(DccPacketDecoder, func_group2b_f9_on) {
 
     reset_mocks();
@@ -787,6 +798,7 @@ TEST(DccPacketDecoder, func_group2b_f9_on) {
 // Feature expansion F13-F20
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-007
 TEST(DccPacketDecoder, func_f13_f20) {
 
     reset_mocks();
@@ -813,6 +825,7 @@ TEST(DccPacketDecoder, func_f13_f20) {
 // CV access (ops-mode write)
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-010
 TEST(DccPacketDecoder, cv_write_ops_mode) {
 
     reset_mocks();
@@ -864,6 +877,7 @@ TEST(DccPacketDecoder, cv_write_cv29_updates_speed_mode) {
 // CV bit manipulation
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-010
 TEST(DccPacketDecoder, cv_bit_write) {
 
     reset_mocks();
@@ -896,6 +910,7 @@ TEST(DccPacketDecoder, cv_bit_write) {
 // Long address
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-015
 TEST(DccPacketDecoder, long_address_speed_128) {
 
     reset_mocks();
@@ -934,6 +949,7 @@ TEST(DccPacketDecoder, long_address_mismatch_ignored) {
 // Basic accessory
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-008
 TEST(DccPacketDecoder, basic_accessory) {
 
     reset_mocks();
@@ -961,6 +977,7 @@ TEST(DccPacketDecoder, basic_accessory) {
 // Extended accessory
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-009
 TEST(DccPacketDecoder, extended_accessory) {
 
     reset_mocks();
@@ -1250,6 +1267,7 @@ TEST(DccPacketDecoder, cv_access_too_few_bytes) {
 // Consist control
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-011
 TEST(DccPacketDecoder, consist_set_normal) {
 
     reset_mocks();
@@ -1286,6 +1304,7 @@ TEST(DccPacketDecoder, consist_null_callback) {
 // Analog function
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-014
 TEST(DccPacketDecoder, analog_function) {
 
     reset_mocks();
@@ -1422,6 +1441,7 @@ TEST(DccPacketDecoder, func_f53_f60) {
 // Binary state short
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-012
 TEST(DccPacketDecoder, binary_state_short) {
 
     reset_mocks();
@@ -1458,6 +1478,7 @@ TEST(DccPacketDecoder, binary_state_short_null_callback) {
 // Binary state long
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-013
 TEST(DccPacketDecoder, binary_state_long) {
 
     reset_mocks();
@@ -1496,6 +1517,7 @@ TEST(DccPacketDecoder, binary_state_long_null_callback) {
 // F61-F68 (same opcode as BSL but only 2 instruction bytes)
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-007
 TEST(DccPacketDecoder, func_f61_f68) {
 
     reset_mocks();
@@ -1519,6 +1541,7 @@ TEST(DccPacketDecoder, func_f61_f68) {
 // Long address packet to short-address decoder (covers line 688)
 // ============================================================================
 
+// @compliance DCC-S9.2.1-DEC-015
 TEST(DccPacketDecoder, long_addr_packet_to_short_decoder_ignored) {
 
     reset_mocks();
@@ -2045,6 +2068,7 @@ TEST(DccPacketDecoder, long_address_too_few_bytes) {
 
 }
 
+// @compliance DCC-S9.2-DEC-003
 TEST(DccPacketDecoder, broadcast_packet_accepted_by_any_short_address) {
 
     reset_mocks();
@@ -2683,6 +2707,7 @@ static void set_decoder_accessory_output_address(
 
 }
 
+// @compliance DCC-S9.2.1-DEC-008
 TEST(DccPacketDecoder, output_address_mode_basic_accessory) {
 
     reset_mocks();

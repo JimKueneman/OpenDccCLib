@@ -19,6 +19,7 @@
 #include "uart_command_parser.h"
 #include "ti_msp_dl_config.h"
 #include "application_drivers/ti_driverlib_uart_driver.h"
+#include "application_drivers/ti_driverlib_dcc_driver.h"
 #include "dcc_lib/dcc_config.h"
 #include "dcc_lib/dcc_application_command_station_main_track.h"
 #include "dcc_lib/dcc_application_command_station_service_track.h"
@@ -871,6 +872,69 @@ static void _cmd_svc_direct(char *tokens[], int count) {
 
     _svc_report_start(started);
 }
+
+/* SVC MOCKACK <width_us>
+ *
+ * Arm the mock-ACK loopback (MOCK_ACK_DRIVE PB24 -> jumper -> MOCK_ACK PB9) to
+ * inject one pulse of the given width, then run a single Direct bit-verify. The
+ * library reads the looped-back pulse through current_sense_read and applies its
+ * 6 ms +/- 1 ms ACK window. read_bit reports value=1 when the width was accepted
+ * as an ACK, value=0 when rejected -- a pure electrical test of the ACK width
+ * counter with no decoder attached. */
+static void _svc_on_mockack(dcc_service_mode_result_t result, uint8_t value) {
+
+    if (result == DCC_SERVICE_MODE_SUCCESS && value != 0) {
+        _respond("SVC MOCKACK: ACK DETECTED");
+    } else {
+        _respond("SVC MOCKACK: NO ACK");
+    }
+}
+
+static void _cmd_svc_mockack(char *tokens[], int count) {
+
+    if (count < 3) {
+        _respond("ERR: usage: SVC MOCKACK <width_us> [EARLY]");
+        return;
+    }
+
+    uint16_t width_us = (uint16_t)atoi(tokens[2]);
+
+    /* Optional EARLY: fire the pulse on the first (blanked) command packet so the
+     * suite can confirm the library masks it. Default = fire in-window. */
+    CallbacksDcc_set_mock_ack_early(count >= 4 && strcmp(tokens[3], "EARLY") == 0);
+
+    TI_DccDriver_mock_ack_arm(width_us);
+
+    /* CV 8 / bit 0 is arbitrary: no decoder responds, so the injected pulse
+     * alone decides ACK vs NO ACK. */
+    _svc_report_start(
+        DccApplicationCommandStationServiceTrack_direct_read_bit(8, 0, _svc_on_mockack, NULL));
+}
+
+/* SVC MOCKCV <cv> <value> | OFF
+ *
+ * Configure the HIL mock decoder to hold <cv> = <value> (decimal or 0x-hex), so
+ * the bench can run real Direct reads/writes against it: reads converge on the
+ * held value, writes update it, and verify commands ACK only when they match.
+ * SVC MOCKCV OFF disables it (no ACK -> failure-path testing). */
+static void _cmd_svc_mockcv(char *tokens[], int count) {
+
+    if (count >= 3 && strcmp(tokens[2], "OFF") == 0) {
+        CallbacksDcc_mock_decoder_off();
+        _respond("OK: mock decoder OFF");
+        return;
+    }
+
+    if (count < 4) {
+        _respond("ERR: usage: SVC MOCKCV <cv> <value> | OFF");
+        return;
+    }
+
+    uint16_t cv = (uint16_t)strtol(tokens[2], NULL, 0);
+    uint8_t value = (uint8_t)strtol(tokens[3], NULL, 0);
+    CallbacksDcc_mock_decoder_set(cv, value);
+    _respond("OK: mock decoder set");
+}
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_DIRECT */
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
@@ -927,8 +991,12 @@ static void _cmd_svc_register(char *tokens[], int count) {
         uint8_t value = (uint8_t)atoi(tokens[4]);
         dcc_decoder_type_enum dt = _parse_decoder_type(count >= 6 ? tokens[5] : NULL);
         started = DccApplicationCommandStationServiceTrack_register_write_cv(cv, value, dt, _svc_on_complete, NULL);
+    } else if (strcmp(tokens[2], "VERIFY") == 0 && count >= 5) {
+        uint8_t value = (uint8_t)atoi(tokens[4]);
+        dcc_decoder_type_enum dt = _parse_decoder_type(count >= 6 ? tokens[5] : NULL);
+        started = DccApplicationCommandStationServiceTrack_register_verify_value(cv, value, dt, _svc_on_complete, NULL);
     } else {
-        _respond("ERR: usage: SVC REG WRITE|READ|RESET <cv> [value] [MOBILE|ACC]");
+        _respond("ERR: usage: SVC REG WRITE|READ|VERIFY|RESET <cv> [value] [MOBILE|ACC]");
         return;
     }
 
@@ -939,10 +1007,10 @@ static void _cmd_svc_register(char *tokens[], int count) {
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
 static void _cmd_svc_address(char *tokens[], int count) {
 
-    /* SVC ADDR WRITE <addr> / SVC ADDR READ */
+    /* SVC ADDR WRITE <addr> / SVC ADDR READ / SVC ADDR VERIFY <addr> */
 
     if (count < 3) {
-        _respond("ERR: usage: SVC ADDR WRITE <addr> | SVC ADDR READ");
+        _respond("ERR: usage: SVC ADDR WRITE|VERIFY <addr> | SVC ADDR READ");
         return;
     }
 
@@ -953,8 +1021,11 @@ static void _cmd_svc_address(char *tokens[], int count) {
     } else if (strcmp(tokens[2], "WRITE") == 0 && count >= 4) {
         uint8_t addr = (uint8_t)atoi(tokens[3]);
         started = DccApplicationCommandStationServiceTrack_address_write(addr, _svc_on_complete, NULL);
+    } else if (strcmp(tokens[2], "VERIFY") == 0 && count >= 4) {
+        uint8_t addr = (uint8_t)atoi(tokens[3]);
+        started = DccApplicationCommandStationServiceTrack_address_verify(addr, _svc_on_complete, NULL);
     } else {
-        _respond("ERR: usage: SVC ADDR WRITE <addr> | SVC ADDR READ");
+        _respond("ERR: usage: SVC ADDR WRITE|VERIFY <addr> | SVC ADDR READ");
         return;
     }
 
@@ -993,6 +1064,16 @@ static void _cmd_svc(char *tokens[], int count) {
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
     if (strcmp(tokens[1], "DIRECT") == 0) {
         _cmd_svc_direct(tokens, count);
+        return;
+    }
+
+    if (strcmp(tokens[1], "MOCKACK") == 0) {
+        _cmd_svc_mockack(tokens, count);
+        return;
+    }
+
+    if (strcmp(tokens[1], "MOCKCV") == 0) {
+        _cmd_svc_mockcv(tokens, count);
         return;
     }
 #endif
@@ -1354,8 +1435,10 @@ static void _cmd_help(void) {
     _respond("  SVC DIRECT WRITE <cv> <value> | READ <cv>");
     _respond("  SVC DIRECT BITW <cv> <bit> <0|1> | BITR <cv> <bit>");
     _respond("  SVC PAGED WRITE <cv> <value> | READ <cv>");
-    _respond("  SVC REG WRITE <cv> <value> [MOBILE|ACC] | READ <cv> [MOBILE|ACC] | RESET");
-    _respond("  SVC ADDR WRITE <addr> | READ");
+    _respond("  SVC REG WRITE|VERIFY <cv> <value> [MOBILE|ACC] | READ <cv> [MOBILE|ACC] | RESET");
+    _respond("  SVC ADDR WRITE|VERIFY <addr> | READ");
+    _respond("  SVC MOCKACK <width_us>  (HIL: inject mock ACK pulse, test width window)");
+    _respond("  SVC MOCKCV <cv> <value> | OFF  (HIL: mock decoder for read/write-back)");
     _respond("  CONSIST <addr> SET <ca> [NORMAL|REVERSE]");
     _respond("  CONSIST <addr> CLEAR");
     _respond("  BSS <addr> <1-127> <ON|OFF>");

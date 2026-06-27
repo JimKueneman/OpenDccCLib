@@ -198,6 +198,7 @@ TEST(DccServiceModeTaskAddress, read_advances_after_no_ack) {
 
 }
 
+// @compliance DCC-S9.2.3-CS-021
 TEST(DccServiceModeTaskAddress, read_ack_on_address_3_returns_3) {
 
     setup();
@@ -491,6 +492,7 @@ TEST(DccServiceModeTaskAddress, write_bit_scans_then_writes_with_bit_set) {
 
 }
 
+// @compliance DCC-S9.2.3-CS-023
 TEST(DccServiceModeTaskAddress, write_bit_clears_bit) {
 
     setup();
@@ -575,6 +577,60 @@ TEST(DccServiceModeTaskAddress, on_primitive_complete_when_idle_no_crash) {
 
     setup();
     DccServiceModeTaskAddress_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);
+
+}
+
+// ============================================================================
+// verify: single CV#1 verify (no scan)
+// ============================================================================
+
+TEST(DccServiceModeTaskAddress, verify_issues_single_verify) {
+
+    setup();
+    EXPECT_TRUE(DccServiceModeTaskAddress_verify(42, mock_on_complete, NULL));
+
+    EXPECT_EQ(address_verify_count, (uint32_t)1);
+    EXPECT_EQ(last_address_verify, (uint8_t)42);
+
+}
+
+TEST(DccServiceModeTaskAddress, verify_success_on_ack) {
+
+    setup();
+    DccServiceModeTaskAddress_verify(42, mock_on_complete, NULL);
+    step_ack();
+
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_SUCCESS);
+    EXPECT_EQ(on_complete_value, (uint8_t)42);
+
+}
+
+TEST(DccServiceModeTaskAddress, verify_fail_on_no_ack) {
+
+    setup();
+    DccServiceModeTaskAddress_verify(42, mock_on_complete, NULL);
+    step_no_ack();
+
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_VERIFY_FAIL);
+
+}
+
+TEST(DccServiceModeTaskAddress, verify_out_of_range_rejected) {
+
+    setup();
+    EXPECT_FALSE(DccServiceModeTaskAddress_verify(0, mock_on_complete, NULL));
+    EXPECT_FALSE(DccServiceModeTaskAddress_verify(200, mock_on_complete, NULL));
+    EXPECT_EQ(address_verify_count, (uint32_t)0);
+
+}
+
+TEST(DccServiceModeTaskAddress, verify_busy_rejected) {
+
+    setup();
+    EXPECT_TRUE(DccServiceModeTaskAddress_verify(42, mock_on_complete, NULL));
+    EXPECT_FALSE(DccServiceModeTaskAddress_verify(42, mock_on_complete, NULL));
 
 }
 

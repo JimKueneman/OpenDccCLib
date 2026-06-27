@@ -39,6 +39,18 @@ extern void CallbacksDcc_on_packet_sent(const dcc_packet_t *packet);
 // "TRIG" command just before the harness sends the command under test.
 extern void CallbacksDcc_arm_trigger(void);
 
+// Mock decoder (HIL only). Hold one CV value so the bench can exercise read-back
+// and write+verify end-to-end through the real ACK path. set() makes the mock
+// ACK Direct verify commands for `cv` that match `value` (and accept writes to
+// it); off() disables it. Driven by the UART "SVC MOCKCV" command.
+extern void CallbacksDcc_mock_decoder_set(uint16_t cv, uint8_t value);
+extern void CallbacksDcc_mock_decoder_off(void);
+
+// HIL boundary test: when early=true the width-test mock fires its pulse on the
+// FIRST command packet (inside the blanking window) so a test can confirm the
+// library masks it; false restores normal in-window firing.
+extern void CallbacksDcc_set_mock_ack_early(bool early);
+
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
 #ifdef __cplusplus

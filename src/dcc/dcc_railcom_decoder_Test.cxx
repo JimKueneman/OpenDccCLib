@@ -120,6 +120,7 @@ TEST(DccRailcomDecoder, initialize_clears_buffer) {
 // 4/8 decode table tests
 // ============================================================================
 
+// @compliance DCC-S9.3.2-CS-010
 TEST(DccRailcomDecoder, decode_byte_invalid_0x00) {
 
     reset_mocks();
@@ -130,6 +131,7 @@ TEST(DccRailcomDecoder, decode_byte_invalid_0x00) {
 
 }
 
+// @compliance DCC-S9.3.2-CS-011
 TEST(DccRailcomDecoder, decode_byte_ack_0xF0) {
 
     reset_mocks();
@@ -151,6 +153,7 @@ TEST(DccRailcomDecoder, decode_byte_ack_0x0F) {
 
 }
 
+// @compliance DCC-S9.3.2-CS-012
 TEST(DccRailcomDecoder, decode_byte_nack_0x3C) {
 
     reset_mocks();
@@ -162,6 +165,7 @@ TEST(DccRailcomDecoder, decode_byte_nack_0x3C) {
 
 }
 
+// @compliance DCC-S9.3.2-CS-010
 TEST(DccRailcomDecoder, decode_byte_value_0x00_codeword_0xAC) {
 
     reset_mocks();
@@ -197,6 +201,7 @@ TEST(DccRailcomDecoder, decode_byte_value_0x3F_codeword_0xC4) {
 // Channel 1 decode tests (2 bytes -> 12 bits)
 // ============================================================================
 
+// @compliance DCC-S9.3.2-CS-013
 TEST(DccRailcomDecoder, ch1_valid_2_bytes) {
 
     reset_mocks();
@@ -249,6 +254,7 @@ TEST(DccRailcomDecoder, ch1_invalid_byte_skipped) {
 // Channel 2 decode tests (bytes 3+ after CH1)
 // ============================================================================
 
+// @compliance DCC-S9.3.2-CS-014
 TEST(DccRailcomDecoder, ch2_valid_4_bytes) {
 
     reset_mocks();
@@ -302,6 +308,7 @@ TEST(DccRailcomDecoder, ch2_valid_2_bytes_minimum) {
 // Buffer tests
 // ============================================================================
 
+// @compliance DCC-S9.3.2-CS-015
 TEST(DccRailcomDecoder, read_returns_buffered_datagram) {
 
     reset_mocks();
@@ -473,6 +480,7 @@ TEST(DccRailcomDecoder, end_cutout_does_not_crash) {
 // Buffer overflow tests
 // ============================================================================
 
+// @compliance DCC-S9.3.2-CS-015
 TEST(DccRailcomDecoder, buffer_overflow_drops_oldest) {
 
     reset_mocks();

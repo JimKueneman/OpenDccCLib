@@ -145,5 +145,5 @@ publishing:
 ---
 
 *Companion docs: [ARCHITECTURE.md](ARCHITECTURE.md) (as-built design),
-[ComplianceMatrix.md](ComplianceMatrix.md) (what's implemented vs pending), and Doxygen
+[ComplianceMatrix.md](compliance/ComplianceMatrix.md) (what's implemented vs pending), and Doxygen
 (`Doxyfile`) for the API reference.*

@@ -110,7 +110,6 @@ static const dcc_config_t dcc_config = {
         .timer_start        = NULL,  /* not used with shared timer */
         .timer_stop         = NULL,  /* not used with shared timer */
         .pin_toggle         = &TI_DccDriver_svc_pin_toggle,
-        .track_power_set    = &TI_DccDriver_svc_track_power_set,
         .current_sense_read = &TI_DccDriver_current_sense_read,
         .railcom            = NULL,
     },
@@ -134,6 +133,7 @@ void DCC_BIT_TIMER_INST_IRQHandler(void) {
 
         case DL_TIMER_IIDX_ZERO:
             TI_DccDriver_timestamp_tick();
+            TI_DccDriver_mock_ack_tick();   /* drive mock ACK before ack sample */
             DccConfig_58us_timer_isr();
             break;
 

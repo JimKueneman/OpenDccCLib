@@ -100,6 +100,7 @@ TEST(DccCvStorage, initialize_does_not_crash) {
 // Basic read/write
 // ============================================================================
 
+// @compliance DCC-S9.2.2-DEC-001
 TEST(DccCvStorage, read_returns_stored_value) {
 
     reset_mocks();
@@ -113,6 +114,7 @@ TEST(DccCvStorage, read_returns_stored_value) {
 
 }
 
+// @compliance DCC-S9.2.2-DEC-001
 TEST(DccCvStorage, write_stores_value_when_unlocked) {
 
     reset_mocks();
@@ -129,6 +131,7 @@ TEST(DccCvStorage, write_stores_value_when_unlocked) {
 // Decoder lock
 // ============================================================================
 
+// @compliance DCC-S9.2.2-DEC-002
 TEST(DccCvStorage, is_locked_when_cv15_ne_cv16) {
 
     reset_mocks();
@@ -177,6 +180,7 @@ TEST(DccCvStorage, is_locked_returns_false_when_cv16_read_fails) {
 
 }
 
+// @compliance DCC-S9.2.2-DEC-002
 TEST(DccCvStorage, write_blocked_when_locked) {
 
     reset_mocks();
@@ -228,6 +232,7 @@ TEST(DccCvStorage, cv16_always_writable_when_locked) {
 // Factory reset
 // ============================================================================
 
+// @compliance DCC-S9.2.2-DEC-003
 TEST(DccCvStorage, factory_reset_allowed_when_locked) {
 
     reset_mocks();
@@ -308,6 +313,7 @@ TEST(DccCvStorage, is_locked_with_null_read_returns_false) {
 // Unlock and write
 // ============================================================================
 
+// @compliance DCC-S9.2.2-DEC-002
 TEST(DccCvStorage, unlock_then_write_succeeds) {
 
     reset_mocks();

@@ -44,7 +44,7 @@ def checks(rep, decoded):
               f"{len(interior)} interior"
               + (f" -> {[round(w, 2) for w in interior]}" if interior else ""))
 
-    # 1. ONE half-bit timing
+    # 1. ONE half-bit timing  @compliance DCC-S9.1-CS-001
     if ones:
         ok = all(ONE_HALF_MIN_US <= w <= ONE_HALF_MAX_US for w in ones)
         rep.check("S-9.1 Tbl2.1", "ONE half-bit 55-61 us (nom 58)", ok,
@@ -52,7 +52,7 @@ def checks(rep, decoded):
     else:
         rep.check("S-9.1 Tbl2.1", "ONE half-bit", False, "no one-bits decoded")
 
-    # 2. ZERO half-bit timing + total duration
+    # 2. ZERO half-bit timing + total duration  @compliance DCC-S9.1-CS-002
     if zeros:
         ok = all(w >= ZERO_HALF_MIN_US for w in zeros)
         rep.check("S-9.1 Tbl2.1", "ZERO half-bit >= 95 us", ok,
@@ -64,14 +64,14 @@ def checks(rep, decoded):
     else:
         rep.check("S-9.1 Tbl2.1", "ZERO half-bit", False, "no zero-bits decoded")
 
-    # 3. intra-bit symmetry
+    # 3. intra-bit symmetry  @compliance DCC-S9.1-CS-004
     if halves:
         deltas = [abs(a - b) for (a, b, c) in halves]
         rep.check("S-9.1", f"intra-bit symmetry <= {INTRA_BIT_SYMMETRY_US} us",
                   max(deltas) <= INTRA_BIT_SYMMETRY_US,
                   lib.sigma_margin_detail(deltas, None, INTRA_BIT_SYMMETRY_US) + " us")
 
-    # 4. preamble length -- exclude inflated first packet; strip merged end bit
+    # 4. preamble length -- exclude inflated first packet; strip merged end bit  @compliance DCC-S9.1-CS-003
     interior_pk = packets[1:]
     if interior_pk:
         preambles = [run - 1 for (run, _) in interior_pk]
@@ -96,7 +96,7 @@ def checks(rep, decoded):
     else:
         rep.check("S-9.2", "packet framing + XOR", False, "no packets decoded")
 
-    # signal levels -- not measurable on a digital LA
+    # signal levels -- not measurable on a digital LA  @compliance DCC-S9.1-HW-001
     rep.na("S-9.1 §2", "signal voltage levels (>=8.5 V out)",
            "requires scope/meter or analog capture -- not coverable by this rig")
 

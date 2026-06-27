@@ -105,7 +105,7 @@ bool DccServiceModeDirect_write_byte(dcc_service_mode_direct_context_t *context,
     packet.repeat_count = 0;
 
     _active_context = context;
-    return context->interface->begin_operation(&packet, &_on_step_complete, true, DCC_SERVICE_MODE_RECOVERY_COUNT);
+    return context->interface->begin_operation(&packet, &_on_step_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT);
 
 }
 
@@ -138,7 +138,7 @@ bool DccServiceModeDirect_verify_byte(dcc_service_mode_direct_context_t *context
     packet.repeat_count = 0;
 
     _active_context = context;
-    return context->interface->begin_operation(&packet, &_on_step_complete, false, 0);
+    return context->interface->begin_operation(&packet, &_on_step_complete, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
 }
 
@@ -177,7 +177,7 @@ bool DccServiceModeDirect_write_bit(dcc_service_mode_direct_context_t *context, 
     packet.repeat_count = 0;
 
     _active_context = context;
-    return context->interface->begin_operation(&packet, &_on_step_complete, true, DCC_SERVICE_MODE_RECOVERY_COUNT);
+    return context->interface->begin_operation(&packet, &_on_step_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT);
 
 }
 
@@ -216,7 +216,7 @@ bool DccServiceModeDirect_verify_bit(dcc_service_mode_direct_context_t *context,
     packet.repeat_count = 0;
 
     _active_context = context;
-    return context->interface->begin_operation(&packet, &_on_step_complete, false, 0);
+    return context->interface->begin_operation(&packet, &_on_step_complete, false, DCC_SERVICE_MODE_COMMAND_REPEAT, 0);
 
 }
 

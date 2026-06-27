@@ -49,6 +49,7 @@ typedef enum {
     DCC_TASK_ADDRESS_STATE_WRITE_BIT_READ,
     DCC_TASK_ADDRESS_STATE_WRITE_BIT_WRITE,
     DCC_TASK_ADDRESS_STATE_WRITE_BIT_VERIFY,
+    DCC_TASK_ADDRESS_STATE_VERIFY,
 
 } dcc_task_address_state_enum;
 
@@ -229,6 +230,42 @@ bool DccServiceModeTaskAddress_write(uint8_t address, dcc_service_mode_task_on_c
 
 }
 
+static void _advance_verify(void) {
+
+    /* Single CV#1 verify: ACK = the address matched (SUCCESS); otherwise the
+     * value did not verify (VERIFY_FAIL). */
+    _complete(_context.ack_result ? DCC_SERVICE_MODE_SUCCESS : DCC_SERVICE_MODE_VERIFY_FAIL,
+              _context.value);
+
+}
+
+bool DccServiceModeTaskAddress_verify(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+
+    if (address < 1 || address > DCC_TASK_ADDRESS_MAX) {
+
+        return false;
+
+    }
+
+    if (_context.state != DCC_TASK_ADDRESS_STATE_IDLE) {
+
+        return false;
+
+    }
+
+    _context.value        = address;
+    _context.current_step = 0;
+    _context.ack_result   = false;
+    _context.on_complete  = on_complete;
+    _context.on_progress  = on_progress;
+    _context.state        = DCC_TASK_ADDRESS_STATE_VERIFY;
+
+    _context.interface->address_verify(address);
+
+    return true;
+
+}
+
 bool DccServiceModeTaskAddress_read_bit(uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (bit > 6) {
@@ -327,6 +364,11 @@ void DccServiceModeTaskAddress_on_primitive_complete(dcc_service_mode_result_t r
         case DCC_TASK_ADDRESS_STATE_WRITE_BIT_VERIFY:
 
             _advance_write_bit_verify();
+            break;
+
+        case DCC_TASK_ADDRESS_STATE_VERIFY:
+
+            _advance_verify();
             break;
 
         default:

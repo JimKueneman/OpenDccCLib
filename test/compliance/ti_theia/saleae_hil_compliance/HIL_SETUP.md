@@ -34,8 +34,10 @@ LaunchPad flash) and the Python venv (in this repo). To bring it back up:
 1. **USB:** plug in the **LaunchPad** (XDS110 — gives the UART + flashing) and the **Saleae**.
 2. **Probe wires** (Saleae → LaunchPad), common ground first:
    - **D0 → PB1** (main DCC out)
-   - **D1 → PB3** (test trigger / DEBUG)
+   - **D1 → PB3** (test trigger / PACKET_LOAD)
+   - **D2 → PB2** (RailCom cutout-active strobe / DCC_MIRROR)
    - **D3 → PB4** (service-track DCC out)
+   - **D4 → PB9** (mock-ACK pin; for the S-9.2.3 ACK width cross-check)
    - **GND → GND**
 3. **Logic 2:** launch it; Preferences → **Automation** → enable the API (port **10430**). Leave it running.
 4. **Firmware:** already flashed. If the board was wiped, re-flash the `saleae_hil_compliance`
@@ -61,49 +63,53 @@ Connect the Saleae digital channels to the LaunchPad pins and tie grounds togeth
 | Saleae channel | LaunchPad pin | Signal                         | Used by                         |
 |:--------------:|:-------------:|--------------------------------|---------------------------------|
 | **D0 (ch 0)**  | **PB1**       | DCC main-track output          | all suites                      |
-| **D1 (ch 1)**  | **PB3**       | Test trigger (DEBUG)           | triggered captures              |
+| **D1 (ch 1)**  | **PB3**       | Test trigger (PACKET_LOAD)     | triggered captures              |
+| **D2 (ch 2)**  | **PB2**       | RailCom cutout-active strobe (DCC_MIRROR) | S-9.3.2 cutout timing |
 | **D3 (ch 3)**  | **PB4**       | DCC service-track output       | S-9.2.3 service mode            |
-| D2 (ch 2)*     | TBD*          | Mock-ACK loopback → PB12       | S-9.2.3 ACK test (not yet wired)|
+| **D4 (ch 4)**  | **PB9**       | Mock-ACK pin (PB24→PB9 loopback) | S-9.2.3 ACK width cross-check |
 | **GND**        | **GND**       | common ground                  | always                          |
 
-These four (D0, D1, D3, GND) are the **current working setup** — wire all of them on
+These six (D0, D1, D2, D3, D4, GND) are the **current working setup** — wire all of them on
 re-assembly. The channel-to-pin map lives at the top of `test/compliance/compliance_lib.py`
-(`DIGITAL_CHANNEL`=0, `TRIGGER_CHANNEL`=1); the S-9.2.3 service channel (3) is set inside
-`s9_2_3_compliance.py` (`SERVICE_CHANNEL`).
+(`DIGITAL_CHANNEL`=0, `TRIGGER_CHANNEL`=1); the S-9.3.2 cutout channel (2) is set in
+`s9_3_2_compliance.py` (`CUTOUT_CHANNEL`), and the S-9.2.3 service channel (3) and mock-ACK
+channel (4) in `s9_2_3_compliance.py` (`SERVICE_CHANNEL`, `ACK_CHANNEL`).
 
-\* The mock-ACK loopback (D2 → a TBD GPIO → PB12) is **not yet wired** — that's tomorrow's
-S-9.2.3 ACK work (see below and `documentation/ServiceModeOperationsMatrix.md`).
+> The **mock-ACK loopback** for the S-9.2.3 ACK test is an on-board **jumper**
+> **MOCK_ACK_DRIVE (PB24) → MOCK_ACK (PB9)**; **D4 taps PB9** so the suite independently
+> measures the injected pulse width. See below and
+> `documentation/compliance/detail_s9_2_3_service_mode.md`.
 
 > Ground first. A missing common ground gives garbled or absent captures.
 
-### Still TODO for the S-9.2.3 ACK test (not yet wired)
+### Mock-ACK loopback for the S-9.2.3 ACK test (one jumper)
 
-The service-track channel (ch3/PB4) is already in place and the s9_2_3 suite passes its
-packet + parallel-track-timing checks. The remaining hardware item is the **mock-ACK loopback**
-for the ACK-detection boundary tests:
+The service-track channel (ch3/PB4) drives the s9_2_3 packet + parallel-track-timing checks.
+The **ACK-detection boundary tests** add one on-board jumper — no extra Saleae channel:
 
-1. **(already done) Service track on ch3/PB4.** The service-mode packets
-   (≥20-bit preamble) come out here, separate from the main track. Wire e.g. **D3/ch 3 → PB4**
-   and set the service-track channel in `compliance_lib.py`.
+1. **Service track on ch3/PB4** (already wired). Service-mode packets (≥20-bit preamble)
+   come out here, separate from the main track.
 
-2. **Mock-ACK output GPIO — pick a pin and jumper it to PB12.** Two ACK pins are involved:
-   - **PB12 — ACK sense input (fixed).** The firmware already reads it via
-     `current_sense_read()`; the comparator/ACK signal lands here.
-   - **Mock-ACK output GPIO — TBD, you must choose it.** A spare LaunchPad GPIO configured
-     as an output, **jumpered to PB12**, that the HIL firmware pulses (via
-     `SVC MOCKACK <width_us>`) to drive a controlled-width ACK back into the sense input.
-     Add it to the HIL SysConfig.
+2. **Mock-ACK loopback jumper — PB24 → PB9.** Two GPIOs in the `GPIO_GRP_SALEAE` group:
+   - **MOCK_ACK_DRIVE (PB24) — output.** The HIL firmware pulses it for a controlled width
+     (via `SVC MOCKACK <width_us>`) during a Direct bit-verify.
+   - **MOCK_ACK (PB9) — input.** `current_sense_read()` reads it as the ACK current-sense
+     substitute. A **jumper wire from PB24 to PB9** loops the driven pulse back in, so the
+     library's ACK width counter validates the 6 ms ± 1 ms window — no decoder required.
 
-3. **(Optional) Probe the mock-ACK pin — D2/ch 2.** Lets the suite independently measure the
-   pulse width the firmware actually produced.
+3. **Probe the mock-ACK pin on D4/ch4 (PB9).** The suite captures D4 during each `SVC MOCKACK`
+   op and independently measures the high-pulse width, cross-checking it against the value
+   requested — so a pass means the firmware really produced that pulse, not just that the
+   UART said so.
 
 ```
-mock-ACK out (TBD GPIO) ──jumper──► PB12 (ACK sense in) ──► current_sense_read() ──► ack_sample()
-service track (PB4) ─────────────► Saleae ch 3  (decode service-mode packets)
+SVC MOCKACK <us> ─► MOCK_ACK_DRIVE (PB24) ──jumper──► MOCK_ACK (PB9) ─► current_sense_read() ─► ack_sample()
+                                                            └─────────► Saleae ch 4  (independent width measure)
+service track (PB4) ───────────────────────────────► Saleae ch 3       (decode service-mode packets)
 ```
 
-These are the open hardware items for the S-9.2.3 HIL work; everything else for that test is
-specced in `documentation/ServiceModeOperationsMatrix.md` (“ACK Pulse-Width Verification”).
+Run the boundary suite with `s9_2_3_compliance.py`; the design is specced in
+`documentation/compliance/detail_s9_2_3_service_mode.md` (“ACK Pulse-Width Verification”).
 
 ## 3. Software prerequisites
 
@@ -186,8 +192,17 @@ SPEED 3 64 FWD 128
 SVC ENTER
 SVC DIRECT READ 8
 SVC DETECT
+SVC MOCKACK 6000         # HIL-only: inject a 6000us mock ACK -> ACK DETECTED / NO ACK
+SVC MOCKCV 8 0x5A        # HIL-only: mock decoder holds CV8=0x5A (read/write-back)
+SVC MOCKCV OFF           # HIL-only: disable the mock decoder
 TRIG                     # HIL-only: pulse PB3 on the next non-idle packet
 ```
+
+The **mock decoder** (`SVC MOCKCV`) makes the bench behave like a decoder holding one
+CV: Direct reads converge on the held value, writes update it, and verify commands ACK
+only when they match — so read-back and write+verify are exercised end-to-end through the
+real ACK path (PB24→PB9), including the failure case when it is OFF. No extra wiring; it
+reuses the mock-ACK loopback jumper.
 
 ## 9. Troubleshooting
 
@@ -203,4 +218,4 @@ TRIG                     # HIL-only: pulse PB3 on the next non-idle packet
 
 For the service-mode (S-9.2.3) HIL plan, including the mock-ACK loopback and the
 `s9_2_3_compliance.py` boundary suite, see the **ACK Pulse-Width Verification** section of
-`documentation/ServiceModeOperationsMatrix.md`.
+`documentation/compliance/detail_s9_2_3_service_mode.md`.

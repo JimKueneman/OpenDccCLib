@@ -188,6 +188,7 @@ TEST(DccScheduler, one_shot_repeat_count_2) {
 // Priority tests
 // ============================================================================
 
+// @compliance DCC-Library-CS-001
 TEST(DccScheduler, estop_has_higher_priority_than_speed) {
     reset_mocks();
     dcc_scheduler_context_t context;
@@ -216,6 +217,7 @@ TEST(DccScheduler, estop_has_higher_priority_than_speed) {
 // Duplicate combining tests
 // ============================================================================
 
+// @compliance DCC-Library-CS-003
 TEST(DccScheduler, duplicate_combining_overwrites_packet) {
     reset_mocks();
     dcc_scheduler_context_t context;
@@ -240,6 +242,7 @@ TEST(DccScheduler, duplicate_combining_overwrites_packet) {
     EXPECT_EQ(last_loaded_packet.data[2], 0x80 | 80);
 }
 
+// @compliance DCC-Library-CS-003
 TEST(DccScheduler, different_tags_do_not_combine) {
     reset_mocks();
     dcc_scheduler_context_t context;
@@ -297,6 +300,7 @@ TEST(DccScheduler, different_addresses_do_not_combine) {
 // Auto-refresh tests
 // ============================================================================
 
+// @compliance DCC-Library-CS-002
 TEST(DccScheduler, auto_refresh_keeps_sending) {
     reset_mocks();
     dcc_scheduler_context_t context;
@@ -322,6 +326,7 @@ TEST(DccScheduler, auto_refresh_keeps_sending) {
     EXPECT_EQ(load_packet_count, (uint32_t)3);
 }
 
+// @compliance DCC-Library-CS-002
 TEST(DccScheduler, auto_refresh_round_robin) {
     reset_mocks();
     dcc_scheduler_context_t context;
@@ -353,6 +358,7 @@ TEST(DccScheduler, auto_refresh_round_robin) {
     EXPECT_NE(first_addr, second_addr);
 }
 
+// @compliance DCC-Library-CS-001
 TEST(DccScheduler, one_shot_takes_priority_over_refresh) {
     reset_mocks();
     dcc_scheduler_context_t context;

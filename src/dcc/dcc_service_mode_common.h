@@ -83,6 +83,9 @@ typedef struct {
     bool first_packet_sent;
     bool is_write_operation;        /**< true = write (has recovery phase) */
     uint8_t recovery_packet_count;  /**< packets to send during recovery */
+    uint8_t command_repeat_count;   /**< command packets to send (S-9.2.3 varies by mode) */
+    bool ack_window_open;           /**< false until the ACK blanking window passes (S-9.2.3 line 55) */
+    uint16_t ack_low_run;           /**< consecutive sub-threshold samples in the current run (dropout filter) */
 
 } dcc_service_mode_common_context_t;
 
@@ -146,10 +149,11 @@ extern void DccServiceModeCommon_exit(dcc_service_mode_common_context_t *context
      * @param command_packet Pointer to @ref dcc_packet_t to send during the command phase.
      * @param on_step_complete Callback fired when the operation completes (@ref dcc_service_mode_step_callback_t).
      * @param is_write_operation true for write operations (longer recovery), false for verify.
+     * @param command_repeat Number of command packets to send (S-9.2.3 minimum varies by mode).
      * @param recovery_count Number of recovery packets to send after the command phase.
      * @return true if operation started, false if busy or no current sense.
      */
-    extern bool DccServiceModeCommon_begin_operation(dcc_service_mode_common_context_t *context, const dcc_packet_t *command_packet, dcc_service_mode_step_callback_t on_step_complete, bool is_write_operation, uint8_t recovery_count);
+    extern bool DccServiceModeCommon_begin_operation(dcc_service_mode_common_context_t *context, const dcc_packet_t *command_packet, dcc_service_mode_step_callback_t on_step_complete, bool is_write_operation, uint8_t command_repeat, uint8_t recovery_count);
 
 #ifdef __cplusplus
 }

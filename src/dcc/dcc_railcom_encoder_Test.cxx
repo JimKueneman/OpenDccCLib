@@ -66,6 +66,7 @@ TEST(DccRailcomEncoder, initialize_does_not_crash) {
 // Encode byte tests
 // ============================================================================
 
+// @compliance DCC-S9.3.2-CS-009
 TEST(DccRailcomEncoder, encode_byte_value_0x00) {
 
     reset_mocks();
@@ -111,6 +112,7 @@ TEST(DccRailcomEncoder, encode_byte_out_of_range) {
 // Encode/decode round-trip: verify encode table is inverse of decode table
 // ============================================================================
 
+// @compliance DCC-S9.3.2-CS-009
 TEST(DccRailcomEncoder, round_trip_all_values) {
 
     reset_mocks();
@@ -140,6 +142,7 @@ TEST(DccRailcomEncoder, round_trip_all_values) {
 // Raw special code word tests (ACK/NACK, 2026 draft S-9.3.2)
 // ============================================================================
 
+// @compliance DCC-S9.3.2-CS-011
 TEST(DccRailcomEncoder, send_code_word_ack_raw) {
 
     reset_mocks();
@@ -154,6 +157,7 @@ TEST(DccRailcomEncoder, send_code_word_ack_raw) {
 
 }
 
+// @compliance DCC-S9.3.2-CS-012
 TEST(DccRailcomEncoder, send_code_word_nack_raw) {
 
     reset_mocks();
@@ -185,6 +189,7 @@ TEST(DccRailcomEncoder, send_code_word_null_uart_no_crash) {
 // Channel 1 send tests
 // ============================================================================
 
+// @compliance DCC-S9.3.2-CS-013
 TEST(DccRailcomEncoder, send_ch1_basic) {
 
     reset_mocks();
@@ -250,6 +255,7 @@ TEST(DccRailcomEncoder, send_ch2_single_data_byte) {
 
 }
 
+// @compliance DCC-S9.3.2-CS-014
 TEST(DccRailcomEncoder, send_ch2_multiple_data_bytes) {
 
     reset_mocks();

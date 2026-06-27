@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenDccCLib — NMRA DCC compliance</title>
+<style>
+  :root{
+    --bg:#ffffff; --bg2:#f5f4ef; --text:#1c1c1a; --text2:#5f5e5a; --text3:#8a8980;
+    --border:rgba(0,0,0,.12); --border2:rgba(0,0,0,.22);
+    --ok:#0f6e56; --ok-bg:#e1f5ee; --warn:#854f0b; --warn-bg:#faeeda;
+    --bad:#a32d2d; --bad-bg:#fcebeb; --info:#185fa5; --info-bg:#e6f1fb;
+    --radius:8px; --radius-lg:12px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#1a1a18; --bg2:#262623; --text:#ececea; --text2:#b4b2a9; --text3:#888780;
+      --border:rgba(255,255,255,.14); --border2:rgba(255,255,255,.26);
+      --ok:#5dcaa5; --ok-bg:#0f6e5640; --warn:#ef9f27; --warn-bg:#854f0b40;
+      --bad:#f09595; --bad-bg:#a32d2d40; --info:#85b7eb; --info-bg:#185fa540;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px; line-height:1.5; padding:28px 22px 80px;}
+  .wrap{max-width:940px; margin:0 auto;}
+  h1{font-size:20px; font-weight:500; margin:0 0 4px;}
+  .chips{display:flex; gap:7px; flex-wrap:wrap; margin:0 0 18px;}
+  .chip{font-size:11px; color:var(--text3); background:var(--bg2); padding:2px 8px; border-radius:var(--radius); border:.5px solid var(--border);}
+  .controls{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 12px;}
+  button.role{font:inherit; font-size:13px; cursor:pointer; padding:6px 12px; border-radius:var(--radius);
+    border:.5px solid var(--border2); background:transparent; color:var(--text); transition:.12s;}
+  button.role:hover{background:var(--bg2);}
+  button.role[aria-pressed="true"]{background:var(--info-bg); color:var(--info); border-color:var(--info);}
+  .legend{display:flex; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--text2); margin:0 0 14px;}
+  .legend span{display:inline-flex; align-items:center; gap:5px;}
+  h2.spec{font-size:15px; font-weight:500; margin:22px 0 8px; padding-bottom:5px; border-bottom:.5px solid var(--border); cursor:pointer; user-select:none; display:flex; align-items:center; gap:8px;}
+  h2.spec .caret{color:var(--text3); font-size:12px; width:12px;}
+  h2.spec .cnt{margin-left:auto; font-size:12px; font-weight:400; color:var(--text3);}
+  table{width:100%; border-collapse:collapse; table-layout:fixed;}
+  th{text-align:left; font-weight:500; color:var(--text2); font-size:12px; padding:6px 8px;}
+  td{padding:9px 8px; vertical-align:top; border-top:.5px solid var(--border); font-size:13px;}
+  tr.grp td{font-size:11.5px; font-weight:500; letter-spacing:.03em; padding:7px 10px; border-top:.5px solid var(--border);}
+  tr.row{cursor:pointer;}
+  tr.row:hover td{background:var(--bg2);}
+  tr.row.open td{background:var(--bg2);}
+  .feat{display:flex; gap:7px;}
+  .tid{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10.5px; color:var(--text3);}
+  .ref{display:block; color:var(--text3); font-size:11px; margin-top:1px;}
+  .cite{color:var(--text2);}
+  .roletag{font-size:11px; padding:2px 10px; border-radius:999px; color:#fff; font-weight:500; letter-spacing:.02em; white-space:nowrap;}
+  .prov{display:inline-block; font-size:10.5px; padding:1px 7px; border-radius:999px; margin-left:5px; white-space:nowrap; border:.5px solid currentColor;}
+  .hwtest{display:inline-block; font-size:11px; padding:2px 9px; border-radius:999px; background:var(--bg2); color:var(--text2); border:.5px solid var(--border2); white-space:nowrap;}
+  .hwtest.hwother{color:var(--info);}
+  .filt{display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--text2); cursor:pointer;}
+  .filt-label{font-size:13px; font-weight:600; color:var(--text); margin-right:2px;}
+  .filt-sep{width:1px; align-self:stretch; background:var(--border2); margin:2px 4px;}
+  .badge{display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:var(--radius); font-size:12px;}
+  .badge svg{width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round;}
+  .note{color:var(--text3); font-size:11px; margin-left:5px;}
+  .detail{background:var(--bg2); border-radius:var(--radius-lg); padding:14px 18px; margin:2px 8px 6px;}
+  .detail h3{font-size:14px; font-weight:500; margin:0 0 2px;}
+  .dgrid{display:grid; gap:12px; margin-top:10px;}
+  .dlabel{font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--text3); margin-bottom:4px;}
+  details.tcase{border:.5px solid var(--border); border-radius:var(--radius); margin-bottom:6px; background:var(--bg);}
+  details.tcase>summary{cursor:pointer; padding:6px 10px; font-size:12.5px; list-style:none; display:flex; gap:8px; align-items:baseline;}
+  details.tcase>summary::-webkit-details-marker{display:none}
+  details.tcase>summary::before{content:"\25B8"; color:var(--text3); font-size:10px;}
+  details.tcase[open]>summary::before{content:"\25BE";}
+  .tname{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px;}
+  .tfile{color:var(--text3); font-size:11px; margin-left:auto; font-family:ui-monospace,Menlo,monospace;}
+  details.tcase>div{padding:0 10px 8px 26px; color:var(--text2); font-size:12.5px;}
+  .prose{font-size:12.5px; color:var(--text2);}
+  .refs{border-top:.5px solid var(--border); margin-top:12px; padding-top:10px; font-size:12px;}
+  code.chip{font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; background:var(--bg);
+    border:.5px solid var(--border); padding:1px 6px; border-radius:5px; margin:0 4px 4px 0; display:inline-block;}
+  .sr-only{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2 class="sr-only">NMRA DCC compliance dashboard, filterable by role, each feature showing supported, gTest, and HIL coverage badges with drill-down detail and test descriptions.</h2>
+  <h1 id="title">Compliance</h1>
+  <div class="chips" id="meta"></div>
+  <div class="controls" id="roles"></div>
+  <div class="controls" id="filters">
+    <span class="filt-label">Show</span>
+    <label class="filt"><input type="checkbox" id="f-released" checked> Released</label>
+    <label class="filt"><input type="checkbox" id="f-draft" checked> Draft</label>
+    <span class="filt-sep"></span>
+    <label class="filt"><input type="checkbox" id="f-fw" checked> Firmware</label>
+    <label class="filt"><input type="checkbox" id="f-hw" checked> Hardware</label>
+    <label class="filt"><input type="checkbox" id="f-other" checked> Other library</label>
+    <span style="flex:1"></span>
+    <button class="role" id="b-collapse">Collapse all</button>
+    <button class="role" id="b-expand">Expand all</button>
+  </div>
+  <div class="legend" id="legend"></div>
+  <div id="board"></div>
+</div>
+
+<script src="compliance.data.js"></script>
+<script>
+(function(){
+  var DB = window.COMPLIANCE;
+  if(!DB){ document.getElementById('board').textContent = 'compliance.data.js failed to load.'; return; }
+  var M = DB.meta, cur = 'all', open = {}, coll = {};
+  var showReleased = true, showDraft = true, showFirmware = true, showHardware = true, showOther = true;
+  var SKEY = 'dcc-compliance-view';
+  try{ var _s = JSON.parse(localStorage.getItem(SKEY) || '{}');
+    if(_s.cur) cur = _s.cur;
+    if(_s.show){
+      if(typeof _s.show.released==='boolean') showReleased=_s.show.released;
+      if(typeof _s.show.draft==='boolean') showDraft=_s.show.draft;
+      if(typeof _s.show.firmware==='boolean') showFirmware=_s.show.firmware;
+      if(typeof _s.show.hardware==='boolean') showHardware=_s.show.hardware;
+      if(typeof _s.show.other==='boolean') showOther=_s.show.other;
+    }
+    if(_s.coll && typeof _s.coll === 'object') coll = _s.coll;
+  }catch(e){}
+  function saveState(){ try{ localStorage.setItem(SKEY, JSON.stringify({cur:cur, show:{released:showReleased,draft:showDraft,firmware:showFirmware,hardware:showHardware,other:showOther}, coll:coll})); }catch(e){} }
+  var GLYPH = {
+    ok:'<path d="M5 13l4 4L19 7"/>',
+    planned:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+    partial:'<path d="M12 4 2 20h20z"/><path d="M12 10v4"/><path d="M12 17v.5"/>',
+    no:'<path d="M6 6l12 12M18 6 6 18"/>',
+    na:'<path d="M6 12h12"/>'
+  };
+  var COLOR = {
+    ok:['var(--ok)','var(--ok-bg)'], planned:['var(--warn)','var(--warn-bg)'],
+    partial:['var(--warn)','var(--warn-bg)'], no:['var(--bad)','var(--bad-bg)'],
+    na:['var(--text3)','var(--bg2)']
+  };
+  var RLAB = {cs:'CS', dec:'Dec', acc:'Acc', hw:'HW'};
+  function rc(role){ return (M.roleColor && M.roleColor[role]) || 'var(--text2)'; }
+  function hexA(h,a){ if(!h||h[0]!=='#') return 'transparent'; var n=parseInt(h.slice(1),16); return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+a+')'; }
+  function rev(spec, origin){ return (M.revisions && M.revisions[spec] && M.revisions[spec][origin]) || null; }
+  function provPill(ref){
+    if(!ref.origin) return '';
+    var draft = ref.origin==='draft', rv = rev(ref.spec, ref.origin);
+    var c = draft ? ['#854f0b','#faeeda'] : ['var(--text2)','var(--bg2)'];
+    var h = '<span class="prov" style="color:'+c[0]+';background:'+c[1]+'">'+esc((draft?'Draft':'Released')+(rv?' · '+rv:''))+'</span>';
+    if(ref.draftDelta) h += '<span class="prov" style="color:#854f0b;background:#faeeda" title="a draft revision changes this requirement">&#916; draft</span>';
+    return h;
+  }
+  function glyph(s){ return '<svg viewBox="0 0 24 24" aria-hidden="true">'+(GLYPH[s]||GLYPH.na)+'</svg>'; }
+  function badge(o){
+    var s=o.state, c=COLOR[s]||COLOR.na;
+    var label={ok:'yes',planned:'planned',partial:'partial',no:'no',na:'n/a'}[s]||s;
+    var h='<span class="badge" style="color:'+c[0]+';background:'+c[1]+'">'+glyph(s)+label+'</span>';
+    if(o.note) h+='<span class="note">'+esc(o.note)+'</span>';
+    return h;
+  }
+  function esc(t){ return (t==null?'':String(t)).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function chips(a){ return a&&a.length ? a.map(function(x){return '<code class="chip">'+esc(x)+'</code>';}).join('') : '<span style="color:var(--text3)">none</span>'; }
+  function cases(items, kind){
+    if(!items||!items.length) return '';
+    return items.map(function(it){
+      var name = kind==='hil' ? it.label : it.name;
+      return '<details class="tcase"><summary><span class="tname">'+esc(name)+'</span><span class="tfile">'+esc(it.file)+'</span></summary><div>'+esc(it.desc)+'</div></details>';
+    }).join('');
+  }
+
+  document.getElementById('title').textContent = M.title;
+  document.getElementById('meta').innerHTML =
+    '<span class="chip">source '+esc(M.sourceCommit)+'</span>'+
+    '<span class="chip">validated '+esc(M.validated)+'</span>'+
+    '<span class="chip">rendered from compliance.data.js</span>';
+
+  var ROLES = [['all','All features']].concat(['cs','dec','acc'].map(function(k){return [k,M.roles[k]];}));
+  document.getElementById('roles').innerHTML = ROLES.map(function(r){
+    return '<button class="role" data-role="'+r[0]+'" aria-pressed="'+(r[0]===cur)+'">'+esc(r[1])+'</button>';
+  }).join('');
+
+  document.getElementById('legend').innerHTML = ['ok','planned','partial','no','na'].map(function(s){
+    var c=COLOR[s], lbl={ok:'covered / yes',planned:'planned',partial:'partial',no:'no',na:'n/a'}[s];
+    return '<span><span class="badge" style="color:'+c[0]+';background:'+c[1]+';padding:2px 6px">'+glyph(s)+'</span> '+lbl+'</span>';
+  }).join('');
+
+  function testCells(f){
+    if(f.verify==='hw') return '<td colspan="2"><span class="hwtest">Hardware test</span></td>';
+    if(f.verify==='other') return '<td colspan="2"><span class="hwtest hwother">Other library</span></td>';
+    return '<td>'+badge(f.gtest)+'</td><td>'+badge(f.hil)+'</td>';
+  }
+  function render(){
+    var board = document.getElementById('board'), html='';
+    DB.specs.forEach(function(spec){
+      var feats = spec.features.filter(function(f){
+        if(cur!=='all' && f.role!==cur) return false;
+        var band = f.ref.origin==='draft' ? 'draft_new' : (f.ref.draftDelta ? 'draft_revised' : 'released');
+        if(band==='released' ? !showReleased : !showDraft) return false;
+        var cat = f.verify==='hw' ? 'hw' : (f.verify==='other' ? 'other' : 'fw');
+        if(cat==='fw' ? !showFirmware : (cat==='hw' ? !showHardware : !showOther)) return false;
+        return true;
+      });
+      if(!feats.length) return;
+      var showRole = (cur==='all');
+      var hilHdr = (cur==='all') ? 'HIL' : (M.hilRig[cur]||'HIL');
+      var isColl=!!coll[spec.id];
+      html += '<h2 class="spec" data-spec="'+spec.id+'"><span class="caret">'+(isColl?'▸':'▾')+'</span>'+esc(spec.spec)+' — '+esc(spec.title)+'<span class="cnt">'+feats.length+' feature'+(feats.length===1?'':'s')+'</span></h2>';
+      if(isColl) return;
+      var span = showRole?5:4;
+      function renderRow(f){
+        var isOpen=!!open[f.tid], col=rc(f.role);
+        var accent = showRole ? 'border-left:4px solid '+col+';padding-left:10px;' : '';
+        var tint = showRole ? ' style="background:'+hexA(col,0.07)+'"' : '';
+        var s = '<tr class="row'+(isOpen?' open':'')+'"'+tint+' data-tid="'+f.tid+'" tabindex="0" role="button" aria-expanded="'+isOpen+'">'+
+          '<td style="'+accent+'"><div class="feat"><span>'+(isOpen?'&#9662;':'&#9656;')+'</span><span>'+esc(f.feature)+
+            '<span class="ref"><span class="tid">'+esc(f.tid)+'</span> · <span class="cite">'+esc(f.ref.cite||'')+'</span></span></span></div></td>'+
+          (showRole?'<td><span class="roletag" style="background:'+col+'">'+esc(RLAB[f.role]||f.role)+'</span></td>':'')+
+          '<td>'+badge(f.supported)+'</td>'+testCells(f)+'</tr>';
+        if(isOpen){
+          var gB = f.refs.tests.length ? cases(f.refs.tests,'gtest') : '<div class="prose">'+esc(f.detail.gtest||'—')+'</div>';
+          var hB = f.refs.hilChecks.length ? cases(f.refs.hilChecks,'hil') : '<div class="prose">'+esc(f.detail.hil||'—')+'</div>';
+          s += '<tr><td colspan="'+span+'" style="border-top:none;padding-top:0">'+
+            '<div class="detail" style="border-left:3px solid '+col+'">'+
+            '<div class="dgrid">'+
+              '<div><div class="dlabel">'+((f.verify==='hw'||f.verify==='other')?'Requirement':'Supported')+'</div><div class="prose">'+esc(f.detail.impl)+'</div></div>'+
+              (f.verify==='hw' ? '<div><div class="dlabel">Verification</div><div class="prose">Hardware standard — verified by hardware test or inspection, not by software tests.</div></div>'
+               : f.verify==='other' ? '<div><div class="dlabel">Verification</div><div class="prose">Defined by a separate firmware library (not implemented in OpenDccCLib); not covered by these software tests.</div></div>'
+               : '<div><div class="dlabel">gTest (host)</div>'+gB+'</div><div><div class="dlabel">'+esc(M.hilRig[f.role]||'HIL')+'</div>'+hB+'</div>')+
+            '</div>'+
+            (f.ref.draftDelta ? '<div class="refs"><div class="dlabel" style="color:#854f0b">draft change'+(rev(f.ref.spec,"draft")?' · '+esc(rev(f.ref.spec,"draft")):'')+'</div><div class="prose">'+esc(f.ref.draftDelta.change||'')+'</div></div>' : '')+
+            '<div class="refs"><span style="color:var(--text2)">symbols checked against src/dcc:</span> '+chips(f.refs.symbols)+'</div>'+
+            '</div></td></tr>';
+        }
+        return s;
+      }
+      html += '<table><thead><tr>'+
+        '<th style="width:'+(showRole?39:46)+'%">Feature</th>'+
+        (showRole?'<th style="width:11%">Role</th>':'')+
+        '<th style="width:18%">Supported</th><th style="width:16%">gTest</th><th style="width:18%">'+esc(hilHdr)+'</th>'+
+        '</tr></thead><tbody>';
+      var RORD={cs:0,dec:1,acc:2,hw:3}, groups={};
+      feats.forEach(function(f){
+        var o = f.ref.origin==='draft' ? 'draft_new' : (f.ref.draftDelta ? 'draft_revised' : 'released');
+        (groups[o]=groups[o]||[]).push(f);
+      });
+      var GMETA = {
+        released:      {label:'Released',         origin:'released', draft:false},
+        draft_revised: {label:'Draft — revised',  origin:'draft',    draft:true},
+        draft_new:     {label:'Draft — new',      origin:'draft',    draft:true}
+      };
+      ['released','draft_revised','draft_new'].forEach(function(gk){
+        var g=groups[gk]; if(!g||!g.length) return;
+        g.sort(function(a,b){ return (RORD[a.role]-RORD[b.role]) || a.tid.localeCompare(b.tid); });
+        var m=GMETA[gk], date=rev(spec.spec, m.origin);
+        var gbg = m.draft ? '#faeeda' : 'var(--bg2)', gcol = m.draft ? '#854f0b' : 'var(--text2)';
+        html += '<tr class="grp"><td colspan="'+span+'" style="background:'+gbg+';color:'+gcol+'">'+m.label+(date?' · '+esc(date):'')+'</td></tr>';
+        g.forEach(function(f){ html += renderRow(f); });
+      });
+      html += '</tbody></table>';
+    });
+    board.innerHTML = html;
+    board.querySelectorAll('h2.spec').forEach(function(h){
+      h.addEventListener('click', function(){ var id=h.getAttribute('data-spec'); coll[id]=!coll[id]; saveState(); render(); });
+    });
+    board.querySelectorAll('tr.row').forEach(function(tr){
+      var go=function(){ var t=tr.getAttribute('data-tid'); open[t]=!open[t]; render(); };
+      tr.addEventListener('click', function(e){ if(e.target.closest('details')) return; go(); });
+      tr.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); go(); } });
+    });
+  }
+  document.getElementById('roles').addEventListener('click', function(e){
+    var b=e.target.closest('button.role'); if(!b) return;
+    cur=b.getAttribute('data-role'); open={};
+    document.querySelectorAll('button.role').forEach(function(x){ x.setAttribute('aria-pressed', x===b); });
+    saveState(); render();
+  });
+  document.getElementById('filters').addEventListener('change', function(){
+    showReleased=document.getElementById('f-released').checked;
+    showDraft=document.getElementById('f-draft').checked;
+    showFirmware=document.getElementById('f-fw').checked;
+    showHardware=document.getElementById('f-hw').checked;
+    showOther=document.getElementById('f-other').checked;
+    open={}; saveState(); render();
+  });
+  document.getElementById('b-collapse').addEventListener('click', function(){ DB.specs.forEach(function(s){ coll[s.id]=true; }); saveState(); render(); });
+  document.getElementById('b-expand').addEventListener('click', function(){ coll={}; saveState(); render(); });
+  document.getElementById('f-released').checked = showReleased;
+  document.getElementById('f-draft').checked = showDraft;
+  document.getElementById('f-fw').checked = showFirmware;
+  document.getElementById('f-hw').checked = showHardware;
+  document.getElementById('f-other').checked = showOther;
+  render();
+})();
+</script>
+</body>
+</html>

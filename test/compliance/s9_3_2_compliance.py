@@ -218,6 +218,7 @@ def checks(rep, decoded, measurements):
 
     # 1. One cutout window per decoded packet (±2 boundary tolerance)
     rep.check(
+        # @compliance DCC-S9.3.2-CS-004
         "S-9.3.2 §3.1", "one cutout window per packet",
         abs(n_cutouts - n_packets) <= 2,
         f"{n_cutouts} cutout windows matched, {n_packets} packets decoded "
@@ -237,14 +238,14 @@ def checks(rep, decoded, measurements):
     t_ce_vals = [m[1] for m in measurements]
     win_vals  = [m[2] for m in measurements]
 
-    # 2. T_CS
+    # 2. T_CS  @compliance DCC-S9.3.2-CS-001
     rep.check(
         "S-9.3.2 §3.2", "T_CS 26-32 us  (end-bit edge → cutout start)",
         all(T_CS_MIN_US <= v <= T_CS_MAX_US for v in t_cs_vals),
         lib.sigma_margin_detail(t_cs_vals, T_CS_MIN_US, T_CS_MAX_US) + " us",
     )
 
-    # 3. T_CE
+    # 3. T_CE  @compliance DCC-S9.3.2-CS-002
     rep.check(
         "S-9.3.2 §3.2", "T_CE 454-488 us  (end-bit edge → cutout end)",
         all(T_CE_MIN_US <= v <= T_CE_MAX_US for v in t_ce_vals),
@@ -254,6 +255,7 @@ def checks(rep, decoded, measurements):
     # 4. Window duration (derived: tightest combination of both walls)
     rep.check(
         "S-9.3.2 §3.2",
+        # @compliance DCC-S9.3.2-CS-003
         f"window T_CE-T_CS  {WIN_MIN_US:.0f}-{WIN_MAX_US:.0f} us",
         all(WIN_MIN_US <= v <= WIN_MAX_US for v in win_vals),
         lib.sigma_margin_detail(win_vals, WIN_MIN_US, WIN_MAX_US) + " us",

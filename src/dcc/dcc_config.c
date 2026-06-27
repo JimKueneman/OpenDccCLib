@@ -364,9 +364,9 @@ static void _service_encoder_stop(void) {
 
 }
 
-static bool _service_begin_operation(const dcc_packet_t *packet, dcc_service_mode_step_callback_t callback, bool is_write_operation, uint8_t recovery_count) {
+static bool _service_begin_operation(const dcc_packet_t *packet, dcc_service_mode_step_callback_t callback, bool is_write_operation, uint8_t command_repeat, uint8_t recovery_count) {
 
-    return DccServiceModeCommon_begin_operation(&_service_common_context, packet, callback, is_write_operation, recovery_count);
+    return DccServiceModeCommon_begin_operation(&_service_common_context, packet, callback, is_write_operation, command_repeat, recovery_count);
 
 }
 
@@ -704,7 +704,6 @@ void DccConfig_initialize(const dcc_config_t *config) {
      * Uses ref-counted shared timer wrappers. */
     _service_application_interface.timer_start = &_shared_timer_acquire;
     _service_application_interface.timer_stop = &_shared_timer_release;
-    _service_application_interface.track_power_set = config->service_track.track_power_set;
     _service_application_interface.encoder_start = &_service_encoder_start;
     _service_application_interface.encoder_stop = &_service_encoder_stop;
     _service_application_interface.enter_service_mode = &_service_enter_service_mode;
@@ -734,11 +733,13 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _service_application_interface.register_read_bit = &DccServiceModeTaskRegister_read_bit;
     _service_application_interface.register_write_bit = &DccServiceModeTaskRegister_write_bit;
     _service_application_interface.register_factory_reset = &DccServiceModeTaskRegister_factory_reset;
+    _service_application_interface.register_verify_value = &DccServiceModeTaskRegister_verify_value;
 #endif
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
     _service_application_interface.address_read = &DccServiceModeTaskAddress_read;
     _service_application_interface.address_write = &DccServiceModeTaskAddress_write;
+    _service_application_interface.address_verify = &DccServiceModeTaskAddress_verify;
     _service_application_interface.address_read_bit = &DccServiceModeTaskAddress_read_bit;
     _service_application_interface.address_write_bit = &DccServiceModeTaskAddress_write_bit;
 #endif

@@ -68,9 +68,6 @@ typedef struct {
         /** @brief Stop the DCC timer for this channel. */
     void (*timer_stop)(void);
 
-        /** @brief Enable or disable track power. */
-    void (*track_power_set)(bool enabled);
-
         /** @brief Start the bit encoder (begin generating DCC signal). */
     void (*encoder_start)(void);
 
@@ -135,6 +132,9 @@ typedef struct {
         /** @brief Register mode task: decoder factory reset (write 8 to register 8). */
     bool (*register_factory_reset)(dcc_service_mode_task_on_complete_callback_t on_complete);
 
+        /** @brief Register mode task: verify a single register value. */
+    bool (*register_verify_value)(uint16_t cv, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_REGISTER */
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
@@ -144,6 +144,9 @@ typedef struct {
 
         /** @brief Address-only mode task: write CV#1 (short address, with verify). */
     bool (*address_write)(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+
+        /** @brief Address-only mode task: verify CV#1 against a value. */
+    bool (*address_verify)(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /** @brief Address-only mode task: read a single bit of CV#1. */
     bool (*address_read_bit)(uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
@@ -255,6 +258,9 @@ extern bool DccApplicationCommandStationServiceTrack_register_write_bit(uint16_t
     /** @brief Register mode: decoder factory reset (write 8 to register 8). */
 extern bool DccApplicationCommandStationServiceTrack_register_factory_reset(dcc_service_mode_task_on_complete_callback_t on_complete);
 
+    /** @brief Register mode: verify a single register value. */
+extern bool DccApplicationCommandStationServiceTrack_register_verify_value(uint16_t cv, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_REGISTER */
 
     // =========================================================================
@@ -268,6 +274,9 @@ extern bool DccApplicationCommandStationServiceTrack_address_read(dcc_service_mo
 
     /** @brief Address-only mode: write CV#1 (short address) then verify. */
 extern bool DccApplicationCommandStationServiceTrack_address_write(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+
+    /** @brief Address-only mode: verify CV#1 against a value. */
+extern bool DccApplicationCommandStationServiceTrack_address_verify(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
     /** @brief Address-only mode: read a single bit of CV#1. */
 extern bool DccApplicationCommandStationServiceTrack_address_read_bit(uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);

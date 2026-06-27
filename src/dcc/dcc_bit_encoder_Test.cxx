@@ -145,6 +145,7 @@ TEST(DccBitEncoder, tick_transmits_idle_packet) {
 
 }
 
+// @compliance DCC-S9.1-CS-001, DCC-S9.1-CS-003
 TEST(DccBitEncoder, tick_preamble_is_all_one_bits) {
 
     reset_tick_mocks();
@@ -177,6 +178,7 @@ TEST(DccBitEncoder, tick_preamble_is_all_one_bits) {
 
 }
 
+// @compliance DCC-S9.1-CS-002
 TEST(DccBitEncoder, tick_zero_bit_takes_four_ticks) {
 
     reset_tick_mocks();
@@ -207,6 +209,7 @@ TEST(DccBitEncoder, tick_zero_bit_takes_four_ticks) {
 
 }
 
+// @compliance DCC-Library-CS-004
 TEST(DccBitEncoder, tick_packet_complete_without_railcom) {
 
     reset_tick_mocks();
@@ -268,6 +271,7 @@ TEST(DccBitEncoder, tick_no_crash_when_not_running) {
 
 }
 
+// @compliance DCC-Library-CS-004
 TEST(DccBitEncoder, tick_consecutive_packets) {
 
     reset_tick_mocks();

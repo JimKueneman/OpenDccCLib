@@ -195,8 +195,7 @@ address; reads or writes up to 4 contiguous CVs (S-9.2.1 §2.3.7.4).
 > and Feature Expansion group `110`).
 > They were previously filed under "S-9.2.1.1." The **released S-9.2.1.1** is a
 > different standard entirely — the Logon auto-registration protocol, address
-> partitions 253/254, CRC-8+XOR error detection, and Data Spaces (see
-> [DCC_Draft_Deltas.md](DCC_Draft_Deltas.md) §2).
+> partitions 253/254, CRC-8+XOR error detection, and Data Spaces.
 
 ### Binary State Control
 - **Short form** (`11011101 DLLLLLLL`):
@@ -211,8 +210,7 @@ address; reads or writes up to 4 contiguous CVs (S-9.2.1 §2.3.7.4).
 00111101 VVVVVVVV DDDDDDDD
 ```
 - Instruction byte `00111101` (CCC=001 Advanced Operations, GGGGG=11101).
-  (Earlier drafts of this note listed `11111101` — that was incorrect; see
-  [DCC_Draft_Deltas.md](DCC_Draft_Deltas.md) §1.3.)
+  (Earlier drafts of this note listed `11111101` — that was incorrect.)
 - V = analog function number (`00000001` = Volume Control; all other values reserved)
 - D = analog value(s)
 - Must NOT be used to control decoder speed.
@@ -374,8 +372,6 @@ address; reads or writes up to 4 contiguous CVs (S-9.2.1 §2.3.7.4).
 - **Channel 1**: starts T_TS1 = **80 µs**, ends T_TC1 ≤ **177 µs**
 - **Channel 2**: starts T_TS2 = **193 µs**, ends T_TC2 ≤ **454 µs**
 - Data rate 250 kbit/s ±2%
-
-> ⚠ The previously listed values (88 / ~464 / ~1544 µs) were incorrect and appear nowhere in the standard. The firmware constants in `dcc_defines.h` (88 / 464 / 1544) still use those old values — see ComplianceMatrix.md.
 
 ### Channel 1 (Short / Broadcast)
 - 2 bytes; each byte on the wire = start bit + **8 data bits** (4/8 line code) + stop bit. Net payload = 12 bits (2 × 6)

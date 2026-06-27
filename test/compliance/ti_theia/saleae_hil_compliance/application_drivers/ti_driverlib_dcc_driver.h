@@ -56,11 +56,24 @@ extern void TI_DccDriver_timer_stop(void);
 // enabled=true means power on, enabled=false means power off.
 extern void TI_DccDriver_track_power_set(bool enabled);
 
-// Read the ACK sense GPIO pin (PB12) as a digital current-sense substitute.
-// Returns 100 when the pin is HIGH (decoder is asserting ACK), 0 when LOW.
+// Read the MOCK_ACK GPIO pin (PB9) as a digital current-sense substitute.
+// Returns 100 when the pin is HIGH (mock ACK asserted), 0 when LOW.
 // The library compares this against USER_DEFINED_DCC_ACK_THRESHOLD_MA (60),
 // so 100 > 60 triggers ACK detection.
 extern uint16_t TI_DccDriver_current_sense_read(void);
+
+// Mock ACK loopback (HIL only): drive MOCK_ACK_DRIVE (PB24), jumpered to
+// MOCK_ACK (PB9), to inject a controlled-width ACK pulse the library reads back.
+//   arm(width_us)  : arm a one-shot pulse of the given width (rounded to 58us ticks)
+//   on_command()   : start the armed pulse (call when a service command packet sends)
+//   tick()         : advance the pulse one ISR tick (call every 58us, before ack sample)
+extern void TI_DccDriver_mock_ack_arm(uint16_t width_us);
+extern void TI_DccDriver_mock_ack_on_command(void);
+extern void TI_DccDriver_mock_ack_tick(void);
+
+// Mock decoder (HIL only): immediately start a mock-ACK pulse of the given width.
+// Used to ACK a verify command the moment a held-value match is detected.
+extern void TI_DccDriver_mock_ack_fire(uint16_t width_us);
 
 // Start the shared fixed-period DCC timer (58us). Both main track and service
 // track are clocked from this single timer. The ISR must call
@@ -88,9 +101,6 @@ extern void TI_DccDriver_main_pin_toggle(void);
 // the .railcom begin/end hooks, called by the cutout timer.
 extern void TI_DccDriver_main_cutout_begin(void);
 extern void TI_DccDriver_main_cutout_end(void);
-
-// Enable or disable the service track power output (PB4).
-extern void TI_DccDriver_svc_track_power_set(bool enabled);
 
 // Toggle the service track DCC signal GPIO pin. Called from ISR context by the
 // bit encoder's tick_isr.

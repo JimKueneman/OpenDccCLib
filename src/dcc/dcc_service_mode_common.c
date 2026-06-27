@@ -95,6 +95,23 @@ static void _load_reset_packet(dcc_service_mode_common_context_t *context) {
 #define DCC_ACK_MAX_SAMPLES \
     (USER_DEFINED_DCC_ACK_MAX_DURATION_US / DCC_ONE_BIT_HALF_PERIOD_US)
 
+    /**
+     * @brief Dropout tolerance: bridge brief sub-threshold dips during an ACK.
+     *
+     * @details A real Basic ACK is the decoder pulsing a noisy load (motor):
+     * commutation/PWM ripple can make the current-sense comparator chatter
+     * below threshold for a sample or two mid-pulse. We bridge up to this many
+     * CONSECUTIVE low samples into the run rather than ending it, so a noisy
+     * 6 ms ACK is still measured as one ~6 ms span. Set the user value to 0 for
+     * strict consecutive-high detection (the original behavior). Optional --
+     * defaults to ~116 us (2 samples) if the user config does not define it.
+     */
+#ifndef USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US
+#define USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US 116
+#endif
+#define DCC_ACK_DROPOUT_SAMPLES \
+    (USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US / DCC_ONE_BIT_HALF_PERIOD_US)
+
 
 // =============================================================================
 // Public API
@@ -133,14 +150,24 @@ void DccServiceModeCommon_ack_sample(dcc_service_mode_common_context_t *context,
 
     }
 
+    /* S-9.2.3 line 55: ignore current until the ACK scan window has opened
+     * (the first command packets are blanked to mask mode-switch transients). */
+    if (!context->ack_window_open) {
+
+        return;
+
+    }
+
     if (sense_value >= USER_DEFINED_DCC_ACK_THRESHOLD_MA) {
 
-        /* Still high: defer the decision. Count the run; if it grows past
-         * the upper bound, flag it as an over-current run (S-9.2.3 p.3),
-         * not an ACK, and stop counting this run. */
+        /* Elevated. Resuming after a brief dropout absorbs the bridged low
+         * samples into the run (we measure the SPAN of elevated current, not
+         * strict-high time -- a noisy motor ACK dips below threshold but the
+         * current is still elevated). Flag over-current if the span grows past
+         * the upper bound (S-9.2.3 p.3) -- that is a fault, not an ACK. */
         if (!context->ack_overrun) {
 
-            context->ack_high_count++;
+            context->ack_high_count += (uint16_t)(context->ack_low_run + 1u);
 
             if (context->ack_high_count > DCC_ACK_MAX_SAMPLES) {
 
@@ -150,20 +177,31 @@ void DccServiceModeCommon_ack_sample(dcc_service_mode_common_context_t *context,
 
         }
 
-    } else {
+        context->ack_low_run = 0;
 
-        /* Falling edge: the high run just ended. Accept it as an ACK only
-         * if it stayed within the two-sided 5-7 ms window (S-9.2.3 p.2):
-         * long enough (>= MIN) and not flagged as over-current (<= MAX). */
-        if (!context->ack_overrun &&
-            context->ack_high_count >= DCC_ACK_MIN_SAMPLES) {
+    } else if (context->ack_high_count > 0) {
 
-            context->ack_detected = true;
+        /* Below threshold while inside a run: a candidate dropout. Bridge up to
+         * DCC_ACK_DROPOUT_SAMPLES consecutive low samples; only a longer low run
+         * is a real falling edge. */
+        context->ack_low_run++;
+
+        if (context->ack_low_run > DCC_ACK_DROPOUT_SAMPLES) {
+
+            /* Real falling edge: accept as an ACK only if the span stayed in the
+             * two-sided 5-7 ms window (>= MIN and not over-current). */
+            if (!context->ack_overrun &&
+                context->ack_high_count >= DCC_ACK_MIN_SAMPLES) {
+
+                context->ack_detected = true;
+
+            }
+
+            context->ack_high_count = 0;
+            context->ack_low_run = 0;
+            context->ack_overrun = false;
 
         }
-
-        context->ack_high_count = 0;
-        context->ack_overrun = false;
 
     }
 
@@ -209,11 +247,20 @@ static void _run_command_state(dcc_service_mode_common_context_t *context) {
         context->state = SERVICE_COMMON_STATE_RESET_POST;
         context->packet_count = 0;
 
-    } else if (context->packet_count < DCC_SERVICE_MODE_COMMAND_REPEAT) {
+    } else if (context->packet_count < context->command_repeat_count) {
 
         context->interface->load_packet(&context->command_packet);
         context->first_packet_sent = true;
         context->packet_count++;
+
+        /* S-9.2.3 line 55: open the ACK scan window once the early command
+         * packets have passed (blank the decoder mode-switch transient). Stays
+         * open through the rest of COMMAND and all of RECOVERY. */
+        if (context->packet_count > DCC_SERVICE_MODE_ACK_BLANK_PACKETS) {
+
+            context->ack_window_open = true;
+
+        }
 
     } else if (context->is_write_operation) {
 
@@ -376,7 +423,7 @@ void DccServiceModeCommon_exit(dcc_service_mode_common_context_t *context) {
 
 }
 
-bool DccServiceModeCommon_begin_operation(dcc_service_mode_common_context_t *context, const dcc_packet_t *command_packet, dcc_service_mode_step_callback_t on_step_complete, bool is_write_operation, uint8_t recovery_count) {
+bool DccServiceModeCommon_begin_operation(dcc_service_mode_common_context_t *context, const dcc_packet_t *command_packet, dcc_service_mode_step_callback_t on_step_complete, bool is_write_operation, uint8_t command_repeat, uint8_t recovery_count) {
 
     if (!context->in_service_mode) {
 
@@ -402,6 +449,9 @@ bool DccServiceModeCommon_begin_operation(dcc_service_mode_common_context_t *con
     context->first_packet_sent = false;
     context->is_write_operation = is_write_operation;
     context->recovery_packet_count = recovery_count;
+    context->command_repeat_count = command_repeat;
+    context->ack_window_open = false;
+    context->ack_low_run = 0;
 
     context->state = SERVICE_COMMON_STATE_RESET_PRE;
 

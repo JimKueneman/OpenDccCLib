@@ -204,6 +204,7 @@ def accessory_nop(addr, is_extended):
 # ----------------------------------------------------------------------------
 # EXACT: (uart_command, expected_bytes, clause, label)
 EXACT = [
+    # @compliance DCC-S9.2.1-CS-001
     ("SPEED 3 64 FWD",      speed_128(3, 64, True),    "§2.3.2.1", "128-step speed 64 fwd"),
     ("SPEED 3 64 REV",      speed_128(3, 64, False),   "§2.3.2.1", "128-step speed 64 rev"),
     ("SPEED 3 0 FWD",       speed_128(3, 0, True),     "§2.3.2.1", "128-step stop (DSSSSSSS=0)"),
@@ -212,29 +213,42 @@ EXACT = [
     ("SPEED 1000 0 FWD",    speed_128(1000, 0, True),  "§2.3.2.1", "128-step long addr + stop (boundary x long)"),
     ("SPEED 1000 1 FWD",    speed_128(1000, 1, True),  "§2.3.2.1", "128-step long addr + e-stop"),
     ("SPEED 1000 127 FWD",  speed_128(1000, 127, True),"§2.3.2.1", "128-step long addr + max"),
+    # @compliance DCC-S9.2.1-CS-025
     ("SPEED 1000 64 FWD",   speed_128(1000, 64, True), "§2.3.1",   "long address (11AAAAAA AAAAAAAA)"),
     ("SPEED 1 64 FWD",      speed_128(1, 64, True),    "§2.3.1",   "short address min (01)"),
+    # @compliance DCC-S9.2.1-CS-025
     ("SPEED 127 64 FWD",    speed_128(127, 64, True),  "§2.3.1",   "short address max (7F)"),
     ("SPEED 128 64 FWD",    speed_128(128, 64, True),  "§2.3.1",   "long address min (C0 80)"),
     ("SPEED 10239 64 FWD",  speed_128(10239, 64, True),"§2.3.1",   "long address max usable (E7 FF)"),
     ("SPEED 3L 64 FWD",     speed_128(3, 64, True, force_long=True), "§2.3.1", "low address forced long (C0 03)"),
+    # @compliance DCC-S9.2.1-CS-004
     ("FUNC 3 0 ON",         group1(3, 0x10),           "§2.3.4",   "func group 1: FL on"),
     ("FUNC 3 1 ON",         group1(3, 0x01),           "§2.3.4",   "func group 1: F1 on"),
+    # @compliance DCC-S9.2.1-CS-005
     ("FUNC 3 5 ON",         group2_high(3, 0x01),      "§2.3.5",   "func group 2: F5 on (1011)"),
+    # @compliance DCC-S9.2.1-CS-006
     ("FUNC 3 9 ON",         group2_low(3, 0x01),       "§2.3.5",   "func group 2: F9 on (1010)"),
+    # @compliance DCC-S9.2.1-CS-007
     ("FUNC 3 13 ON",        func_f13_f20(3, 0x01),     "§2.3.6",   "F13-F20 expansion (11011110)"),
     ("FUNC 3 21 ON",        func_f21_f28(3, 0x01),     "§2.3.6",   "F21-F28 expansion (11011111)"),
     ("FUNC 3 29 ON",        func_f29_f36(3, 0x01),     "§2.3.6",   "F29-F36 expansion (11011000)"),
     ("FUNC 3 37 ON",        func_f37_f44(3, 0x01),     "§2.3.6",   "F37-F44 expansion (11011001)"),
     ("FUNC 3 45 ON",        func_f45_f52(3, 0x01),     "§2.3.6",   "F45-F52 expansion (11011010)"),
     ("FUNC 3 53 ON",        func_f53_f60(3, 0x01),     "§2.3.6",   "F53-F60 expansion (11011011)"),
+    # @compliance DCC-S9.2.1-CS-007
     ("FUNC 3 61 ON",        func_f61_f68(3, 0x01),     "§2.3.6",   "F61-F68 expansion (11011100)"),
+    # @compliance DCC-S9.2.1-CS-013
     ("CV WRITE 3 1 8",      cv_write_pom(3, 1, 8),     "§2.3.7.3", "CV-POM write CV1=8 (1110 11)"),
+    # @compliance DCC-S9.2.1-CS-014
     ("CV VERIFY 3 1 8",     cv_verify_pom(3, 1, 8),    "§2.3.7.3", "CV-POM verify CV1=8 (1110 01)"),
+    # @compliance DCC-S9.2.1-CS-017
     ("CONSIST 3 SET 5",     consist_set(3, 5, True),   "§2.3.1.4", "consist set addr 5 normal"),
+    # @compliance DCC-S9.2.1-CS-019
     ("BSS 3 1 ON",          binary_state_short(3, 1, True), "§2.3.6.1", "binary state short (11011101)"),
+    # @compliance DCC-S9.2.1-CS-021
     ("ANALOG 3 1 64",       analog(3, 1, 64),          "§2.3.2.3", "analog function (00111101)"),
     ("SPEED 3 10 FWD 28",   speed_28(3, 10, True),     "§2.3.2.1", "28-step speed 10 fwd (c-bit even)"),
+    # @compliance DCC-S9.2.1-CS-002
     ("SPEED 3 11 FWD 28",   speed_28(3, 11, True),     "§2.3.2.1", "28-step speed 11 fwd (c-bit odd)"),
     ("SPEED 3 0 FWD 28",    speed_28(3, 0, True),      "§2.3.2.1", "28-step stop (cssss=0)"),
     ("SPEED 3 1 FWD 28",    speed_28(3, 1, True),      "§2.3.2.1", "28-step e-stop (cssss=1)"),
@@ -242,11 +256,16 @@ EXACT = [
     ("SPEED 3 10 REV 28",   speed_28(3, 10, False),    "§2.3.2.1", "28-step speed 10 reverse"),
     ("SPEED 3 0 FWD 14",    speed_14(3, 0, True),      "§2.3.2.1", "14-step stop (SSSS=0)"),
     ("SPEED 3 1 FWD 14",    speed_14(3, 1, True),      "§2.3.2.1", "14-step e-stop (SSSS=1)"),
+    # @compliance DCC-S9.2.1-CS-003
     ("SPEED 3 15 FWD 14",   speed_14(3, 15, True),     "§2.3.2.1", "14-step max (SSSS=15, FL on)"),
     ("SPEED 3 8 REV 14",    speed_14(3, 8, False),     "§2.3.2.1", "14-step speed 8 reverse"),
+    # @compliance DCC-S9.2.1-CS-008
     ("ACC 1 0 ON",          accessory_basic(1, 0, True), "§2.4",   "accessory basic (inverted high addr bits)"),
+    # @compliance DCC-S9.2.1-CS-009
     ("ACCE 1 5",            accessory_extended(1, 5),  "§2.4",     "accessory extended (inverted high addr bits)"),
+    # @compliance DCC-S9.2.1-CS-012
     ("NOP 1",               accessory_nop(1, False),   "§2.4.6",   "accessory NOP basic (0AAA1AAT, T=0)"),
+    # @compliance DCC-S9.2.1-CS-012
     ("NOP 1 E",             accessory_nop(1, True),    "§2.4.6",   "accessory NOP extended (T=1)"),
     ("NOP 1500 E",          accessory_nop(1500, True), "§2.4.6",   "accessory NOP high addr (mid-2 bits)"),
     # --- accessory address boundary coverage ---
@@ -255,9 +274,11 @@ EXACT = [
     # raw-11-bit conventions first diverge -- exactly the case addr=1 hid.
     ("ACC 64 0 ON",         accessory_basic(64, 0, True),  "§2.4",   "accessory basic board 64 (6-bit rollover, high-3 inv=1)"),
     ("ACC 256 0 ON",        accessory_basic(256, 0, True), "§2.4",   "accessory basic board 256 (high-3 inv=4)"),
+    # @compliance DCC-S9.2.1-CS-008
     ("ACC 511 0 ON",        accessory_basic(511, 0, True), "§2.4",   "accessory basic board 511 (9-bit max)"),
     ("ACCE 64 5",           accessory_extended(64, 5),     "§2.4.2", "accessory extended board 64 (catches board-vs-raw11 split)"),
     ("ACCE 256 5",          accessory_extended(256, 5),    "§2.4.2", "accessory extended board 256"),
+    # @compliance DCC-S9.2.1-CS-009
     ("ACCE 511 5",          accessory_extended(511, 5),    "§2.4.2", "accessory extended board 511 (9-bit max)"),
     ("NOP 64",              accessory_nop(64, False),      "§2.4.6", "accessory NOP basic board 64"),
     ("NOP 256 E",           accessory_nop(256, True),      "§2.4.6", "accessory NOP extended board 256"),
@@ -266,12 +287,15 @@ EXACT = [
     ("SYSTIME 0",           system_time(0),       "§2.3.6.3", "system time ms=0 (00 C2 00 00)"),
     ("SYSTIME 1",           system_time(1),       "§2.3.6.3", "system time ms=1 (MSB clear, 00 01)"),
     ("SYSTIME 30000",       system_time(30000),   "§2.3.6.3", "system time ms=30000 (75 30)"),
+    # @compliance DCC-S9.2.1-CS-022
     ("SYSTIME 65535",       system_time(65535),   "§2.3.6.3", "system time ms=65535 (FF FF, 16-bit max)"),
+    # @compliance DCC-S9.2.1-CS-023
     ("MTIME 30 2 14 0 8",   model_time(30, 2, 14, 0, 8),  "§2.3.6.2", "model time 14:30 Wed accel 8"),
     ("MTIME 0 0 0 0 0",     model_time(0, 0, 0, 0, 0),    "§2.3.6.2", "model time min fields (00:00 Mon)"),
     ("MTIME 59 6 23 1 63",  model_time(59, 6, 23, 1, 63), "§2.3.6.2", "model time max fields (U=1, accel 63)"),
     ("MDATE 15 6 2026",     model_date(15, 6, 2026),      "§2.3.6.2", "model date 2026-06-15"),
     ("MDATE 1 1 0",         model_date(1, 1, 0),          "§2.3.6.2", "model date min fields"),
+    # @compliance DCC-S9.2.1-CS-024
     ("MDATE 31 12 4095",    model_date(31, 12, 4095),     "§2.3.6.2", "model date max fields (12-bit year)"),
 ]
 
@@ -314,6 +338,7 @@ def run():
     time.sleep(0.3)
     dec2, _ = lib.capture_and_decode()
     still = _target(dec2) is not None
+    # @compliance DCC-S9.2.1-CS-019
     rep.check(SPEC_DOC + " §2.3.6.1", "binary state NOT auto-refreshed",
               (got is not None) and not still,
               f"captured={got is not None}; still transmitting after 300ms={still}")

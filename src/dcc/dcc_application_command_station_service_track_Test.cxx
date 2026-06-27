@@ -28,8 +28,6 @@ static int  call_log_len;
 
 #define LOG_TIMER_START   1
 #define LOG_TIMER_STOP    2
-#define LOG_POWER_ON      3
-#define LOG_POWER_OFF     4
 #define LOG_ENCODER_START 5
 #define LOG_ENCODER_STOP  6
 #define LOG_ENTER         7
@@ -39,7 +37,6 @@ static void log_push(int e) { if (call_log_len < 16) call_log[call_log_len++] = 
 
 static void mock_timer_start(uint16_t period) { (void)period; log_push(LOG_TIMER_START); }
 static void mock_timer_stop(void) { log_push(LOG_TIMER_STOP); }
-static void mock_power_set(bool enabled) { log_push(enabled ? LOG_POWER_ON : LOG_POWER_OFF); }
 static void mock_encoder_start(void) { log_push(LOG_ENCODER_START); }
 static void mock_encoder_stop(void) { log_push(LOG_ENCODER_STOP); }
 
@@ -131,7 +128,6 @@ static interface_dcc_application_command_station_service_track_t make_interface(
 
     i.timer_start = mock_timer_start;
     i.timer_stop = mock_timer_stop;
-    i.track_power_set = mock_power_set;
     i.encoder_start = mock_encoder_start;
     i.encoder_stop = mock_encoder_stop;
     i.enter_service_mode = mock_enter_service_mode;
@@ -194,30 +190,27 @@ TEST(DccApplicationCommandStationServiceTrack, power_on_sequence) {
     setup();
     DccApplicationCommandStationServiceTrack_power_on();
 
-    ASSERT_EQ(call_log_len, 3);
-    EXPECT_EQ(call_log[0], LOG_POWER_ON);
-    EXPECT_EQ(call_log[1], LOG_TIMER_START);
-    EXPECT_EQ(call_log[2], LOG_ENCODER_START);
+    ASSERT_EQ(call_log_len, 2);
+    EXPECT_EQ(call_log[0], LOG_TIMER_START);
+    EXPECT_EQ(call_log[1], LOG_ENCODER_START);
 }
 
 TEST(DccApplicationCommandStationServiceTrack, power_off_sequence) {
     setup();
     DccApplicationCommandStationServiceTrack_power_off();
 
-    ASSERT_EQ(call_log_len, 3);
+    ASSERT_EQ(call_log_len, 2);
     EXPECT_EQ(call_log[0], LOG_ENCODER_STOP);
     EXPECT_EQ(call_log[1], LOG_TIMER_STOP);
-    EXPECT_EQ(call_log[2], LOG_POWER_OFF);
 }
 
 TEST(DccApplicationCommandStationServiceTrack, enter_service_mode_powers_and_enters) {
     setup();
     EXPECT_TRUE(DccApplicationCommandStationServiceTrack_enter_service_mode());
 
-    EXPECT_EQ(call_log[0], LOG_POWER_ON);
-    EXPECT_EQ(call_log[1], LOG_TIMER_START);
-    EXPECT_EQ(call_log[2], LOG_ENCODER_START);
-    EXPECT_EQ(call_log[3], LOG_ENTER);
+    EXPECT_EQ(call_log[0], LOG_TIMER_START);
+    EXPECT_EQ(call_log[1], LOG_ENCODER_START);
+    EXPECT_EQ(call_log[2], LOG_ENTER);
 }
 
 TEST(DccApplicationCommandStationServiceTrack, enter_service_mode_passes_through_false) {
@@ -230,11 +223,10 @@ TEST(DccApplicationCommandStationServiceTrack, exit_service_mode_exits_then_powe
     setup();
     DccApplicationCommandStationServiceTrack_exit_service_mode();
 
-    ASSERT_EQ(call_log_len, 4);
+    ASSERT_EQ(call_log_len, 3);
     EXPECT_EQ(call_log[0], LOG_EXIT);
     EXPECT_EQ(call_log[1], LOG_ENCODER_STOP);
     EXPECT_EQ(call_log[2], LOG_TIMER_STOP);
-    EXPECT_EQ(call_log[3], LOG_POWER_OFF);
 }
 
 TEST(DccApplicationCommandStationServiceTrack, is_service_mode_active_delegates) {

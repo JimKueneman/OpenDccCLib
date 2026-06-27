@@ -76,6 +76,12 @@
 /** @brief ACK maximum pulse duration in microseconds */
 #define USER_DEFINED_DCC_ACK_MAX_DURATION_US   7000
 
+// Bridge brief current-sense dropouts during an ACK (noisy motor loads /
+// comparator chatter). 0 = strict consecutive-high. Keep it a small fraction of
+// the 6 ms ACK (single-digit samples at the 58 us sample period) or it defeats
+// the width discrimination. ~116 us = 2 samples.
+#define USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US 116
+
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
 // =============================================================================

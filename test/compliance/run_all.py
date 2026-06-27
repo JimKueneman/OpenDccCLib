@@ -16,12 +16,14 @@ import compliance_lib as lib
 import s9_1_compliance
 import s9_2_compliance
 import s9_2_1_compliance
+import s9_2_3_compliance
 import s9_3_2_compliance
 
 SUITES = [
     s9_1_compliance,
     s9_2_compliance,
     s9_2_1_compliance,
+    s9_2_3_compliance,
     s9_3_2_compliance,
 ]
 

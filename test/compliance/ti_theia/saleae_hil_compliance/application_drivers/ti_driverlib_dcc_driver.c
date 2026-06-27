@@ -72,19 +72,80 @@ void TI_DccDriver_timer_stop(void) {
 void TI_DccDriver_track_power_set(bool enabled) {
 
     if (enabled) {
-        DL_GPIO_setPins(GPIO_DCC_PORT, GPIO_DCC_DCC_SIGNAL_PIN);
+        DL_GPIO_setPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_MAIN_DCC_PIN);
     } else {
-        DL_GPIO_clearPins(GPIO_DCC_PORT, GPIO_DCC_DCC_SIGNAL_PIN);
+        DL_GPIO_clearPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_MAIN_DCC_PIN);
     }
 }
 
 uint16_t TI_DccDriver_current_sense_read(void) {
 
-    /* Read the ACK sense pin (PB12).  Returns 100 (above threshold) when
-     * the decoder board is asserting its ACK GPIO, 0 otherwise. */
-    uint32_t pins = DL_GPIO_readPins(GPIO_ACK_SENSE_PORT,
-                                      GPIO_ACK_SENSE_ACK_IN_PIN);
-    return (pins & GPIO_ACK_SENSE_ACK_IN_PIN) ? 100 : 0;
+    /* Read the MOCK_ACK pin (PB9). On the HIL bench MOCK_ACK_DRIVE (PB24) is
+     * jumpered to MOCK_ACK (PB9), so the firmware-generated mock pulse is read
+     * back here as the "real" ACK current-sense level. Returns 100 (above the
+     * ACK threshold) when high, 0 otherwise. */
+    uint32_t pins = DL_GPIO_readPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_MOCK_ACK_PIN);
+    return (pins & GPIO_GRP_SALEAE_MOCK_ACK_PIN) ? 100 : 0;
+}
+
+/* =========================================================================
+ * Mock ACK loopback (HIL only)
+ *
+ * Drive MOCK_ACK_DRIVE (PB24) high for a controlled number of 58 us ISR ticks,
+ * then low. Wired to MOCK_ACK (PB9) by a board jumper, so the library's ACK
+ * width counter (in dcc_service_mode_common) reads it back through
+ * current_sense_read() and validates the 6 ms +/- 1 ms window. Lets the s9_2_3
+ * suite test ACK detection electrically with no real decoder.
+ *
+ *   arm(width_us)  -> records the pulse width (in 58 us ticks)
+ *   on_command()   -> when a service-mode command packet is sent, start the pulse
+ *   tick()         -> called every 58 us ISR; drives the pulse high then low
+ * ========================================================================= */
+
+#define MOCK_ACK_TICK_US 58u   /* fixed DCC bit-timer ISR period */
+
+static volatile uint16_t _mock_ack_width_ticks = 0;   /* armed width; 0 = not armed */
+static volatile uint16_t _mock_ack_remaining   = 0;   /* pulse countdown; >0 = high */
+
+void TI_DccDriver_mock_ack_arm(uint16_t width_us) {
+
+    /* Arm a one-shot pulse. Fired by on_command() at the next service command. */
+    _mock_ack_width_ticks = (uint16_t)(width_us / MOCK_ACK_TICK_US);
+    _mock_ack_remaining = 0;
+}
+
+void TI_DccDriver_mock_ack_on_command(void) {
+
+    /* Called when a service-mode command packet starts transmitting. If armed,
+     * begin the pulse now (so it lands inside the common module's COMMAND-state
+     * ACK-sample window) and disarm so it fires exactly once. */
+    if (_mock_ack_width_ticks > 0) {
+
+        _mock_ack_remaining = _mock_ack_width_ticks;
+        _mock_ack_width_ticks = 0;
+    }
+}
+
+void TI_DccDriver_mock_ack_fire(uint16_t width_us) {
+
+    /* Immediately start a pulse of the given width. Used by the mock decoder to
+     * ACK a verify command the instant a value match is detected (the width-test
+     * arm/on_command path above is left untouched). */
+    _mock_ack_remaining = (uint16_t)(width_us / MOCK_ACK_TICK_US);
+}
+
+void TI_DccDriver_mock_ack_tick(void) {
+
+    /* Called every 58 us ISR, BEFORE the library reads current_sense_read(). */
+    if (_mock_ack_remaining > 0) {
+
+        DL_GPIO_setPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_MOCK_ACK_DRIVE_PIN);
+        _mock_ack_remaining--;
+
+    } else {
+
+        DL_GPIO_clearPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_MOCK_ACK_DRIVE_PIN);
+    }
 }
 
 void TI_DccDriver_shared_timer_start(uint16_t period_usec) {
@@ -126,44 +187,26 @@ void TI_DccDriver_main_pin_toggle(void) {
      * line is IDENTICAL whether RailCom is on or off. The cutout is a separate
      * signal (begin/end below) that real H-bridge hardware would mux on to
      * tristate the track -- blanking is hardware's job, not ours. */
-    DL_GPIO_togglePins(GPIO_DCC_PORT, GPIO_DCC_DCC_SIGNAL_PIN);
+    DL_GPIO_togglePins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_MAIN_DCC_PIN);
 }
 
 /* Cutout-active signal (T_CS): raise PB2. In a real station this gates the
  * H-bridge into the cutout (tristate). Here it is the Saleae cutout-window marker. */
 void TI_DccDriver_main_cutout_begin(void) {
 
-    DL_GPIO_setPins(GPIO_DCC_MIRROR_PORT, GPIO_DCC_MIRROR_DCC_MIRROR_PIN);
+    DL_GPIO_setPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_RAILCOM_CUTOUT_PIN);
 }
 
 /* Cutout-active signal (T_CE): drop PB2 -- the H-bridge resumes driving the track. */
 void TI_DccDriver_main_cutout_end(void) {
 
-    DL_GPIO_clearPins(GPIO_DCC_MIRROR_PORT, GPIO_DCC_MIRROR_DCC_MIRROR_PIN);
-}
-
-void TI_DccDriver_svc_track_power_set(bool enabled) {
-
-    if (enabled) {
-        DL_GPIO_setPins(GPIO_SERVICE_MODE_DCC_PORT,
-                        GPIO_SERVICE_MODE_DCC_SERVICE_MODE_DCC_SIGNAL_PIN);
-        /* Tell decoder to listen on service track input (PB4) */
-        DL_GPIO_setPins(GPIO_TRACK_SELECT_PORT,
-                        GPIO_TRACK_SELECT_TRACK_SEL_PIN);
-    } else {
-        DL_GPIO_clearPins(GPIO_SERVICE_MODE_DCC_PORT,
-                          GPIO_SERVICE_MODE_DCC_SERVICE_MODE_DCC_SIGNAL_PIN);
-        /* Tell decoder to listen on main track input (PB1) */
-        DL_GPIO_clearPins(GPIO_TRACK_SELECT_PORT,
-                          GPIO_TRACK_SELECT_TRACK_SEL_PIN);
-    }
+    DL_GPIO_clearPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_RAILCOM_CUTOUT_PIN);
 }
 
 void TI_DccDriver_svc_pin_toggle(void) {
 
-    DL_GPIO_togglePins(GPIO_SERVICE_MODE_DCC_PORT,
-                       GPIO_SERVICE_MODE_DCC_SERVICE_MODE_DCC_SIGNAL_PIN);
-    /* PB2 (DCC_MIRROR) is now the RailCom cutout marker, not a DCC mirror. */
+    DL_GPIO_togglePins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_SERVICE_MODE_DCC_PIN);
+
 }
 
 void TI_DccDriver_timestamp_tick(void) {

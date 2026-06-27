@@ -50,7 +50,7 @@ extern "C" {
 typedef struct {
 
         /** @brief Start a service mode operation via the common module. */
-    bool (*begin_operation)(const dcc_packet_t *packet, dcc_service_mode_step_callback_t callback, bool is_write_operation, uint8_t recovery_count);
+    bool (*begin_operation)(const dcc_packet_t *packet, dcc_service_mode_step_callback_t callback, bool is_write_operation, uint8_t command_repeat, uint8_t recovery_count);
 
         /** @brief Check if the common module is idle. */
     bool (*is_common_idle)(void);
@@ -64,6 +64,9 @@ typedef struct {
 typedef struct {
 
     const interface_dcc_service_mode_address_t *interface;
+    uint8_t address_state;     /**< address_state_enum cast to uint8_t */
+    uint8_t address;           /**< pending address for the command step */
+    bool is_write;             /**< true = write, false = verify */
 
 } dcc_service_mode_address_context_t;
 

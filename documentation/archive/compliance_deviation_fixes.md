@@ -9,19 +9,18 @@
 > is not wired to hardware — `dcc_config.c` leaves the encoder's `uart_write` permanently NULL,
 > and there is no byte→pin bridge or decoder-side Tx one-shot timer (archived Open-Question-#2).
 > The encoder + response API are unit-tested with mocks but transmit nothing in a real build.
-> This is a larger design issue, deferred. Tracked in [../ComplianceMatrix.md](../ComplianceMatrix.md) →
+> This is a larger design issue, deferred. Tracked in [../ComplianceMatrix.md](../compliance/ComplianceMatrix.md) →
 > "Decoder-side RailCom Tx integration."
 
 ## Goal
 
-Fix the **"implemented but wrong"** findings from [../ComplianceMatrix.md](../ComplianceMatrix.md) —
+Fix the **"implemented but wrong"** findings from [../ComplianceMatrix.md](../compliance/ComplianceMatrix.md) —
 features that exist in the code but deviate from the NMRA spec. The **not-implemented**
 features (fail-safe/CV11, XPOM, Time/Date, accessory NOP, indexed CVs, Logon) are new
 functionality and are **out of scope** for this plan; they belong in a separate roadmap.
 
 Source of truth for spec facts: [../specs/DCC_Spec_Reference.md](../specs/DCC_Spec_Reference.md)
-and [../specs/DCC_Draft_Deltas.md](../specs/DCC_Draft_Deltas.md) (both verified claim-by-claim
-against the NMRA PDFs).
+(verified claim-by-claim against the NMRA PDFs).
 
 ## Ground rules
 
@@ -156,7 +155,7 @@ Land the small, self-contained fixes first; do the cutout rework last (it change
 
 ## Out of scope (tracked elsewhere)
 
-- Not-implemented features → see [../ComplianceMatrix.md](../ComplianceMatrix.md) backlog: fail-safe/CV11, XPOM,
+- Not-implemented features → see [../ComplianceMatrix.md](../compliance/ComplianceMatrix.md) backlog: fail-safe/CV11, XPOM,
   Time/Date & System Time, accessory NOP encoder, indexed CVs (CV31/32), factory-reset-to-defaults,
   CV29 bits 2/3/4/7 behavior, Logon/Data Spaces.
 - Retiring the duplicate pre-refactor modules (`dcc_packet_encoder`, `dcc_application_service_track`,

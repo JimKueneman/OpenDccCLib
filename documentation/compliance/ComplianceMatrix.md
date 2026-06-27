@@ -1,13 +1,11 @@
 # DCC Compliance Matrix
 
-> **Generated 2026-06-23.** Maps each DCC feature area to the released NMRA standard, the
+> **Generated 2026-06-22.** Maps each DCC feature area to the released NMRA standard, the
 > draft revision (where applicable), and the library's implementation + test coverage.
 > Scope: DCC core (S-9.1, S-9.2, S-9.2.1, S-9.2.1.1, S-9.2.2, S-9.2.3, S-9.2.4, S-9.3.2).
-> Granularity: feature-area. Spec facts come from the validated [DCC_Spec_Reference.md](specs/DCC_Spec_Reference.md)
-> and [DCC_Draft_Deltas.md](specs/DCC_Draft_Deltas.md); code/test facts from a sweep of
-> `src/dcc/` (verified against the source, commit `577f345`). The **S-9.2.3 service-mode
-> task-orchestrator layer, ACK-width boundary tests, and the `s9_2_3` HIL suite** were added
-> after `577f345` and verified against current source + the HIL bench (2026-06-23).
+> Granularity: feature-area. Spec facts come from the validated [DCC_Spec_Reference.md](../specs/DCC_Spec_Reference.md)
+> (draft provenance now lives in compliance.data.js); code/test facts from a sweep of
+> `src/dcc/` (verified against the source, commit `c4dc61e`).
 
 **Legend:** ✅ implemented + tested · ⚠️ implemented but spec-deviation/partial · ❌ not implemented · — n/a
 All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.cxx`).
@@ -17,26 +15,27 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 ## Snapshot
 
 - **Roles:** Command Station, Decoder, Accessory Decoder — `DCC_COMPILE_COMMAND_STATION` / `_DECODER` / `_ACCESSORY_DECODER`.
-- **Service modes:** Direct, Paged, Register, Address — primitives **plus a task-orchestrator layer** (read/write CV & bit per mode, decoder mode-detect, register factory-reset) exposed on the service-track façade; ACK detection (6 ms ±1 ms width window) handled in the common module.
-- **Tests:** 28 host unit-test binaries, 1155 tests passing (host, mocked drivers); ≈99% line coverage. Green host tests inject mock drivers — see **Known defects** (decoder RailCom Tx), which they cannot catch.
-- **Hardware-in-loop:** two-board MSPM0 loopback suite (manual gate, not CI); plus a Saleae logic-analyzer compliance rig ([test/compliance/](../test/compliance/)) that drives the command station over UART and wire-verifies S-9.1/S-9.2/S-9.2.1/S-9.2.3/S-9.3.2 packets via PB3 hardware trigger or timed capture (manual gate). Suite counts: S-9.1 7 (+1 n/a), S-9.2 8, S-9.2.1 66, S-9.3.2 4, **S-9.2.3 51 (+3 n/a — ACK boundary pending mock-ACK)**. The S-9.2.3 suite captures the main (ch0) and service (ch3) tracks **simultaneously** and asserts both stay in S-9.1 half-bit tolerance during every service-mode op.
+- **Service modes:** Direct, Paged, Register, Address — all implemented.
+- **Tests:** 28 host unit-test binaries, 1158 tests passing (host, mocked drivers); ≈99% line coverage. Green host tests inject mock drivers — see **Known defects** (decoder RailCom Tx), which they cannot catch.
+- **Hardware-in-loop:** Saleae HIL compliance suites (S-9.1 electrical/timing, S-9.2.1 packets, S-9.3.2 RailCom cutout, S-9.2.3 service mode — the last 150 checks incl. mock-ACK loopback) plus the two-board MSPM0 loopback suite (manual gate, not CI).
 
 ---
 
 ## Summary
 
-- **Strong, fully-tested core:** packet encoding (speed/function/accessory/CV-POM/consist/binary-state/analog), scheduler, bit encoder, all four service modes + the service-mode task-orchestrator layer, bit/packet decoder, CV storage, RailCom 4/8 encode+decode, decoder-side RailCom responses, accessory-decoder RailCom. 1155 unit tests, ~99% line coverage.
-- **Compliance deviations — ALL FIXED 2026-06-22** (see [archive/compliance_deviation_fixes.md](archive/compliance_deviation_fixes.md); 923 tests pass):
+- **Strong, fully-tested core:** packet encoding (speed/function/accessory/CV-POM/consist/binary-state/analog), scheduler, bit encoder, all four service modes (full §E page-preset sequences), bit/packet decoder, CV storage, RailCom 4/8 encode+decode, decoder-side RailCom responses, accessory-decoder RailCom. 1158 unit tests, ~99% line coverage.
+- **Compliance deviations — ALL FIXED 2026-06-22** (see [archive/compliance_deviation_fixes.md](../archive/compliance_deviation_fixes.md); 1158 tests pass):
   - ✅ **RailCom cutout** rebuilt as a 5-state machine (DELAY/SETTLING/CH1/GAP/CH2) with spec timing (T_CS 26 / T_TS1 80 / T_TC1 177 / T_TS2 193 / T_CE 454 µs), now user-configurable via `dcc_config_t` (0 = spec default).
   - ✅ Bit-encoder comment corrected to "single-buffered" (matches the code).
   - ✅ ACK detection now enforces the upper bound (`DCC_ACK_MAX_SAMPLES`); an over-long pulse is rejected as over-current, not an ACK.
   - ✅ Accessory **extended SRQ** now transmits the full address (basic ≠ extended).
   - ✅ Speed-restriction (`00111110`) **removed** (byte reserved for Zimo East-West).
   - ✅ RailCom decoder-response **datagram IDs aligned to the 2026 draft**; ACK/NACK now sent as 4/8 special code words; CS-side decode-table bug fixed (`0x0F`→ACK, `0x3C`→NACK).
-  - ✅ **Broadcast stop** rebuilt to the S-9.2 baseline `01DC000S` form (was a 128-step speed-1 packet that baseline-only decoders ignore). `load_estop_all(packet, isPanic)` now emits emergency S=1 (`00 51 51`) and controlled stop S=0 (`00 50 50`); wire-verified on the Saleae HIL rig. Deprecated `DccPacketEncoder_estop_all` removed.
 - **Top functional gaps (not implemented):**
   - ❌ **Fail-safe / CV11 packet timeout (S-9.2.4)** — only dead callback declarations + an unused `#define`.
-  - ❌ **XPOM** (S-9.2.1 §2.3.7.4) — no command-station encoder. *(Time/Date §2.3.6.2 and System Time §2.3.6.3 now both done — host + HIL verified — leaving XPOM as the only remaining S-9.2.1 gap.)*
+  - ❌ **XPOM** (S-9.2.1 §2.3.7.4) — no command-station encoder.
+  - ❌ **Time/Date & System Time** packets (S-9.2.1) — unused `#define` only.
+  - ❌ **Accessory NOP** packet encoder — only auto-schedule comments.
   - ❌ **Indexed CVs (CV31/32)** decoder paging — defines only.
   - ❌ **Factory reset (CV8)** — write-permission exception only, no reset-to-defaults logic.
   - ❌ **Logon / Data Spaces (S-9.2.1.1)** — absent. *Released standard (2022), not draft-only — the 2026 draft only expands it.* Out of current scope.
@@ -46,12 +45,17 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 
 ## 1. Electrical / Signal (S-9.1)
 
-| Feature | Released | Draft | Implemented | Tested | Status |
+Badges — **Supported:** ✅ in library · ⚠️ partial · ❌ no · — out of library scope.
+**gTest** (host unit tests) / **HIL** (on-hardware, Saleae): ✅ covered · — n/a · ❌ gap ·
+🚧 planned. Limitation notes sit inline with the badge.
+
+| Feature | Released | Draft | Supported | gTest | HIL |
 |---|---|---|---|---|---|
-| One-bit timing 58 µs (55–61) | S-9.1 Tbl 2.1 | — | `dcc_defines.h: DCC_ONE_BIT_HALF_PERIOD_US=58` | bit-encoder tick tests | ✅ |
-| Zero-bit 95 min/100 nom, max 12000 µs | S-9.1 Tbl 2.1 | — | `dcc_defines.h: DCC_ZERO_BIT_HALF_PERIOD_US=100`, `_MAX_TOTAL_DURATION_US=12000` | `dcc_config_Test :: DccDefines` | ✅ |
-| Preamble ≥14 (CS) / ≥10 (decoder accept) | S-9.1/S-9.2 | — | encoder `DCC_PREAMBLE_BITS_OPS=14`; decoder `_DECODER_MIN=10` | `tick_preamble_is_all_one_bits`; `preamble_exactly_10_produces_packet` | ✅ |
-| Asymmetric/stretched zero accepted | S-9.1 | — | `dcc_bit_decoder.c:DccBitDecoder_edge` | `asymmetric_zero_accepted` | ✅ |
+| One-bit half-period 58 µs (55–61) | S-9.1 Tbl 2.1 | — | ✅ | ✅ | ✅ 55–61 µs on wire |
+| Zero-bit half ≥95 µs (nom 100); stretched total ≤12000 µs | S-9.1 Tbl 2.1 | — | ✅ | ✅ | ✅ ≥95 µs, total ≤12000 µs |
+| Preamble ≥14 (CS transmit) / ≥10 (decoder accept) | S-9.1 / S-9.2 | — | ✅ CS sends 16 (+margin for cutout) | ✅ | ✅ ≥14 ones |
+| Asymmetric / stretched zero accepted | S-9.1 | — | ✅ | ✅ | — decoder-side; HIL captures CS output only |
+| Signal voltage / levels | S-9.1 §2 | — | — app H-bridge driver | — | — needs analog capture |
 
 ## 2. Packet Format (S-9.2)
 
@@ -60,8 +64,8 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 | Preamble/start/data/end framing + XOR | S-9.2 | — | encode `dcc_bit_encoder.c`; decode `dcc_bit_decoder.c` + `dcc_packet_decoder.c:_validate_xor` | bit-encoder (11), `bad_xor_ignored` | ✅ |
 | Idle packet | S-9.2 | — | `..._packet.c:CSPacket_idle` | `idle_packet_*` | ✅ |
 | Reset packet | S-9.2 | — | `..._packet.c:CSPacket_reset` | `reset_packet_*` | ✅ |
-| Broadcast e-stop (S=1) | S-9.2 | — | `..._packet.c:CSPacket_estop_all(isPanic=true)` → baseline `01DC000S` (`00 51 51`) | `estop_all_packet`; HIL S-9.2 wire-verified | ✅ |
-| Broadcast controlled stop (S=0) | S-9.2 | — | `..._packet.c:CSPacket_estop_all(isPanic=false)` → baseline `01DC000S` (`00 50 50`) | `estop_all_controlled`; HIL S-9.2 wire-verified | ✅ |
+| Broadcast e-stop | S-9.2 | — | `..._packet.c:CSPacket_estop_all` | `estop_all_*` | ✅ |
+| Broadcast normal stop (S=0) | S-9.2 | — | no dedicated function (only e-stop) | — | ⚠️ partial |
 | Address ranges / matching | S-9.2 + S-9.2.1 | — | `dcc_packet_decoder.c:process_packet` | `matching_address_dispatched`, broadcast/long tests | ✅ |
 
 ## 3. Extended Packets — Multifunction (S-9.2.1)
@@ -73,15 +77,14 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 | Function expansion F13–F68 | S-9.2.1 §2.3.6 | — | `CSPacket_func_f13_f20 … _f61_f68` | `func_f13_f20 … _f61_f68` | ✅ |
 | Accessory basic / extended | S-9.2.1 §2.4 | notation `1AAADAAR` | `CSPacket_accessory_basic/_extended`; decode `_dispatch_accessory_*` | basic/extended encode+decode | ✅ |
 | Accessory basic/extended **stop** | S-9.2.1 | Tbl 36 | `CSPacket_accessory_basic_stop/_extended_stop` | `accessory_*_stop_*` | ✅ (new module only) |
-| Accessory **NOP** | S-9.2.1 §2.4.6 | NEW | `..._packet.c:CSPacket_load_accessory_nop(addr, is_extended)` → `10AAAAAA 0 0AAA1AAT` | `accessory_nop_*` (5 host); HIL s9_2_1 | ✅ |
+| Accessory **NOP** | S-9.2.1 §2.4.6 | NEW | ❌ no encoder (auto-sched comments only) | — | ❌ |
 | CV ops-mode (POM) write/verify/bit | S-9.2.1 §2.3.7.3 | GG/F notation | `CSPacket_cv_write_pom/_verify_pom/_cv_bit_pom`; decode `_dispatch_cv_access` | `cv_write_ops_*`, `cv_bit_ops_*` | ✅ |
 | **XPOM** (24-bit indexed, read/write/bit) | S-9.2.1 §2.3.7.4 | §1.6 | ❌ absent | — | ❌ |
 | Consist set / clear | S-9.2.1 §2.3.1.4 | TTTT notation | `CSPacket_consist_set/_clear`; decode `_dispatch_instruction` | `consist_*` | ✅ |
 | Binary state short / long | S-9.2.1 §2.3.6.1/.4 | moved here from 9.2.1.1 | `CSPacket_binary_state_short/_long`; decode `_dispatch_feature_expansion` | `binary_state_*` | ✅ |
 | Analog function (`00111101`) | S-9.2.1 §2.3.2.3 | byte corrected | `CSPacket_analog_function`; decode `_dispatch_advanced_ops` | `analog_function*` | ✅ |
 | Speed restriction (`00111110`) | — | reserved: Zimo East-West | **removed** | — | ✅ removed (byte left reserved) |
-| System Time (broadcast clock) | S-9.2.1 §2.3.6.3 | full layout NEW | `CSPacket_load_system_time` (`00 C2` + 16-bit ms, MSB-first); broadcast to addr 0 | `system_time*` (host) + `SYSTIME` HIL exact-byte | ✅ |
-| Time/Date | S-9.2.1 §2.3.6.2 | full layout NEW | `CSPacket_load_model_time/_model_date` (`00 C1`; Time CC=00 `00MMMMMM WWWHHHHH U0BBBBBB`, Date CC=01 `010TTTTT MMMMYYYY YYYYYYYY`) | `model_time*`/`model_date*` (8 host) + `MTIME`/`MDATE` HIL exact-byte | ✅ |
+| Time/Date, System Time | S-9.2.1 §2.3.6.2/.3 | full layouts NEW | ❌ unused `#define DCC_FEAT_TIME_DATE` only | — | ❌ |
 
 ## 4. Advanced Extended / Logon (S-9.2.1.1)
 
@@ -104,19 +107,19 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 
 ## 6. Service Mode (S-9.2.3)
 
+> **Detail:** requirement-level design and per-test traceability (host gTest + Saleae HIL)
+> in [detail_s9_2_3_service_mode.md](detail_s9_2_3_service_mode.md).
+
 | Feature | Released | Draft | Implemented | Tested | Status |
 |---|---|---|---|---|---|
 | Long preamble ≥20 | S-9.2.3 | — | `DCC_PREAMBLE_BITS_SERVICE=20` | per-mode packet tests | ✅ |
-| Common ACK detect / reset seq / retry | S-9.2.3 | — | `dcc_service_mode_common.c` | `..._common_Test` (64) | ✅ |
-| ACK ≥60 mA for 6 ms ±1 ms | S-9.2.3 | — | threshold + min/max samples (`MIN/MAX_DURATION_US`); width counted in the 58 µs ISR | `..._common_Test` 9 boundary tests (MIN−1 / MIN / MAX / MAX+1 / overrun / blip-reset / idempotent) | ✅ window [MIN,MAX] enforced; host-verified |
-| Direct write/verify byte & bit | S-9.2.3 | — | `dcc_service_mode_direct.c` (4 fns) | `..._direct_Test` (30) | ✅ |
-| Paged write/verify | S-9.2.3 | — | `dcc_service_mode_paged.c`; CV=`((cv-1)/4)+1`/`((cv-1)%4)+1` | `..._paged_Test` (22) | ✅ |
-| Register write/verify | S-9.2.3 | — | `dcc_service_mode_register.c` | `..._register_Test` (16) | ✅ |
-| Address-only write/verify | S-9.2.3 | — | `dcc_service_mode_address.c` | `..._address_Test` (20) | ✅ (recovery count hardcoded 10) |
-| **Task orchestrator layer** (read_cv / write_cv / read_bit / write_bit per mode; mode-detect; register factory-reset) | S-9.2.3 §E | — | `dcc_service_mode_task_{direct,paged,register,address,detect}.c`; sequences + verifies primitives; ACK derived from primitive result (no app-side ACK timing) | `..._task_direct_Test` (48), `_paged` (53), `_register` (48), `_address` (36), `_detect` (23) | ✅ host; wire-verified on HIL |
-| Decoder-mode detection (Direct→Paged→Register→Address probe, supported-modes bitmask) | S-9.2.3 §A/B | — | `dcc_service_mode_task_detect.c`; CV#8 bit-verify + scans; Address-only **not** assumed universal | `..._task_detect_Test` (23) | ✅ host |
+| Common ACK detect / reset seq / retry | S-9.2.3 | — | `dcc_service_mode_common.c`; per-op `command_repeat` + `recovery_count` | `..._common_Test` (64) | ✅ |
+| ACK ≥60 mA for 6 ms ±1 ms | S-9.2.3 | — | threshold + min/max samples (`MIN/MAX_DURATION_US`) | ACK tests + HIL mock-ACK loopback | ✅ window [MIN,MAX] enforced |
+| Direct write/verify byte & bit | S-9.2.3 | — | `dcc_service_mode_direct.c` (4 fns) | `..._direct_Test` (30) | ✅ all 3 instr types |
+| Paged write/verify | S-9.2.3 | — | `dcc_service_mode_paged.c`; CV=`((cv-1)/4)+1`/`((cv-1)%4)+1`; page-select→data proceeds unconditionally (§E line 215) | `..._paged_Test` (22) | ✅ |
+| Register write/verify | S-9.2.3 | — | `dcc_service_mode_register.c`; **page-preset** then command; verify 7 repeats; Reg 1 write recovery 10 | `..._register_Test` (20) | ✅ full §E sequence |
+| Address-only write/verify | S-9.2.3 | — | `dcc_service_mode_address.c`; **page-preset** then CV#1 command; write recovery 10 | `..._address_Test` (21) | ✅ full §E sequence |
 | Decoder-side service-mode CV ops | S-9.2.3 | — | `dcc_packet_decoder.c:_dispatch_service_mode*` (+`service_mode` flag) | svc_direct/register/verify tests | ✅ |
-| **HIL wire + parallel-track timing** | S-9.2.3 §D/§E | — | `test/compliance/s9_2_3_compliance.py`; spec-derived encoders vs the service track (ch3); main+service captured simultaneously, both checked against S-9.1 half-bit tolerance every op | 51 pass / 3 n/a (ACK boundary pending mock-ACK loopback) | ✅ Direct/Register/Address precise bytes + Paged page-preset; ⚠️ ACK electrical test pending |
 
 ## 7. Fail-Safe (S-9.2.4)
 
@@ -128,10 +131,13 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 
 ## 8. RailCom / Bi-Directional (S-9.3.2)
 
+> **Detail:** requirement-level design and per-test traceability (host gTest + Saleae HIL)
+> in [detail_s9_3_2_railcom.md](detail_s9_3_2_railcom.md).
+
 | Feature | Released | Draft | Implemented | Tested | Status |
 |---|---|---|---|---|---|
-| Cutout timing | S-9.3.2 Tbl 1 (T_CS 26–32, T_CE 454–488) | §4.1 (same) | `dcc_railcom_cutout.c`; defaults 26/54/97/16/261 µs, configurable via `dcc_config_t` | `..._cutout_Test` (25); HIL `s9_3_2_compliance.py` (4 checks: T_CS/T_CE/window/count) wire-verified | ✅ spec timing + HIL |
-| Cutout state machine | S-9.3.2 | 5-phase (settling/gap) | 5-state (DELAY/SETTLING/CH1/GAP/CH2) in `dcc_railcom_cutout.c`; bit encoder is **continuous-clock** — fires cutout timer and keeps clocking, `on_packet_complete` fires at end-bit not after cutout | cutout tests | ✅ |
+| Cutout timing | S-9.3.2 Tbl 1 (T_CS 26–32, T_CE 454–488) | §4.1 (same) | `dcc_railcom_cutout.c`; defaults 26/54/97/16/261 µs, configurable via `dcc_config_t` | `..._cutout_Test` (25) | ✅ spec timing |
+| Cutout state machine | S-9.3.2 | 5-phase (settling/gap) | 5-state (DELAY/SETTLING/CH1/GAP/CH2) | cutout tests | ✅ |
 | 4/8 decode + Ch1/Ch2 + receive buffer | S-9.3.2 §2.5 | — | `dcc_railcom_decoder.c` | `..._decoder_Test` (27) | ✅ |
 | 4/8 encode (decoder responses) | S-9.3.2 | — | `dcc_railcom_encoder.c:encode_byte` | `..._encoder_Test` (13) | ✅ |
 | Address feedback ADR1/ADR2 alternation | S-9.3.2 §3.1 | §4.12 | `DccApplicationDecoderRailcom_send_address_feedback` | alternation tests | ✅ |
@@ -154,7 +160,7 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 | Feature | Released | Draft | Implemented | Tested | Status |
 |---|---|---|---|---|---|
 | Scheduler priority / combining / auto-refresh | (lib design) | — | `dcc_scheduler.c` | `..._scheduler_Test` (22) | ✅ |
-| Bit-encoder buffering | (lib design) | — | single `active_packet` + `packet_loaded` flag; **continuous-clock** — encoder keeps clocking next preamble during RailCom cutout window, no stall state | — | ✅ |
+| Bit-encoder buffering | (lib design) | — | single `active_packet` + `packet_loaded` flag | — | ✅ doc corrected |
 
 ---
 
@@ -167,9 +173,8 @@ conformance gaps**, not draft features. (Per-feature detail is in the §1–8 ta
 |---|---|---|---|
 | **Fail-safe / packet timeout (CV11)** | Released **S-9.2.4** | Not implemented | Only dead `on_failsafe_entered/exited` callbacks + an unused `DCC_CV_PACKET_TIMEOUT` define; no timeout timer or fail-safe state. |
 | **XPOM (Extended POM)** | Released **S-9.2.1** §2.3.7.4 | Not started | 24-bit indexed CV read/write/bit (`1110GGSS`); exceeds the 6-byte packet limit. |
-| **System Time packet** | Released **S-9.2.1** §2.3.6.3 | **Done** | `load_system_time` (broadcast `00 C2` + 16-bit ms, MSB-first); host gtest + HIL exact-byte verified. |
-| **Time/Date packet** | Released **S-9.2.1** §2.3.6.2 | **Done** | `load_model_time/_model_date` (broadcast `00 C1`, Time CC=00 / Date CC=01); host gtest (8) + HIL exact-byte verified (`MTIME`/`MDATE`). |
-| **Accessory NOP packet** | Released **S-9.2.1** §2.4.6 | **Done** | `load_accessory_nop` (basic/extended); host + HIL exact-byte verified. |
+| **Time/Date & System Time packets** | Released **S-9.2.1** §2.3.6.2/.3 | Not started | Broadcast clock packets; only an unused `#define DCC_FEAT_TIME_DATE`. |
+| **Accessory NOP packet** | Released **S-9.2.1** §2.4.6 | Not started | No encoder; the accessory SRQ auto-scheduling references it. |
 | **Indexed CVs (CV31/32)** | Released **S-9.2.2** | Not started | Page-pointer access to CVs 257-512; defines exist, no paging logic. |
 | **CV29 bits 2/3/4/7 behavior** | Released **S-9.2.2** | Partial | Decoder acts on bits 0/1/5 only; bit 2 (power-source), 3 (RailCom), 4 (speed table), 7 (decoder type) not acted on. |
 | **Factory reset to defaults (CV8)** | Manufacturer convention | Partial | Write-permission exception only; no reset-to-defaults logic. |
@@ -186,25 +191,21 @@ conformance gaps**, not draft features. (Per-feature detail is in the §1–8 ta
   encoder's `uart_write` permanently NULL and there is no byte→pin bridge or decoder-side Tx
   one-shot timer (archived Open-Question-#2) — so **no RailCom is transmitted in a real build**.
   Host unit tests cannot catch it (they inject a mock `uart_write`). Needs a bit-bang and/or UART
-  backend. Tracked plan context: [archive/compliance_deviation_fixes.md](archive/compliance_deviation_fixes.md).
-
-### Recently resolved (2026-06-23)
-
-- **S-9.3.2 HIL compliance suite** (`s9_3_2_compliance.py`) — Saleae dual-channel capture (ch0 DCC + ch2 cutout strobe) wire-verifies T_CS/T_CE/window/count against spec limits; 4 checks, now part of `run_all.py`. HIL total: 82 → 86.
-- **Continuous-clock RailCom** — bit encoder no longer stalls in a `DCC_BIT_STATE_RAILCOM_CUTOUT` state. It fires the cutout timer and immediately keeps clocking the next preamble; `on_packet_complete` fires at the end-bit (not after the cutout). The cutout 5-state machine (`dcc_railcom_cutout.c`) is unchanged.
+  backend. Tracked plan context: [archive/compliance_deviation_fixes.md](../archive/compliance_deviation_fixes.md).
 
 ### Recently resolved (2026-06-22)
 
 - The six compliance deviations (see Summary) — RailCom cutout retiming, accessory extended SRQ,
   ACK upper bound, speed-restriction removal, datagram-ID alignment + CS decode-table fix,
-  bit-encoder doc. Plan: [archive/compliance_deviation_fixes.md](archive/compliance_deviation_fixes.md).
+  bit-encoder doc. Plan: [archive/compliance_deviation_fixes.md](../archive/compliance_deviation_fixes.md).
 - **POM vs service-mode ACK** — decoder CV callbacks now carry a `service_mode` flag and the ACK
   pulse fires only in service mode (`dcc_packet_decoder.c`), so POM no longer triggers the ACK load.
 
 ### Spec-reference errata
 
-Corrected in [specs/DCC_Spec_Reference.md](specs/DCC_Spec_Reference.md): analog-function instruction
+Corrected in [specs/DCC_Spec_Reference.md](../specs/DCC_Spec_Reference.md): analog-function instruction
 byte is `00111101` (was `11111101`); the "Advanced Extended Packets" content (binary state, analog,
 time/date, system time) belongs to **S-9.2.1**, not S-9.2.1.1 (which is the Logon / Data-Space standard).
 
-*Cross-reference: [ARCHITECTURE.md](ARCHITECTURE.md) (module map).*
+*Cross-reference: [ARCHITECTURE.md](../ARCHITECTURE.md) (module map).*
+* 

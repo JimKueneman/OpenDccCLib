@@ -126,6 +126,17 @@ typedef struct {
     extern bool DccServiceModeTaskRegister_factory_reset(dcc_service_mode_task_on_complete_callback_t on_complete);
 
     /**
+     * @brief Verify a single register value (one register-verify op).
+     * @param cv CV number (mapped to a physical register for decoder_type).
+     * @param value Expected byte value.
+     * @param decoder_type Mobile or Accessory (selects the CV->register map).
+     * @param on_complete Called with SUCCESS if the value verified (ACK), VERIFY_FAIL otherwise.
+     * @param on_progress Optional progress callback (may be NULL).
+     * @return true if started, false if busy or CV not register-accessible.
+     */
+    extern bool DccServiceModeTaskRegister_verify_value(uint16_t cv, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+
+    /**
      * @brief Notify the task module that the primitive has finished its full operation
      *        (including recovery packets). Wire this into the primitive's on_complete slot
      *        via dcc_config.c. The task module advances its state machine on this event;

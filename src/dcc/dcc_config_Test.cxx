@@ -29,7 +29,6 @@ static void mock_main_power_set(bool enabled) { (void)enabled; }
 
 static void mock_svc_timer_start(uint16_t period) { (void)period; }
 static void mock_svc_timer_stop(void) {}
-static void mock_svc_power_set(bool enabled) { (void)enabled; }
 
 static uint16_t mock_current_sense_read(void) { return 100; }
 
@@ -104,7 +103,6 @@ static dcc_config_t make_test_config(void) {
 
     cfg.service_track.timer_start = mock_svc_timer_start;
     cfg.service_track.timer_stop = mock_svc_timer_stop;
-    cfg.service_track.track_power_set = mock_svc_power_set;
 #endif
 
 #ifdef DCC_COMPILE_DECODER
@@ -202,36 +200,6 @@ TEST(DccConfig, main_track_power_off_null_guard) {
 // Service track power control
 // ============================================================================
 
-static bool svc_power_set_called = false;
-static bool svc_power_set_value = false;
-
-static void mock_svc_power_set_tracking(bool enabled) {
-    svc_power_set_called = true;
-    svc_power_set_value = enabled;
-}
-
-TEST(DccConfig, service_track_power_on_calls_driver) {
-    dcc_config_t cfg = make_test_config();
-    cfg.service_track.track_power_set = mock_svc_power_set_tracking;
-    DccConfig_initialize(&cfg);
-
-    svc_power_set_called = false;
-    DccApplicationCommandStationServiceTrack_power_on();
-    EXPECT_TRUE(svc_power_set_called);
-    EXPECT_TRUE(svc_power_set_value);
-}
-
-TEST(DccConfig, service_track_power_off_calls_driver) {
-    dcc_config_t cfg = make_test_config();
-    cfg.service_track.track_power_set = mock_svc_power_set_tracking;
-    DccConfig_initialize(&cfg);
-
-    svc_power_set_called = false;
-    DccApplicationCommandStationServiceTrack_power_off();
-    EXPECT_TRUE(svc_power_set_called);
-    EXPECT_FALSE(svc_power_set_value);
-}
-
 TEST(DccConfig, service_track_power_on_null_guard) {
     DccConfig_initialize(NULL);
     DccApplicationCommandStationServiceTrack_power_on();
@@ -271,25 +239,22 @@ TEST(DccConfig, run_calls_service_mode_when_active) {
 // Dual-channel independence: both ISRs callable in same test
 // ============================================================================
 
-TEST(DccConfig, both_tracks_power_independently) {
+TEST(DccConfig, main_track_power_independent_of_service) {
     dcc_config_t cfg = make_test_config();
     cfg.main_track.track_power_set = mock_main_power_set_tracking;
-    cfg.service_track.track_power_set = mock_svc_power_set_tracking;
     DccConfig_initialize(&cfg);
 
-    /* Power on main, service stays off */
+    /* Main-track power is driven by the main-track power callback. */
     main_power_set_called = false;
-    svc_power_set_called = false;
     DccApplicationCommandStationMainTrack_power_on();
     EXPECT_TRUE(main_power_set_called);
-    EXPECT_FALSE(svc_power_set_called);
 
-    /* Power on service independently */
+    /* Service-track operations do not touch main-track power. The service track
+     * has no separate power callback (the encoder drives it). */
     main_power_set_called = false;
-    svc_power_set_called = false;
     DccApplicationCommandStationServiceTrack_power_on();
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
     EXPECT_FALSE(main_power_set_called);
-    EXPECT_TRUE(svc_power_set_called);
 }
 
 // ============================================================================
@@ -951,12 +916,14 @@ TEST(DccTypes, speed_mode_enum_values) {
 // dcc_defines.h protocol constant tests
 // ============================================================================
 
+// @compliance DCC-S9.1-CS-001, DCC-S9.1-CS-002
 TEST(DccDefines, bit_timing_constants) {
     EXPECT_EQ(DCC_ONE_BIT_HALF_PERIOD_US, 58);
     EXPECT_EQ(DCC_ZERO_BIT_HALF_PERIOD_US, 100);
     EXPECT_EQ(DCC_ZERO_BIT_MAX_TOTAL_DURATION_US, 12000);
 }
 
+// @compliance DCC-S9.1-CS-003, DCC-S9.1-DEC-002
 TEST(DccDefines, preamble_constants) {
     EXPECT_EQ(DCC_PREAMBLE_BITS_OPS, 16);   /* 16 so a RailCom cutout leaves >= 11 driven */
     EXPECT_EQ(DCC_PREAMBLE_BITS_SERVICE, 20);

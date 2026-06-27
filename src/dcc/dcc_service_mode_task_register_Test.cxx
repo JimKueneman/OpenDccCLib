@@ -187,6 +187,7 @@ TEST(DccServiceModeTaskRegister, initialize_does_not_crash) {
 // CV-to-register mapping — Mobile
 // ============================================================================
 
+// @compliance DCC-S9.2.3-CS-019
 TEST(DccServiceModeTaskRegister, mobile_cv1_maps_to_register_1) {
 
     setup();
@@ -298,6 +299,7 @@ TEST(DccServiceModeTaskRegister, accessory_cv7_maps_to_register_7) {
 
 }
 
+// @compliance DCC-S9.2.3-CS-019
 TEST(DccServiceModeTaskRegister, accessory_cv520_maps_to_register_8) {
 
     setup();
@@ -347,6 +349,7 @@ TEST(DccServiceModeTaskRegister, read_cv_advances_scan_after_no_ack) {
 
 }
 
+// @compliance DCC-S9.2.3-CS-021, DCC-S9.2.3-CS-024
 TEST(DccServiceModeTaskRegister, read_cv_ack_on_value_42_returns_42) {
 
     setup();
@@ -426,6 +429,7 @@ TEST(DccServiceModeTaskRegister, write_cv_unmapped_cv_rejected) {
 
 }
 
+// @compliance DCC-S9.2.3-CS-022
 TEST(DccServiceModeTaskRegister, write_cv_verifies_after_write_complete) {
 
     setup();
@@ -547,6 +551,7 @@ TEST(DccServiceModeTaskRegister, write_bit_unmapped_cv_rejected) {
 
 }
 
+// @compliance DCC-S9.2.3-CS-023
 TEST(DccServiceModeTaskRegister, write_bit_scans_then_writes_with_bit_set) {
 
     setup();
@@ -612,6 +617,7 @@ TEST(DccServiceModeTaskRegister, write_bit_verify_no_ack_fail) {
 // factory_reset — write 8 to register 8
 // ============================================================================
 
+// @compliance DCC-S9.2.3-CS-020
 TEST(DccServiceModeTaskRegister, factory_reset_writes_8_to_register_8) {
 
     setup();
@@ -687,6 +693,61 @@ TEST(DccServiceModeTaskRegister, on_primitive_complete_when_idle_no_crash) {
 
     setup();
     DccServiceModeTaskRegister_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);
+
+}
+
+// ============================================================================
+// verify_value: single register verify (no scan)
+// ============================================================================
+
+TEST(DccServiceModeTaskRegister, verify_value_issues_single_verify) {
+
+    setup();
+    EXPECT_TRUE(DccServiceModeTaskRegister_verify_value(8, 0x42, DCC_DECODER_TYPE_MOBILE, mock_on_complete, NULL));
+
+    EXPECT_EQ(register_verify_count, (uint32_t)1);
+    EXPECT_EQ(last_register_verify_reg, (uint8_t)8);     /* CV8 -> register 8 (mobile) */
+    EXPECT_EQ(last_register_verify_value, (uint8_t)0x42);
+
+}
+
+TEST(DccServiceModeTaskRegister, verify_value_success_on_ack) {
+
+    setup();
+    DccServiceModeTaskRegister_verify_value(8, 0x42, DCC_DECODER_TYPE_MOBILE, mock_on_complete, NULL);
+    step_ack();
+
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_SUCCESS);
+    EXPECT_EQ(on_complete_value, (uint8_t)0x42);
+
+}
+
+TEST(DccServiceModeTaskRegister, verify_value_fail_on_no_ack) {
+
+    setup();
+    DccServiceModeTaskRegister_verify_value(8, 0x42, DCC_DECODER_TYPE_MOBILE, mock_on_complete, NULL);
+    step_no_ack();
+
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_VERIFY_FAIL);
+
+}
+
+TEST(DccServiceModeTaskRegister, verify_value_invalid_cv_rejected) {
+
+    setup();
+    /* CV 99 is not accessible in register mode -> rejected. */
+    EXPECT_FALSE(DccServiceModeTaskRegister_verify_value(99, 0x42, DCC_DECODER_TYPE_MOBILE, mock_on_complete, NULL));
+    EXPECT_EQ(register_verify_count, (uint32_t)0);
+
+}
+
+TEST(DccServiceModeTaskRegister, verify_value_busy_rejected) {
+
+    setup();
+    EXPECT_TRUE(DccServiceModeTaskRegister_verify_value(8, 0x42, DCC_DECODER_TYPE_MOBILE, mock_on_complete, NULL));
+    EXPECT_FALSE(DccServiceModeTaskRegister_verify_value(8, 0x42, DCC_DECODER_TYPE_MOBILE, mock_on_complete, NULL));
 
 }
 

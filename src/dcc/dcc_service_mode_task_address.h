@@ -92,6 +92,15 @@ typedef struct {
     extern bool DccServiceModeTaskAddress_write(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
     /**
+     * @brief Verify CV#1 (short address) against a value (one verify op).
+     * @param address Expected address value (1-127).
+     * @param on_complete Called with SUCCESS if it verified (ACK), VERIFY_FAIL otherwise.
+     * @param on_progress Optional progress callback (may be NULL).
+     * @return true if started, false if busy or address out of range.
+     */
+    extern bool DccServiceModeTaskAddress_verify(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+
+    /**
      * @brief Read a single bit from CV#1. Reads full byte via iteration, extracts bit.
      * @param bit Bit position (0-6; bit 7 is always 0 in 7-bit address).
      * @param on_complete Called when complete; value = 0 or 1.

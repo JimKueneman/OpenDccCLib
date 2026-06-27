@@ -93,26 +93,16 @@ static void _on_data_access_complete(dcc_service_mode_result_t result);
 static void _on_page_select_complete(dcc_service_mode_result_t result) {
 
     dcc_packet_t packet;
+    (void)result;
     memset(&packet, 0, sizeof(packet));
 
-    if (result != DCC_SERVICE_MODE_SUCCESS) {
-
-        _active_context->paged_state = PAGED_STATE_IDLE;
-
-        if (_active_context->interface->on_complete) {
-
-            _active_context->interface->on_complete(result);
-
-        }
-
-        return;
-
-    }
-
-    /* Page select succeeded — start data access step */
+    /* Page-select complete. Per S-9.2.3 the data step follows unconditionally:
+     * the page-write phase completes either by ACK or by sending its packet
+     * count, and ACK is optional (some decoders never assert one), so the page
+     * select's own ACK result is not required to proceed. */
     _active_context->paged_state = PAGED_STATE_DATA_ACCESS;
     _build_register_packet(&packet, _active_context->data_register, _active_context->data_value, _active_context->is_write);
-    _active_context->interface->begin_operation(&packet, &_on_data_access_complete, _active_context->is_write, DCC_SERVICE_MODE_RECOVERY_COUNT);
+    _active_context->interface->begin_operation(&packet, &_on_data_access_complete, _active_context->is_write, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT);
 
 }
 
@@ -172,7 +162,7 @@ bool DccServiceModePaged_write(dcc_service_mode_paged_context_t *context, uint16
     _active_context = context;
     _build_register_packet(&packet, DCC_SERVICE_MODE_PAGE_REGISTER, page, true);
 
-    return context->interface->begin_operation(&packet, &_on_page_select_complete, true, DCC_SERVICE_MODE_RECOVERY_COUNT);
+    return context->interface->begin_operation(&packet, &_on_page_select_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT);
 
 }
 
@@ -209,7 +199,7 @@ bool DccServiceModePaged_verify(dcc_service_mode_paged_context_t *context, uint1
     _active_context = context;
     _build_register_packet(&packet, DCC_SERVICE_MODE_PAGE_REGISTER, page, true);
 
-    return context->interface->begin_operation(&packet, &_on_page_select_complete, true, DCC_SERVICE_MODE_RECOVERY_COUNT);
+    return context->interface->begin_operation(&packet, &_on_page_select_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT);
 
 }
 

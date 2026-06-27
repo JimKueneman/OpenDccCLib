@@ -27,8 +27,9 @@
  * @file dcc_service_mode_register.h
  * @brief Physical register mode CV programming (legacy, registers 1-8).
  *
- * @details Addresses physical registers 1-8 directly. Single-step operation.
- * This is the oldest service mode and is supported by all decoders.
+ * @details Addresses physical registers 1-8. Per S-9.2.3 each operation is a
+ * two-step sequence: a page-preset (page register -> page 1) followed by the
+ * register verify/write. This is the oldest service mode, supported by all decoders.
  *
  * @author Jim Kueneman
  * @date 07 Apr 2026
@@ -50,7 +51,7 @@ extern "C" {
 typedef struct {
 
         /** @brief Start a service mode operation via the common module. */
-    bool (*begin_operation)(const dcc_packet_t *packet, dcc_service_mode_step_callback_t callback, bool is_write_operation, uint8_t recovery_count);
+    bool (*begin_operation)(const dcc_packet_t *packet, dcc_service_mode_step_callback_t callback, bool is_write_operation, uint8_t command_repeat, uint8_t recovery_count);
 
         /** @brief Check if the common module is idle. */
     bool (*is_common_idle)(void);
@@ -64,6 +65,10 @@ typedef struct {
 typedef struct {
 
     const interface_dcc_service_mode_register_t *interface;
+    uint8_t register_state;    /**< register_state_enum cast to uint8_t */
+    uint8_t register_number;   /**< pending register for the command step */
+    uint8_t value;             /**< pending value for the command step */
+    bool is_write;             /**< true = write, false = verify */
 
 } dcc_service_mode_register_context_t;
 

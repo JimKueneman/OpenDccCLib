@@ -14,10 +14,6 @@ const GPIO1   = GPIO.addInstance();
 const GPIO2   = GPIO.addInstance();
 const GPIO3   = GPIO.addInstance();
 const GPIO4   = GPIO.addInstance();
-const GPIO5   = GPIO.addInstance();
-const GPIO6   = GPIO.addInstance();
-const GPIO7   = GPIO.addInstance();
-const GPIO8   = GPIO.addInstance();
 const SYSCTL  = scripting.addModule("/ti/driverlib/SYSCTL");
 const SYSTICK = scripting.addModule("/ti/driverlib/SYSTICK");
 const TIMER   = scripting.addModule("/ti/driverlib/TIMER", {}, false);
@@ -62,42 +58,37 @@ GPIO1.associatedPins[2].assignedPin = "27";
 
 const Board = scripting.addModule("/ti/driverlib/Board", {}, false);
 
-GPIO2.$name                          = "GPIO_DCC";
-GPIO2.port                           = "PORTB";
-GPIO2.associatedPins[0].$name        = "DCC_SIGNAL";
-GPIO2.associatedPins[0].assignedPin  = "1";
-GPIO2.associatedPins[0].initialValue = "SET";
+GPIO2.$name                         = "GPIO_ACK_SENSE";
+GPIO2.port                          = "PORTB";
+GPIO2.associatedPins[0].$name       = "ACK_IN";
+GPIO2.associatedPins[0].direction   = "INPUT";
+GPIO2.associatedPins[0].assignedPin = "12";
 
-GPIO3.$name                         = "GPIO_DEBUG";
-GPIO3.port                          = "PORTB";
-GPIO3.associatedPins[0].$name       = "DEBUG_PIN";
-GPIO3.associatedPins[0].assignedPin = "3";
+GPIO3.port                          = "PORTA";
+GPIO3.$name                         = "GPIO_ISR_TIME";
+GPIO3.associatedPins[0].$name       = "ISR_TIME";
+GPIO3.associatedPins[0].assignedPin = "15";
 
-GPIO4.$name                         = "GPIO_ACK_SENSE";
-GPIO4.port                          = "PORTB";
-GPIO4.associatedPins[0].$name       = "ACK_IN";
-GPIO4.associatedPins[0].direction   = "INPUT";
-GPIO4.associatedPins[0].assignedPin = "12";
-
-GPIO5.$name                          = "GPIO_SERVICE_MODE_DCC";
-GPIO5.associatedPins[0].$name        = "SERVICE_MODE_DCC_SIGNAL";
-GPIO5.associatedPins[0].assignedPort = "PORTB";
-GPIO5.associatedPins[0].assignedPin  = "4";
-
-GPIO6.$name                         = "GPIO_TRACK_SELECT";
-GPIO6.port                          = "PORTB";
-GPIO6.associatedPins[0].$name       = "TRACK_SEL";
-GPIO6.associatedPins[0].assignedPin = "17";
-
-GPIO7.$name                         = "GPIO_DCC_MIRROR";
-GPIO7.port                          = "PORTB";
-GPIO7.associatedPins[0].$name       = "DCC_MIRROR";
-GPIO7.associatedPins[0].assignedPin = "2";
-
-GPIO8.port                          = "PORTA";
-GPIO8.$name                         = "GPIO_ISR_TIME";
-GPIO8.associatedPins[0].$name       = "ISR_TIME";
-GPIO8.associatedPins[0].assignedPin = "15";
+GPIO4.$name                          = "GPIO_GRP_SALEAE";
+GPIO4.associatedPins.create(6);
+GPIO4.associatedPins[0].$name        = "MAIN_DCC";
+GPIO4.associatedPins[0].assignedPort = "PORTB";
+GPIO4.associatedPins[0].assignedPin  = "1";
+GPIO4.associatedPins[1].$name        = "SERVICE_MODE_DCC";
+GPIO4.associatedPins[1].assignedPin  = "4";
+GPIO4.associatedPins[1].assignedPort = "PORTB";
+GPIO4.associatedPins[2].$name        = "RAILCOM_CUTOUT";
+GPIO4.associatedPins[2].assignedPort = "PORTB";
+GPIO4.associatedPins[2].assignedPin  = "2";
+GPIO4.associatedPins[3].assignedPin  = "3";
+GPIO4.associatedPins[3].assignedPort = "PORTB";
+GPIO4.associatedPins[3].$name        = "PACKET_LOAD";
+GPIO4.associatedPins[4].$name        = "MOCK_ACK";
+GPIO4.associatedPins[4].direction    = "INPUT";
+GPIO4.associatedPins[4].assignedPort = "PORTB";
+GPIO4.associatedPins[4].assignedPin  = "9";
+GPIO4.associatedPins[5].$name        = "MOCK_ACK_DRIVE";
+GPIO4.associatedPins[5].assignedPin  = "24";
 
 SYSCTL.clockTreeEn = true;
 
@@ -151,11 +142,12 @@ GPIO1.associatedPins[2].pin.$suggestSolution       = "PB27";
 Board.peripheral.$suggestSolution                  = "DEBUGSS";
 Board.peripheral.swclkPin.$suggestSolution         = "PA20";
 Board.peripheral.swdioPin.$suggestSolution         = "PA19";
-GPIO2.associatedPins[0].pin.$suggestSolution       = "PB1";
-GPIO3.associatedPins[0].pin.$suggestSolution       = "PB3";
-GPIO4.associatedPins[0].pin.$suggestSolution       = "PB12";
-GPIO5.associatedPins[0].pin.$suggestSolution       = "PB4";
-GPIO6.associatedPins[0].pin.$suggestSolution       = "PB17";
-GPIO7.associatedPins[0].pin.$suggestSolution       = "PB2";
-GPIO8.associatedPins[0].pin.$suggestSolution       = "PA15";
+GPIO2.associatedPins[0].pin.$suggestSolution       = "PB12";
+GPIO3.associatedPins[0].pin.$suggestSolution       = "PA15";
+GPIO4.associatedPins[0].pin.$suggestSolution       = "PB1";
+GPIO4.associatedPins[1].pin.$suggestSolution       = "PB4";
+GPIO4.associatedPins[2].pin.$suggestSolution       = "PB2";
+GPIO4.associatedPins[3].pin.$suggestSolution       = "PB3";
+GPIO4.associatedPins[4].pin.$suggestSolution       = "PB9";
+GPIO4.associatedPins[5].pin.$suggestSolution       = "PB24";
 UART1.peripheral.$suggestSolution                  = "UART0";

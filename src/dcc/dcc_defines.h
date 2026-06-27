@@ -434,6 +434,23 @@ extern "C" {
     /** @brief Page register number for paged mode */
 #define DCC_SERVICE_MODE_PAGE_REGISTER      6
 
+    /** @brief S-9.2.3: register-mode VERIFY requires 7 or more command packets */
+#define DCC_SERVICE_MODE_REGISTER_VERIFY_REPEAT 7
+
+    /** @brief S-9.2.3: Decoder-Recovery-Time is 10 packets after a write to
+     *  Register 1 (and to CV #1 in Address-only mode). */
+#define DCC_SERVICE_MODE_RECOVERY_COUNT_LONG    10
+
+    /** @brief S-9.2.3: page-preset sets the page register to page 1, performed
+     *  ahead of register-mode and address-only operations. */
+#define DCC_SERVICE_MODE_PAGE_PRESET_PAGE       1
+
+    /** @brief S-9.2.3 line 55: the ACK scan window starts at the END of the 2nd
+     *  command packet. We blank ACK sampling during the first this-many command
+     *  packets so an early decoder mode-switch transient cannot be latched as an
+     *  ACK. (A conformant decoder cannot ACK before 2 packets, so this is lossless.) */
+#define DCC_SERVICE_MODE_ACK_BLANK_PACKETS      2
+
 // =============================================================================
 // ACK Pulse Timing (S-9.2.3)
 // =============================================================================

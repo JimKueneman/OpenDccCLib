@@ -190,6 +190,7 @@ TEST(DccBitDecoder, first_edge_ignored) {
 // Preamble detection
 // ============================================================================
 
+// @compliance DCC-S9.1-DEC-002
 TEST(DccBitDecoder, preamble_too_short_no_packet) {
 
     reset_mocks();
@@ -212,6 +213,7 @@ TEST(DccBitDecoder, preamble_too_short_no_packet) {
 
 }
 
+// @compliance DCC-S9.1-DEC-002
 TEST(DccBitDecoder, preamble_exactly_10_produces_packet) {
 
     reset_mocks();
@@ -358,6 +360,7 @@ TEST(DccBitDecoder, mismatched_halves_recovers) {
 // Too-long half period resets
 // ============================================================================
 
+// @compliance DCC-S9.1-DEC-001
 TEST(DccBitDecoder, too_long_period_resets) {
 
     reset_mocks();
@@ -412,6 +415,7 @@ TEST(DccBitDecoder, null_callback_no_crash) {
 // Asymmetric zero-bit (stretched first half)
 // ============================================================================
 
+// @compliance DCC-S9.1-DEC-003, DCC-S9.1-ACC-001
 TEST(DccBitDecoder, asymmetric_zero_accepted) {
 
     reset_mocks();
