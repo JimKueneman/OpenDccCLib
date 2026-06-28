@@ -1365,7 +1365,7 @@ TEST(DccPacketEncoder, binary_state_long_rejects_state_too_large) {
 // Basic accessory CV ops-mode write
 // ============================================================================
 
-// @compliance DCC-S9.2.1-ACC-001
+// @compliance DCC-S9.2.1-CS-026
 TEST(DccPacketEncoder, acc_basic_cv_write_addr5_pair2_cv1) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_accessory_basic_cv_write(&pkt, 5, 2, 1, 200);
@@ -1471,7 +1471,7 @@ TEST(DccPacketEncoder, acc_basic_cv_bit_rejects_bit8) {
 // Extended accessory CV ops-mode write
 // ============================================================================
 
-// @compliance DCC-S9.2.1-ACC-002
+// @compliance DCC-S9.2.1-CS-027
 TEST(DccPacketEncoder, acc_extended_cv_write_addr0_cv1) {
     dcc_packet_t pkt;
     bool ok = DccApplicationCommandStationPacket_load_accessory_extended_cv_write(&pkt, 0, 1, 200);

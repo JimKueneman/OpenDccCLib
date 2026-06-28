@@ -286,6 +286,20 @@ typedef struct {
         /** @brief Write CV to persistent storage. Returns true on success. REQUIRED. */
     bool (*cv_write)(uint16_t cv_number, uint8_t value);
 
+        /** @brief Restore CVs to factory defaults. OPTIONAL (NULL = no reset).
+         *  Invoked when a write command targets CV8 (read-only Manufacturer ID, S-9.2.2). */
+    void (*factory_reset)(void);
+
+        /** @brief Indexed CV access (CV257-512 window into the page selected by CV31/CV32).
+         *  OPTIONAL (NULL = no indexed support). page = CV31:CV32, offset = cv# - 257. */
+    bool (*cv_read_indexed)(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t *value);
+    bool (*cv_write_indexed)(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t value);
+
+        /** @brief Decoded-CV29 notification after a successful CV29 write. OPTIONAL.
+         *  The library decodes the register and forces the reserved bit; the app re-applies
+         *  the features it supports (it never has to parse CV29 bits itself). */
+    void (*on_cv29_config_changed)(const dcc_cv29_flags_t *flags);
+
     // =========================================================================
     // Decoder: NULL-optional hardware drivers
     // =========================================================================

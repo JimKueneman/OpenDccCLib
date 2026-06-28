@@ -256,6 +256,8 @@ extern "C" {
 #define DCC_CV_CONFIG                       29  /**< Primary config register */
 #define DCC_CV_INDEX_HIGH                   31  /**< Indexed CV page pointer high */
 #define DCC_CV_INDEX_LOW                    32  /**< Indexed CV page pointer low */
+#define DCC_CV_INDEXED_FIRST               257  /**< First CV of the indexed access window */
+#define DCC_CV_INDEXED_LAST                512  /**< Last CV of the indexed access window */
 #define DCC_CV_FUNC_MAP_START               33  /**< Function mapping start (F0) */
 #define DCC_CV_FUNC_MAP_END                 46  /**< Function mapping end */
 #define DCC_CV_SPEED_TABLE_START            67  /**< Speed table start */
@@ -289,6 +291,8 @@ extern "C" {
 #define DCC_CV29_RAILCOM_ENABLE_BIT         0x08  /**< Bit 3: RailCom enabled */
 #define DCC_CV29_SPEED_TABLE_BIT            0x10  /**< Bit 4: speed table enabled */
 #define DCC_CV29_EXTENDED_ADDRESS_BIT       0x20  /**< Bit 5: extended address */
+#define DCC_CV29_RESERVED_BIT               0x40  /**< Bit 6: reserved (forced to 0 on write) */
+#define DCC_CV29_ACCESSORY_BIT              0x80  /**< Bit 7: accessory (vs multifunction) decoder */
 
 // =============================================================================
 // CV 28 Bit Masks (RailCom Configuration)

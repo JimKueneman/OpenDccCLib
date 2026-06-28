@@ -49,6 +49,10 @@ const dcc_config_t dcc_config = {
      * a real product (see callbacks_dcc.c). */
     .cv_read                 = &CallbacksDcc_cv_read,
     .cv_write                = &CallbacksDcc_cv_write,
+    .factory_reset           = &CallbacksDcc_factory_reset,
+    .cv_read_indexed         = &CallbacksDcc_cv_read_indexed,
+    .cv_write_indexed        = &CallbacksDcc_cv_write_indexed,
+    .on_cv29_config_changed  = &CallbacksDcc_on_cv29_config_changed,
 
     /* --- Application callbacks (OPTIONAL, NULL = no notification) ---
      * Each of these fires when the library decodes the corresponding DCC

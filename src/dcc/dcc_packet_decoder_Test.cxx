@@ -949,7 +949,7 @@ TEST(DccPacketDecoder, long_address_mismatch_ignored) {
 // Basic accessory
 // ============================================================================
 
-// @compliance DCC-S9.2.1-DEC-008
+// @compliance DCC-S9.2.1-ACC-003
 TEST(DccPacketDecoder, basic_accessory) {
 
     reset_mocks();
@@ -973,7 +973,7 @@ TEST(DccPacketDecoder, basic_accessory) {
 
 }
 
-// @compliance DCC-S9.2.2-DEC-006
+// @compliance DCC-S9.2.2-ACC-001
 TEST(DccPacketDecoder, accessory_cvs_513_521_541_combine_into_address) {
 
     /* Accessory address is built from CV513 (low 6 bits) + CV521 (high 3 bits), with
@@ -1023,7 +1023,7 @@ TEST(DccPacketDecoder, cv29_direction_bit_reverses_reported_direction) {
 // Extended accessory
 // ============================================================================
 
-// @compliance DCC-S9.2.1-DEC-009
+// @compliance DCC-S9.2.1-ACC-004
 TEST(DccPacketDecoder, extended_accessory) {
 
     reset_mocks();
@@ -2754,7 +2754,7 @@ static void set_decoder_accessory_output_address(
 
 }
 
-// @compliance DCC-S9.2.1-DEC-008
+// @compliance DCC-S9.2.1-ACC-003
 TEST(DccPacketDecoder, output_address_mode_basic_accessory) {
 
     reset_mocks();

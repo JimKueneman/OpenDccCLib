@@ -47,6 +47,20 @@ extern void CallbacksDcc_clear(void);
 extern bool CallbacksDcc_cv_read(uint16_t cv_number, uint8_t *value);
 extern bool CallbacksDcc_cv_write(uint16_t cv_number, uint8_t value);
 
+/* Restore CVs to factory defaults (wired to dcc_config_t.factory_reset).
+ * Invoked when a write command targets CV8 (read-only Manufacturer ID, S-9.2.2). */
+extern void CallbacksDcc_factory_reset(void);
+
+/* Indexed CV access (wired to dcc_config_t.cv_read_indexed / .cv_write_indexed).
+ * The library resolves the CV257-512 window via CV31/CV32 and calls these with
+ * (page_hi, page_lo, offset). */
+extern bool CallbacksDcc_cv_read_indexed(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t *value);
+extern bool CallbacksDcc_cv_write_indexed(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t value);
+
+/* Decoded CV29 config notification (wired to dcc_config_t.on_cv29_config_changed).
+ * The library decodes CV29 and forces the reserved bit; this demo reports the flags. */
+extern void CallbacksDcc_on_cv29_config_changed(const dcc_cv29_flags_t *flags);
+
 /* --- DCC command callbacks (wired to dcc_config_t.on_xxx) ---
  * Override these with your application logic.  Each one fires from ISR
  * context when the library decodes the corresponding DCC packet type.

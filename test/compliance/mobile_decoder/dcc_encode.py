@@ -103,3 +103,55 @@ def cv_bit_pom(addr, cv, bit, value, write=True):
     hi, lo = _cv_hi_lo(cv)
     data = 0xE0 | ((1 if write else 0) << 4) | ((value & 1) << 3) | (bit & 0x07)
     return list(addr) + [0xE8 | hi, lo, data]
+
+
+# ---------------------------------------------------------------------------
+# Phase 2 -- additional instruction types (S-9.2 / S-9.2.1)
+# ---------------------------------------------------------------------------
+def speed_28(addr, step, forward=True):
+    """28-step speed: 01DC SSSS.  C (bit4) is the speed LSB.
+    5-bit value: 0=stop, 1=estop, 4..31 = steps 1..28 (so step n -> n+3)."""
+    if not 0 <= step <= 28:
+        raise ValueError("28-step: step 0..28")
+    val = 0 if step == 0 else step + 3
+    d = 0x20 if forward else 0x00
+    return list(addr) + [0x40 | d | ((val & 0x01) << 4) | ((val >> 1) & 0x0F)]
+
+
+# Note: there is no separate 14-step encoder -- 14- and 28-step share the wire
+# format (01DxSSSS); the decoder selects 14 vs 28 from CV29 bit 1. To exercise
+# 14-step, write CV29 bit 1 = 0 (cv_bit_pom) then send a speed_28-format packet.
+
+
+def function_expansion(addr, func_num, state=True):
+    """Function expansion F13-F28: F13-20 via 1101 1110 (0xDE), F21-28 via 1101 1111 (0xDF)."""
+    if 13 <= func_num <= 20:
+        inst, bit = 0xDE, func_num - 13
+    elif 21 <= func_num <= 28:
+        inst, bit = 0xDF, func_num - 21
+    else:
+        raise ValueError("function_expansion supports F13..F28")
+    return list(addr) + [inst, ((1 if state else 0) << bit) & 0xFF]
+
+
+def consist(addr, consist_addr, direction_normal=True):
+    """Consist control: 0001 001D + consist address (7-bit). D=0 normal, 1 reverse."""
+    inst = 0x12 if direction_normal else 0x13
+    return list(addr) + [inst, consist_addr & 0x7F]
+
+
+def binary_state_short(addr, state_num, on=True):
+    """Binary State Short: 1101 1101 (0xDD) + D LLLLLLL (state 1..127)."""
+    return list(addr) + [0xDD, ((1 if on else 0) << 7) | (state_num & 0x7F)]
+
+
+def binary_state_long(addr, state_num, on=True):
+    """Binary State Long: 1100 0000 (0xC0) + D LLLLLLL  LHHHHHHH (15-bit state)."""
+    lo = ((1 if on else 0) << 7) | (state_num & 0x7F)
+    hi = (state_num >> 7) & 0xFF
+    return list(addr) + [0xC0, lo, hi]
+
+
+def analog_function(addr, output, value):
+    """Analog Function Group: 0011 1101 (0x3D) + output number + value."""
+    return list(addr) + [0x3D, output & 0xFF, value & 0xFF]

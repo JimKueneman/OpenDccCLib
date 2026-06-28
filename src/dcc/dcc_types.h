@@ -396,6 +396,20 @@ typedef struct {
 #define DCC_RAILCOM_DATAGRAM_MAX_BYTES 6
 #endif
 
+    /** @brief Decoded CV29 configuration flags, handed to the app after a CV29 write.
+     *  The library decodes the register; the app acts only on the features it supports. */
+typedef struct {
+
+    bool direction_reversed;        /**< Bit 0: locomotive direction reversed */
+    bool speed_steps_28_128;        /**< Bit 1: true = 28/128-step (FL in function group), false = 14-step */
+    bool power_source_conversion;   /**< Bit 2: analog power-source conversion enabled */
+    bool railcom_enabled;           /**< Bit 3: RailCom (bi-directional comms) enabled */
+    bool speed_table_enabled;       /**< Bit 4: speed table (CV67-94) selected */
+    bool extended_address;          /**< Bit 5: long (CV17/18) addressing */
+    bool accessory_decoder;         /**< Bit 7: accessory (vs multifunction) decoder */
+
+} dcc_cv29_flags_t;
+
     /** @brief RailCom datagram for encoder (decoder-side response) */
 typedef struct {
 

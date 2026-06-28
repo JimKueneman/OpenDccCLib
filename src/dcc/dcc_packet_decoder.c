@@ -470,7 +470,8 @@ static bool _cv_write_and_notify(uint16_t cv_number, uint8_t data_byte, bool is_
         cv_number == DCC_CV_EXTENDED_ADDRESS_LOW ||
         cv_number == DCC_CV_ACC_CONFIG ||
         cv_number == DCC_CV_ACC_ADDRESS_LSB ||
-        cv_number == DCC_CV_ACC_ADDRESS_MSB) {
+        cv_number == DCC_CV_ACC_ADDRESS_MSB ||
+        cv_number == DCC_CV_MANUFACTURER_ID) {   /* CV8 write = factory reset -> address CVs may have changed */
 
         _update_address_cv_cache();
 
@@ -609,7 +610,8 @@ static bool _cv_write_and_notify_acc(uint16_t cv_number, uint8_t data_byte) {
         cv_number == DCC_CV_EXTENDED_ADDRESS_LOW ||
         cv_number == DCC_CV_ACC_CONFIG ||
         cv_number == DCC_CV_ACC_ADDRESS_LSB ||
-        cv_number == DCC_CV_ACC_ADDRESS_MSB) {
+        cv_number == DCC_CV_ACC_ADDRESS_MSB ||
+        cv_number == DCC_CV_MANUFACTURER_ID) {   /* CV8 write = factory reset -> address CVs may have changed */
 
         _update_address_cv_cache();
 

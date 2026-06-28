@@ -2683,13 +2683,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Decoder recognizes 0x3F adv-ops byte and fires speed callback.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
+            "hil": "Covered by mobile_decoder/s9_2_1_compliance.py: 128-step speed packet -> SPEED mode=128 speed=64."
           },
           "refs": {
             "symbols": [
@@ -2702,7 +2702,13 @@ window.COMPLIANCE =
                 "desc": "asserts decoded forward 128-step speed"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "128-step speed decode",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "Player sources a 128-step speed packet; decoder reports SPEED mode=128 speed=64."
+              }
+            ]
           }
         },
         {
@@ -2771,13 +2777,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Decoder reverses the interleaved 28-step encoding.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
+            "hil": "Covered by mobile_decoder/s9_2_1_compliance.py: 28-step speed packet -> SPEED mode=28."
           },
           "refs": {
             "symbols": [
@@ -2790,7 +2796,13 @@ window.COMPLIANCE =
                 "desc": "asserts decoded 28-step forward step 5"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "28-step speed decode",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "Player sources a 28-step speed packet; decoder reports SPEED mode=28."
+              }
+            ]
           }
         },
         {
@@ -2859,13 +2871,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Decoder decodes 01DCSSSS as 14-step when configured.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
+            "hil": "Covered by mobile_decoder/s9_2_1_compliance.py: CV29 bit1=0 (14-step) then speed packet -> SPEED mode=14; CV29 restored."
           },
           "refs": {
             "symbols": [
@@ -2878,7 +2890,13 @@ window.COMPLIANCE =
                 "desc": "asserts decoded 14-step speed"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "14-step speed decode",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "Writes CV29 bit1=0 then sources a speed packet; decoder reports SPEED mode=14; CV29 restored."
+              }
+            ]
           }
         },
         {
@@ -2947,13 +2965,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Decoder extracts FL/F1-F4 from 100DDDDD.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
+            "hil": "Covered by mobile_decoder/s9_2_1_compliance.py: FG1 (F0 on) -> FUNC func=0 ON."
           },
           "refs": {
             "symbols": [
@@ -2966,7 +2984,13 @@ window.COMPLIANCE =
                 "desc": "asserts decoded FL/F1/F2 states"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "function group 1 decode",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "Player sources FG1 with F0 on; decoder reports FUNC func=0 state=ON."
+              }
+            ]
           }
         },
         {
@@ -3035,13 +3059,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Decoder dispatches F5-F8 from 1011DDDD.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
+            "hil": "Covered by mobile_decoder/s9_2_1_compliance.py: FG2a (F5 on) -> FUNC func=5 ON."
           },
           "refs": {
             "symbols": [
@@ -3054,7 +3078,13 @@ window.COMPLIANCE =
                 "desc": "asserts decoded F5/F6"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "function group 2a decode",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "Player sources FG2a with F5 on; decoder reports FUNC func=5 state=ON."
+              }
+            ]
           }
         },
         {
@@ -3123,13 +3153,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Decoder dispatches F9-F12 from 1010DDDD.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
+            "hil": "Covered by mobile_decoder/s9_2_1_compliance.py: FG2b (F9 on) -> FUNC func=9 ON."
           },
           "refs": {
             "symbols": [
@@ -3142,7 +3172,13 @@ window.COMPLIANCE =
                 "desc": "asserts decoded F9"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "function group 2b decode",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "Player sources FG2b with F9 on; decoder reports FUNC func=9 state=ON."
+              }
+            ]
           }
         },
         {
@@ -3222,13 +3258,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Decoder recognizes 0xD8-0xDF and dispatches the F13-F68 group.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
+            "hil": "Covered by mobile_decoder/s9_2_1_compliance.py: F13 and F21 expansion -> FUNC func=13/21 ON."
           },
           "refs": {
             "symbols": [
@@ -3246,7 +3282,13 @@ window.COMPLIANCE =
                 "desc": "asserts decoded F61-F68"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "function expansion F13-F28",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "Player sources F13 and F21 expansion packets; decoder reports FUNC func=13 and func=21 ON."
+              }
+            ]
           }
         },
         {
@@ -3309,9 +3351,9 @@ window.COMPLIANCE =
           }
         },
         {
-          "tid": "DCC-S9.2.1-DEC-008",
+          "tid": "DCC-S9.2.1-ACC-003",
           "feature": "Decode basic accessory packet",
-          "role": "dec",
+          "role": "acc",
           "ref": {
             "spec": "S-9.2.1",
             "cite": "Section 2.4 (Basic Accessory Packet)",
@@ -3411,9 +3453,9 @@ window.COMPLIANCE =
           }
         },
         {
-          "tid": "DCC-S9.2.1-DEC-009",
+          "tid": "DCC-S9.2.1-ACC-004",
           "feature": "Decode extended accessory packet",
-          "role": "dec",
+          "role": "acc",
           "ref": {
             "spec": "S-9.2.1",
             "cite": "Section 2.4.2 (Extended Accessory Control)",
@@ -3776,13 +3818,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Decoder dispatches 1110CCDD CV access to write/verify/bit callbacks.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
+            "hil": "Covered by mobile_decoder/s9_2_1_compliance.py: POM write/verify/bit -> CV_WRITE/CV_VERIFY/CV_BIT."
           },
           "refs": {
             "symbols": [
@@ -3800,11 +3842,17 @@ window.COMPLIANCE =
                 "desc": "asserts CV bit write applied"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "CV ops-mode write/verify/bit",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "Player sources POM CV write/verify/bit; decoder reports CV_WRITE, CV_VERIFY, CV_BIT."
+              }
+            ]
           }
         },
         {
-          "tid": "DCC-S9.2.1-ACC-001",
+          "tid": "DCC-S9.2.1-CS-026",
           "feature": "Encode basic accessory CV access",
           "role": "cs",
           "ref": {
@@ -3851,7 +3899,7 @@ window.COMPLIANCE =
           }
         },
         {
-          "tid": "DCC-S9.2.1-ACC-002",
+          "tid": "DCC-S9.2.1-CS-027",
           "feature": "Encode extended accessory CV access",
           "role": "cs",
           "ref": {
@@ -4053,13 +4101,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Decoder dispatches consist control to the consist callback.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
+            "hil": "Covered by mobile_decoder/s9_2_1_compliance.py: consist-set -> CONSIST consist=5 NORMAL."
           },
           "refs": {
             "symbols": [
@@ -4072,7 +4120,13 @@ window.COMPLIANCE =
                 "desc": "asserts decoded consist set"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "consist set decode",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "Player sources a consist-set packet; decoder reports CONSIST consist=5 dir=NORMAL."
+              }
+            ]
           }
         },
         {
@@ -4150,13 +4204,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Decoder recognizes 0xDD and dispatches binary state short.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
+            "hil": "Covered by mobile_decoder/s9_2_1_compliance.py: binary-state-short -> BSS state=5 ON."
           },
           "refs": {
             "symbols": [
@@ -4169,7 +4223,13 @@ window.COMPLIANCE =
                 "desc": "asserts decoded binary state short"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "binary state short decode",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "Player sources a binary-state-short packet; decoder reports BSS state=5 active=ON."
+              }
+            ]
           }
         },
         {
@@ -4242,13 +4302,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Decoder recognizes the long-form feature byte and dispatches the 15-bit state.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
+            "hil": "Covered by mobile_decoder/s9_2_1_compliance.py: binary-state-long -> BSL state=300 ON."
           },
           "refs": {
             "symbols": [
@@ -4261,7 +4321,13 @@ window.COMPLIANCE =
                 "desc": "asserts decoded binary state long"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "binary state long decode",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "Player sources a binary-state-long packet; decoder reports BSL state=300 active=ON."
+              }
+            ]
           }
         },
         {
@@ -4334,13 +4400,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Decoder recognizes 0x3D and dispatches the analog function callback.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
+            "hil": "Covered by mobile_decoder/s9_2_1_compliance.py: analog-function -> ANALOG output=1 value=128."
           },
           "refs": {
             "symbols": [
@@ -4353,7 +4419,13 @@ window.COMPLIANCE =
                 "desc": "asserts decoded analog function"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "analog function decode",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "Player sources an analog-function packet; decoder reports ANALOG output=1 value=128."
+              }
+            ]
           }
         },
         {
@@ -4573,13 +4645,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Decoder matches its short or long address before dispatching multifunction instructions.",
             "gtest": "",
-            "hil": "Decoder-side HIL requires a rig that does not exist. Needs decoder-HIL rig (none exists)."
+            "hil": "Covered by mobile_decoder/s9_2_1_compliance.py: short addr 3 and long addr 1234 both decode."
           },
           "refs": {
             "symbols": [
@@ -4597,7 +4669,13 @@ window.COMPLIANCE =
                 "desc": "asserts long packet ignored by short decoder"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "short and long addressing",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "Player sources packets to short addr 3 and long addr 1234; decoder decodes both; address restored."
+              }
+            ]
           }
         }
       ]
@@ -4628,7 +4706,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "no",
             "note": ""
           },
           "detail": {
@@ -4665,7 +4743,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "no",
             "note": ""
           },
           "detail": {
@@ -4700,7 +4778,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "no",
             "note": ""
           },
           "detail": {
@@ -4740,13 +4818,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "nobs",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "DccCvStorage_read/write delegate to injected callbacks with null guards.",
             "gtest": "",
-            "hil": "CV-storage logic is host-tested; on-wire access covered under S-9.2.1. CV access on the wire rides POM under S-9.2.1; storage logic is host-only."
+            "hil": "Covered by mobile_decoder/s9_2_2_compliance.py: a POM write of CV1 moves the decoder's address on the wire (write path effective); restored after."
           },
           "refs": {
             "symbols": [
@@ -4765,7 +4843,13 @@ window.COMPLIANCE =
                 "desc": "asserts write persists when unlocked"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "POM CV1 write moves address",
+                "file": "mobile_decoder/s9_2_2_compliance.py",
+                "desc": "Player POM-writes CV1=7; decoder then responds to address 7 and not 3 (then restored)."
+              }
+            ]
           }
         },
         {
@@ -4789,13 +4873,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "nobs",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "is_locked compares CV15 to CV16; write blocks all CVs except 15/16 (and CV8=8) while locked.",
             "gtest": "",
-            "hil": "Lock logic is host-only."
+            "hil": "Covered by mobile_decoder/s9_2_2_compliance.py: locking (CV15!=CV16) blocks a POM CV write; unlocking permits it -- verified by address response on the wire."
           },
           "refs": {
             "symbols": [
@@ -4818,7 +4902,13 @@ window.COMPLIANCE =
                 "desc": "asserts unlocking then writing succeeds"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "decoder lock blocks CV write",
+                "file": "mobile_decoder/s9_2_2_compliance.py",
+                "desc": "Player locks (CV15!=CV16) then POM-writes CV1: address unchanged; after unlock the same write takes effect."
+              }
+            ]
           }
         },
         {
@@ -4827,12 +4917,14 @@ window.COMPLIANCE =
           "role": "dec",
           "ref": {
             "spec": "S-9.2.2",
-            "cite": "CV8 Manufacturer ID (write value 8 resets CVs to factory defaults)",
+            "cite": "CV8 Manufacturer ID (read-only; cannot be modified)",
             "origin": "released",
-            "draftDelta": null
+            "draftDelta": {
+              "change": "Released S-9.2.2: CV8 is read-only and cannot be modified (NMRA Manufacturer ID only) -- no factory-reset behavior is defined. Draft S-9.2.2 (2026-02-11): the value remains unchangeable, but write commands to CV8 are defined as a decoder reset trigger. The earlier cite 'write value 8 resets CVs to factory defaults' was a manufacturer convention, not spec text."
+            }
           },
           "supported": {
-            "state": "partial",
+            "state": "ok",
             "note": ""
           },
           "gtest": {
@@ -4840,27 +4932,30 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "nobs",
+            "state": "ok",
             "note": ""
           },
           "detail": {
-            "impl": "write special-cases CV8==8 to bypass the lock and forwards it to cv_write; no in-library default restoration. Only a write-permission exception; no reset-to-defaults logic in the library.",
-            "gtest": "",
-            "hil": "Host-only."
+            "impl": "DccCvStorage_write special-cases CV8==8 (read-only Manufacturer ID) BEFORE the lock check: it invokes factory_reset and does NOT forward the value to cv_write -- the app restores its CV defaults (CV1=3, CV29=0x06, lock cleared). The packet decoder's CV-write path also refreshes the address cache on a CV8 write (dcc_packet_decoder.c), so the reset takes effect on the live matching address instead of leaving the decoder answering at the pre-reset address.",
+            "gtest": "dcc_cv_storage_Test: a CV8==8 write triggers factory_reset (not a value write) and is allowed even while the decoder lock is engaged; a null factory_reset hook does not crash.",
+            "hil": "mobile_decoder/s9_2_2_compliance.py: move the address to 7 via CV1, then CV8:=8 (POM addressed to 7) factory-resets and the decoder returns to the default address 3. Verified on hardware."
           },
           "refs": {
             "symbols": [
               "DccCvStorage_write",
-              "DCC_CV_MANUFACTURER_ID"
+              "DCC_CV_MANUFACTURER_ID",
+              "_update_address_cv_cache"
             ],
             "tests": [
               {
                 "name": "DccCvStorage.factory_reset_allowed_when_locked",
                 "file": "dcc_cv_storage_Test.cxx",
-                "desc": "asserts writing 8 to CV8 is forwarded even while locked"
+                "desc": "asserts a CV8==8 write triggers factory_reset even while the decoder lock is engaged"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              { "label": "Factory reset (CV8=8) restores default address", "file": "mobile_decoder/s9_2_2_compliance.py", "desc": "CV1:=7 moves the decoder to address 7; CV8:=8 (POM to 7) factory-resets so it answers at the default address 3 again." }
+            ]
           }
         },
         {
@@ -4869,14 +4964,12 @@ window.COMPLIANCE =
           "role": "dec",
           "ref": {
             "spec": "S-9.2.2",
-            "cite": "CV29 Configuration (bit 0 direction, bit 1 speed-steps, bit 5 extended address)",
+            "cite": "CV29 Configuration register (bit0 direction, bit1 FL location/speed steps, bit2 power-source conversion, bit3 RailCom, bit4 speed table, bit5 extended address, bit6 reserved, bit7 accessory type)",
             "origin": "released",
-            "draftDelta": {
-              "change": "Released baseline: CV29 is a bit-flag register selecting direction, FL location, power-source conversion, RailCom, speed table, and long/short address. The draft's Table 4 nails down the disputed mid bits and adds a high bit: bit1 'FL Location' (0 = bit4 of Speed-and-Direction controls FL, 1 = bit4 of Function Group One controls FL); bit2 'Power Source Conversion' (0 = NMRA Digital Only, 1 = enabled, target in CV12); bit5 = use extended address (CV17/18); bit6 reserved; and the new bit7 'Accessory Decoder Control Type' (0 = Multifunction, 1 = Accessory). When bit7 = 1 the meaning of bits 0-6 switches to the accessory layout (CV541/Table 11). Implementer impact: bit7 selects which CV29 bit-map applies, so decode must branch on it, and a bit must not be settable if the feature is unsupported."
-            }
+            "draftDelta": null
           },
           "supported": {
-            "state": "partial",
+            "state": "ok",
             "note": ""
           },
           "gtest": {
@@ -4884,28 +4977,38 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "ok",
             "note": ""
           },
           "detail": {
-            "impl": "_update_address_cv_cache caches direction/speed-step/extended-address from CV29; other bits are ignored. Only bits 0/1/5 acted on; bits 2 (analog), 3 (RailCom), 4 (speed table) not acted on.",
-            "gtest": "Host test sets CV29 with the direction bit clear vs set and asserts the decoded travel direction inverts (bit 0). Speed-step mode (bit 1) and extended addressing (bit 5) are covered by their own decode tests; bits 2/3/4 are intentionally not acted on (supported=partial).",
-            "hil": "Address/speed-mode behavior tested on the wire elsewhere."
+            "impl": "DccCvStorage_write intercepts CV29: forces the reserved bit 6 to 0, stores, then -- only on a successful store -- decodes the register into dcc_cv29_flags_t and fires on_cv29_config_changed. The library acts internally on bits 0/1/5/7 for its own decode (direction, speed-step mode, addressing, decoder type) but never takes a hardware action on a feature bit (analog/RailCom/speed-table) -- the app re-applies the features its product supports from the decoded flags (a RailCom product enables Tx off flags->railcom_enabled; a product without RailCom ignores it). _update_address_cv_cache still refreshes the address/speed-mode cache on the same write.",
+            "gtest": "dcc_cv_storage_Test asserts the decode (named flags for a known value), the reserved bit 6 forced to 0 on a bogus byte, notify firing only on a successful store, and a locked decoder neither storing nor notifying. The direction-bit inversion is additionally covered end-to-end by the packet-decoder test.",
+            "hil": "POM-write CV29 and observe the decoded flags reported on the wire (RECV CV29 ...). Verified on hardware."
           },
           "refs": {
             "symbols": [
               "DCC_CV29_DIRECTION_BIT",
               "DCC_CV29_SPEED_STEPS_BIT",
-              "DCC_CV29_EXTENDED_ADDRESS_BIT"
+              "DCC_CV29_EXTENDED_ADDRESS_BIT",
+              "DCC_CV29_RESERVED_BIT",
+              "DCC_CV29_ACCESSORY_BIT",
+              "dcc_cv29_flags_t",
+              "on_cv29_config_changed"
             ],
             "tests": [
               {
                 "name": "DccPacketDecoder.cv29_direction_bit_reverses_reported_direction",
                 "file": "dcc_packet_decoder_Test.cxx",
                 "desc": "asserts the CV29 direction bit inverts the decoded travel direction"
-              }
+              },
+              { "name": "DccCvStorage.cv29_write_decodes_named_flags", "file": "dcc_cv_storage_Test.cxx", "desc": "a CV29 write decodes into the named dcc_cv29_flags_t fields" },
+              { "name": "DccCvStorage.cv29_write_forces_reserved_bit6_to_zero", "file": "dcc_cv_storage_Test.cxx", "desc": "a bogus byte with bit 6 set is sanitized to 0 before store" },
+              { "name": "DccCvStorage.cv29_notify_only_on_successful_store", "file": "dcc_cv_storage_Test.cxx", "desc": "on_cv29_config_changed does not fire when the backend store fails" },
+              { "name": "DccCvStorage.cv29_write_blocked_when_locked", "file": "dcc_cv_storage_Test.cxx", "desc": "a locked decoder neither stores nor notifies on a CV29 write" }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              { "label": "CV29 write decodes to named flags", "file": "mobile_decoder/s9_2_2_compliance.py", "desc": "POM-writes CV29=0x2A; decoder reports RECV CV29 with steps/railcom/extaddr set and dir clear." }
+            ]
           }
         },
         {
@@ -4921,41 +5024,49 @@ window.COMPLIANCE =
             }
           },
           "supported": {
-            "state": "no",
+            "state": "ok",
             "note": ""
           },
           "gtest": {
-            "state": "no",
+            "state": "ok",
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "ok",
             "note": ""
           },
           "detail": {
-            "impl": "Only #define constants for CV31/CV32; no page-selected indexing. CV31/CV32 are #defines only; no paging logic.",
-            "gtest": "No indexed-CV behavior exists to test. No tests for indexed CV paging.",
-            "hil": "Not implemented."
+            "impl": "DccCvStorage routes CV257-512 through CV31/CV32 to cv_read_indexed/cv_write_indexed (page = CV31:CV32, offset = cv-257); the app owns the virtual banks and NACKs unsupported pages. Lock-checked like any write.",
+            "gtest": "dcc_cv_storage_Test.cxx: indexed_write/read route the correct page+offset, window boundaries (257/512), no-hook NACK, and lock-blocked indexed write.",
+            "hil": "mobile_decoder/s9_2_2_compliance.py: POM-select a page via CV31/32, write CV262, decoder reports the routed indexed write (RECV CVIDX). Verified on hardware."
           },
           "refs": {
             "symbols": [
               "DCC_CV_INDEX_HIGH",
               "DCC_CV_INDEX_LOW"
             ],
-            "tests": [],
-            "hilChecks": []
+            "tests": [
+              { "name": "DccCvStorage.indexed_write_routes_page_and_offset", "file": "dcc_cv_storage_Test.cxx", "desc": "A write to CV257-512 routes to cv_write_indexed with page=CV31:CV32 and offset=cv-257." },
+              { "name": "DccCvStorage.indexed_read_routes_page_and_offset", "file": "dcc_cv_storage_Test.cxx", "desc": "A read of CV257-512 routes to cv_read_indexed with the right page/offset." },
+              { "name": "DccCvStorage.indexed_window_boundaries", "file": "dcc_cv_storage_Test.cxx", "desc": "CV257 and CV512 are in the window (offset 0 and 255); CV256 is not." },
+              { "name": "DccCvStorage.indexed_write_without_hook_nacks", "file": "dcc_cv_storage_Test.cxx", "desc": "Indexed write with no cv_write_indexed hook returns false (NACK)." },
+              { "name": "DccCvStorage.indexed_write_blocked_when_locked", "file": "dcc_cv_storage_Test.cxx", "desc": "Indexed write is blocked while the decoder lock is engaged." }
+            ],
+            "hilChecks": [
+              { "label": "Indexed CV write routes via CV31/32", "file": "mobile_decoder/s9_2_2_compliance.py", "desc": "POM-selects page 2 via CV31/32, writes CV262=99; decoder reports RECV CVIDX page=2 off=5 val=99." }
+            ]
           }
         },
         {
-          "tid": "DCC-S9.2.2-DEC-006",
+          "tid": "DCC-S9.2.2-ACC-001",
           "feature": "Accessory decoder CVs (513/521/541)",
-          "role": "dec",
+          "role": "acc",
           "ref": {
             "spec": "S-9.2.2",
             "cite": "Accessory Decoder CVs (CV513/521 address, CV541 config)",
             "origin": "released",
             "draftDelta": {
-              "change": "Released baseline: accessory-decoder CVs lived in 513-1024 (CV513=address LSB, CV521=address MSB, CV541=config), with 1-512 reserved. The draft (section 1.3.3) relocates the canonical accessory CV definitions down into 1-512 (many shipped decoders already used low CVs and some command stations cannot reach above 512), leaving 513-1024 as optional, and fills the gaps: adds CV15-16 (decoder lock), CV17-18 (Mirrored Address, so the decoder is also reachable via a mobile address when CV29[541] bit7=0), and a full CV29[541] bit table (Table 11: bit3 RailCom, bit5 Basic vs Extended, bit6 Addressing Method, bit7 control type). It adds the Table 9 user-address-to-packet mapping: bit6=0 'Decoder-Address' stores the raw 9-bit address; bit6=1 'Output-Address' stores Output = User-3, split CV1 = Output mod 256, CV9 = Output div 256, where Linear makes Output == User except at 2048 and Non-Linear applies a 256 (mod 2048) offset. Implementer impact: support the lower CV image, branch address encode/decode on CV29[541] bit6, and apply the -3 offset and linear/non-linear convention."
+              "change": "Released baseline (already mapped into 1-512): CV1[513]=address LSB, CV9[521]=address MSB, CV29[541]=config (bit3 RailCom, bit5 basic-vs-extended, bit6 addressing-method, bit7 control-type), plus CV15-16 decoder lock; CVs 513-1024 optional. NOTE the 513-1024 to 1-512 relocation and the CV15-16 lock are in the RELEASED spec, not the draft. Draft-new (2026-02): CV17-18 Mirrored Address (CVs 1/9 mirrored so the accessory decoder is also reachable via a mobile-decoder address when CV29[541] bit7=0; if bit7=1, bits 3-7 of CV17 must be 0); a precise Table 9 user-address-to-packet mapping with Linear vs Non-Linear conventions (Output Address = User Address - 3, with a 256 mod-2048 offset for Non-Linear); and CV33 Decoder Output Status (four output pairs, queryable via RailCom). The CV29[541] bit assignments themselves are unchanged from released. Implementer impact: support CV17/18 mirrored addressing and the -3 / linear-vs-non-linear Output-Address convention."
             }
           },
           "supported": {
@@ -6756,7 +6867,7 @@ window.COMPLIANCE =
           }
         },
         {
-          "tid": "DCC-S9.3.2-CS-009",
+          "tid": "DCC-S9.3.2-DEC-008",
           "feature": "4/8 codec encode (64 values + boundaries)",
           "role": "dec",
           "ref": {
@@ -7662,7 +7773,7 @@ window.COMPLIANCE =
       "title": "SUSI Bus",
       "features": [
         {
-          "tid": "DCC-S9.4.X-HOST-001",
+          "tid": "DCC-S9.4.X-CS-001",
           "feature": "Electrical interface (S-9.4.1)",
           "role": "cs",
           "verify": "other",
@@ -7696,7 +7807,7 @@ window.COMPLIANCE =
           }
         },
         {
-          "tid": "DCC-S9.4.X-HOST-002",
+          "tid": "DCC-S9.4.X-CS-002",
           "feature": "Protocol and timing (S-9.4.1)",
           "role": "cs",
           "verify": "other",
@@ -7730,7 +7841,7 @@ window.COMPLIANCE =
           }
         },
         {
-          "tid": "DCC-S9.4.X-HOST-003",
+          "tid": "DCC-S9.4.X-CS-003",
           "feature": "Command set and CV manipulation (S-9.4.1)",
           "role": "cs",
           "verify": "other",
@@ -7798,7 +7909,7 @@ window.COMPLIANCE =
           }
         },
         {
-          "tid": "DCC-S9.4.X-HOST-004",
+          "tid": "DCC-S9.4.X-CS-004",
           "feature": "Bidirectional extension (S-9.4.3)",
           "role": "cs",
           "verify": "other",
@@ -7832,7 +7943,7 @@ window.COMPLIANCE =
           }
         },
         {
-          "tid": "DCC-S9.4.X-HOST-005",
+          "tid": "DCC-S9.4.X-CS-005",
           "feature": "SIO shift-register train bus (S-9.4.4)",
           "role": "cs",
           "verify": "other",

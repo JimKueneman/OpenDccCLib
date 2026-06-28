@@ -66,7 +66,7 @@ TEST(DccRailcomEncoder, initialize_does_not_crash) {
 // Encode byte tests
 // ============================================================================
 
-// @compliance DCC-S9.3.2-CS-009
+// @compliance DCC-S9.3.2-DEC-008
 TEST(DccRailcomEncoder, encode_byte_value_0x00) {
 
     reset_mocks();
@@ -112,7 +112,7 @@ TEST(DccRailcomEncoder, encode_byte_out_of_range) {
 // Encode/decode round-trip: verify encode table is inverse of decode table
 // ============================================================================
 
-// @compliance DCC-S9.3.2-CS-009
+// @compliance DCC-S9.3.2-DEC-008
 TEST(DccRailcomEncoder, round_trip_all_values) {
 
     reset_mocks();

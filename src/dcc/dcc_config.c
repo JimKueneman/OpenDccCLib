@@ -869,6 +869,10 @@ void DccConfig_initialize(const dcc_config_t *config) {
     /* Wire CV storage interface */
     _cv_storage_interface.cv_read = config->cv_read;
     _cv_storage_interface.cv_write = config->cv_write;
+    _cv_storage_interface.factory_reset = config->factory_reset;
+    _cv_storage_interface.cv_read_indexed = config->cv_read_indexed;
+    _cv_storage_interface.cv_write_indexed = config->cv_write_indexed;
+    _cv_storage_interface.on_cv29_config_changed = config->on_cv29_config_changed;
 
     DccCvStorage_initialize(&_cv_storage_interface);
 

@@ -86,7 +86,14 @@ void CallbacksDcc_initialize(void) {
     _recv_head = 0;
     _recv_tail = 0;
 
-    /* Initialize CV storage with NMRA defaults.
+    /* Restore CV storage to NMRA defaults. */
+    CallbacksDcc_factory_reset();
+
+}
+
+void CallbacksDcc_factory_reset(void) {
+
+    /* Restore CV storage to NMRA defaults.
      * CV1  = primary short address (default 3).
      * CV15 = decoder lock key, CV16 = decoder lock value (both 0 = unlocked).
      * CV29 = configuration register (0x06 = 28/128 speed steps, short addr). */
@@ -147,6 +154,58 @@ bool CallbacksDcc_cv_write(uint16_t cv_number, uint8_t value) {
 
     _cv_storage[cv_number - 1] = value;
     return true;
+
+}
+
+/* ========================================================================== */
+/* Indexed CV storage -- 4 demo pages (CV31=0, CV32=0..3), 256 bytes each.     */
+/* The library resolves the CV257-512 window via CV31/CV32 and calls these     */
+/* with (page, offset).  Unsupported pages return false (NACK).                */
+/* ========================================================================== */
+
+static uint8_t _idx_store[4][256];
+
+bool CallbacksDcc_cv_read_indexed(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t *value) {
+
+    if (page_hi != 0 || page_lo >= 4) {
+
+        return false;
+
+    }
+
+    *value = _idx_store[page_lo][offset];
+    return true;
+
+}
+
+bool CallbacksDcc_cv_write_indexed(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t value) {
+
+    if (page_hi != 0 || page_lo >= 4) {
+
+        return false;
+
+    }
+
+    _idx_store[page_lo][offset] = value;
+    _recv_enqueue("RECV CVIDX page=%u off=%u val=%u",
+                  (unsigned)(((unsigned)page_hi << 8) | page_lo),
+                  (unsigned)offset, (unsigned)value);
+    return true;
+
+}
+
+void CallbacksDcc_on_cv29_config_changed(const dcc_cv29_flags_t *flags) {
+
+    /* The library decoded CV29 for us. This demo reports the flags over UART; a real
+     * product would act here (enable RailCom Tx, switch analog, set speed mode, ...). */
+    _recv_enqueue("RECV CV29 dir=%u steps=%u analog=%u railcom=%u sptbl=%u extaddr=%u acc=%u",
+                  (unsigned)flags->direction_reversed,
+                  (unsigned)flags->speed_steps_28_128,
+                  (unsigned)flags->power_source_conversion,
+                  (unsigned)flags->railcom_enabled,
+                  (unsigned)flags->speed_table_enabled,
+                  (unsigned)flags->extended_address,
+                  (unsigned)flags->accessory_decoder);
 
 }
 

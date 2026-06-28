@@ -364,12 +364,12 @@ EXACT = [
     ("BSL 3 1 ON",          binary_state_long(3, 1, True),      "§2.3.6.1", "binary state long on (11000000 DLLLLLLL HHHHHHHH)"),
     ("BSL 3 32767 OFF",     binary_state_long(3, 32767, False), "§2.3.6.1", "binary state long max state 32767 off (15-bit)"),
     # --- basic accessory CV access (S-9.2.1 2.4) ---
-    # @compliance DCC-S9.2.1-ACC-001
+    # @compliance DCC-S9.2.1-CS-026
     ("ACC CV WRITE 1 0 7 42",  accessory_basic_cv(1, 0, 7, 42, CV_WRITE),               "§2.4", "basic accessory CV write CV7=42"),
     ("ACC CV VERIFY 1 0 7 42", accessory_basic_cv(1, 0, 7, 42, CV_VERIFY),              "§2.4", "basic accessory CV verify CV7=42"),
     ("ACC CV BIT 1 0 7 3 1",   accessory_basic_cv(1, 0, 7, _cv_bit_byte(3, 1), CV_BIT), "§2.4", "basic accessory CV bit write CV7 b3=1"),
     # --- extended accessory CV access (S-9.2.1 2.4.2) ---
-    # @compliance DCC-S9.2.1-ACC-002
+    # @compliance DCC-S9.2.1-CS-027
     ("ACCE CV WRITE 1 7 42",   accessory_extended_cv(1, 7, 42, CV_WRITE),               "§2.4.2", "extended accessory CV write CV7=42"),
     ("ACCE CV VERIFY 1 7 42",  accessory_extended_cv(1, 7, 42, CV_VERIFY),              "§2.4.2", "extended accessory CV verify CV7=42"),
     ("ACCE CV BIT 1 7 3 1",    accessory_extended_cv(1, 7, _cv_bit_byte(3, 1), CV_BIT), "§2.4.2", "extended accessory CV bit write CV7 b3=1"),
