@@ -8,6 +8,7 @@
 #include "test/main_Test.hxx"
 
 #include "dcc/dcc_railcom_command_station.h"
+#include "dcc/dcc_railcom_utilities.h"
 #include "dcc/dcc_types.h"
 #include "dcc/dcc_defines.h"
 
@@ -113,87 +114,6 @@ TEST(DccRailcomCommandStation, initialize_clears_buffer) {
     DccRailcomCommandStation_initialize(&test_context, &interface);
 
     EXPECT_EQ(DccRailcomCommandStation_available(&test_context), (uint8_t)0);
-
-}
-
-// ============================================================================
-// 4/8 decode table tests
-// ============================================================================
-
-// @compliance DCC-S9.3.2-CS-010
-TEST(DccRailcomCommandStation, decode_byte_invalid_0x00) {
-
-    reset_mocks();
-    interface_dcc_railcom_command_station_t interface = make_interface();
-    DccRailcomCommandStation_initialize(&test_context, &interface);
-
-    EXPECT_EQ(DccRailcomCommandStation_decode_byte(0x00), DCC_RAILCOM_DECODE_INVALID);
-
-}
-
-// @compliance DCC-S9.3.2-CS-011
-TEST(DccRailcomCommandStation, decode_byte_ack_0xF0) {
-
-    reset_mocks();
-    interface_dcc_railcom_command_station_t interface = make_interface();
-    DccRailcomCommandStation_initialize(&test_context, &interface);
-
-    EXPECT_EQ(DccRailcomCommandStation_decode_byte(0xF0), DCC_RAILCOM_DECODE_ACK);
-
-}
-
-TEST(DccRailcomCommandStation, decode_byte_ack_0x0F) {
-
-    reset_mocks();
-    interface_dcc_railcom_command_station_t interface = make_interface();
-    DccRailcomCommandStation_initialize(&test_context, &interface);
-
-    /* 0x0F is the alternate ACK special code word (2026 draft S-9.3.2) */
-    EXPECT_EQ(DccRailcomCommandStation_decode_byte(0x0F), DCC_RAILCOM_DECODE_ACK);
-
-}
-
-// @compliance DCC-S9.3.2-CS-012
-TEST(DccRailcomCommandStation, decode_byte_nack_0x3C) {
-
-    reset_mocks();
-    interface_dcc_railcom_command_station_t interface = make_interface();
-    DccRailcomCommandStation_initialize(&test_context, &interface);
-
-    /* 0x3C is the NACK special code word (2026 draft S-9.3.2) */
-    EXPECT_EQ(DccRailcomCommandStation_decode_byte(0x3C), DCC_RAILCOM_DECODE_NACK);
-
-}
-
-// @compliance DCC-S9.3.2-CS-010
-TEST(DccRailcomCommandStation, decode_byte_value_0x00_codeword_0xAC) {
-
-    reset_mocks();
-    interface_dcc_railcom_command_station_t interface = make_interface();
-    DccRailcomCommandStation_initialize(&test_context, &interface);
-
-    /* 6-bit value 0x00 maps to codeword 0xAC */
-    EXPECT_EQ(DccRailcomCommandStation_decode_byte(0xAC), (uint8_t)0x00);
-
-}
-
-TEST(DccRailcomCommandStation, decode_byte_value_0x01_codeword_0xAB) {
-
-    reset_mocks();
-    interface_dcc_railcom_command_station_t interface = make_interface();
-    DccRailcomCommandStation_initialize(&test_context, &interface);
-
-    EXPECT_EQ(DccRailcomCommandStation_decode_byte(0xAB), (uint8_t)0x01);
-
-}
-
-TEST(DccRailcomCommandStation, decode_byte_value_0x3F_codeword_0xC4) {
-
-    reset_mocks();
-    interface_dcc_railcom_command_station_t interface = make_interface();
-    DccRailcomCommandStation_initialize(&test_context, &interface);
-
-    EXPECT_EQ(DccRailcomCommandStation_decode_byte(0xC4), (uint8_t)0x3F);
 
 }
 

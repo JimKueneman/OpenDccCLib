@@ -120,13 +120,6 @@ extern void DccRailcomCommandStation_end_cutout(dcc_railcom_command_station_cont
      */
 extern uint8_t DccRailcomCommandStation_available(const dcc_railcom_command_station_context_t *context);
 
-    /**
-     * @brief Decode a single RailCom 4/8 encoded byte.
-     * @param encoded The 8-bit codeword received from UART.
-     * @return 6-bit decoded value, or DCC_RAILCOM_DECODE_INVALID/ACK/NACK.
-     */
-extern uint8_t DccRailcomCommandStation_decode_byte(uint8_t encoded);
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

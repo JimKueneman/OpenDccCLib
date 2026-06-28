@@ -160,28 +160,29 @@ set(CS_MODULES
     DccApplicationCommandStationServiceTrack DccApplicationMainTrack
     DccApplicationServiceTrack DccBitEncoder DccScheduler DccPacketEncoder
     DccServiceMode)
-set(CS_RAILCOM    DccRailcomCutout DccRailcomCommandStation)
+set(CS_RAILCOM    DccRailcomCutout DccRailcomCommandStation DccRailcomUtilities_decode_byte)
 set(DEC_RAILCOM   DccRailcomDecoder)
+set(DEC_ACC_RAILCOM DccRailcomUtilities_encode_byte)
 set(APP_RAILCOM   DccApplicationDecoderRailcom)
 set(ACC_RAILCOM   DccApplicationAccessoryDecoderRailcom)
 
 # command station: no decoder/accessory modules at all.
 dcc_gate_target(command_station
-    ${DEC_MODULES} ${DEC_RAILCOM} ${APP_RAILCOM} ${ACC_RAILCOM})
+    ${DEC_MODULES} ${DEC_RAILCOM} ${APP_RAILCOM} ${ACC_RAILCOM} ${DEC_ACC_RAILCOM})
 dcc_gate_target(command_station_no_railcom
-    ${DEC_MODULES} ${DEC_RAILCOM} ${APP_RAILCOM} ${ACC_RAILCOM} ${CS_RAILCOM})
+    ${DEC_MODULES} ${DEC_RAILCOM} ${APP_RAILCOM} ${ACC_RAILCOM} ${CS_RAILCOM} ${DEC_ACC_RAILCOM})
 
 # mobile decoder: no command-station / accessory-specific / CS-railcom modules.
 dcc_gate_target(decoder
     ${CS_MODULES} ${CS_RAILCOM} ${ACC_RAILCOM})
 dcc_gate_target(decoder_no_railcom
-    ${CS_MODULES} ${CS_RAILCOM} ${ACC_RAILCOM} ${DEC_RAILCOM} ${APP_RAILCOM})
+    ${CS_MODULES} ${CS_RAILCOM} ${ACC_RAILCOM} ${DEC_RAILCOM} ${APP_RAILCOM} ${DEC_ACC_RAILCOM})
 
 # accessory decoder: no command-station / mobile-decoder modules.
 dcc_gate_target(accessory
     ${CS_MODULES} ${CS_RAILCOM} ${DEC_MODULES} ${DEC_RAILCOM})
 dcc_gate_target(accessory_no_railcom
-    ${CS_MODULES} ${CS_RAILCOM} ${DEC_MODULES} ${DEC_RAILCOM} ${APP_RAILCOM} ${ACC_RAILCOM})
+    ${CS_MODULES} ${CS_RAILCOM} ${DEC_MODULES} ${DEC_RAILCOM} ${APP_RAILCOM} ${ACC_RAILCOM} ${DEC_ACC_RAILCOM})
 
 # Generate the HTML coverage report
 add_custom_command(OUTPUT gcovr/coverage.html

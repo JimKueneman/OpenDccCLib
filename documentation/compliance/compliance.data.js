@@ -6981,13 +6981,13 @@ window.COMPLIANCE =
             ],
             "tests": [
               {
-                "name": "DccRailcomDecoder.encode_byte_value_0x00",
-                "file": "dcc_railcom_decoder_Test.cxx",
+                "name": "DccRailcomUtilities.encode_byte_value_0x00",
+                "file": "dcc_railcom_utilities_Test.cxx",
                 "desc": "encodes low boundary value 0x00"
               },
               {
-                "name": "DccRailcomDecoder.round_trip_all_values",
-                "file": "dcc_railcom_decoder_Test.cxx",
+                "name": "DccRailcomUtilities.round_trip_all_values",
+                "file": "dcc_railcom_utilities_Test.cxx",
                 "desc": "encode/decode round-trips all 64 values"
               }
             ],
@@ -7029,13 +7029,13 @@ window.COMPLIANCE =
             ],
             "tests": [
               {
-                "name": "DccRailcomCommandStation.decode_byte_value_0x00_codeword_0xAC",
-                "file": "dcc_railcom_command_station_Test.cxx",
+                "name": "DccRailcomUtilities.decode_byte_value_0x00_codeword_0xAC",
+                "file": "dcc_railcom_utilities_Test.cxx",
                 "desc": "decodes valid code word 0xAC back to 0x00"
               },
               {
-                "name": "DccRailcomCommandStation.decode_byte_invalid_0x00",
-                "file": "dcc_railcom_command_station_Test.cxx",
+                "name": "DccRailcomUtilities.decode_byte_invalid_0x00",
+                "file": "dcc_railcom_utilities_Test.cxx",
                 "desc": "rejects an invalid code word"
               }
             ],
@@ -7080,8 +7080,8 @@ window.COMPLIANCE =
                 "desc": "emits ACK 0xF0 raw"
               },
               {
-                "name": "DccRailcomCommandStation.decode_byte_ack_0xF0",
-                "file": "dcc_railcom_command_station_Test.cxx",
+                "name": "DccRailcomUtilities.decode_byte_ack_0xF0",
+                "file": "dcc_railcom_utilities_Test.cxx",
                 "desc": "decodes 0xF0 as ACK"
               }
             ],
@@ -7126,8 +7126,8 @@ window.COMPLIANCE =
                 "desc": "emits NACK 0x3C raw"
               },
               {
-                "name": "DccRailcomCommandStation.decode_byte_nack_0x3C",
-                "file": "dcc_railcom_command_station_Test.cxx",
+                "name": "DccRailcomUtilities.decode_byte_nack_0x3C",
+                "file": "dcc_railcom_utilities_Test.cxx",
                 "desc": "decodes 0x3C as NACK"
               }
             ],

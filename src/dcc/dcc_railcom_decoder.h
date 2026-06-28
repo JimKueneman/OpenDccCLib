@@ -63,13 +63,6 @@ typedef struct {
 extern void DccRailcomDecoder_initialize(const interface_dcc_railcom_decoder_t *interface);
 
     /**
-     * @brief Encode a single 6-bit value to an 8-bit RailCom codeword.
-     * @param value 6-bit data value (0x00-0x3F).
-     * @return 8-bit DC-balanced codeword, or 0x00 if value is out of range.
-     */
-extern uint8_t DccRailcomDecoder_encode_byte(uint8_t value);
-
-    /**
      * @brief Send a raw RailCom special code word (bypasses the 4/8 table).
      * @param code_word Raw 8-bit code word to transmit (e.g.
      *        @ref DCC_RAILCOM_CODE_WORD_ACK or @ref DCC_RAILCOM_CODE_WORD_NACK).
@@ -98,6 +91,47 @@ extern void DccRailcomDecoder_send_ch1(uint8_t datagram_id, uint8_t data);
      * additional data bytes are encoded individually as 6-bit values.
      */
 extern void DccRailcomDecoder_send_ch2(const dcc_railcom_response_t *response);
+
+// =============================================================================
+// Decoder-side recognizer (pure)
+// =============================================================================
+
+    /**
+     * @brief Total DCC packet length (including the XOR byte) implied by the bytes
+     *  received so far, from the self-describing multifunction-decoder instruction
+     *  format (S-9.2.1).
+     *
+     * @details Pure -- no side effects, no module state. The decoder-side RailCom
+     *  recognizer uses it to know a command is complete (the next byte is the XOR)
+     *  before the cutout. Returns 0 when the length cannot yet be determined: too few
+     *  bytes to classify, an extended form not yet sized (XPOM), an accessory/reserved
+     *  leading byte, or an instruction this module does not size.
+     *
+     * @param data Packet bytes received so far (address + instruction).
+     * @param count Number of bytes in @p data.
+     *
+     * @return Total packet length in bytes including XOR, or 0 if undeterminable.
+     */
+extern uint8_t DccRailcomDecoder_packet_length(const uint8_t *data, uint8_t count);
+
+    /**
+     * @brief Extract the multifunction address and its type from a packet's leading
+     *  bytes.
+     *
+     * @details Pure -- no side effects, no module state. Decodes the broadcast, short
+     *  (CV1), long (CV17/18), and idle leading bytes. The recognizer compares the
+     *  result against this decoder's own address to decide "addressed to me."
+     *
+     * @param data Packet bytes received so far.
+     * @param count Number of bytes in @p data.
+     * @param address Out: decoded @ref dcc_address_t (valid only when true is returned).
+     * @param type Out: decoded @ref dcc_address_type_enum (valid only when true returned).
+     *
+     * @return true if an address was decoded; false if too few bytes or an
+     *         accessory/reserved leading byte (not a multifunction packet).
+     */
+extern bool DccRailcomDecoder_packet_address(const uint8_t *data, uint8_t count,
+            dcc_address_t *address, dcc_address_type_enum *type);
 
 #ifdef __cplusplus
 }

@@ -32,38 +32,9 @@
  */
 
 #include "dcc_railcom_decoder.h"
+#include "dcc_railcom_utilities.h"
 
 #if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_DECODER)
-
-// =============================================================================
-// RailCom 4/8 Encode Table (NMRA RP-9.3.2)
-// =============================================================================
-
-    /**
-     * @brief 4/8 encode table: maps 6-bit data value to 8-bit codeword.
-     *
-     * @details Each valid 8-bit codeword has exactly 4 ones and 4 zeros for
-     * DC balance. Derived as the inverse of the decode table in
-     * dcc_railcom_decoder.c.
-     */
-static const uint8_t _encode_table[64] = {
-    /* 0x00-0x07 */
-    0xAC, 0xAB, 0xD3, 0xA3, 0xC5, 0xCA, 0x65, 0xB3,
-    /* 0x08-0x0F */
-    0x95, 0xD5, 0xC9, 0xA9, 0xD6, 0x99, 0xA6, 0x96,
-    /* 0x10-0x17 */
-    0x69, 0xE5, 0xC3, 0xA5, 0xB4, 0xAA, 0x55, 0x93,
-    /* 0x18-0x1F */
-    0x4E, 0x59, 0x49, 0x6A, 0x35, 0x36, 0x56, 0x66,
-    /* 0x20-0x27 */
-    0x5A, 0xD9, 0xCC, 0x8D, 0xCB, 0x4D, 0x2E, 0xB5,
-    /* 0x28-0x2F */
-    0x8B, 0x71, 0xC6, 0x9A, 0x72, 0xB1, 0x6C, 0x53,
-    /* 0x30-0x37 */
-    0x4B, 0xE3, 0x8E, 0xB2, 0xD4, 0x2D, 0x4A, 0x2C,
-    /* 0x38-0x3F */
-    0x3A, 0x63, 0xE6, 0x9C, 0xB8, 0xB6, 0xD2, 0xC4
-};
 
 // =============================================================================
 // Static state
@@ -78,18 +49,6 @@ static const interface_dcc_railcom_decoder_t *_interface;
 void DccRailcomDecoder_initialize(const interface_dcc_railcom_decoder_t *interface) {
 
     _interface = interface;
-
-}
-
-uint8_t DccRailcomDecoder_encode_byte(uint8_t value) {
-
-    if (value > 0x3F) {
-
-        return 0x00;
-
-    }
-
-    return _encode_table[value];
 
 }
 
@@ -123,8 +82,8 @@ void DccRailcomDecoder_send_ch1(uint8_t datagram_id, uint8_t data) {
     high_six_bits = (uint8_t)((combined >> 6) & 0x3F);
     low_six_bits = (uint8_t)(combined & 0x3F);
 
-    _interface->uart_write(_encode_table[high_six_bits]);
-    _interface->uart_write(_encode_table[low_six_bits]);
+    _interface->uart_write(DccRailcomUtilities_encode_byte(high_six_bits));
+    _interface->uart_write(DccRailcomUtilities_encode_byte(low_six_bits));
 
 }
 
@@ -152,15 +111,275 @@ void DccRailcomDecoder_send_ch2(const dcc_railcom_response_t *response) {
     high_six_bits = (uint8_t)((combined >> 6) & 0x3F);
     low_six_bits = (uint8_t)(combined & 0x3F);
 
-    _interface->uart_write(_encode_table[high_six_bits]);
-    _interface->uart_write(_encode_table[low_six_bits]);
+    _interface->uart_write(DccRailcomUtilities_encode_byte(high_six_bits));
+    _interface->uart_write(DccRailcomUtilities_encode_byte(low_six_bits));
 
     /* Additional data bytes encoded individually as 6-bit values */
     for (byte_index = 1; byte_index < response->count; byte_index++) {
 
-        _interface->uart_write(_encode_table[response->data[byte_index] & 0x3F]);
+        _interface->uart_write(DccRailcomUtilities_encode_byte(response->data[byte_index] & 0x3F));
 
     }
+
+}
+
+// =============================================================================
+// Decoder-side recognizer -- pure DCC packet-length logic (no side effects)
+// =============================================================================
+
+    /**
+     * @brief Address byte count implied by a multifunction packet's leading byte.
+     * @param first First packet byte.
+     * @return 1 (broadcast / short / idle), 2 (long), or 0 (accessory / reserved --
+     *         not a multifunction-decoder packet this module sizes).
+     */
+static uint8_t _address_byte_count(uint8_t first) {
+
+    if (first == DCC_ADDRESS_BROADCAST_VALUE) {
+
+        return 1;
+
+    }
+
+    if (first <= DCC_ADDRESS_SHORT_MAX) {
+
+        return 1;   /* 0x01-0x7F short address */
+
+    }
+
+    if (first == DCC_ADDRESS_IDLE_VALUE) {
+
+        return 1;   /* 0xFF idle */
+
+    }
+
+    if (first >= 0xC0 && first <= 0xE7) {
+
+        return 2;   /* 0xC0-0xE7 long (14-bit) address */
+
+    }
+
+    return 0;       /* 0x80-0xBF accessory, 0xE8-0xFE reserved */
+
+}
+
+    /**
+     * @brief Instruction byte count implied by an instruction opcode (S-9.2.1).
+     * @param opcode First instruction byte (after the address).
+     * @return Instruction length in bytes, or 0 if not sizable from the opcode alone
+     *         (extended XPOM form, or an instruction not sized by this module).
+     */
+static uint8_t _instruction_byte_count(uint8_t opcode) {
+
+    if ((opcode & 0xF0) == 0x10) {
+
+        return 2;   /* consist control: 0001xxxx + consist address */
+
+    }
+
+    if ((opcode & 0xC0) == 0x40) {
+
+        return 1;   /* speed / direction 14/28-step: 01Dxxxxx */
+
+    }
+
+    if ((opcode & 0xE0) == 0x20) {
+
+        if (opcode == DCC_ADV_OPS_128_SPEED) {
+
+            return 2;   /* 0x3F + speed */
+
+        }
+
+        if (opcode == DCC_ADV_OPS_ANALOG_FUNCTION) {
+
+            return 3;   /* 0x3D + output + data */
+
+        }
+
+        return 0;       /* other advanced ops: not sized here */
+
+    }
+
+    if ((opcode & 0xE0) == 0x80) {
+
+        return 1;   /* function group 1: 100xxxxx */
+
+    }
+
+    if ((opcode & 0xE0) == 0xA0) {
+
+        return 1;   /* function group 2: 101xxxxx */
+
+    }
+
+    if ((opcode & 0xE0) == 0xC0) {
+
+        if (opcode == DCC_FEAT_BINARY_STATE_LONG) {
+
+            return 3;   /* 0xC0 + 2 data bytes */
+
+        }
+
+        if (opcode == DCC_FEAT_BINARY_STATE_SHORT) {
+
+            return 2;   /* 0xDD + 1 data byte */
+
+        }
+
+        if (opcode == DCC_FEAT_F13_F20 || opcode == DCC_FEAT_F21_F28 ||
+            opcode == DCC_FEAT_F29_F36 || opcode == DCC_FEAT_F37_F44 ||
+            opcode == DCC_FEAT_F45_F52 || opcode == DCC_FEAT_F53_F60 ||
+            opcode == DCC_FEAT_F61_F68) {
+
+            return 2;   /* feature-expansion function groups: opcode + 1 data */
+
+        }
+
+        return 0;       /* time/date, system time, others: not sized here */
+
+    }
+
+    if ((opcode & 0xE0) == 0xE0) {
+
+        if ((opcode & 0xF0) == 0xF0) {
+
+            return 2;   /* short-form CV access: 1111GGGG + data */
+
+        }
+
+        if (opcode == DCC_CV_LONG_VERIFY || opcode == DCC_CV_LONG_BIT ||
+            opcode == DCC_CV_LONG_WRITE) {
+
+            return 3;   /* standard POM long form: 1110GGVV VVVVVVVV DDDDDDDD */
+
+        }
+
+        return 0;       /* XPOM (1110GGSS) and other 0xE0 forms: length not yet grounded */
+
+    }
+
+    return 0;           /* decoder control (0000xxxx) and anything else: not sized */
+
+}
+
+    /**
+     * @brief Total DCC packet length (including XOR) implied by the bytes so far.
+     *
+     * @details Algorithm:
+     * -# Size the address from byte 0 (1 or 2 bytes); 0 if not a multifunction packet.
+     * -# Once the opcode byte is present, size the instruction from it.
+     * -# Total = address bytes + instruction bytes + 1 (XOR).
+     * Returns 0 while still undeterminable, or for an extended form (XPOM) whose
+     * length is not yet grounded.
+     *
+     * @verbatim
+     * @param data  Packet bytes received so far.
+     * @param count Number of bytes in data.
+     * @endverbatim
+     *
+     * @return Total packet length including XOR, or 0 if undeterminable.
+     */
+uint8_t DccRailcomDecoder_packet_length(const uint8_t *data, uint8_t count) {
+
+    uint8_t address_bytes;
+    uint8_t instruction_bytes;
+
+    if (count < 1) {
+
+        return 0;
+
+    }
+
+    address_bytes = _address_byte_count(data[0]);
+
+    if (address_bytes == 0) {
+
+        return 0;
+
+    }
+
+    if (count < (uint8_t)(address_bytes + 1)) {
+
+        return 0;   /* opcode not yet received */
+
+    }
+
+    instruction_bytes = _instruction_byte_count(data[address_bytes]);
+
+    if (instruction_bytes == 0) {
+
+        return 0;   /* undeterminable, or extended (XPOM) */
+
+    }
+
+    return (uint8_t)(address_bytes + instruction_bytes + 1);   /* + XOR */
+
+}
+
+    /**
+     * @brief Extract the multifunction address and its type from a packet's leading bytes.
+     *
+     * @details Algorithm:
+     * -# Size the address (1 or 2 bytes); reject accessory/reserved/short-of-bytes.
+     * -# Broadcast (0x00) and idle (0xFF) decode to their own types.
+     * -# 1-byte form is a short address; 2-byte form is a 14-bit long address.
+     *
+     * @verbatim
+     * @param data    Packet bytes received so far.
+     * @param count   Number of bytes in data.
+     * @param address Out: decoded address.
+     * @param type    Out: decoded address type.
+     * @endverbatim
+     *
+     * @return true if an address was decoded; false otherwise.
+     */
+bool DccRailcomDecoder_packet_address(const uint8_t *data, uint8_t count,
+            dcc_address_t *address, dcc_address_type_enum *type) {
+
+    uint8_t address_bytes;
+
+    if (count < 1) {
+
+        return false;
+
+    }
+
+    address_bytes = _address_byte_count(data[0]);
+
+    if (address_bytes == 0 || count < address_bytes) {
+
+        return false;
+
+    }
+
+    if (data[0] == DCC_ADDRESS_BROADCAST_VALUE) {
+
+        *address = 0;
+        *type = DCC_ADDRESS_BROADCAST;
+        return true;
+
+    }
+
+    if (data[0] == DCC_ADDRESS_IDLE_VALUE) {
+
+        *address = DCC_ADDRESS_IDLE_VALUE;
+        *type = DCC_ADDRESS_IDLE;
+        return true;
+
+    }
+
+    if (address_bytes == 1) {
+
+        *address = data[0];
+        *type = DCC_ADDRESS_SHORT;
+        return true;
+
+    }
+
+    *address = (dcc_address_t)(((uint16_t)(data[0] & 0x3F) << 8) | data[1]);
+    *type = DCC_ADDRESS_LONG;
+    return true;
 
 }
 

@@ -23,6 +23,7 @@ set(SOURCES
     dcc_cv_storage.c
     dcc_failsafe.c
     dcc_railcom_decoder.c
+    dcc_railcom_utilities.c
     dcc_railcom_cutout.c
     dcc_service_mode_task_direct.c
     dcc_service_mode_task_paged.c
@@ -50,6 +51,7 @@ set(TESTS ${TESTS}
     ${ROOT_DIR}/src/dcc/dcc_cv_storage_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_failsafe_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_railcom_decoder_Test.cxx
+    ${ROOT_DIR}/src/dcc/dcc_railcom_utilities_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_railcom_cutout_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_application_decoder_cv_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_application_decoder_railcom_Test.cxx
