@@ -510,6 +510,57 @@ TEST(DccPacketDecoder, on_address_changed_fires_long) {
 #endif /* DCC_COMPILE_RAILCOM */
 
 // ============================================================================
+// Deferred dispatch: enqueue (ISR) + run (poll)
+// ============================================================================
+
+TEST(DccPacketDecoder, enqueue_then_run_dispatches) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    uint8_t data[] = { 0x03, 0x60, 0x63 };   /* addr 3 + speed, XOR 0x63 */
+    DccPacketDecoder_enqueue(data, 3);
+    EXPECT_EQ(speed_callback_count, (uint32_t)0);   /* queued, not yet dispatched */
+
+    DccPacketDecoder_run();
+    EXPECT_EQ(speed_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_speed_address, (uint16_t)3);
+
+}
+
+TEST(DccPacketDecoder, run_with_empty_queue_does_nothing) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    DccPacketDecoder_run();
+    EXPECT_EQ(speed_callback_count, (uint32_t)0);
+
+}
+
+TEST(DccPacketDecoder, full_queue_drops_excess) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    uint8_t data[] = { 0x03, 0x60, 0x63 };
+    uint8_t enqueue_index;
+    for (enqueue_index = 0; enqueue_index < USER_DEFINED_DCC_PACKET_QUEUE_DEPTH + 2; enqueue_index++) {
+
+        DccPacketDecoder_enqueue(data, 3);
+
+    }
+
+    DccPacketDecoder_run();
+    /* one slot reserved -> USER_DEFINED_DCC_PACKET_QUEUE_DEPTH-1 usable, the rest dropped */
+    EXPECT_EQ(speed_callback_count, (uint32_t)(USER_DEFINED_DCC_PACKET_QUEUE_DEPTH - 1));
+
+}
+
+// ============================================================================
 // Initialization
 // ============================================================================
 

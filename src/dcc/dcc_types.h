@@ -135,6 +135,13 @@ extern "C" {
 #error "USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS must be >= 1"
 #endif
 
+#ifndef USER_DEFINED_DCC_PACKET_QUEUE_DEPTH
+#error "USER_DEFINED_DCC_PACKET_QUEUE_DEPTH must be defined in dcc_user_config.h"
+#endif
+#if USER_DEFINED_DCC_PACKET_QUEUE_DEPTH < 2
+#error "USER_DEFINED_DCC_PACKET_QUEUE_DEPTH must be >= 2 (one slot is reserved)"
+#endif
+
 #endif /* DCC_COMPILE_DECODER */
 
 // =============================================================================

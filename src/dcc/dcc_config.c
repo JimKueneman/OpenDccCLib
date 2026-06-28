@@ -931,7 +931,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     DccFailsafe_initialize(&_failsafe_interface);
 
     /* Wire bit decoder interface — complete packets go to packet decoder */
-    _bit_decoder_interface.on_packet_received = &DccPacketDecoder_process_packet;
+    _bit_decoder_interface.on_packet_received = &DccPacketDecoder_enqueue;
 #if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_DECODER)
     /* Per-byte feed to the RailCom Tx dispatch (recognize + answer before the XOR) */
     _bit_decoder_interface.on_byte_received = &DccRailcomDecoder_on_byte_received;
@@ -991,6 +991,10 @@ void DccConfig_run(void) {
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
 #ifdef DCC_COMPILE_DECODER
+
+    /* Dispatch packets queued by the end-bit ISR. Instruction callbacks run here in
+     * the poll context (not the ISR), keeping the RailCom cutout window clear. */
+    DccPacketDecoder_run();
 
     /* Packet-timeout fail-safe (S-9.2.4 §4): poll CV11 vs. elapsed time. */
     DccFailsafe_run();

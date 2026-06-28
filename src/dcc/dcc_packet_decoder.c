@@ -56,6 +56,14 @@ static bool _use_extended_address;
     /** @brief Cached CV541 bit 6: true = output-address mode for accessory. */
 static bool _use_output_address;
 
+    /** @brief Received-packet FIFO. The end-bit ISR enqueues; DccConfig_run drains.
+     *  Single-producer (ISR) / single-consumer (poll): head/tail are volatile and one
+     *  slot is reserved, so no shared counter and no lock is needed. */
+static uint8_t _packet_queue[USER_DEFINED_DCC_PACKET_QUEUE_DEPTH][DCC_PACKET_MAX_BYTES];
+static uint8_t _packet_queue_count[USER_DEFINED_DCC_PACKET_QUEUE_DEPTH];
+static volatile uint8_t _packet_queue_head;
+static volatile uint8_t _packet_queue_tail;
+
     /** @brief Consecutive reset packet counter for service mode detection. */
 static uint8_t _reset_count;
 
@@ -1212,6 +1220,8 @@ void DccPacketDecoder_initialize(const interface_dcc_packet_decoder_t *interface
     _use_output_address = false;
     _reset_count = 0;
     _service_mode_active = false;
+    _packet_queue_head = 0;
+    _packet_queue_tail = 0;
     _update_address_cv_cache();
 
 }
@@ -1352,6 +1362,66 @@ void DccPacketDecoder_process_packet(const uint8_t *data, uint8_t byte_count) {
 
     /* Dispatch instruction bytes (excluding address and XOR) */
     _dispatch_instruction(packet_address, &data[inst_start], byte_count - inst_start - 1);
+
+}
+
+    /**
+     * @brief Enqueue a raw decoded packet for deferred dispatch (called at the end bit).
+     *
+     * @details Algorithm:
+     * -# Compute the next tail; if it meets head the FIFO is full -- drop the packet
+     *    (the command station resends).
+     * -# Copy up to DCC_PACKET_MAX_BYTES into the tail slot, then publish the new tail.
+     *
+     * @verbatim
+     * @param data Raw packet bytes (including XOR).
+     * @param byte_count Number of bytes in data.
+     * @endverbatim
+     */
+void DccPacketDecoder_enqueue(const uint8_t *data, uint8_t byte_count) {
+
+    uint8_t next_tail = (uint8_t)((_packet_queue_tail + 1) % USER_DEFINED_DCC_PACKET_QUEUE_DEPTH);
+    uint8_t byte_index;
+
+    if (next_tail == _packet_queue_head) {
+
+        return;
+
+    }
+
+    if (byte_count > DCC_PACKET_MAX_BYTES) {
+
+        byte_count = DCC_PACKET_MAX_BYTES;
+
+    }
+
+    for (byte_index = 0; byte_index < byte_count; byte_index++) {
+
+        _packet_queue[_packet_queue_tail][byte_index] = data[byte_index];
+
+    }
+
+    _packet_queue_count[_packet_queue_tail] = byte_count;
+    _packet_queue_tail = next_tail;
+
+}
+
+    /**
+     * @brief Drain the packet FIFO, dispatching each queued packet (poll context).
+     *
+     * @details Runs the instruction callbacks for every packet queued since the last
+     * call, outside the edge ISR. Call from the main loop (DccConfig_run).
+     */
+void DccPacketDecoder_run(void) {
+
+    while (_packet_queue_head != _packet_queue_tail) {
+
+        DccPacketDecoder_process_packet(_packet_queue[_packet_queue_head],
+                _packet_queue_count[_packet_queue_head]);
+
+        _packet_queue_head = (uint8_t)((_packet_queue_head + 1) % USER_DEFINED_DCC_PACKET_QUEUE_DEPTH);
+
+    }
 
 }
 
