@@ -29,7 +29,7 @@
  * dispatch for decoders.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 28 Jun 2026
  */
 
 #include "dcc_packet_decoder.h"
@@ -59,8 +59,8 @@ static bool _use_output_address;
     /** @brief Received-packet FIFO. The end-bit ISR enqueues; DccConfig_run drains.
      *  Single-producer (ISR) / single-consumer (poll): head/tail are volatile and one
      *  slot is reserved, so no shared counter and no lock is needed. */
-static uint8_t _packet_queue[USER_DEFINED_DCC_PACKET_QUEUE_DEPTH][DCC_PACKET_MAX_BYTES];
-static uint8_t _packet_queue_count[USER_DEFINED_DCC_PACKET_QUEUE_DEPTH];
+static uint8_t _packet_queue[USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH][DCC_PACKET_MAX_BYTES];
+static uint8_t _packet_queue_count[USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH];
 static volatile uint8_t _packet_queue_head;
 static volatile uint8_t _packet_queue_tail;
 
@@ -1380,7 +1380,7 @@ void DccPacketDecoder_process_packet(const uint8_t *data, uint8_t byte_count) {
      */
 void DccPacketDecoder_enqueue(const uint8_t *data, uint8_t byte_count) {
 
-    uint8_t next_tail = (uint8_t)((_packet_queue_tail + 1) % USER_DEFINED_DCC_PACKET_QUEUE_DEPTH);
+    uint8_t next_tail = (uint8_t)((_packet_queue_tail + 1) % USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH);
     uint8_t byte_index;
 
     if (next_tail == _packet_queue_head) {
@@ -1419,7 +1419,7 @@ void DccPacketDecoder_run(void) {
         DccPacketDecoder_process_packet(_packet_queue[_packet_queue_head],
                 _packet_queue_count[_packet_queue_head]);
 
-        _packet_queue_head = (uint8_t)((_packet_queue_head + 1) % USER_DEFINED_DCC_PACKET_QUEUE_DEPTH);
+        _packet_queue_head = (uint8_t)((_packet_queue_head + 1) % USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH);
 
     }
 

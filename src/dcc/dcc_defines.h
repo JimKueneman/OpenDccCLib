@@ -32,7 +32,7 @@
  * directly from the NMRA specifications.
  *
  * @author Jim Kueneman
- * @date 23 Jun 2026
+ * @date 28 Jun 2026
  */
 
 #ifndef __DCC_DEFINES__

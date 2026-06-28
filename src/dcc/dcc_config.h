@@ -32,7 +32,7 @@
  * to bring up the entire stack. This is the only header users need to include.
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 28 Jun 2026
  */
 
 #ifndef __DCC_CONFIG__

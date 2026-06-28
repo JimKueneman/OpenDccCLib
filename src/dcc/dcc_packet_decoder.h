@@ -34,7 +34,7 @@
  * appropriate application callbacks.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 28 Jun 2026
  */
 
 #ifndef __DCC_PACKET_DECODER__

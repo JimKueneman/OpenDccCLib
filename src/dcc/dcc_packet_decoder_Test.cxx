@@ -548,15 +548,15 @@ TEST(DccPacketDecoder, full_queue_drops_excess) {
 
     uint8_t data[] = { 0x03, 0x60, 0x63 };
     uint8_t enqueue_index;
-    for (enqueue_index = 0; enqueue_index < USER_DEFINED_DCC_PACKET_QUEUE_DEPTH + 2; enqueue_index++) {
+    for (enqueue_index = 0; enqueue_index < USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH + 2; enqueue_index++) {
 
         DccPacketDecoder_enqueue(data, 3);
 
     }
 
     DccPacketDecoder_run();
-    /* one slot reserved -> USER_DEFINED_DCC_PACKET_QUEUE_DEPTH-1 usable, the rest dropped */
-    EXPECT_EQ(speed_callback_count, (uint32_t)(USER_DEFINED_DCC_PACKET_QUEUE_DEPTH - 1));
+    /* one slot reserved -> USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH-1 usable, the rest dropped */
+    EXPECT_EQ(speed_callback_count, (uint32_t)(USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH - 1));
 
 }
 
