@@ -34,7 +34,7 @@
  * Ch1/Ch2 hardware access, wired by dcc_config.c.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 27 Jun 2026
  */
 
 #ifndef __DCC_APPLICATION_ACCESSORY_DECODER_RAILCOM__
@@ -43,7 +43,7 @@
 #include "dcc_types.h"
 #include "dcc_application_decoder_railcom.h"
 
-#ifdef DCC_COMPILE_ACCESSORY_DECODER
+#if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_ACCESSORY_DECODER)
 
 #ifdef __cplusplus
 extern "C" {
@@ -179,6 +179,6 @@ extern void DccApplicationAccessoryDecoderRailcom_on_cutout(void);
 }
 #endif /* __cplusplus */
 
-#endif /* DCC_COMPILE_ACCESSORY_DECODER */
+#endif /* DCC_COMPILE_RAILCOM && DCC_COMPILE_ACCESSORY_DECODER */
 
 #endif /* __DCC_APPLICATION_ACCESSORY_DECODER_RAILCOM__ */

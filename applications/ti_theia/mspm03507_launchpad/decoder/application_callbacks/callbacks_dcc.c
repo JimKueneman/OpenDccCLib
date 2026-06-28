@@ -194,10 +194,20 @@ bool CallbacksDcc_cv_write_indexed(uint8_t page_hi, uint8_t page_lo, uint8_t off
 
 }
 
-void CallbacksDcc_on_cv29_config_changed(const dcc_cv29_flags_t *flags) {
+void CallbacksDcc_cv29_apply_supported_features(dcc_cv29_flags_t *flags) {
 
-    /* The library decoded CV29 for us. This demo reports the flags over UART; a real
-     * product would act here (enable RailCom Tx, switch analog, set speed mode, ...). */
+    /* The library decoded the requested CV29 config and forced the reserved bit; our job is
+     * to clear any feature this product does not implement so it can never be stored as "on"
+     * (S-9.2.2). This decode/dispatch demo implements no analog conversion and no speed table,
+     * and no RailCom Tx unless DCC_COMPILE_RAILCOM is defined, so it clears all three. A real
+     * product clears only what it actually lacks. The RECV line then reports exactly what the
+     * library will store. */
+    flags->power_source_conversion = false;   /* demo has no analog operation */
+    flags->speed_table_enabled     = false;   /* demo has no speed table */
+#if !defined(DCC_COMPILE_RAILCOM)
+    flags->railcom_enabled = false;           /* no RailCom Tx compiled in */
+#endif
+
     _recv_enqueue("RECV CV29 dir=%u steps=%u analog=%u railcom=%u sptbl=%u extaddr=%u acc=%u",
                   (unsigned)flags->direction_reversed,
                   (unsigned)flags->speed_steps_28_128,

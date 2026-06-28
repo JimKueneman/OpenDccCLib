@@ -1332,6 +1332,14 @@ void DccPacketDecoder_process_packet(const uint8_t *data, uint8_t byte_count) {
 
     }
 
+    /* A multifunction packet addressed to us (or broadcast) was accepted in
+     * Operations Mode -- re-arm the S-9.2.4 packet-timeout fail-safe. */
+    if (_interface->on_addressed_packet) {
+
+        _interface->on_addressed_packet();
+
+    }
+
     /* Dispatch instruction bytes (excluding address and XOR) */
     _dispatch_instruction(packet_address, &data[inst_start], byte_count - inst_start - 1);
 

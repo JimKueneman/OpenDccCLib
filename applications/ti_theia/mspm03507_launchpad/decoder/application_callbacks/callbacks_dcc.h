@@ -57,9 +57,10 @@ extern void CallbacksDcc_factory_reset(void);
 extern bool CallbacksDcc_cv_read_indexed(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t *value);
 extern bool CallbacksDcc_cv_write_indexed(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t value);
 
-/* Decoded CV29 config notification (wired to dcc_config_t.on_cv29_config_changed).
- * The library decodes CV29 and forces the reserved bit; this demo reports the flags. */
-extern void CallbacksDcc_on_cv29_config_changed(const dcc_cv29_flags_t *flags);
+/* CV29 supported-feature application (wired to dcc_config_t.cv29_apply_supported_features).
+ * The library decodes a CV29 write; the app clears any feature it does not implement
+ * (this demo clears RailCom when DCC_COMPILE_RAILCOM is off) and the result is stored. */
+extern void CallbacksDcc_cv29_apply_supported_features(dcc_cv29_flags_t *flags);
 
 /* --- DCC command callbacks (wired to dcc_config_t.on_xxx) ---
  * Override these with your application logic.  Each one fires from ISR

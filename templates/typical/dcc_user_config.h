@@ -22,6 +22,12 @@
 // #define DCC_COMPILE_DECODER
 // #define DCC_COMPILE_ACCESSORY_DECODER
 
+// RailCom feedback (optional). Requires a role flag above; the role decides which
+// half compiles (command station = cutout + Rx; decoder/accessory = Tx). Comment
+// out to strip ALL RailCom code -- useful on flash-constrained / weak-linker
+// targets (e.g. XC16) where unused code is not removed automatically.
+#define DCC_COMPILE_RAILCOM
+
 // =============================================================================
 // Service Mode Selection (requires DCC_COMPILE_COMMAND_STATION)
 // =============================================================================

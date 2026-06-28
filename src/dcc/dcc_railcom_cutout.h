@@ -42,7 +42,7 @@
  * through interface function pointers only (no direct includes).
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 27 Jun 2026
  */
 
 #ifndef __DCC_RAILCOM_CUTOUT__
@@ -51,7 +51,7 @@
 #include "dcc_types.h"
 #include "dcc_defines.h"
 
-#ifdef DCC_COMPILE_COMMAND_STATION
+#if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_COMMAND_STATION)
 
 #ifdef __cplusplus
 extern "C" {
@@ -166,6 +166,6 @@ extern bool DccRailcomCutout_is_idle(const dcc_railcom_cutout_context_t *context
 }
 #endif /* __cplusplus */
 
-#endif /* DCC_COMPILE_COMMAND_STATION */
+#endif /* DCC_COMPILE_RAILCOM && DCC_COMPILE_COMMAND_STATION */
 
 #endif /* __DCC_RAILCOM_CUTOUT__ */

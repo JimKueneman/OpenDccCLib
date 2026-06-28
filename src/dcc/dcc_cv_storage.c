@@ -28,12 +28,14 @@
  * @brief CV read/write abstraction with decoder lock and factory reset.
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 27 Jun 2026
  */
 
 #include "dcc_cv_storage.h"
 
 #ifdef DCC_COMPILE_DECODER
+
+#include <string.h>   /* memset */
 
 // =============================================================================
 // Static state
@@ -59,24 +61,33 @@ static bool _index_page(uint8_t *page_hi, uint8_t *page_lo) {
 
 }
 
-/* Decode a (sanitized) CV29 value and hand the named flags to the app. */
-static void _notify_cv29(uint8_t value) {
+/* Decode a CV29 byte into the named feature flags. */
+static void _decode_cv29(uint8_t value, dcc_cv29_flags_t *flags) {
 
-    if (!_interface->on_cv29_config_changed) {
+    flags->direction_reversed      = (value & DCC_CV29_DIRECTION_BIT)        != 0;
+    flags->speed_steps_28_128      = (value & DCC_CV29_SPEED_STEPS_BIT)      != 0;
+    flags->power_source_conversion = (value & DCC_CV29_ANALOG_ENABLE_BIT)    != 0;
+    flags->railcom_enabled         = (value & DCC_CV29_RAILCOM_ENABLE_BIT)   != 0;
+    flags->speed_table_enabled     = (value & DCC_CV29_SPEED_TABLE_BIT)      != 0;
+    flags->extended_address        = (value & DCC_CV29_EXTENDED_ADDRESS_BIT) != 0;
+    flags->accessory_decoder       = (value & DCC_CV29_ACCESSORY_BIT)        != 0;
 
-        return;
+}
 
-    }
+/* Re-encode the named feature flags into a CV29 byte (reserved bit 6 stays 0). */
+static uint8_t _encode_cv29(const dcc_cv29_flags_t *flags) {
 
-    dcc_cv29_flags_t f;
-    f.direction_reversed      = (value & DCC_CV29_DIRECTION_BIT)        != 0;
-    f.speed_steps_28_128      = (value & DCC_CV29_SPEED_STEPS_BIT)      != 0;
-    f.power_source_conversion = (value & DCC_CV29_ANALOG_ENABLE_BIT)    != 0;
-    f.railcom_enabled         = (value & DCC_CV29_RAILCOM_ENABLE_BIT)   != 0;
-    f.speed_table_enabled     = (value & DCC_CV29_SPEED_TABLE_BIT)      != 0;
-    f.extended_address        = (value & DCC_CV29_EXTENDED_ADDRESS_BIT) != 0;
-    f.accessory_decoder       = (value & DCC_CV29_ACCESSORY_BIT)        != 0;
-    _interface->on_cv29_config_changed(&f);
+    uint8_t value = 0;
+
+    value |= flags->direction_reversed      ? DCC_CV29_DIRECTION_BIT        : 0;
+    value |= flags->speed_steps_28_128      ? DCC_CV29_SPEED_STEPS_BIT      : 0;
+    value |= flags->power_source_conversion ? DCC_CV29_ANALOG_ENABLE_BIT    : 0;
+    value |= flags->railcom_enabled         ? DCC_CV29_RAILCOM_ENABLE_BIT   : 0;
+    value |= flags->speed_table_enabled     ? DCC_CV29_SPEED_TABLE_BIT      : 0;
+    value |= flags->extended_address        ? DCC_CV29_EXTENDED_ADDRESS_BIT : 0;
+    value |= flags->accessory_decoder       ? DCC_CV29_ACCESSORY_BIT        : 0;
+
+    return value;
 
 }
 
@@ -163,21 +174,27 @@ bool DccCvStorage_write(uint16_t cv_number, uint8_t value) {
 
     }
 
-    /* CV29 configuration register: force the reserved bit, store, then (only on a
-     * successful store) hand the app the decoded config.  The library never acts on
-     * the feature bits itself -- the app re-applies what its product supports. */
+    /* CV29 configuration register: force the reserved bit (the library's one universal
+     * responsibility), then hand the decoded config to the app so it can clear any feature
+     * it does not implement.  Per S-9.2.2 an unsupported feature bit must not be settable;
+     * only the app knows what it supports, so it -- not the library -- filters the bits.
+     * What the app leaves set is re-encoded and stored. */
     if (cv_number == DCC_CV_CONFIG) {
 
-        value &= (uint8_t)~DCC_CV29_RESERVED_BIT;       /* bit 6 reserved -> 0 (sanitize) */
+        dcc_cv29_flags_t flags;
+        memset(&flags, 0, sizeof(flags));
 
-        if (!_interface->cv_write(cv_number, value)) {
+        value &= (uint8_t)~DCC_CV29_RESERVED_BIT;       /* bit 6 reserved -> 0 */
+        _decode_cv29(value, &flags);
 
-            return false;
+        if (_interface->cv29_apply_supported_features) {
+
+            _interface->cv29_apply_supported_features(&flags);
+            value = _encode_cv29(&flags);
 
         }
 
-        _notify_cv29(value);
-        return true;
+        return _interface->cv_write(cv_number, value);
 
     }
 

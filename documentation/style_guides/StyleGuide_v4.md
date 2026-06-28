@@ -217,15 +217,23 @@ typedef void (*dcc_service_mode_step_callback_t)(dcc_service_mode_result_t resul
 
 Every module's declarations and definitions must be wrapped in the appropriate `DCC_COMPILE_*` ifdef guard.  The feature flag sits inside the header guard and around the `extern "C"` block.
 
-Primary flags:
+Primary flags (roles):
 - `DCC_COMPILE_COMMAND_STATION` — command station (DCC output) functionality
 - `DCC_COMPILE_DECODER` — decoder (DCC input) functionality
+- `DCC_COMPILE_ACCESSORY_DECODER` — accessory decoder functionality
 
 Service mode flags (require `DCC_COMPILE_COMMAND_STATION`):
 - `DCC_COMPILE_SERVICE_MODE_DIRECT`
 - `DCC_COMPILE_SERVICE_MODE_PAGED`
 - `DCC_COMPILE_SERVICE_MODE_REGISTER`
 - `DCC_COMPILE_SERVICE_MODE_ADDRESS`
+
+Feature flags (cross-cutting — require a role flag; the role decides which half compiles):
+- `DCC_COMPILE_RAILCOM` — RailCom feedback. With `DCC_COMPILE_COMMAND_STATION` it compiles the
+  cutout generator and the receive/decode path; with `DCC_COMPILE_DECODER` or
+  `DCC_COMPILE_ACCESSORY_DECODER` it compiles the transmit encoder and datagram application layer.
+  Guard form is the role-stripped compound: `#if defined(DCC_COMPILE_RAILCOM) && defined(<role>)`.
+  A lone `DCC_COMPILE_RAILCOM` with no role is rejected with an `#error` in `dcc_types.h`.
 
 All `USER_DEFINED_DCC_*` constants are validated at compile time in `dcc_types.h`.
 

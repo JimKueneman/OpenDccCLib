@@ -32,7 +32,7 @@
  * to bring up the entire stack. This is the only header users need to include.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 27 Jun 2026
  */
 
 #ifndef __DCC_CONFIG__
@@ -51,8 +51,8 @@ extern "C" {
 // Compile-time feature dependency validation
 // =============================================================================
 
-#if !defined(DCC_COMPILE_COMMAND_STATION) && !defined(DCC_COMPILE_DECODER)
-#warning "No role enabled. Define DCC_COMPILE_COMMAND_STATION and/or DCC_COMPILE_DECODER in dcc_user_config.h."
+#if !defined(DCC_COMPILE_COMMAND_STATION) && !defined(DCC_COMPILE_DECODER) && !defined(DCC_COMPILE_ACCESSORY_DECODER)
+#warning "No role enabled. Define DCC_COMPILE_COMMAND_STATION, DCC_COMPILE_DECODER, and/or DCC_COMPILE_ACCESSORY_DECODER in dcc_user_config.h."
 #endif
 
 #if defined(DCC_COMPILE_SERVICE_MODE_DIRECT) && !defined(DCC_COMPILE_COMMAND_STATION)
@@ -76,6 +76,8 @@ extern "C" {
 // =============================================================================
 
 #ifdef DCC_COMPILE_COMMAND_STATION
+
+#if defined(DCC_COMPILE_RAILCOM)
 
     /**
      * @brief RailCom detector hardware drivers.
@@ -109,6 +111,8 @@ typedef struct {
     void (*on_railcom_datagram_result)(uint16_t address, uint8_t channel, const dcc_railcom_datagram_t *datagram);
 
 } dcc_railcom_hw_t;
+
+#endif /* DCC_COMPILE_RAILCOM */
 
     /**
      * @brief Per-channel DCC output hardware drivers.
@@ -144,11 +148,13 @@ typedef struct {
          */
     uint16_t (*current_sense_read)(void);
 
+#if defined(DCC_COMPILE_RAILCOM)
         /**
          * @brief RailCom detector hardware. NULL = no RailCom on this channel.
          *  In practice only the main track has a RailCom detector.
          */
     const dcc_railcom_hw_t *railcom;
+#endif /* DCC_COMPILE_RAILCOM */
 
 } dcc_output_hw_t;
 
@@ -226,6 +232,7 @@ typedef struct {
         /** @brief Stop the shared fixed-period DCC timer. */
     void (*shared_timer_stop)(void);
 
+#if defined(DCC_COMPILE_RAILCOM)
         /** @brief Start the RailCom cutout one-shot timer with the given period
          *  in microseconds. NULL = no RailCom cutout timing. */
     void (*railcom_timer_start)(uint16_t period_usec);
@@ -252,6 +259,7 @@ typedef struct {
         /** @brief Cutout CH2 window before disabling UART Rx and restoring the
          *  H-bridge at T_CE = 454us (cumulative). 0 = use spec default. */
     uint16_t railcom_ch2_window_us;
+#endif /* DCC_COMPILE_RAILCOM */
 
         /** @brief Main track output hardware. Runs the scheduler (normal DCC). */
     dcc_output_hw_t main_track;
@@ -266,11 +274,13 @@ typedef struct {
         /** @brief Packet fully transmitted on the wire. */
     void (*on_packet_sent)(const dcc_packet_t *packet);
 
+#if defined(DCC_COMPILE_RAILCOM)
         /** @brief Accessory decoder SRQ detected in RailCom Ch1.
          *  The user should respond by sending a stop command
          *  (load_accessory_basic_stop or load_accessory_extended_stop)
          *  to collect the decoder's update. NULL = SRQ ignored. */
     void (*on_accessory_srq)(uint16_t address, bool is_extended);
+#endif /* DCC_COMPILE_RAILCOM */
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
@@ -286,6 +296,16 @@ typedef struct {
         /** @brief Write CV to persistent storage. Returns true on success. REQUIRED. */
     bool (*cv_write)(uint16_t cv_number, uint8_t value);
 
+        /** @brief Reduce a CV29 write to the features this decoder actually supports. REQUIRED.
+         *  On any CV29 write the library forces reserved bit 6, decodes the requested config,
+         *  and calls this with a mutable @ref dcc_cv29_flags_t. Set to false every feature this
+         *  product does NOT implement -- RailCom (railcom_enabled), analog conversion
+         *  (power_source_conversion), speed table (speed_table_enabled), and so on. The library
+         *  re-encodes whatever you leave set and stores that as CV29. Per S-9.2.2 an unsupported
+         *  feature bit must never be settable, and only your app knows what it supports -- so
+         *  clearing those bits is your responsibility, not the library's. */
+    void (*cv29_apply_supported_features)(dcc_cv29_flags_t *flags);
+
         /** @brief Restore CVs to factory defaults. OPTIONAL (NULL = no reset).
          *  Invoked when a write command targets CV8 (read-only Manufacturer ID, S-9.2.2). */
     void (*factory_reset)(void);
@@ -295,15 +315,11 @@ typedef struct {
     bool (*cv_read_indexed)(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t *value);
     bool (*cv_write_indexed)(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t value);
 
-        /** @brief Decoded-CV29 notification after a successful CV29 write. OPTIONAL.
-         *  The library decodes the register and forces the reserved bit; the app re-applies
-         *  the features it supports (it never has to parse CV29 bits itself). */
-    void (*on_cv29_config_changed)(const dcc_cv29_flags_t *flags);
-
     // =========================================================================
     // Decoder: NULL-optional hardware drivers
     // =========================================================================
 
+#if defined(DCC_COMPILE_RAILCOM)
         /** @brief Set the RailCom Tx GPIO high or low. Library bit-bangs 4/8 encoded
          *  bytes at 4us intervals from ISR context. No UART hardware needed.
          *  NULL = no RailCom responses. */
@@ -314,6 +330,7 @@ typedef struct {
          *  disable hardware interrupt or set a flag to skip. NULL = no blanking.
          *  Required if using RailCom. */
     void (*decoder_edge_irq_enable)(bool enabled);
+#endif /* DCC_COMPILE_RAILCOM */
 
     // =========================================================================
     // Decoder: Service mode hardware drivers
@@ -415,6 +432,7 @@ extern void DccConfig_run(void);
      */
 extern void DccConfig_58us_timer_isr(void);
 
+#if defined(DCC_COMPILE_RAILCOM)
     /**
      * @brief RailCom cutout one-shot timer ISR entry point.
      * @details Call from the RailCom one-shot timer ISR. Drives the cutout
@@ -446,6 +464,8 @@ extern void DccConfig_cancel_railcom_cutout(void);
      * @brief True while a RailCom cutout is in progress (state != IDLE).
      */
 extern bool DccConfig_railcom_cutout_is_active(void);
+
+#endif /* DCC_COMPILE_RAILCOM */
 
     /**
      * @brief 100ms timer tick. Call from a 100ms periodic timer or main loop.

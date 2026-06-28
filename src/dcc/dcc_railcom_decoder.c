@@ -28,12 +28,12 @@
  * @brief RailCom 4/8 decoding, cutout management, and receive buffer.
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 27 Jun 2026
  */
 
 #include "dcc_railcom_decoder.h"
 
-#ifdef DCC_COMPILE_COMMAND_STATION
+#if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_COMMAND_STATION)
 
 #include <string.h>
 
@@ -337,4 +337,4 @@ uint8_t DccRailcomDecoder_decode_byte(uint8_t encoded) {
 
 }
 
-#endif /* DCC_COMPILE_COMMAND_STATION */
+#endif /* DCC_COMPILE_RAILCOM && DCC_COMPILE_COMMAND_STATION */

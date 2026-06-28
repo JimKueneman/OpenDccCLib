@@ -486,6 +486,20 @@ extern "C" {
     /** @brief RailCom NACK codeword decode result */
 #define DCC_RAILCOM_DECODE_NACK             0xFD
 
+// =============================================================================
+// Packet-Timeout Fail-Safe (S-9.2.4 §4)
+// =============================================================================
+
+    /** @brief Real-time value of one CV11 (DCC_CV_PACKET_TIMEOUT) least-
+     *  significant bit, in microseconds.
+     *
+     *  S-9.2.4 §4 deliberately leaves the CV11 unit manufacturer-defined; it
+     *  only constrains the configurable maximum (TIMEOUT_MAX) to be at least
+     *  20 seconds. This library maps CV11 to 0.1 s per LSB, giving a 0.1 s ..
+     *  25.5 s range that satisfies that floor (CV11 = 200 -> 20.0 s). Redefine
+     *  this single constant to choose a different unit. */
+#define DCC_FAILSAFE_CV11_UNIT_US           100000u
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

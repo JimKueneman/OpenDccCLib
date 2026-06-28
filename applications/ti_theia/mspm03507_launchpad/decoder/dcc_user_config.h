@@ -20,6 +20,7 @@
 
 // #define DCC_COMPILE_COMMAND_STATION   /* not used in this demo */
 #define DCC_COMPILE_DECODER
+#define DCC_COMPILE_RAILCOM           // RailCom Tx (comment out to strip)
 
 // =============================================================================
 // Decoder Configuration

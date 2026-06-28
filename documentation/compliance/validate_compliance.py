@@ -120,6 +120,16 @@ def main():
         tests = f["refs"].get("tests", [])
         checks = f["refs"].get("hilChecks", [])
 
+        # The supported/gtest/hil status cells must show ONLY the pill -- no
+        # accompanying text. The `note` field must be empty; any caveat or status
+        # prose belongs in the matching `detail.*` field (the expanded panel).
+        for sec in ("supported", "gtest", "hil"):
+            note = f.get(sec, {}).get("note", "")
+            if note.strip():
+                errors.append(
+                    f"{tid}: {sec}.note must be empty (status cells show only the pill); "
+                    f"move '{note[:40]}...' to detail.{sec}")
+
         if f["gtest"]["state"] in ("ok", "partial"):
             if not tests:
                 errors.append(f"{tid}: gTest='{f['gtest']['state']}' but refs.tests is empty")

@@ -15,6 +15,7 @@
 #define DCC_COMPILE_COMMAND_STATION
 #define DCC_COMPILE_DECODER
 #define DCC_COMPILE_ACCESSORY_DECODER
+#define DCC_COMPILE_RAILCOM           // RailCom feedback (Tx + Rx, role-stripped)
 
 // =============================================================================
 // Service Mode Selection -- all enabled for full test coverage

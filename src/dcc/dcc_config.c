@@ -36,7 +36,7 @@
  * user-facing API.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 27 Jun 2026
  */
 
 #include "dcc_config.h"
@@ -49,8 +49,10 @@
 #include "dcc_application_command_station_packet.h"
 #include "dcc_scheduler.h"
 #include "dcc_service_mode_common.h"
+#if defined(DCC_COMPILE_RAILCOM)
 #include "dcc_railcom_decoder.h"
 #include "dcc_railcom_cutout.h"
+#endif
 #include "dcc_application_command_station_main_track.h"
 #include "dcc_application_command_station_service_track.h"
 #endif
@@ -95,7 +97,10 @@
 #include "dcc_bit_decoder.h"
 #include "dcc_packet_decoder.h"
 #include "dcc_cv_storage.h"
+#if defined(DCC_COMPILE_RAILCOM)
 #include "dcc_railcom_encoder.h"
+#endif
+#include "dcc_failsafe.h"
 #endif
 
     /** @brief Stored pointer to the user's configuration struct */
@@ -119,11 +124,13 @@ static dcc_scheduler_context_t _main_scheduler_context;
     /** @brief Main track scheduler interface */
 static interface_dcc_scheduler_t _main_scheduler_interface;
 
+#if defined(DCC_COMPILE_RAILCOM)
     /** @brief Main track RailCom decoder context */
 static dcc_railcom_decoder_context_t _main_railcom_context;
 
     /** @brief Main track RailCom decoder interface */
 static interface_dcc_railcom_decoder_t _main_railcom_interface;
+#endif /* DCC_COMPILE_RAILCOM */
 
     /** @brief Main track application layer interface */
 static interface_dcc_application_command_station_main_track_t _main_application_interface;
@@ -151,11 +158,13 @@ static interface_dcc_application_command_station_service_track_t _service_applic
  * RailCom cutout: one-shot timer state machine
  * ========================================================================= */
 
+#if defined(DCC_COMPILE_RAILCOM)
     /** @brief RailCom cutout context (main track only for now) */
 static dcc_railcom_cutout_context_t _railcom_cutout_context;
 
     /** @brief RailCom cutout interface */
 static interface_dcc_railcom_cutout_t _railcom_cutout_interface;
+#endif /* DCC_COMPILE_RAILCOM */
 
 /* =========================================================================
  * Shared timer reference count
@@ -169,6 +178,7 @@ static uint8_t _shared_timer_ref_count = 0;
  * NOP auto-scheduling state (accessory RailCom SRQ polling)
  * ========================================================================= */
 
+#if defined(DCC_COMPILE_RAILCOM)
     /** @brief 100ms tick counter for NOP auto-scheduling.
      *  NOP inserted every 50 ticks (5 seconds) per S-9.3.2 Section 6.3.3. */
 static uint8_t _nop_tick_counter = 0;
@@ -176,6 +186,7 @@ static uint8_t _nop_tick_counter = 0;
     /** @brief NOP threshold address for SRQ collision arbitration.
      *  Starts at max (all decoders respond). Lowered on collision. */
 static uint16_t _nop_threshold_address = 0x07FF;
+#endif /* DCC_COMPILE_RAILCOM */
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
@@ -255,8 +266,13 @@ static interface_dcc_packet_decoder_t _packet_decoder_interface;
     /** @brief Interface struct for the CV storage module */
 static interface_dcc_cv_storage_t _cv_storage_interface;
 
+#if defined(DCC_COMPILE_RAILCOM)
     /** @brief Interface struct for the RailCom encoder module */
 static interface_dcc_railcom_encoder_t _railcom_encoder_interface;
+#endif /* DCC_COMPILE_RAILCOM */
+
+    /** @brief Interface struct for the packet-timeout fail-safe module */
+static interface_dcc_failsafe_t _failsafe_interface;
 
     /** @brief ACK pulse currently in progress */
 static bool _ack_pulse_active = false;
@@ -450,6 +466,7 @@ static void _shared_timer_release(void) {
 
 }
 
+#if defined(DCC_COMPILE_RAILCOM)
 /* =========================================================================
  * RailCom cutout bridge: the bit encoder's end bit arms the cutout timer.
  * The encoder runs continuously (no cutout-complete wait) -- the driver blanks
@@ -461,6 +478,7 @@ static void _railcom_cutout_begin_wrapper(void) {
     DccRailcomCutout_begin(&_railcom_cutout_context);
 
 }
+#endif /* DCC_COMPILE_RAILCOM */
 
 #ifdef DCC_COMPILE_SERVICE_MODE_DIRECT
 
@@ -590,14 +608,17 @@ void DccConfig_initialize(const dcc_config_t *config) {
      * ================================================================= */
 
     _shared_timer_ref_count = 0;
+#if defined(DCC_COMPILE_RAILCOM)
     _nop_tick_counter = 0;
     _nop_threshold_address = 0x07FF;
+#endif /* DCC_COMPILE_RAILCOM */
 
     /* Wire main track bit encoder */
     _main_encoder_interface.pin_toggle = config->main_track.pin_toggle;
     _main_encoder_interface.railcom_cutout_begin = (void *)0;
     _main_encoder_interface.on_packet_complete = &_main_on_packet_complete;
 
+#if defined(DCC_COMPILE_RAILCOM)
     if (config->main_track.railcom) {
 
         if (config->railcom_timer_start) {
@@ -611,6 +632,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
         }
 
     }
+#endif /* DCC_COMPILE_RAILCOM */
 
     DccBitEncoder_initialize(&_main_encoder_context, &_main_encoder_interface);
 
@@ -622,6 +644,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
 
     DccScheduler_initialize(&_main_scheduler_context, &_main_scheduler_interface);
 
+#if defined(DCC_COMPILE_RAILCOM)
     /* Wire main track RailCom decoder */
     _main_railcom_interface.uart_read = (void *)0;
     _main_railcom_interface.on_datagram = (void *)0;
@@ -669,6 +692,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     DccRailcomCutout_initialize(&_railcom_cutout_context, &_railcom_cutout_interface,
                                 cutout_start_delay, cutout_uart_rx_delay, cutout_ch1_window,
                                 cutout_ch1_ch2_gap, cutout_ch2_window);
+#endif /* DCC_COMPILE_RAILCOM */
 
     /* Wire main track application layer.
      * Uses ref-counted shared timer wrappers. */
@@ -872,7 +896,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _cv_storage_interface.factory_reset = config->factory_reset;
     _cv_storage_interface.cv_read_indexed = config->cv_read_indexed;
     _cv_storage_interface.cv_write_indexed = config->cv_write_indexed;
-    _cv_storage_interface.on_cv29_config_changed = config->on_cv29_config_changed;
+    _cv_storage_interface.cv29_apply_supported_features = config->cv29_apply_supported_features;
 
     DccCvStorage_initialize(&_cv_storage_interface);
 
@@ -892,13 +916,23 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _packet_decoder_interface.on_binary_state_long_command = config->on_binary_state_long_command;
     _packet_decoder_interface.on_analog_function_command = config->on_analog_function_command;
     _packet_decoder_interface.start_ack_pulse = config->start_ack_pulse;
+    _packet_decoder_interface.on_addressed_packet = &DccFailsafe_note_valid_packet;
     DccPacketDecoder_initialize(&_packet_decoder_interface);
+
+    /* Wire packet-timeout fail-safe (S-9.2.4 §4). CV11 read through cv_storage;
+     * the timer is polled in DccConfig_run and re-armed by on_addressed_packet. */
+    _failsafe_interface.cv_read = &DccCvStorage_read;
+    _failsafe_interface.get_timestamp_usec = config->get_timestamp_usec;
+    _failsafe_interface.on_failsafe_entered = config->on_failsafe_entered;
+    _failsafe_interface.on_failsafe_exited = config->on_failsafe_exited;
+    DccFailsafe_initialize(&_failsafe_interface);
 
     /* Wire bit decoder interface — complete packets go to packet decoder */
     _bit_decoder_interface.on_packet_received = &DccPacketDecoder_process_packet;
 
     DccBitDecoder_initialize(&_bit_decoder_interface);
 
+#if defined(DCC_COMPILE_RAILCOM)
     /* Wire RailCom encoder interface */
     _railcom_encoder_interface.uart_write = (void *)0;
 
@@ -910,6 +944,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     }
 
     DccRailcomEncoder_initialize(&_railcom_encoder_interface);
+#endif /* DCC_COMPILE_RAILCOM */
 
     /* Initialize ACK pulse state */
     _ack_pulse_active = false;
@@ -939,12 +974,17 @@ void DccConfig_run(void) {
 
     }
 
+#if defined(DCC_COMPILE_RAILCOM)
     /* Main track RailCom: drain decoded datagrams */
     DccRailcomDecoder_run(&_main_railcom_context);
+#endif /* DCC_COMPILE_RAILCOM */
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
 #ifdef DCC_COMPILE_DECODER
+
+    /* Packet-timeout fail-safe (S-9.2.4 §4): poll CV11 vs. elapsed time. */
+    DccFailsafe_run();
 
     /* ACK pulse 6ms timing: poll timestamp and stop after 6ms elapsed */
     if (_ack_pulse_active) {
@@ -1006,6 +1046,7 @@ void DccConfig_58us_timer_isr(void) {
 
 }
 
+#if defined(DCC_COMPILE_RAILCOM)
 void DccConfig_railcom_oneshot_timer_isr(void) {
 
     DccRailcomCutout_timer_isr(&_railcom_cutout_context);
@@ -1044,9 +1085,11 @@ bool DccConfig_railcom_cutout_is_active(void) {
     return _railcom_cutout_context.state != DCC_RAILCOM_CUTOUT_IDLE;
 
 }
+#endif /* DCC_COMPILE_RAILCOM */
 
 void DccConfig_100ms_timer_tick(void) {
 
+#if defined(DCC_COMPILE_RAILCOM)
     /* NOP auto-scheduling: insert accessory NOP every 5 seconds when main
      * track is powered on and RailCom is enabled (S-9.3.2 Section 6.3.3).
      * The NOP triggers accessory decoders to send SRQ in Ch1 if they have
@@ -1076,6 +1119,7 @@ void DccConfig_100ms_timer_tick(void) {
         }
 
     }
+#endif /* DCC_COMPILE_RAILCOM */
 
 }
 

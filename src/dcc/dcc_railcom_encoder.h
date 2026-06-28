@@ -33,7 +33,7 @@
  * uart_write is NULL.
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 27 Jun 2026
  */
 
 #ifndef __DCC_RAILCOM_ENCODER__
@@ -42,7 +42,7 @@
 #include "dcc_types.h"
 #include "dcc_defines.h"
 
-#ifdef DCC_COMPILE_DECODER
+#if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_DECODER)
 
 #ifdef __cplusplus
 extern "C" {
@@ -103,6 +103,6 @@ extern void DccRailcomEncoder_send_ch2(const dcc_railcom_response_t *response);
 }
 #endif /* __cplusplus */
 
-#endif /* DCC_COMPILE_DECODER */
+#endif /* DCC_COMPILE_RAILCOM && DCC_COMPILE_DECODER */
 
 #endif /* __DCC_RAILCOM_ENCODER__ */

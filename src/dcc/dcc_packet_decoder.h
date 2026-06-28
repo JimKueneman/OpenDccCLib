@@ -110,6 +110,12 @@ typedef struct {
         /** @brief Turn on the ACK current load. Library handles 6ms timing. */
     void (*start_ack_pulse)(void);
 
+        /** @brief A command packet addressed to this decoder was accepted.
+         *  NULL = no notification. Fired for multifunction packets whose
+         *  address matches ours (or broadcast) in Operations Mode -- used to
+         *  re-arm the S-9.2.4 packet-timeout fail-safe. */
+    void (*on_addressed_packet)(void);
+
 } interface_dcc_packet_decoder_t;
 
     /**

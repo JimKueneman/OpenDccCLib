@@ -34,7 +34,7 @@
  * All memory is statically allocated at compile time.
  *
  * @author Jim Kueneman
- * @date 23 Jun 2026
+ * @date 27 Jun 2026
  */
 
 #ifndef __DCC_TYPES__
@@ -66,6 +66,15 @@ extern "C" {
   #endif
 #else
   #include "dcc_user_config.h"
+#endif
+
+// RailCom is an add-on to a role, not a role itself: it only compiles alongside a
+// command-station, decoder, or accessory-decoder build. Catch a lone definition early.
+#if defined(DCC_COMPILE_RAILCOM) && \
+    !defined(DCC_COMPILE_COMMAND_STATION) && \
+    !defined(DCC_COMPILE_DECODER) && \
+    !defined(DCC_COMPILE_ACCESSORY_DECODER)
+  #error "DCC_COMPILE_RAILCOM requires DCC_COMPILE_COMMAND_STATION, DCC_COMPILE_DECODER, or DCC_COMPILE_ACCESSORY_DECODER"
 #endif
 
 // =============================================================================

@@ -34,7 +34,7 @@
  * of the internal RailCom encoder header.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 27 Jun 2026
  */
 
 #ifndef __DCC_APPLICATION_DECODER_RAILCOM__
@@ -42,7 +42,7 @@
 
 #include "dcc_types.h"
 
-#if defined(DCC_COMPILE_DECODER) || defined(DCC_COMPILE_ACCESSORY_DECODER)
+#if defined(DCC_COMPILE_RAILCOM) && (defined(DCC_COMPILE_DECODER) || defined(DCC_COMPILE_ACCESSORY_DECODER))
 
 #ifdef __cplusplus
 extern "C" {
@@ -152,6 +152,6 @@ extern void DccApplicationDecoderRailcom_send_raw(uint8_t datagram_id, const uin
 }
 #endif /* __cplusplus */
 
-#endif /* DCC_COMPILE_DECODER || DCC_COMPILE_ACCESSORY_DECODER */
+#endif /* DCC_COMPILE_RAILCOM && (DCC_COMPILE_DECODER || DCC_COMPILE_ACCESSORY_DECODER) */
 
 #endif /* __DCC_APPLICATION_DECODER_RAILCOM__ */

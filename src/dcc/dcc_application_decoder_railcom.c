@@ -28,7 +28,7 @@
  * @brief Application-layer implementation for decoder RailCom responses.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 27 Jun 2026
  */
 
 /*
@@ -41,7 +41,9 @@
 #include "dcc_application_decoder_railcom.h"
 #include "dcc_defines.h"
 
-#if defined(DCC_COMPILE_DECODER) || defined(DCC_COMPILE_ACCESSORY_DECODER)
+#if defined(DCC_COMPILE_RAILCOM) && (defined(DCC_COMPILE_DECODER) || defined(DCC_COMPILE_ACCESSORY_DECODER))
+
+#include <string.h>   /* memset — used by both the decoder and accessory paths */
 
 // =============================================================================
 // RailCom datagram ID aliases (2026 draft S-9.3.2, mapped to dcc_defines.h)
@@ -96,8 +98,6 @@ void DccApplicationDecoderRailcom_initialize(const interface_dcc_application_dec
 // =============================================================================
 
 #ifdef DCC_COMPILE_DECODER
-
-#include <string.h>
 
 /**
  * @verbatim
@@ -319,4 +319,4 @@ void DccApplicationDecoderRailcom_send_raw(uint8_t datagram_id, const uint8_t *d
 
 }
 
-#endif /* DCC_COMPILE_DECODER || DCC_COMPILE_ACCESSORY_DECODER */
+#endif /* DCC_COMPILE_RAILCOM && (DCC_COMPILE_DECODER || DCC_COMPILE_ACCESSORY_DECODER) */

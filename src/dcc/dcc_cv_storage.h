@@ -32,7 +32,7 @@
  * detection (writing 8 to CV 8).
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 27 Jun 2026
  */
 
 #ifndef __DCC_CV_STORAGE__
@@ -56,6 +56,14 @@ typedef struct {
         /** @brief Write CV to persistent storage. REQUIRED. */
     bool (*cv_write)(uint16_t cv_number, uint8_t value);
 
+        /** @brief Reduce a CV29 write to the features this decoder actually supports. REQUIRED.
+         *  The library forces reserved bit 6, decodes the request, and calls this; the app
+         *  leaves set only the features it implements, clearing the rest (RailCom, analog
+         *  conversion, speed table, ...). The library re-encodes what remains and stores that.
+         *  Per S-9.2.2 an unsupported feature bit must never be settable, and only the app
+         *  knows its support. */
+    void (*cv29_apply_supported_features)(dcc_cv29_flags_t *flags);
+
         /** @brief Restore configuration to factory defaults. OPTIONAL (NULL = none).
          *  Invoked when a write command targets CV8 (the read-only Manufacturer ID);
          *  per S-9.2.2 the value is unchangeable, so the write only triggers a reset. */
@@ -68,11 +76,6 @@ typedef struct {
         /** @brief Write a byte to the indexed CV window (CV257-512). OPTIONAL (NULL or a
          *  false return = page not supported -> NACK). */
     bool (*cv_write_indexed)(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t value);
-
-        /** @brief Notify the app of decoded CV29 config after a successful CV29 write.
-         *  OPTIONAL (NULL = none). The library never acts on the feature bits itself --
-         *  the app re-applies the features it supports (RailCom, analog, ...). */
-    void (*on_cv29_config_changed)(const dcc_cv29_flags_t *flags);
 
 } interface_dcc_cv_storage_t;
 

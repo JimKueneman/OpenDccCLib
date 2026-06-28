@@ -28,13 +28,13 @@
  * @brief Application-layer implementation for accessory decoder RailCom SRQ and status.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 27 Jun 2026
  */
 
 #include "dcc_application_accessory_decoder_railcom.h"
 #include "dcc_defines.h"
 
-#ifdef DCC_COMPILE_ACCESSORY_DECODER
+#if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_ACCESSORY_DECODER)
 
 // =============================================================================
 // RailCom datagram ID aliases (mapped to existing dcc_defines.h constants)
@@ -323,4 +323,4 @@ void DccApplicationAccessoryDecoderRailcom_on_cutout(void) {
 
 }
 
-#endif /* DCC_COMPILE_ACCESSORY_DECODER */
+#endif /* DCC_COMPILE_RAILCOM && DCC_COMPILE_ACCESSORY_DECODER */

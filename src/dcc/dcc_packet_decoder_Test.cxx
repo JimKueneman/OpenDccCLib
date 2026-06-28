@@ -277,6 +277,14 @@ static void mock_on_analog(uint16_t address, uint8_t output_number, uint8_t valu
 
 }
 
+static uint32_t addressed_packet_callback_count;
+
+static void mock_on_addressed_packet(void) {
+
+    addressed_packet_callback_count++;
+
+}
+
 static void reset_mocks(void) {
 
     memset(mock_cv_values, 0, sizeof(mock_cv_values));
@@ -365,6 +373,8 @@ static void reset_mocks(void) {
     mock_cv_read_should_fail = false;
     mock_cv_write_should_fail = false;
 
+    addressed_packet_callback_count = 0;
+
 }
 
     /**
@@ -424,6 +434,7 @@ static interface_dcc_packet_decoder_t make_interface(void) {
     interface.on_binary_state_short_command = mock_on_bss;
     interface.on_binary_state_long_command = mock_on_bsl;
     interface.on_analog_function_command = mock_on_analog;
+    interface.on_addressed_packet = mock_on_addressed_packet;
 
     return interface;
 
@@ -548,6 +559,57 @@ TEST(DccPacketDecoder, matching_address_dispatched) {
 
     EXPECT_EQ(speed_callback_count, (uint32_t)1);
     EXPECT_EQ(last_speed_address, (uint16_t)3);
+
+}
+
+// ============================================================================
+// Fail-safe re-arm hook (S-9.2.4): on_addressed_packet fires only on a match
+// ============================================================================
+
+// @compliance DCC-S9.2.4-DEC-001
+TEST(DccPacketDecoder, addressed_packet_hook_fires_on_match) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    uint8_t data[] = {0x03, 0x60, 0x00};
+    data[2] = xor_bytes(data, 2);
+    DccPacketDecoder_process_packet(data, 3);
+
+    EXPECT_EQ(addressed_packet_callback_count, (uint32_t)1);
+
+}
+
+// @compliance DCC-S9.2.4-DEC-001
+TEST(DccPacketDecoder, addressed_packet_hook_silent_on_wrong_address) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    /* Packet for address 5, not 3 */
+    uint8_t data[] = {0x05, 0x60, 0x00};
+    data[2] = xor_bytes(data, 2);
+    DccPacketDecoder_process_packet(data, 3);
+
+    EXPECT_EQ(addressed_packet_callback_count, (uint32_t)0);
+
+}
+
+// @compliance DCC-S9.2.4-DEC-001
+TEST(DccPacketDecoder, addressed_packet_hook_fires_on_broadcast) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    /* Broadcast speed packet (address 0, non-reset instruction). */
+    uint8_t data[] = {0x00, 0x60, 0x00};
+    data[2] = xor_bytes(data, 2);
+    DccPacketDecoder_process_packet(data, 3);
+
+    EXPECT_EQ(addressed_packet_callback_count, (uint32_t)1);
 
 }
 

@@ -2585,7 +2585,7 @@ window.COMPLIANCE =
           },
           "supported": {
             "state": "no",
-            "note": "unsupported (legacy, RP-9.2.1)"
+            "note": ""
           },
           "gtest": {
             "state": "na",
@@ -4981,8 +4981,8 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "DccCvStorage_write intercepts CV29: forces the reserved bit 6 to 0, stores, then -- only on a successful store -- decodes the register into dcc_cv29_flags_t and fires on_cv29_config_changed. The library acts internally on bits 0/1/5/7 for its own decode (direction, speed-step mode, addressing, decoder type) but never takes a hardware action on a feature bit (analog/RailCom/speed-table) -- the app re-applies the features its product supports from the decoded flags (a RailCom product enables Tx off flags->railcom_enabled; a product without RailCom ignores it). _update_address_cv_cache still refreshes the address/speed-mode cache on the same write.",
-            "gtest": "dcc_cv_storage_Test asserts the decode (named flags for a known value), the reserved bit 6 forced to 0 on a bogus byte, notify firing only on a successful store, and a locked decoder neither storing nor notifying. The direction-bit inversion is additionally covered end-to-end by the packet-decoder test.",
+            "impl": "DccCvStorage_write intercepts CV29: forces the reserved bit 6 to 0, decodes the register into dcc_cv29_flags_t, then calls cv29_apply_supported_features so the app clears any feature bit (analog/RailCom/speed-table) its product does not implement -- per S-9.2.2 an unsupported feature bit must never be settable, and only the app knows its support. The library re-encodes what remains and stores that. It never takes a hardware action on a feature bit; the app owns feature support. _update_address_cv_cache still refreshes the address/speed-mode cache on the same write.",
+            "gtest": "dcc_cv_storage_Test asserts the decode (named flags for a known value), the reserved bit 6 forced to 0 on a bogus byte, the filter result being re-encoded and stored (a cleared bit is dropped), and a locked decoder neither storing nor filtering. The direction-bit inversion is additionally covered end-to-end by the packet-decoder test.",
             "hil": "POM-write CV29 and observe the decoded flags reported on the wire (RECV CV29 ...). Verified on hardware."
           },
           "refs": {
@@ -4993,7 +4993,7 @@ window.COMPLIANCE =
               "DCC_CV29_RESERVED_BIT",
               "DCC_CV29_ACCESSORY_BIT",
               "dcc_cv29_flags_t",
-              "on_cv29_config_changed"
+              "cv29_apply_supported_features"
             ],
             "tests": [
               {
@@ -5003,8 +5003,8 @@ window.COMPLIANCE =
               },
               { "name": "DccCvStorage.cv29_write_decodes_named_flags", "file": "dcc_cv_storage_Test.cxx", "desc": "a CV29 write decodes into the named dcc_cv29_flags_t fields" },
               { "name": "DccCvStorage.cv29_write_forces_reserved_bit6_to_zero", "file": "dcc_cv_storage_Test.cxx", "desc": "a bogus byte with bit 6 set is sanitized to 0 before store" },
-              { "name": "DccCvStorage.cv29_notify_only_on_successful_store", "file": "dcc_cv_storage_Test.cxx", "desc": "on_cv29_config_changed does not fire when the backend store fails" },
-              { "name": "DccCvStorage.cv29_write_blocked_when_locked", "file": "dcc_cv_storage_Test.cxx", "desc": "a locked decoder neither stores nor notifies on a CV29 write" }
+              { "name": "DccCvStorage.cv29_filter_result_is_stored", "file": "dcc_cv_storage_Test.cxx", "desc": "a feature the app's filter clears is dropped from the stored CV29 byte" },
+              { "name": "DccCvStorage.cv29_write_blocked_when_locked", "file": "dcc_cv_storage_Test.cxx", "desc": "a locked decoder neither stores nor filters on a CV29 write" }
             ],
             "hilChecks": [
               { "label": "CV29 write decodes to named flags", "file": "mobile_decoder/s9_2_2_compliance.py", "desc": "POM-writes CV29=0x2A; decoder reports RECV CV29 with steps/railcom/extaddr set and dir clear." }
@@ -6422,28 +6422,110 @@ window.COMPLIANCE =
             "draftDelta": null
           },
           "supported": {
-            "state": "no",
+            "state": "ok",
             "note": ""
           },
           "gtest": {
-            "state": "no",
+            "state": "ok",
             "note": ""
           },
           "hil": {
-            "state": "na",
+            "state": "no",
             "note": ""
           },
           "detail": {
-            "impl": "Unimplemented: on_failsafe_* callbacks are declared but never called, and CV11 is defined only. Only dead callback declarations and an unreferenced DCC_CV_PACKET_TIMEOUT define; no timer or stop logic.",
-            "gtest": "No gtest coverage; the on_failsafe_* callbacks have zero call sites. No tests exercise failsafe; symbols never invoked.",
-            "hil": "No HIL coverage; nothing to drive. Feature unimplemented."
+            "impl": "dcc_failsafe polls CV11 vs elapsed time (0.1 s/LSB; 0 disables). Fires on_failsafe_entered on timeout, on_failsafe_exited when an addressed packet resumes.",
+            "gtest": "",
+            "hil": "Suite s9_2_4_compliance.py written; awaiting bench run on reflashed firmware."
           },
           "refs": {
             "symbols": [
-              "DCC_CV_PACKET_TIMEOUT"
+              "DCC_CV_PACKET_TIMEOUT",
+              "DCC_FAILSAFE_CV11_UNIT_US",
+              "DccFailsafe_initialize",
+              "DccFailsafe_note_valid_packet",
+              "DccFailsafe_run",
+              "DccFailsafe_is_active"
             ],
-            "tests": [],
-            "hilChecks": []
+            "tests": [
+              {
+                "name": "DccFailsafe.trips_at_threshold",
+                "file": "dcc_failsafe_Test.cxx",
+                "desc": "fires on_failsafe_entered once when elapsed reaches CV11 x unit (20 s at CV11=200)"
+              },
+              {
+                "name": "DccFailsafe.cv11_zero_disables_timeout",
+                "file": "dcc_failsafe_Test.cxx",
+                "desc": "CV11=0 never trips even after 60 s of silence"
+              },
+              {
+                "name": "DccFailsafe.valid_packet_exits_failsafe_once",
+                "file": "dcc_failsafe_Test.cxx",
+                "desc": "an addressed packet clears fail-safe and fires on_failsafe_exited once"
+              },
+              {
+                "name": "DccFailsafe.packet_rearms_timer",
+                "file": "dcc_failsafe_Test.cxx",
+                "desc": "note_valid_packet re-stamps the clock so the timeout restarts"
+              },
+              {
+                "name": "DccPacketDecoder.addressed_packet_hook_fires_on_match",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "on_addressed_packet fires when a packet matches the decoder address"
+              },
+              {
+                "name": "DccPacketDecoder.addressed_packet_hook_silent_on_wrong_address",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "on_addressed_packet stays silent for a non-matching address"
+              },
+              {
+                "name": "DccPacketDecoder.addressed_packet_hook_fires_on_broadcast",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "on_addressed_packet fires on a broadcast (address 0) command"
+              },
+              {
+                "name": "DccFailsafe.initialize_stamps_clock_so_no_immediate_trip",
+                "file": "dcc_failsafe_Test.cxx",
+                "desc": "init stamps last-packet=now so a fresh decoder does not trip immediately"
+              },
+              {
+                "name": "DccFailsafe.no_trip_just_below_threshold",
+                "file": "dcc_failsafe_Test.cxx",
+                "desc": "does not trip one microsecond before the CV11 timeout"
+              },
+              {
+                "name": "DccFailsafe.entered_fires_exactly_once",
+                "file": "dcc_failsafe_Test.cxx",
+                "desc": "on_failsafe_entered is not re-fired while still timed out"
+              },
+              {
+                "name": "DccFailsafe.packet_while_not_tripped_does_not_fire_exit",
+                "file": "dcc_failsafe_Test.cxx",
+                "desc": "a packet received while not in fail-safe does not fire on_failsafe_exited"
+              },
+              {
+                "name": "DccFailsafe.recovers_then_can_retrip",
+                "file": "dcc_failsafe_Test.cxx",
+                "desc": "after recovery a renewed loss of packets trips fail-safe again"
+              },
+              {
+                "name": "DccFailsafe.null_callbacks_are_safe",
+                "file": "dcc_failsafe_Test.cxx",
+                "desc": "NULL on_failsafe_* callbacks do not crash on enter/exit"
+              },
+              {
+                "name": "DccFailsafe.cv_read_failure_does_not_trip",
+                "file": "dcc_failsafe_Test.cxx",
+                "desc": "a failed CV11 read leaves the decoder out of fail-safe"
+              }
+            ],
+            "hilChecks": [
+              {
+                "label": "CV11 timeout enter/exit",
+                "file": "mobile_decoder/s9_2_4_compliance.py",
+                "desc": "drives packets, drops the signal past CV11, expects RECV FAILSAFE_ENTER then EXIT on resume; CV11=0 no-trip"
+              }
+            ]
           }
         }
       ]

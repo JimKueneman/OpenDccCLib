@@ -52,7 +52,7 @@ const dcc_config_t dcc_config = {
     .factory_reset           = &CallbacksDcc_factory_reset,
     .cv_read_indexed         = &CallbacksDcc_cv_read_indexed,
     .cv_write_indexed        = &CallbacksDcc_cv_write_indexed,
-    .on_cv29_config_changed  = &CallbacksDcc_on_cv29_config_changed,
+    .cv29_apply_supported_features = &CallbacksDcc_cv29_apply_supported_features,
 
     /* --- Application callbacks (OPTIONAL, NULL = no notification) ---
      * Each of these fires when the library decodes the corresponding DCC

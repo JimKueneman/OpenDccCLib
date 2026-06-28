@@ -80,14 +80,23 @@ static bool mock_cv_read_indexed(uint8_t hi, uint8_t lo, uint8_t off, uint8_t *v
 
 }
 
-/* --- CV29 notify mock --- */
-static dcc_cv29_flags_t last_cv29_flags;
-static uint32_t cv29_notify_count;
+/* --- CV29 feature-filter mock ---
+ * The library decodes a CV29 write, calls this so the app can clear bits for
+ * features it does not support, then re-encodes what remains and stores it. */
+static dcc_cv29_flags_t last_cv29_flags;   /* flags as decoded and handed to us */
+static uint32_t cv29_filter_count;
+static bool cv29_clear_railcom;            /* test knob: pretend RailCom unsupported */
 
-static void mock_on_cv29(const dcc_cv29_flags_t *f) {
+static void mock_cv29_filter(dcc_cv29_flags_t *f) {
 
     last_cv29_flags = *f;
-    cv29_notify_count++;
+    cv29_filter_count++;
+
+    if (cv29_clear_railcom) {
+
+        f->railcom_enabled = false;
+
+    }
 
 }
 
@@ -127,7 +136,8 @@ static void reset_mocks(void) {
     last_idx_page_hi = last_idx_page_lo = last_idx_offset = last_idx_value = 0;
     idx_write_count = idx_read_count = 0;
     memset(idx_store, 0, sizeof(idx_store));
-    cv29_notify_count = 0;
+    cv29_filter_count = 0;
+    cv29_clear_railcom = false;
     memset(&last_cv29_flags, 0, sizeof(last_cv29_flags));
 
 }
@@ -142,7 +152,7 @@ static interface_dcc_cv_storage_t make_interface(void) {
     interface.factory_reset = mock_factory_reset;
     interface.cv_read_indexed = mock_cv_read_indexed;
     interface.cv_write_indexed = mock_cv_write_indexed;
-    interface.on_cv29_config_changed = mock_on_cv29;
+    interface.cv29_apply_supported_features = mock_cv29_filter;
 
     return interface;
 
@@ -432,7 +442,7 @@ TEST(DccCvStorage, cv29_write_decodes_named_flags) {
 
     /* bit0 dir + bit3 railcom + bit5 extended = 0x29 */
     EXPECT_TRUE(DccCvStorage_write(DCC_CV_CONFIG, 0x29));
-    EXPECT_EQ(cv29_notify_count, (uint32_t)1);
+    EXPECT_EQ(cv29_filter_count, (uint32_t)1);
     EXPECT_TRUE(last_cv29_flags.direction_reversed);
     EXPECT_FALSE(last_cv29_flags.speed_steps_28_128);
     EXPECT_FALSE(last_cv29_flags.power_source_conversion);
@@ -458,15 +468,32 @@ TEST(DccCvStorage, cv29_write_forces_reserved_bit6_to_zero) {
 }
 
 // @compliance DCC-S9.2.2-DEC-004
-TEST(DccCvStorage, cv29_notify_only_on_successful_store) {
+TEST(DccCvStorage, cv29_filter_result_is_stored) {
 
     reset_mocks();
     interface_dcc_cv_storage_t interface = make_interface();
-    interface.cv_write = mock_cv_write_fail;    /* store always fails */
     DccCvStorage_initialize(&interface);
 
-    EXPECT_FALSE(DccCvStorage_write(DCC_CV_CONFIG, 0x06));
-    EXPECT_EQ(cv29_notify_count, (uint32_t)0);   /* failed store -> no notify */
+    /* App does not implement RailCom, so its filter clears that bit. */
+    cv29_clear_railcom = true;
+
+    /* Request bit0 dir + bit3 railcom + bit5 extended = 0x29. */
+    EXPECT_TRUE(DccCvStorage_write(DCC_CV_CONFIG, 0x29));
+    EXPECT_EQ(cv29_filter_count, (uint32_t)1);
+
+    /* RailCom (0x08) filtered out -> stored value is dir + extended = 0x21. */
+    EXPECT_EQ(mock_cv_values[DCC_CV_CONFIG - 1], (uint8_t)0x21);
+
+}
+
+TEST(DccCvStorage, write_returns_false_when_store_fails) {
+
+    reset_mocks();
+    interface_dcc_cv_storage_t interface = make_interface();
+    interface.cv_write = mock_cv_write_fail;    /* backend store always fails */
+    DccCvStorage_initialize(&interface);
+
+    EXPECT_FALSE(DccCvStorage_write(DCC_CV_VSTART, 0x10));
 
 }
 
@@ -481,7 +508,7 @@ TEST(DccCvStorage, cv29_write_blocked_when_locked) {
     mock_cv_values[DCC_CV_DECODER_LOCK_2 - 1] = 10;  /* locked */
 
     EXPECT_FALSE(DccCvStorage_write(DCC_CV_CONFIG, 0x06));
-    EXPECT_EQ(cv29_notify_count, (uint32_t)0);
+    EXPECT_EQ(cv29_filter_count, (uint32_t)0);   /* locked: blocked before the filter */
 
 }
 

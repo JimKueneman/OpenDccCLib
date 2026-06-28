@@ -28,12 +28,12 @@
  * @brief RailCom cutout timer state machine for the command station.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 27 Jun 2026
  */
 
 #include "dcc_railcom_cutout.h"
 
-#ifdef DCC_COMPILE_COMMAND_STATION
+#if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_COMMAND_STATION)
 
 void DccRailcomCutout_initialize(dcc_railcom_cutout_context_t *context, const interface_dcc_railcom_cutout_t *interface,
                                  uint16_t start_delay, uint16_t uart_rx_delay, uint16_t ch1, uint16_t gap, uint16_t ch2) {
@@ -243,4 +243,4 @@ bool DccRailcomCutout_is_idle(const dcc_railcom_cutout_context_t *context) {
 
 }
 
-#endif /* DCC_COMPILE_COMMAND_STATION */
+#endif /* DCC_COMPILE_RAILCOM && DCC_COMPILE_COMMAND_STATION */

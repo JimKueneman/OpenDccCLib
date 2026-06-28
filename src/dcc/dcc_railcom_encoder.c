@@ -28,12 +28,12 @@
  * @brief RailCom 4/8 encoding and datagram transmission for decoders.
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 27 Jun 2026
  */
 
 #include "dcc_railcom_encoder.h"
 
-#ifdef DCC_COMPILE_DECODER
+#if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_DECODER)
 
 // =============================================================================
 // RailCom 4/8 Encode Table (NMRA RP-9.3.2)
@@ -164,4 +164,4 @@ void DccRailcomEncoder_send_ch2(const dcc_railcom_response_t *response) {
 
 }
 
-#endif /* DCC_COMPILE_DECODER */
+#endif /* DCC_COMPILE_RAILCOM && DCC_COMPILE_DECODER */
