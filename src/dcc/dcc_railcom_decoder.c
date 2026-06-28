@@ -42,6 +42,12 @@
 
 static const interface_dcc_railcom_decoder_t *_interface;
 
+    /** @brief This decoder's active address, pushed by the packet decoder. */
+static dcc_address_t _decoder_address;
+
+    /** @brief This decoder's address type (short / long). */
+static dcc_address_type_enum _decoder_address_type;
+
 // =============================================================================
 // Public API
 // =============================================================================
@@ -49,6 +55,13 @@ static const interface_dcc_railcom_decoder_t *_interface;
 void DccRailcomDecoder_initialize(const interface_dcc_railcom_decoder_t *interface) {
 
     _interface = interface;
+
+}
+
+void DccRailcomDecoder_set_address(dcc_address_t address, dcc_address_type_enum type) {
+
+    _decoder_address = address;
+    _decoder_address_type = type;
 
 }
 

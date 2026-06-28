@@ -63,6 +63,18 @@ typedef struct {
 extern void DccRailcomDecoder_initialize(const interface_dcc_railcom_decoder_t *interface);
 
     /**
+     * @brief Set this decoder's active address, pushed by the packet decoder whenever
+     *  it resolves or changes (at init and on address-CV writes).
+     *
+     * @details The RailCom Tx engine holds the address for its ADR (Channel 1)
+     *  datagram, so it never re-reads CVs during the cutout.
+     *
+     * @param address The decoder's resolved @ref dcc_address_t.
+     * @param type The resolved @ref dcc_address_type_enum (short / long).
+     */
+extern void DccRailcomDecoder_set_address(dcc_address_t address, dcc_address_type_enum type);
+
+    /**
      * @brief Send a raw RailCom special code word (bypasses the 4/8 table).
      * @param code_word Raw 8-bit code word to transmit (e.g.
      *        @ref DCC_RAILCOM_CODE_WORD_ACK or @ref DCC_RAILCOM_CODE_WORD_NACK).

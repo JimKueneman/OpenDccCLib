@@ -285,6 +285,20 @@ static void mock_on_addressed_packet(void) {
 
 }
 
+#if defined(DCC_COMPILE_RAILCOM)
+static dcc_address_t last_address_changed_value;
+static dcc_address_type_enum last_address_changed_type;
+static uint32_t address_changed_count;
+
+static void mock_on_address_changed(dcc_address_t address, dcc_address_type_enum type) {
+
+    last_address_changed_value = address;
+    last_address_changed_type = type;
+    address_changed_count++;
+
+}
+#endif /* DCC_COMPILE_RAILCOM */
+
 static void reset_mocks(void) {
 
     memset(mock_cv_values, 0, sizeof(mock_cv_values));
@@ -294,6 +308,11 @@ static void reset_mocks(void) {
 
     /* Default CV 1: short address 3 */
     mock_cv_values[DCC_CV_PRIMARY_ADDRESS - 1] = 3;
+#if defined(DCC_COMPILE_RAILCOM)
+    last_address_changed_value = 0;
+    last_address_changed_type = DCC_ADDRESS_SHORT;
+    address_changed_count = 0;
+#endif
 
     last_speed_address = 0;
     last_speed_value = 0;
@@ -435,6 +454,9 @@ static interface_dcc_packet_decoder_t make_interface(void) {
     interface.on_binary_state_long_command = mock_on_bsl;
     interface.on_analog_function_command = mock_on_analog;
     interface.on_addressed_packet = mock_on_addressed_packet;
+#if defined(DCC_COMPILE_RAILCOM)
+    interface.on_address_changed = mock_on_address_changed;
+#endif
 
     return interface;
 
@@ -457,6 +479,35 @@ static uint8_t xor_bytes(const uint8_t *data, uint8_t count) {
     return xor_val;
 
 }
+
+#if defined(DCC_COMPILE_RAILCOM)
+// ============================================================================
+// Address push to the RailCom Tx engine (on_address_changed)
+// ============================================================================
+
+TEST(DccPacketDecoder, on_address_changed_fires_at_init_short) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    DccPacketDecoder_initialize(&interface);
+
+    EXPECT_GE(address_changed_count, (uint32_t)1);
+    EXPECT_EQ(last_address_changed_value, (dcc_address_t)3);
+    EXPECT_EQ(last_address_changed_type, DCC_ADDRESS_SHORT);
+
+}
+
+TEST(DccPacketDecoder, on_address_changed_fires_long) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_long_address(&interface, 1000);
+
+    EXPECT_EQ(last_address_changed_value, (dcc_address_t)1000);
+    EXPECT_EQ(last_address_changed_type, DCC_ADDRESS_LONG);
+
+}
+#endif /* DCC_COMPILE_RAILCOM */
 
 // ============================================================================
 // Initialization

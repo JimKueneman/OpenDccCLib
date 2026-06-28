@@ -917,6 +917,9 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _packet_decoder_interface.on_analog_function_command = config->on_analog_function_command;
     _packet_decoder_interface.start_ack_pulse = config->start_ack_pulse;
     _packet_decoder_interface.on_addressed_packet = &DccFailsafe_note_valid_packet;
+#if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_DECODER)
+    _packet_decoder_interface.on_address_changed = &DccRailcomDecoder_set_address;
+#endif /* DCC_COMPILE_RAILCOM && DCC_COMPILE_DECODER */
     DccPacketDecoder_initialize(&_packet_decoder_interface);
 
     /* Wire packet-timeout fail-safe (S-9.2.4 §4). CV11 read through cv_storage;

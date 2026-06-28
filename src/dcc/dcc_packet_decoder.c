@@ -210,6 +210,16 @@ static void _update_address_cv_cache(void) {
 
     }
 
+#if defined(DCC_COMPILE_RAILCOM)
+    /* Push the freshly resolved address to subscribers (e.g. the RailCom Tx engine,
+     * which holds it for the ADR datagram rather than re-reading CVs each cutout). */
+    if (_interface->on_address_changed) {
+
+        _interface->on_address_changed(_my_address, _my_address_type);
+
+    }
+#endif /* DCC_COMPILE_RAILCOM */
+
 }
 
     /**

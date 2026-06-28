@@ -116,6 +116,13 @@ typedef struct {
          *  re-arm the S-9.2.4 packet-timeout fail-safe. */
     void (*on_addressed_packet)(void);
 
+#if defined(DCC_COMPILE_RAILCOM)
+        /** @brief The decoder's resolved address changed (or was first resolved at
+         *  init). NULL = no notification. The RailCom Tx engine holds the pushed
+         *  address for its ADR datagram instead of re-reading CVs each cutout. */
+    void (*on_address_changed)(dcc_address_t address, dcc_address_type_enum type);
+#endif /* DCC_COMPILE_RAILCOM */
+
 } interface_dcc_packet_decoder_t;
 
     /**
