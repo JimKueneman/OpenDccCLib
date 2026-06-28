@@ -115,13 +115,13 @@ programming from POM.
 | `dcc_scheduler` | CS | Priority queue, duplicate combining, auto-refresh round-robin |
 | `dcc_bit_encoder` | CS | ISR bit framing from the shared fixed-period timer |
 | `dcc_railcom_cutout` | CS | RailCom cutout timer state machine |
-| `dcc_railcom_decoder` | CS | 4/8 decode of received RailCom, receive buffer |
+| `dcc_railcom_command_station` | CS | 4/8 decode of received RailCom, receive buffer |
 | `dcc_service_mode_common` | CS | Shared ACK detection, reset sequencing, retry |
 | `dcc_service_mode_{direct,paged,register,address}` | CS | Per-mode programming state machines |
 | `dcc_bit_decoder` | DECODER | Edge-timestamp → bit classification → byte assembly |
 | `dcc_packet_decoder` | DECODER | Parse bytes → structured commands, XOR, address match, dispatch |
 | `dcc_cv_storage` | DECODER | CV abstraction, decoder lock, factory reset, fail-safe |
-| `dcc_railcom_encoder` | DECODER | 4/8 encode of decoder RailCom responses |
+| `dcc_railcom_decoder` | DECODER | 4/8 encode of decoder RailCom responses |
 
 Each module owns an `interface_dcc_<module>_t` of function pointers, populated by
 `dcc_config.c`. This makes every dependency mockable in unit tests and lets an

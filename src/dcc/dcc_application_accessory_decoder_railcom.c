@@ -28,7 +28,7 @@
  * @brief Application-layer implementation for accessory decoder RailCom SRQ and status.
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 28 Jun 2026
  */
 
 #include "dcc_application_accessory_decoder_railcom.h"
@@ -278,7 +278,7 @@ void DccApplicationAccessoryDecoderRailcom_on_cutout(void) {
          *     basic    : 0AAA AAAA-AAAA  (MSB = 0, 11-bit address)
          *     extended : 1AAA AAAA-AAAA  (MSB = 1, 11-bit address)
          *
-         * DccRailcomEncoder_send_ch1() packs its two arguments into one
+         * DccRailcomDecoder_send_ch1() packs its two arguments into one
          * 12-bit value as ((datagram_id & 0x0F) << 8) | data, then splits
          * that into two 6-bit RailCom code words.  There is no SRQ
          * identifier, so the full 12 bits must carry the format bit and the

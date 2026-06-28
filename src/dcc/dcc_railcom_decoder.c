@@ -24,14 +24,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @file dcc_railcom_encoder.c
+ * @file dcc_railcom_decoder.c
  * @brief RailCom 4/8 encoding and datagram transmission for decoders.
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 28 Jun 2026
  */
 
-#include "dcc_railcom_encoder.h"
+#include "dcc_railcom_decoder.h"
 
 #if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_DECODER)
 
@@ -69,19 +69,19 @@ static const uint8_t _encode_table[64] = {
 // Static state
 // =============================================================================
 
-static const interface_dcc_railcom_encoder_t *_interface;
+static const interface_dcc_railcom_decoder_t *_interface;
 
 // =============================================================================
 // Public API
 // =============================================================================
 
-void DccRailcomEncoder_initialize(const interface_dcc_railcom_encoder_t *interface) {
+void DccRailcomDecoder_initialize(const interface_dcc_railcom_decoder_t *interface) {
 
     _interface = interface;
 
 }
 
-uint8_t DccRailcomEncoder_encode_byte(uint8_t value) {
+uint8_t DccRailcomDecoder_encode_byte(uint8_t value) {
 
     if (value > 0x3F) {
 
@@ -93,7 +93,7 @@ uint8_t DccRailcomEncoder_encode_byte(uint8_t value) {
 
 }
 
-void DccRailcomEncoder_send_code_word(uint8_t code_word) {
+void DccRailcomDecoder_send_code_word(uint8_t code_word) {
 
     if (!_interface->uart_write) {
 
@@ -107,7 +107,7 @@ void DccRailcomEncoder_send_code_word(uint8_t code_word) {
 
 }
 
-void DccRailcomEncoder_send_ch1(uint8_t datagram_id, uint8_t data) {
+void DccRailcomDecoder_send_ch1(uint8_t datagram_id, uint8_t data) {
 
     uint16_t combined;
     uint8_t high_six_bits;
@@ -128,7 +128,7 @@ void DccRailcomEncoder_send_ch1(uint8_t datagram_id, uint8_t data) {
 
 }
 
-void DccRailcomEncoder_send_ch2(const dcc_railcom_response_t *response) {
+void DccRailcomDecoder_send_ch2(const dcc_railcom_response_t *response) {
 
     uint16_t combined;
     uint8_t high_six_bits;

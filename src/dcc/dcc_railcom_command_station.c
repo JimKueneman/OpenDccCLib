@@ -24,14 +24,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @file dcc_railcom_decoder.c
+ * @file dcc_railcom_command_station.c
  * @brief RailCom 4/8 decoding, cutout management, and receive buffer.
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 28 Jun 2026
  */
 
-#include "dcc_railcom_decoder.h"
+#include "dcc_railcom_command_station.h"
 
 #if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_COMMAND_STATION)
 
@@ -98,7 +98,7 @@ static const uint8_t _decode_table[256] = {
 // Static helpers
 // =============================================================================
 
-static void _buffer_push(dcc_railcom_decoder_context_t *context, const dcc_railcom_datagram_t *datagram) {
+static void _buffer_push(dcc_railcom_command_station_context_t *context, const dcc_railcom_datagram_t *datagram) {
 
     if (context->buffer_count >= USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH) {
 
@@ -119,7 +119,7 @@ static void _buffer_push(dcc_railcom_decoder_context_t *context, const dcc_railc
      * @param raw_bytes Raw UART bytes from cutout.
      * @param raw_count Number of raw bytes received.
      */
-static void _decode_channel_1(dcc_railcom_decoder_context_t *context, const uint8_t *raw_bytes, uint8_t raw_count) {
+static void _decode_channel_1(dcc_railcom_command_station_context_t *context, const uint8_t *raw_bytes, uint8_t raw_count) {
 
     uint8_t decoded_0;
     uint8_t decoded_1;
@@ -165,7 +165,7 @@ static void _decode_channel_1(dcc_railcom_decoder_context_t *context, const uint
      * @param raw_bytes Raw UART bytes from cutout.
      * @param raw_count Number of raw bytes received.
      */
-static void _decode_channel_2(dcc_railcom_decoder_context_t *context, const uint8_t *raw_bytes, uint8_t raw_count) {
+static void _decode_channel_2(dcc_railcom_command_station_context_t *context, const uint8_t *raw_bytes, uint8_t raw_count) {
 
     uint8_t ch2_start = DCC_RAILCOM_CH1_MAX_BYTES;
     uint8_t ch2_count;
@@ -233,7 +233,7 @@ static void _decode_channel_2(dcc_railcom_decoder_context_t *context, const uint
 
 }
 
-static void _process_cutout(dcc_railcom_decoder_context_t *context) {
+static void _process_cutout(dcc_railcom_command_station_context_t *context) {
 
     uint8_t raw_bytes[DCC_RAILCOM_CH1_MAX_BYTES + DCC_RAILCOM_CH2_MAX_BYTES];
     uint8_t raw_count = 0;
@@ -265,7 +265,7 @@ static void _process_cutout(dcc_railcom_decoder_context_t *context) {
 // Public API
 // =============================================================================
 
-void DccRailcomDecoder_initialize(dcc_railcom_decoder_context_t *context, const interface_dcc_railcom_decoder_t *interface) {
+void DccRailcomCommandStation_initialize(dcc_railcom_command_station_context_t *context, const interface_dcc_railcom_command_station_t *interface) {
 
     context->interface = interface;
     context->buffer_head = 0;
@@ -276,7 +276,7 @@ void DccRailcomDecoder_initialize(dcc_railcom_decoder_context_t *context, const 
 
 }
 
-void DccRailcomDecoder_run(dcc_railcom_decoder_context_t *context) {
+void DccRailcomCommandStation_run(dcc_railcom_command_station_context_t *context) {
 
     if (!context->interface->uart_read) {
 
@@ -295,21 +295,21 @@ void DccRailcomDecoder_run(dcc_railcom_decoder_context_t *context) {
 
 }
 
-void DccRailcomDecoder_begin_cutout(dcc_railcom_decoder_context_t *context, dcc_address_t address) {
+void DccRailcomCommandStation_begin_cutout(dcc_railcom_command_station_context_t *context, dcc_address_t address) {
 
     context->cutout_address = address;
     context->cutout_pending = true;
 
 }
 
-void DccRailcomDecoder_end_cutout(dcc_railcom_decoder_context_t *context) {
+void DccRailcomCommandStation_end_cutout(dcc_railcom_command_station_context_t *context) {
 
     /* Intentionally empty — processing happens in run() after cutout ends. */
     (void)context;
 
 }
 
-bool DccRailcomDecoder_read(dcc_railcom_decoder_context_t *context, dcc_railcom_datagram_t *datagram) {
+bool DccRailcomCommandStation_read(dcc_railcom_command_station_context_t *context, dcc_railcom_datagram_t *datagram) {
 
     if (context->buffer_count == 0) {
 
@@ -325,13 +325,13 @@ bool DccRailcomDecoder_read(dcc_railcom_decoder_context_t *context, dcc_railcom_
 
 }
 
-uint8_t DccRailcomDecoder_available(const dcc_railcom_decoder_context_t *context) {
+uint8_t DccRailcomCommandStation_available(const dcc_railcom_command_station_context_t *context) {
 
     return context->buffer_count;
 
 }
 
-uint8_t DccRailcomDecoder_decode_byte(uint8_t encoded) {
+uint8_t DccRailcomCommandStation_decode_byte(uint8_t encoded) {
 
     return _decode_table[encoded];
 

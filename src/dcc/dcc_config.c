@@ -36,7 +36,7 @@
  * user-facing API.
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 28 Jun 2026
  */
 
 #include "dcc_config.h"
@@ -50,7 +50,7 @@
 #include "dcc_scheduler.h"
 #include "dcc_service_mode_common.h"
 #if defined(DCC_COMPILE_RAILCOM)
-#include "dcc_railcom_decoder.h"
+#include "dcc_railcom_command_station.h"
 #include "dcc_railcom_cutout.h"
 #endif
 #include "dcc_application_command_station_main_track.h"
@@ -98,7 +98,7 @@
 #include "dcc_packet_decoder.h"
 #include "dcc_cv_storage.h"
 #if defined(DCC_COMPILE_RAILCOM)
-#include "dcc_railcom_encoder.h"
+#include "dcc_railcom_decoder.h"
 #endif
 #include "dcc_failsafe.h"
 #endif
@@ -126,10 +126,10 @@ static interface_dcc_scheduler_t _main_scheduler_interface;
 
 #if defined(DCC_COMPILE_RAILCOM)
     /** @brief Main track RailCom decoder context */
-static dcc_railcom_decoder_context_t _main_railcom_context;
+static dcc_railcom_command_station_context_t _main_railcom_context;
 
     /** @brief Main track RailCom decoder interface */
-static interface_dcc_railcom_decoder_t _main_railcom_interface;
+static interface_dcc_railcom_command_station_t _main_railcom_interface;
 #endif /* DCC_COMPILE_RAILCOM */
 
     /** @brief Main track application layer interface */
@@ -268,7 +268,7 @@ static interface_dcc_cv_storage_t _cv_storage_interface;
 
 #if defined(DCC_COMPILE_RAILCOM)
     /** @brief Interface struct for the RailCom encoder module */
-static interface_dcc_railcom_encoder_t _railcom_encoder_interface;
+static interface_dcc_railcom_decoder_t _railcom_encoder_interface;
 #endif /* DCC_COMPILE_RAILCOM */
 
     /** @brief Interface struct for the packet-timeout fail-safe module */
@@ -656,7 +656,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
 
     }
 
-    DccRailcomDecoder_initialize(&_main_railcom_context, &_main_railcom_interface);
+    DccRailcomCommandStation_initialize(&_main_railcom_context, &_main_railcom_interface);
 
     /* Wire RailCom cutout module (one-shot timer state machine) */
     _railcom_cutout_interface.timer_one_shot_start = config->railcom_timer_start;
@@ -943,7 +943,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
 
     }
 
-    DccRailcomEncoder_initialize(&_railcom_encoder_interface);
+    DccRailcomDecoder_initialize(&_railcom_encoder_interface);
 #endif /* DCC_COMPILE_RAILCOM */
 
     /* Initialize ACK pulse state */
@@ -976,7 +976,7 @@ void DccConfig_run(void) {
 
 #if defined(DCC_COMPILE_RAILCOM)
     /* Main track RailCom: drain decoded datagrams */
-    DccRailcomDecoder_run(&_main_railcom_context);
+    DccRailcomCommandStation_run(&_main_railcom_context);
 #endif /* DCC_COMPILE_RAILCOM */
 
 #endif /* DCC_COMPILE_COMMAND_STATION */

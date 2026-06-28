@@ -34,7 +34,7 @@
  * All memory is statically allocated at compile time.
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 28 Jun 2026
  */
 
 #ifndef __DCC_TYPES__
@@ -208,8 +208,6 @@ typedef enum {
 // Scheduler types (Command Station)
 // =============================================================================
 
-#ifdef DCC_COMPILE_COMMAND_STATION
-
     /** @brief Packet priority levels for the scheduler */
 typedef enum {
 
@@ -255,8 +253,6 @@ typedef struct {
     bool active;                /**< true = slot is in use */
 
 } dcc_scheduler_slot_t;
-
-#endif /* DCC_COMPILE_COMMAND_STATION */
 
 // =============================================================================
 // Service mode types
@@ -330,8 +326,6 @@ typedef void (*dcc_service_mode_task_on_progress_callback_t)(dcc_task_phase_enum
 // RailCom types
 // =============================================================================
 
-#ifdef DCC_COMPILE_COMMAND_STATION
-
     /** @brief Maximum data bytes in a RailCom datagram */
 #define DCC_RAILCOM_DATAGRAM_MAX_BYTES 6
 
@@ -353,13 +347,9 @@ typedef struct {
 
 } dcc_railcom_datagram_t;
 
-#endif /* DCC_COMPILE_COMMAND_STATION */
-
 // =============================================================================
 // Bit encoder state (Command Station)
 // =============================================================================
-
-#ifdef DCC_COMPILE_COMMAND_STATION
 
     /** @brief Bit encoder ISR state machine states */
 typedef enum {
@@ -373,13 +363,9 @@ typedef enum {
 
 } dcc_bit_state_enum;
 
-#endif /* DCC_COMPILE_COMMAND_STATION */
-
 // =============================================================================
 // Decoder types
 // =============================================================================
-
-#ifdef DCC_COMPILE_DECODER
 
     /** @brief A decoded DCC packet with parsed fields */
 typedef struct {
@@ -392,18 +378,9 @@ typedef struct {
 
 } dcc_decoded_packet_t;
 
-#endif /* DCC_COMPILE_DECODER */
-
 // =============================================================================
 // RailCom encoder types (Decoder / Accessory Decoder)
 // =============================================================================
-
-#if defined(DCC_COMPILE_DECODER) || defined(DCC_COMPILE_ACCESSORY_DECODER)
-
-    /** @brief Maximum data bytes in a RailCom response (decoder side) */
-#ifndef DCC_RAILCOM_DATAGRAM_MAX_BYTES
-#define DCC_RAILCOM_DATAGRAM_MAX_BYTES 6
-#endif
 
     /** @brief Decoded CV29 configuration flags, handed to the app after a CV29 write.
      *  The library decodes the register; the app acts only on the features it supports. */
@@ -428,7 +405,25 @@ typedef struct {
 
 } dcc_railcom_response_t;
 
-#endif /* DCC_COMPILE_DECODER || DCC_COMPILE_ACCESSORY_DECODER */
+    /** @brief Kind of app-handled RailCom Channel 2 request (POM is library-internal). */
+typedef enum {
+
+    DCC_RAILCOM_APP_REQUEST_SEARCH,   /**< EXT location search (ID3) -- app returns its location */
+    DCC_RAILCOM_APP_REQUEST_FILL      /**< XF refuel (ID7) -- app returns tank/refuel data */
+
+} dcc_railcom_app_request_type_enum;
+
+    /** @brief Outcome of filling a RailCom Channel 2 reply. The library turns the status into
+     *  the matching S-9.3.2 token; the application never encodes a token itself. */
+typedef enum {
+
+    DCC_RAILCOM_REPLY_DATA,   /**< Success: the response datagram holds the data to transmit */
+    DCC_RAILCOM_REPLY_ACK,    /**< Success, no data: transmit the ACK token */
+    DCC_RAILCOM_REPLY_BUSY,   /**< Cannot answer yet, retry later: transmit the BUSY token */
+    DCC_RAILCOM_REPLY_NACK,   /**< Cannot comply: transmit the NACK token */
+    DCC_RAILCOM_REPLY_NONE    /**< Nothing to send: leave Channel 2 empty */
+
+} dcc_railcom_reply_status_enum;
 
 #ifdef __cplusplus
 }

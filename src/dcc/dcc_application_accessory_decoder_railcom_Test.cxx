@@ -28,7 +28,7 @@
  * @brief GoogleTest suite for dcc_application_accessory_decoder_railcom.c
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 28 Jun 2026
  */
 
 #include "test/main_Test.hxx"
@@ -394,7 +394,7 @@ TEST_F(AccDecoderRailcomTest, on_cutout_null_interface_guard) {
  *   12-bit datagram, NO identifier.
  *     basic    : 0AAA AAAA-AAAA  (MSB = 0, 11-bit address)
  *     extended : 1AAA AAAA-AAAA  (MSB = 1, 11-bit address)
- * DccRailcomEncoder_send_ch1(id, data) packs ((id & 0x0F) << 8) | data into
+ * DccRailcomDecoder_send_ch1(id, data) packs ((id & 0x0F) << 8) | data into
  * the 12 bits, so the mock receives:
  *     id   (bits 11..8) = (format << 3) | ((address >> 8) & 0x07)
  *     data (bits  7..0) = address & 0xFF

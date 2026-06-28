@@ -138,8 +138,8 @@ Badges — **Supported:** ✅ in library · ⚠️ partial · ❌ no · — out 
 |---|---|---|---|---|---|
 | Cutout timing | S-9.3.2 Tbl 1 (T_CS 26–32, T_CE 454–488) | §4.1 (same) | `dcc_railcom_cutout.c`; defaults 26/54/97/16/261 µs, configurable via `dcc_config_t` | `..._cutout_Test` (25) | ✅ spec timing |
 | Cutout state machine | S-9.3.2 | 5-phase (settling/gap) | 5-state (DELAY/SETTLING/CH1/GAP/CH2) | cutout tests | ✅ |
-| 4/8 decode + Ch1/Ch2 + receive buffer | S-9.3.2 §2.5 | — | `dcc_railcom_decoder.c` | `..._decoder_Test` (27) | ✅ |
-| 4/8 encode (decoder responses) | S-9.3.2 | — | `dcc_railcom_encoder.c:encode_byte` | `..._encoder_Test` (13) | ✅ |
+| 4/8 decode + Ch1/Ch2 + receive buffer | S-9.3.2 §2.5 | — | `dcc_railcom_command_station.c` | `..._decoder_Test` (27) | ✅ |
+| 4/8 encode (decoder responses) | S-9.3.2 | — | `dcc_railcom_decoder.c:encode_byte` | `..._encoder_Test` (13) | ✅ |
 | Address feedback ADR1/ADR2 alternation | S-9.3.2 §3.1 | §4.12 | `DccApplicationDecoderRailcom_send_address_feedback` | alternation tests | ✅ |
 | POM / dynamic / ACK / NACK / track-search / CV-auto / raw responses | S-9.3.2 | §4.7 expanded | `dcc_application_decoder_railcom.c` (7 fns) | `..._decoder_railcom_Test` (21) | ✅ IDs aligned to 2026 draft; ACK/NACK as 4/8 special code words |
 | CV28 / CV29 bit-3 RailCom enable | S-9.3.2 §4.2 | 8-bit CV28 | decoder reads CV29; CV28 bits not acted on | — | ⚠️ partial |
@@ -955,7 +955,7 @@ RailCom spans four library modules across two roles:
 | Module | Role / compile flag | Responsibility |
 |--------|--------------------|----------------|
 | `dcc_railcom_cutout` | Command-station (`DCC_COMPILE_COMMAND_STATION`) | The cutout: tristate the H-bridge after the packet end-bit so the decoder can transmit. |
-| `dcc_railcom_encoder` / `dcc_railcom_decoder` | 4/8 codec | Encode/decode the 8-bit RailCom code words and Ch1/Ch2 datagrams. |
+| `dcc_railcom_decoder` / `dcc_railcom_command_station` | 4/8 codec | Encode/decode the 8-bit RailCom code words and Ch1/Ch2 datagrams. |
 | `dcc_application_decoder_railcom` | Decoder (mobile) | Build the decoder-side responses (POM, dynamic, address, ACK/NACK…). |
 | `dcc_application_accessory_decoder_railcom` | Accessory decoder | Accessory SRQ state machine + Status/Time/Error reports. |
 

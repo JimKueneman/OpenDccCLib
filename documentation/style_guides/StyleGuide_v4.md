@@ -237,6 +237,14 @@ Feature flags (cross-cutting — require a role flag; the role decides which hal
 
 All `USER_DEFINED_DCC_*` constants are validated at compile time in `dcc_types.h`.
 
+### Core Type Headers Are Never Gated
+
+The core type/constant headers `dcc_types.h` and `dcc_defines.h` define data types and protocol constants only.  Type, enum, struct, and constant `#define` *definitions* in these files are NEVER wrapped in a `DCC_COMPILE_*` role or feature guard — every type is always visible regardless of which role the build selects.  A type emits no code, so gating it saves nothing; it only couples the type header to the role flags and forces every consumer to mirror the guard.
+
+The ONLY `#if`/`#ifdef` permitted in `dcc_types.h` are compile-time *validation* assertions: the `USER_DEFINED_*` "must be defined / must be in range" `#error` checks (which stay role-conditional, because a role's constants only exist in that role's build) and the lone-`DCC_COMPILE_RAILCOM` `#error`.  These guard configuration correctness, not type visibility.
+
+This exception applies only to the core type/constant headers.  Module `.h`/`.c` files still wrap their declarations and definitions in the appropriate role guard as described above.
+
 ## Interface Structs and Cross-Module Calls:
 
 Never `#include` a module header to call its functions directly in another module's .c or .h files.  All cross-module calls must go through interface structs (function pointers).  A direct include that pulls in a module's implementation is a bug.

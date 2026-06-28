@@ -24,7 +24,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @file dcc_railcom_decoder.h
+ * @file dcc_railcom_command_station.h
  * @brief RailCom 4/8 decoding, cutout management, and receive buffer.
  *
  * @details Decodes RailCom bytes received during cutout windows. Manages
@@ -33,11 +33,11 @@
  * is NULL in the config.
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 28 Jun 2026
  */
 
-#ifndef __DCC_RAILCOM_DECODER__
-#define __DCC_RAILCOM_DECODER__
+#ifndef __DCC_RAILCOM_COMMAND_STATION__
+#define __DCC_RAILCOM_COMMAND_STATION__
 
 #include "dcc_types.h"
 #include "dcc_defines.h"
@@ -56,11 +56,11 @@ typedef struct {
 
         /**
          * @brief User callback: RailCom datagram decoded. NULL = no notification.
-         *        Fired from DccRailcomDecoder_run(), NOT ISR context.
+         *        Fired from DccRailcomCommandStation_run(), NOT ISR context.
          */
     void (*on_datagram)(uint16_t address, uint8_t channel, const dcc_railcom_datagram_t *datagram);
 
-} interface_dcc_railcom_decoder_t;
+} interface_dcc_railcom_command_station_t;
 
     /** @brief Instance context for the RailCom decoder module.
      *
@@ -69,7 +69,7 @@ typedef struct {
      */
 typedef struct {
 
-    const interface_dcc_railcom_decoder_t *interface;
+    const interface_dcc_railcom_command_station_t *interface;
     dcc_railcom_datagram_t buffer[USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH];
     uint8_t buffer_head;
     uint8_t buffer_tail;
@@ -77,55 +77,55 @@ typedef struct {
     dcc_address_t cutout_address;
     volatile bool cutout_pending;
 
-} dcc_railcom_decoder_context_t;
+} dcc_railcom_command_station_context_t;
 
     /**
      * @brief Initialize the RailCom decoder module.
-     * @param context Pointer to @ref dcc_railcom_decoder_context_t instance.
-     * @param interface Pointer to populated @ref interface_dcc_railcom_decoder_t struct.
+     * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
+     * @param interface Pointer to populated @ref interface_dcc_railcom_command_station_t struct.
      */
-    extern void DccRailcomDecoder_initialize(dcc_railcom_decoder_context_t *context, const interface_dcc_railcom_decoder_t *interface);
+    extern void DccRailcomCommandStation_initialize(dcc_railcom_command_station_context_t *context, const interface_dcc_railcom_command_station_t *interface);
 
     /**
      * @brief Main loop processing for the RailCom decoder.
-     * @param context Pointer to @ref dcc_railcom_decoder_context_t instance.
+     * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
      */
-extern void DccRailcomDecoder_run(dcc_railcom_decoder_context_t *context);
+extern void DccRailcomCommandStation_run(dcc_railcom_command_station_context_t *context);
 
     /**
      * @brief Begin a RailCom cutout window for a given address.
-     * @param context Pointer to @ref dcc_railcom_decoder_context_t instance.
+     * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
      * @param address The DCC address associated with this cutout.
      */
-    extern void DccRailcomDecoder_begin_cutout(dcc_railcom_decoder_context_t *context, dcc_address_t address);
+    extern void DccRailcomCommandStation_begin_cutout(dcc_railcom_command_station_context_t *context, dcc_address_t address);
 
     /**
      * @brief End the current RailCom cutout window.
-     * @param context Pointer to @ref dcc_railcom_decoder_context_t instance.
+     * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
      */
-extern void DccRailcomDecoder_end_cutout(dcc_railcom_decoder_context_t *context);
+extern void DccRailcomCommandStation_end_cutout(dcc_railcom_command_station_context_t *context);
 
     /**
      * @brief Read the next decoded RailCom datagram from the buffer.
-     * @param context Pointer to @ref dcc_railcom_decoder_context_t instance.
+     * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
      * @param datagram Pointer to @ref dcc_railcom_datagram_t to fill with decoded data.
      * @return true if a datagram was available, false if buffer empty.
      */
-    extern bool DccRailcomDecoder_read(dcc_railcom_decoder_context_t *context, dcc_railcom_datagram_t *datagram);
+    extern bool DccRailcomCommandStation_read(dcc_railcom_command_station_context_t *context, dcc_railcom_datagram_t *datagram);
 
     /**
      * @brief Return the number of decoded datagrams available in the buffer.
-     * @param context Pointer to @ref dcc_railcom_decoder_context_t instance.
+     * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
      * @return Number of datagrams waiting to be read.
      */
-extern uint8_t DccRailcomDecoder_available(const dcc_railcom_decoder_context_t *context);
+extern uint8_t DccRailcomCommandStation_available(const dcc_railcom_command_station_context_t *context);
 
     /**
      * @brief Decode a single RailCom 4/8 encoded byte.
      * @param encoded The 8-bit codeword received from UART.
      * @return 6-bit decoded value, or DCC_RAILCOM_DECODE_INVALID/ACK/NACK.
      */
-extern uint8_t DccRailcomDecoder_decode_byte(uint8_t encoded);
+extern uint8_t DccRailcomCommandStation_decode_byte(uint8_t encoded);
 
 #ifdef __cplusplus
 }
@@ -133,4 +133,4 @@ extern uint8_t DccRailcomDecoder_decode_byte(uint8_t encoded);
 
 #endif /* DCC_COMPILE_RAILCOM && DCC_COMPILE_COMMAND_STATION */
 
-#endif /* __DCC_RAILCOM_DECODER__ */
+#endif /* __DCC_RAILCOM_COMMAND_STATION__ */

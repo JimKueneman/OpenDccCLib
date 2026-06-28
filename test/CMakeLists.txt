@@ -160,8 +160,8 @@ set(CS_MODULES
     DccApplicationCommandStationServiceTrack DccApplicationMainTrack
     DccApplicationServiceTrack DccBitEncoder DccScheduler DccPacketEncoder
     DccServiceMode)
-set(CS_RAILCOM    DccRailcomCutout DccRailcomDecoder)
-set(DEC_RAILCOM   DccRailcomEncoder)
+set(CS_RAILCOM    DccRailcomCutout DccRailcomCommandStation)
+set(DEC_RAILCOM   DccRailcomDecoder)
 set(APP_RAILCOM   DccApplicationDecoderRailcom)
 set(ACC_RAILCOM   DccApplicationAccessoryDecoderRailcom)
 

@@ -29,12 +29,12 @@
  *
  * @details Provides high-level named functions that hide datagram IDs, 4/8
  * encoding, and Ch1/Ch2 splitting from the user. Wraps the internal
- * dcc_railcom_encoder module through an interface struct wired by dcc_config.c
+ * dcc_railcom_decoder module through an interface struct wired by dcc_config.c
  * during DccConfig_initialize(). Application code includes this header instead
  * of the internal RailCom encoder header.
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 28 Jun 2026
  */
 
 #ifndef __DCC_APPLICATION_DECODER_RAILCOM__
