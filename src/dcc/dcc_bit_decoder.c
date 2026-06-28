@@ -29,7 +29,7 @@
  * assembly for DCC decoder.
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 27 Jun 2026
  */
 
 #include "dcc_bit_decoder.h"
@@ -179,6 +179,17 @@ static void _on_bit(bool is_one) {
 
             _packet_buffer[_byte_count] = _current_byte;
             _byte_count++;
+
+#if defined(DCC_COMPILE_RAILCOM)
+            /* Emit the byte the instant it completes -- before the next byte arrives (so the
+             * last data byte fires before the XOR) for the RailCom Tx command-recognizer. */
+            if (_interface->on_byte_received) {
+
+                _interface->on_byte_received(_packet_buffer, _byte_count);
+
+            }
+#endif /* DCC_COMPILE_RAILCOM */
+
             _state = DECODE_SEPARATOR;
 
         }

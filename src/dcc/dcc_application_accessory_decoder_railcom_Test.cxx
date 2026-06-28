@@ -129,7 +129,6 @@ TEST_F(AccDecoderRailcomTest, initialize_with_null_interface) {
 // send_srq tests
 // ============================================================================
 
-// @compliance DCC-S9.3.2-ACC-001
 TEST_F(AccDecoderRailcomTest, send_srq_sets_pending_state) {
 
     DccApplicationAccessoryDecoderRailcom_send_srq(0x0010, false);
@@ -154,7 +153,6 @@ TEST_F(AccDecoderRailcomTest, send_srq_stores_address) {
 // send_status tests
 // ============================================================================
 
-// @compliance DCC-S9.3.2-ACC-003
 TEST_F(AccDecoderRailcomTest, send_status_packs_aspect_only) {
 
     DccApplicationAccessoryDecoderRailcom_send_status(0x15, false, false);
@@ -195,7 +193,6 @@ TEST_F(AccDecoderRailcomTest, send_status_packs_is_setpoint) {
 
 }
 
-// @compliance DCC-S9.3.2-ACC-003
 TEST_F(AccDecoderRailcomTest, send_status_packs_all_flags) {
 
     DccApplicationAccessoryDecoderRailcom_send_status(0x1F, true, true);
@@ -213,7 +210,6 @@ TEST_F(AccDecoderRailcomTest, send_status_packs_all_flags) {
 // send_status_extended tests
 // ============================================================================
 
-// @compliance DCC-S9.3.2-ACC-004
 TEST_F(AccDecoderRailcomTest, send_status_extended_packs_two_datagrams) {
 
     /* aspect_state = 0xAB = 10101011
@@ -250,7 +246,6 @@ TEST_F(AccDecoderRailcomTest, send_status_extended_flags) {
 // send_status_4 test
 // ============================================================================
 
-// @compliance DCC-S9.3.2-ACC-004
 TEST_F(AccDecoderRailcomTest, send_status_4_delegates) {
 
     DccApplicationAccessoryDecoderRailcom_send_status_4(0xCD);
@@ -283,7 +278,6 @@ TEST_F(AccDecoderRailcomTest, send_time_report_no_resolution) {
 
 }
 
-// @compliance DCC-S9.3.2-ACC-005
 TEST_F(AccDecoderRailcomTest, send_time_report_with_resolution) {
 
     DccApplicationAccessoryDecoderRailcom_send_time_report(42, true);
@@ -314,7 +308,6 @@ TEST_F(AccDecoderRailcomTest, send_error_report_no_additional) {
 
 }
 
-// @compliance DCC-S9.3.2-ACC-006
 TEST_F(AccDecoderRailcomTest, send_error_report_with_additional) {
 
     DccApplicationAccessoryDecoderRailcom_send_error_report(7, true);
@@ -349,7 +342,6 @@ TEST_F(AccDecoderRailcomTest, get_srq_state_returns_pending_after_srq) {
 // on_stop_command tests
 // ============================================================================
 
-// @compliance DCC-S9.3.2-ACC-001
 TEST_F(AccDecoderRailcomTest, on_stop_command_transitions_pending_to_responding) {
 
     DccApplicationAccessoryDecoderRailcom_send_srq(0x0010, false);
@@ -437,7 +429,6 @@ TEST_F(AccDecoderRailcomTest, on_cutout_pending_sends_ch1_extended) {
 
 }
 
-// @compliance DCC-S9.3.2-ACC-002
 TEST_F(AccDecoderRailcomTest, on_cutout_basic_and_extended_differ_for_same_address) {
 
     /* Same address, different format must produce different Channel-1 payloads

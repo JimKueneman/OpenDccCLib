@@ -36,11 +36,42 @@ static void mock_on_packet_received(const uint8_t *data, uint8_t byte_count) {
 
 }
 
+#if defined(DCC_COMPILE_RAILCOM)
+static uint8_t byte_received_counts[MAX_PACKET_BYTES];
+static uint32_t byte_received_call_count;
+static uint8_t byte_received_snapshot[MAX_PACKET_BYTES];   /* buffer contents at the last call */
+
+static void mock_on_byte_received(const uint8_t *data, uint8_t byte_count) {
+
+    uint8_t byte_index;
+
+    if (byte_received_call_count < MAX_PACKET_BYTES) {
+
+        byte_received_counts[byte_received_call_count] = byte_count;
+
+    }
+
+    for (byte_index = 0; byte_index < byte_count && byte_index < MAX_PACKET_BYTES; byte_index++) {
+
+        byte_received_snapshot[byte_index] = data[byte_index];
+
+    }
+
+    byte_received_call_count++;
+
+}
+#endif /* DCC_COMPILE_RAILCOM */
+
 static void reset_mocks(void) {
 
     memset(received_packet, 0, sizeof(received_packet));
     received_byte_count = 0;
     packet_callback_count = 0;
+#if defined(DCC_COMPILE_RAILCOM)
+    memset(byte_received_counts, 0, sizeof(byte_received_counts));
+    byte_received_call_count = 0;
+    memset(byte_received_snapshot, 0, sizeof(byte_received_snapshot));
+#endif
 
 }
 
@@ -50,6 +81,9 @@ static interface_dcc_bit_decoder_t make_interface(void) {
     memset(&interface, 0, sizeof(interface));
 
     interface.on_packet_received = mock_on_packet_received;
+#if defined(DCC_COMPILE_RAILCOM)
+    interface.on_byte_received = mock_on_byte_received;
+#endif
 
     return interface;
 
@@ -506,3 +540,40 @@ TEST(DccBitDecoder, packet_too_long_discarded) {
     EXPECT_EQ(received_packet[0], (uint8_t)0xAA);
 
 }
+
+#if defined(DCC_COMPILE_RAILCOM)
+// ============================================================================
+// RailCom Tx foundation: on_byte_received fires per byte, before the XOR byte
+// ============================================================================
+
+TEST(DccBitDecoder, on_byte_received_fires_each_byte_before_xor) {
+
+    reset_mocks();
+    interface_dcc_bit_decoder_t interface = make_interface();
+    DccBitDecoder_initialize(&interface);
+
+    /* 3-byte packet (addr, data, XOR), fed by hand so we can inspect state mid-packet. */
+    feed_preamble(12);
+    feed_zero_bit();             /* start bit of byte 1 */
+    feed_byte(0x03);             /* byte 1 (address) */
+    EXPECT_EQ(byte_received_call_count, (uint32_t)1);
+    EXPECT_EQ(byte_received_counts[0], (uint8_t)1);
+    EXPECT_EQ(packet_callback_count, (uint32_t)0);    /* no packet yet */
+
+    feed_zero_bit();             /* separator */
+    feed_byte(0x3F);             /* byte 2 (last DATA byte) */
+    EXPECT_EQ(byte_received_call_count, (uint32_t)2);
+    EXPECT_EQ(byte_received_counts[1], (uint8_t)2);
+    EXPECT_EQ(byte_received_snapshot[1], (uint8_t)0x3F);
+    EXPECT_EQ(packet_callback_count, (uint32_t)0);    /* fired BEFORE the XOR byte */
+
+    feed_zero_bit();             /* separator */
+    feed_byte(0x3C);             /* byte 3 (XOR) */
+    EXPECT_EQ(byte_received_call_count, (uint32_t)3);
+    EXPECT_EQ(byte_received_counts[2], (uint8_t)3);
+
+    feed_one_bit();              /* end bit -> packet complete */
+    EXPECT_EQ(packet_callback_count, (uint32_t)1);    /* packet fires only now */
+
+}
+#endif /* DCC_COMPILE_RAILCOM */

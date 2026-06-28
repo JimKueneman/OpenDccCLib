@@ -34,7 +34,7 @@
  * raw packet bytes. Complete packets are forwarded via callback.
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 27 Jun 2026
  */
 
 #ifndef __DCC_BIT_DECODER__
@@ -59,6 +59,18 @@ typedef struct {
          * @param byte_count Number of bytes in the packet.
          */
     void (*on_packet_received)(const uint8_t *data, uint8_t byte_count);
+
+#if defined(DCC_COMPILE_RAILCOM)
+        /**
+         * @brief One packet byte assembled. Fired the instant a byte is committed --
+         *  i.e. BEFORE the next byte, so the last data byte fires before the XOR byte.
+         *  RailCom Tx uses this to recognize a complete command in time to answer in the
+         *  immediate cutout. OPTIONAL (NULL = skip).
+         * @param data Packet bytes assembled so far.
+         * @param byte_count Number of bytes assembled so far (1-based).
+         */
+    void (*on_byte_received)(const uint8_t *data, uint8_t byte_count);
+#endif /* DCC_COMPILE_RAILCOM */
 
 } interface_dcc_bit_decoder_t;
 
