@@ -48,6 +48,15 @@ static dcc_address_t _decoder_address;
     /** @brief This decoder's address type (short / long). */
 static dcc_address_type_enum _decoder_address_type;
 
+    /** @brief Toggles ADR1 (HIGH) / ADR2 (LOW) on successive cutouts. */
+static bool _adr_alternate;
+
+    /** @brief Encoded Channel 1 (ADR) bytes pending transmit in the next cutout. */
+static uint8_t _pending_ch1[DCC_RAILCOM_CH1_MAX_BYTES];
+
+    /** @brief A complete addressed command was recognized; the next byte is the XOR. */
+static bool _pending_armed;
+
 // =============================================================================
 // Public API
 // =============================================================================
@@ -55,6 +64,8 @@ static dcc_address_type_enum _decoder_address_type;
 void DccRailcomDecoder_initialize(const interface_dcc_railcom_decoder_t *interface) {
 
     _interface = interface;
+    _adr_alternate = false;
+    _pending_armed = false;
 
 }
 
@@ -375,6 +386,124 @@ bool DccRailcomDecoder_packet_address(const uint8_t *data, uint8_t count,
     *address = (dcc_address_t)(((uint16_t)(data[0] & 0x3F) << 8) | data[1]);
     *type = DCC_ADDRESS_LONG;
     return true;
+
+}
+
+// =============================================================================
+// Decoder-side dispatch -- recognize an addressed command before the XOR and
+// answer in the following cutout (ADR on Channel 1)
+// =============================================================================
+
+    /**
+     * @brief XOR-validate the assembled packet: XOR of all data bytes == last byte.
+     * @param data Packet bytes (including the trailing XOR byte).
+     * @param count Number of bytes in data.
+     * @return true if the packet's XOR check passes.
+     */
+static bool _xor_valid(const uint8_t *data, uint8_t count) {
+
+    uint8_t xor_val = 0;
+    uint8_t byte_index;
+
+    if (count < 2) {
+
+        return false;
+
+    }
+
+    for (byte_index = 0; byte_index < (uint8_t)(count - 1); byte_index++) {
+
+        xor_val ^= data[byte_index];
+
+    }
+
+    return xor_val == data[count - 1];
+
+}
+
+    /**
+     * @brief Fill the pending Channel 1 slot with the ADR datagram, alternating
+     *  ADR1 (HIGH bits) / ADR2 (LOW bits), encoded from the cached decoder address.
+     */
+static void _fill_adr(void) {
+
+    if (!_adr_alternate) {
+
+        DccRailcomUtilities_encode_ch1(DCC_RAILCOM_ID_ADR1_HIGH,
+                (uint8_t)((_decoder_address >> 8) & 0x3F), _pending_ch1);
+
+    } else {
+
+        DccRailcomUtilities_encode_ch1(DCC_RAILCOM_ID_ADR2_LOW,
+                (uint8_t)(_decoder_address & 0xFF), _pending_ch1);
+
+    }
+
+    _adr_alternate = !_adr_alternate;
+
+}
+
+    /**
+     * @brief Clock the pending Channel 1 bytes out via the UART interface.
+     */
+static void _transmit_pending(void) {
+
+    uint8_t byte_index;
+
+    if (!_interface || !_interface->uart_write) {
+
+        return;
+
+    }
+
+    for (byte_index = 0; byte_index < DCC_RAILCOM_CH1_MAX_BYTES; byte_index++) {
+
+        _interface->uart_write(_pending_ch1[byte_index]);
+
+    }
+
+}
+
+void DccRailcomDecoder_on_byte_received(const uint8_t *data, uint8_t count) {
+
+    dcc_address_t address;
+    dcc_address_type_enum type;
+
+    /* A new packet starts at count 1 -- drop any stale armed state. */
+    if (count == 1) {
+
+        _pending_armed = false;
+
+    }
+
+    /* The byte after a recognized command is its XOR: validate, then transmit. */
+    if (_pending_armed) {
+
+        if (_xor_valid(data, count)) {
+
+            _transmit_pending();
+
+        }
+
+        _pending_armed = false;
+        return;
+
+    }
+
+    /* Recognize a complete command (next byte is the XOR) addressed to this decoder. */
+    if (DccRailcomDecoder_packet_length(data, count) != (uint8_t)(count + 1)) {
+
+        return;
+
+    }
+
+    if (DccRailcomDecoder_packet_address(data, count, &address, &type)
+            && type == _decoder_address_type && address == _decoder_address) {
+
+        _fill_adr();
+        _pending_armed = true;
+
+    }
 
 }
 

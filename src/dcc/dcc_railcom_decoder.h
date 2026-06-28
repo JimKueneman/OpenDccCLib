@@ -145,6 +145,19 @@ extern uint8_t DccRailcomDecoder_packet_length(const uint8_t *data, uint8_t coun
 extern bool DccRailcomDecoder_packet_address(const uint8_t *data, uint8_t count,
             dcc_address_t *address, dcc_address_type_enum *type);
 
+    /**
+     * @brief Feed one assembled packet byte to the RailCom Tx dispatch.
+     *
+     * @details Wired (in dcc_config) to the bit decoder's on_byte_received. As bytes
+     *  arrive it recognizes a complete command addressed to this decoder (before the
+     *  XOR), arms the ADR reply, and on the XOR byte -- if the packet validates --
+     *  clocks the reply out via uart_write for the app to place in the cutout.
+     *
+     * @param data Packet bytes assembled so far.
+     * @param count Number of bytes in @p data.
+     */
+extern void DccRailcomDecoder_on_byte_received(const uint8_t *data, uint8_t count);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

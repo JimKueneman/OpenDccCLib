@@ -380,3 +380,82 @@ TEST(DccRailcomDecoder, packet_address_rejects_accessory_and_incomplete) {
     EXPECT_FALSE(DccRailcomDecoder_packet_address(longp, 1, &address, &type));
 
 }
+
+// ============================================================================
+// Dispatch: recognize addressed command before XOR, answer with ADR (Ch1)
+// ============================================================================
+
+TEST(DccRailcomDecoder, dispatch_adr_on_addressed_packet) {
+
+    reset_mocks();
+    interface_dcc_railcom_decoder_t interface = make_interface();
+    DccRailcomDecoder_initialize(&interface);
+    DccRailcomDecoder_set_address(3, DCC_ADDRESS_SHORT);
+
+    /* short addr 0x03 + speed 0x60, XOR = 0x03 ^ 0x60 = 0x63 */
+    uint8_t data[] = { 0x03, 0x60, 0x63 };
+    DccRailcomDecoder_on_byte_received(data, 1);
+    DccRailcomDecoder_on_byte_received(data, 2);   /* last data byte -> recognize + arm */
+    DccRailcomDecoder_on_byte_received(data, 3);   /* XOR byte -> validate + transmit ADR1 */
+
+    EXPECT_EQ(uart_byte_count, (uint8_t)2);        /* ADR is one Channel 1 datagram (2 bytes) */
+
+}
+
+TEST(DccRailcomDecoder, dispatch_no_response_when_not_addressed) {
+
+    reset_mocks();
+    interface_dcc_railcom_decoder_t interface = make_interface();
+    DccRailcomDecoder_initialize(&interface);
+    DccRailcomDecoder_set_address(7, DCC_ADDRESS_SHORT);   /* not address 3 */
+
+    uint8_t data[] = { 0x03, 0x60, 0x63 };
+    DccRailcomDecoder_on_byte_received(data, 1);
+    DccRailcomDecoder_on_byte_received(data, 2);
+    DccRailcomDecoder_on_byte_received(data, 3);
+
+    EXPECT_EQ(uart_byte_count, (uint8_t)0);
+
+}
+
+TEST(DccRailcomDecoder, dispatch_no_response_on_bad_xor) {
+
+    reset_mocks();
+    interface_dcc_railcom_decoder_t interface = make_interface();
+    DccRailcomDecoder_initialize(&interface);
+    DccRailcomDecoder_set_address(3, DCC_ADDRESS_SHORT);
+
+    /* correct XOR would be 0x63; feed a corrupt one */
+    uint8_t data[] = { 0x03, 0x60, 0xFF };
+    DccRailcomDecoder_on_byte_received(data, 1);
+    DccRailcomDecoder_on_byte_received(data, 2);
+    DccRailcomDecoder_on_byte_received(data, 3);
+
+    EXPECT_EQ(uart_byte_count, (uint8_t)0);
+
+}
+
+TEST(DccRailcomDecoder, dispatch_adr_alternates_high_then_low) {
+
+    reset_mocks();
+    interface_dcc_railcom_decoder_t interface = make_interface();
+    DccRailcomDecoder_initialize(&interface);
+    DccRailcomDecoder_set_address(3, DCC_ADDRESS_SHORT);
+
+    uint8_t data[] = { 0x03, 0x60, 0x63 };
+
+    /* packet 1 -> ADR1 (HIGH) */
+    DccRailcomDecoder_on_byte_received(data, 1);
+    DccRailcomDecoder_on_byte_received(data, 2);
+    DccRailcomDecoder_on_byte_received(data, 3);
+
+    /* packet 2 -> ADR2 (LOW) */
+    DccRailcomDecoder_on_byte_received(data, 1);
+    DccRailcomDecoder_on_byte_received(data, 2);
+    DccRailcomDecoder_on_byte_received(data, 3);
+
+    EXPECT_EQ(uart_byte_count, (uint8_t)4);
+    /* ADR1 and ADR2 encode different datagram IDs -> first byte differs */
+    EXPECT_NE(uart_bytes[0], uart_bytes[2]);
+
+}

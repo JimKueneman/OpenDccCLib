@@ -932,6 +932,10 @@ void DccConfig_initialize(const dcc_config_t *config) {
 
     /* Wire bit decoder interface — complete packets go to packet decoder */
     _bit_decoder_interface.on_packet_received = &DccPacketDecoder_process_packet;
+#if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_DECODER)
+    /* Per-byte feed to the RailCom Tx dispatch (recognize + answer before the XOR) */
+    _bit_decoder_interface.on_byte_received = &DccRailcomDecoder_on_byte_received;
+#endif /* DCC_COMPILE_RAILCOM && DCC_COMPILE_DECODER */
 
     DccBitDecoder_initialize(&_bit_decoder_interface);
 
