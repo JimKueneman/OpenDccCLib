@@ -2,11 +2,12 @@
  * Copyright (c) 2026, Jim Kueneman
  * All rights reserved.
  *
- * Test suite for DCC RailCom Decoder (Phase 4)
+ * Test suite for DCC RailCom Encoder (Phase 5)
  */
 
 #include "test/main_Test.hxx"
 
+#include "dcc/dcc_railcom_encoder.h"
 #include "dcc/dcc_railcom_decoder.h"
 #include "dcc/dcc_types.h"
 #include "dcc/dcc_defines.h"
@@ -15,618 +16,299 @@
 // Mock / tracking state
 // ============================================================================
 
-static uint8_t uart_buffer[16];
-static uint8_t uart_buffer_count;
-static uint8_t uart_read_index;
+#define MAX_UART_BYTES 16
 
-static uint16_t last_datagram_address;
-static uint8_t last_datagram_channel;
-static dcc_railcom_datagram_t last_datagram;
-static uint32_t datagram_callback_count;
+static uint8_t uart_bytes[MAX_UART_BYTES];
+static uint8_t uart_byte_count;
 
-static bool mock_uart_read(uint8_t *byte) {
+static void mock_uart_write(uint8_t byte) {
 
-    if (uart_read_index >= uart_buffer_count)
-        return false;
+    if (uart_byte_count < MAX_UART_BYTES) {
 
-    *byte = uart_buffer[uart_read_index];
-    uart_read_index++;
+        uart_bytes[uart_byte_count] = byte;
+        uart_byte_count++;
 
-    return true;
+    }
 
 }
-
-static void mock_on_datagram(uint16_t address, uint8_t channel,
-                              const dcc_railcom_datagram_t *datagram) {
-
-    last_datagram_address = address;
-    last_datagram_channel = channel;
-    memcpy(&last_datagram, datagram, sizeof(dcc_railcom_datagram_t));
-    datagram_callback_count++;
-
-}
-
-static dcc_railcom_decoder_context_t test_context;
 
 static void reset_mocks(void) {
 
-    memset(uart_buffer, 0, sizeof(uart_buffer));
-    uart_buffer_count = 0;
-    uart_read_index = 0;
-
-    last_datagram_address = 0;
-    last_datagram_channel = 0xFF;
-    memset(&last_datagram, 0, sizeof(last_datagram));
-    datagram_callback_count = 0;
-
-    memset(&test_context, 0, sizeof(test_context));
+    memset(uart_bytes, 0, sizeof(uart_bytes));
+    uart_byte_count = 0;
 
 }
 
-static interface_dcc_railcom_decoder_t make_interface(void) {
+static interface_dcc_railcom_encoder_t make_interface(void) {
 
-    interface_dcc_railcom_decoder_t interface;
+    interface_dcc_railcom_encoder_t interface;
     memset(&interface, 0, sizeof(interface));
 
-    interface.uart_read = mock_uart_read;
-    interface.on_datagram = mock_on_datagram;
+    interface.uart_write = mock_uart_write;
 
     return interface;
 
 }
 
 // ============================================================================
-// Helper: load UART bytes for a cutout
+// Initialization
 // ============================================================================
 
-static void load_uart_bytes(const uint8_t *bytes, uint8_t count) {
+TEST(DccRailcomEncoder, initialize_does_not_crash) {
 
-    uint8_t byte_index;
+    reset_mocks();
+    interface_dcc_railcom_encoder_t interface = make_interface();
+    DccRailcomEncoder_initialize(&interface);
 
-    for (byte_index = 0; byte_index < count && byte_index < 16; byte_index++) {
+}
 
-        uart_buffer[byte_index] = bytes[byte_index];
+// ============================================================================
+// Encode byte tests
+// ============================================================================
+
+// @compliance DCC-S9.3.2-DEC-008
+TEST(DccRailcomEncoder, encode_byte_value_0x00) {
+
+    reset_mocks();
+    interface_dcc_railcom_encoder_t interface = make_interface();
+    DccRailcomEncoder_initialize(&interface);
+
+    EXPECT_EQ(DccRailcomEncoder_encode_byte(0x00), (uint8_t)0xAC);
+
+}
+
+TEST(DccRailcomEncoder, encode_byte_value_0x01) {
+
+    reset_mocks();
+    interface_dcc_railcom_encoder_t interface = make_interface();
+    DccRailcomEncoder_initialize(&interface);
+
+    EXPECT_EQ(DccRailcomEncoder_encode_byte(0x01), (uint8_t)0xAB);
+
+}
+
+TEST(DccRailcomEncoder, encode_byte_value_0x3F) {
+
+    reset_mocks();
+    interface_dcc_railcom_encoder_t interface = make_interface();
+    DccRailcomEncoder_initialize(&interface);
+
+    EXPECT_EQ(DccRailcomEncoder_encode_byte(0x3F), (uint8_t)0xC4);
+
+}
+
+TEST(DccRailcomEncoder, encode_byte_out_of_range) {
+
+    reset_mocks();
+    interface_dcc_railcom_encoder_t interface = make_interface();
+    DccRailcomEncoder_initialize(&interface);
+
+    EXPECT_EQ(DccRailcomEncoder_encode_byte(0x40), (uint8_t)0x00);
+    EXPECT_EQ(DccRailcomEncoder_encode_byte(0xFF), (uint8_t)0x00);
+
+}
+
+// ============================================================================
+// Encode/decode round-trip: verify encode table is inverse of decode table
+// ============================================================================
+
+// @compliance DCC-S9.3.2-DEC-008
+TEST(DccRailcomEncoder, round_trip_all_values) {
+
+    reset_mocks();
+    interface_dcc_railcom_encoder_t enc_interface = make_interface();
+    DccRailcomEncoder_initialize(&enc_interface);
+
+    /* Also initialize decoder to use its decode function */
+    dcc_railcom_decoder_context_t decoder_context;
+    interface_dcc_railcom_decoder_t dec_interface;
+    memset(&decoder_context, 0, sizeof(decoder_context));
+    memset(&dec_interface, 0, sizeof(dec_interface));
+    DccRailcomDecoder_initialize(&decoder_context, &dec_interface);
+
+    uint8_t value;
+
+    for (value = 0; value < 64; value++) {
+
+        uint8_t encoded = DccRailcomEncoder_encode_byte(value);
+        uint8_t decoded = DccRailcomDecoder_decode_byte(encoded);
+        EXPECT_EQ(decoded, value) << "Round-trip failed for value " << (int)value;
 
     }
 
-    uart_buffer_count = count;
-    uart_read_index = 0;
-
 }
 
 // ============================================================================
-// Initialization tests
+// Raw special code word tests (ACK/NACK, 2026 draft S-9.3.2)
 // ============================================================================
-
-TEST(DccRailcomDecoder, initialize_does_not_crash) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-}
-
-TEST(DccRailcomDecoder, initialize_clears_buffer) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    EXPECT_EQ(DccRailcomDecoder_available(&test_context), (uint8_t)0);
-
-}
-
-// ============================================================================
-// 4/8 decode table tests
-// ============================================================================
-
-// @compliance DCC-S9.3.2-CS-010
-TEST(DccRailcomDecoder, decode_byte_invalid_0x00) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    EXPECT_EQ(DccRailcomDecoder_decode_byte(0x00), DCC_RAILCOM_DECODE_INVALID);
-
-}
 
 // @compliance DCC-S9.3.2-CS-011
-TEST(DccRailcomDecoder, decode_byte_ack_0xF0) {
+TEST(DccRailcomEncoder, send_code_word_ack_raw) {
 
     reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
+    interface_dcc_railcom_encoder_t interface = make_interface();
+    DccRailcomEncoder_initialize(&interface);
 
-    EXPECT_EQ(DccRailcomDecoder_decode_byte(0xF0), DCC_RAILCOM_DECODE_ACK);
+    /* ACK code word 0xF0 is transmitted raw, bypassing the 4/8 table */
+    DccRailcomEncoder_send_code_word(DCC_RAILCOM_CODE_WORD_ACK);
 
-}
-
-TEST(DccRailcomDecoder, decode_byte_ack_0x0F) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    /* 0x0F is the alternate ACK special code word (2026 draft S-9.3.2) */
-    EXPECT_EQ(DccRailcomDecoder_decode_byte(0x0F), DCC_RAILCOM_DECODE_ACK);
+    EXPECT_EQ(uart_byte_count, (uint8_t)1);
+    EXPECT_EQ(uart_bytes[0], (uint8_t)0xF0);
 
 }
 
 // @compliance DCC-S9.3.2-CS-012
-TEST(DccRailcomDecoder, decode_byte_nack_0x3C) {
+TEST(DccRailcomEncoder, send_code_word_nack_raw) {
 
     reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
+    interface_dcc_railcom_encoder_t interface = make_interface();
+    DccRailcomEncoder_initialize(&interface);
 
-    /* 0x3C is the NACK special code word (2026 draft S-9.3.2) */
-    EXPECT_EQ(DccRailcomDecoder_decode_byte(0x3C), DCC_RAILCOM_DECODE_NACK);
+    /* NACK code word 0x3C is transmitted raw, bypassing the 4/8 table */
+    DccRailcomEncoder_send_code_word(DCC_RAILCOM_CODE_WORD_NACK);
+
+    EXPECT_EQ(uart_byte_count, (uint8_t)1);
+    EXPECT_EQ(uart_bytes[0], (uint8_t)0x3C);
 
 }
 
-// @compliance DCC-S9.3.2-CS-010
-TEST(DccRailcomDecoder, decode_byte_value_0x00_codeword_0xAC) {
+TEST(DccRailcomEncoder, send_code_word_null_uart_no_crash) {
 
     reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
+    interface_dcc_railcom_encoder_t interface;
+    memset(&interface, 0, sizeof(interface));
+    interface.uart_write = NULL;
+    DccRailcomEncoder_initialize(&interface);
 
-    /* 6-bit value 0x00 maps to codeword 0xAC */
-    EXPECT_EQ(DccRailcomDecoder_decode_byte(0xAC), (uint8_t)0x00);
-
-}
-
-TEST(DccRailcomDecoder, decode_byte_value_0x01_codeword_0xAB) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    EXPECT_EQ(DccRailcomDecoder_decode_byte(0xAB), (uint8_t)0x01);
-
-}
-
-TEST(DccRailcomDecoder, decode_byte_value_0x3F_codeword_0xC4) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    EXPECT_EQ(DccRailcomDecoder_decode_byte(0xC4), (uint8_t)0x3F);
+    DccRailcomEncoder_send_code_word(DCC_RAILCOM_CODE_WORD_ACK);
+    EXPECT_EQ(uart_byte_count, (uint8_t)0);
 
 }
 
 // ============================================================================
-// Channel 1 decode tests (2 bytes -> 12 bits)
+// Channel 1 send tests
 // ============================================================================
 
 // @compliance DCC-S9.3.2-CS-013
-TEST(DccRailcomDecoder, ch1_valid_2_bytes) {
+TEST(DccRailcomEncoder, send_ch1_basic) {
 
     reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
+    interface_dcc_railcom_encoder_t interface = make_interface();
+    DccRailcomEncoder_initialize(&interface);
 
-    /* Encode two 6-bit values: 0x00, 0x01 -> combined = 0x001 */
-    /* datagram_id = (0x001 >> 8) & 0x0F = 0 */
-    /* data[0] = 0x001 & 0xFF = 0x01 */
-    uint8_t raw[2];
-    raw[0] = 0xAC;  /* decodes to 0x00 */
-    raw[1] = 0xAB;  /* decodes to 0x01 */
+    /* datagram_id=0, data=0x01 → combined=0x001 → high_six_bits=0x00, low_six_bits=0x01 */
+    DccRailcomEncoder_send_ch1(0, 0x01);
 
-    load_uart_bytes(raw, 2);
-    DccRailcomDecoder_begin_cutout(&test_context,42);
-    DccRailcomDecoder_run(&test_context);
-
-    EXPECT_EQ(datagram_callback_count, (uint32_t)1);
-    EXPECT_EQ(last_datagram_address, (uint16_t)42);
-    EXPECT_EQ(last_datagram_channel, (uint8_t)DCC_RAILCOM_CH1);
-    EXPECT_TRUE(last_datagram.valid);
-    EXPECT_EQ(last_datagram.datagram_id, (uint8_t)0);
-    EXPECT_EQ(last_datagram.data[0], (uint8_t)0x01);
-    EXPECT_EQ(last_datagram.count, (uint8_t)1);
+    EXPECT_EQ(uart_byte_count, (uint8_t)2);
+    /* encoded(0x00) = 0xAC, encoded(0x01) = 0xAB */
+    EXPECT_EQ(uart_bytes[0], (uint8_t)0xAC);
+    EXPECT_EQ(uart_bytes[1], (uint8_t)0xAB);
 
 }
 
-TEST(DccRailcomDecoder, ch1_invalid_byte_skipped) {
+TEST(DccRailcomEncoder, send_ch1_with_datagram_id) {
 
     reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
+    interface_dcc_railcom_encoder_t interface = make_interface();
+    DccRailcomEncoder_initialize(&interface);
 
-    /* First byte invalid */
-    uint8_t raw[2];
-    raw[0] = 0x00;  /* invalid */
-    raw[1] = 0xAB;  /* valid */
+    /* datagram_id=15, data=0x00 → combined=0xF00 → high_six_bits=0x3C, low_six_bits=0x00 */
+    DccRailcomEncoder_send_ch1(15, 0x00);
 
-    load_uart_bytes(raw, 2);
-    DccRailcomDecoder_begin_cutout(&test_context,10);
-    DccRailcomDecoder_run(&test_context);
+    EXPECT_EQ(uart_byte_count, (uint8_t)2);
 
-    /* CH1 should not decode because first byte is invalid */
-    /* No CH2 either since we only have 2 bytes total */
-    EXPECT_EQ(datagram_callback_count, (uint32_t)0);
+}
+
+TEST(DccRailcomEncoder, send_ch1_null_uart_no_crash) {
+
+    reset_mocks();
+    interface_dcc_railcom_encoder_t interface;
+    memset(&interface, 0, sizeof(interface));
+    interface.uart_write = NULL;
+    DccRailcomEncoder_initialize(&interface);
+
+    DccRailcomEncoder_send_ch1(0, 0x42);
+    EXPECT_EQ(uart_byte_count, (uint8_t)0);
 
 }
 
 // ============================================================================
-// Channel 2 decode tests (bytes 3+ after CH1)
+// Channel 2 send tests
 // ============================================================================
+
+TEST(DccRailcomEncoder, send_ch2_single_data_byte) {
+
+    reset_mocks();
+    interface_dcc_railcom_encoder_t interface = make_interface();
+    DccRailcomEncoder_initialize(&interface);
+
+    dcc_railcom_response_t response;
+    memset(&response, 0, sizeof(response));
+    response.datagram_id = 0;
+    response.data[0] = 0x01;
+    response.count = 1;
+
+    DccRailcomEncoder_send_ch2(&response);
+
+    /* 2 encoded bytes for ID + data[0] */
+    EXPECT_EQ(uart_byte_count, (uint8_t)2);
+
+}
 
 // @compliance DCC-S9.3.2-CS-014
-TEST(DccRailcomDecoder, ch2_valid_4_bytes) {
+TEST(DccRailcomEncoder, send_ch2_multiple_data_bytes) {
 
     reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
+    interface_dcc_railcom_encoder_t interface = make_interface();
+    DccRailcomEncoder_initialize(&interface);
 
-    /* 2 CH1 bytes + 4 CH2 bytes */
-    uint8_t raw[6];
-    raw[0] = 0xAC;  /* CH1 byte 0: decodes to 0x00 */
-    raw[1] = 0xAB;  /* CH1 byte 1: decodes to 0x01 */
-    raw[2] = 0xD3;  /* CH2 byte 0: decodes to 0x02 */
-    raw[3] = 0xA3;  /* CH2 byte 1: decodes to 0x03 */
-    raw[4] = 0xC5;  /* CH2 byte 2: decodes to 0x04 */
-    raw[5] = 0xCA;  /* CH2 byte 3: decodes to 0x05 */
+    dcc_railcom_response_t response;
+    memset(&response, 0, sizeof(response));
+    response.datagram_id = 0;
+    response.data[0] = 0x01;
+    response.data[1] = 0x02;
+    response.data[2] = 0x03;
+    response.count = 3;
 
-    load_uart_bytes(raw, 6);
-    DccRailcomDecoder_begin_cutout(&test_context,100);
-    DccRailcomDecoder_run(&test_context);
+    DccRailcomEncoder_send_ch2(&response);
 
-    /* Should get CH1 + CH2 callbacks */
-    EXPECT_EQ(datagram_callback_count, (uint32_t)2);
+    /* 2 bytes for ID+data[0], then 1 byte each for data[1] and data[2] */
+    EXPECT_EQ(uart_byte_count, (uint8_t)4);
 
 }
 
-TEST(DccRailcomDecoder, ch2_valid_2_bytes_minimum) {
+TEST(DccRailcomEncoder, send_ch2_zero_count_no_send) {
 
     reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
+    interface_dcc_railcom_encoder_t interface = make_interface();
+    DccRailcomEncoder_initialize(&interface);
 
-    /* 2 CH1 bytes + 2 CH2 bytes (minimum for valid CH2) */
-    uint8_t raw[4];
-    raw[0] = 0xAC;  /* CH1: decodes to 0x00 */
-    raw[1] = 0xAB;  /* CH1: decodes to 0x01 */
-    raw[2] = 0xD3;  /* CH2: decodes to 0x02 */
-    raw[3] = 0xA3;  /* CH2: decodes to 0x03 */
+    dcc_railcom_response_t response;
+    memset(&response, 0, sizeof(response));
+    response.count = 0;
 
-    load_uart_bytes(raw, 4);
-    DccRailcomDecoder_begin_cutout(&test_context,200);
-    DccRailcomDecoder_run(&test_context);
+    DccRailcomEncoder_send_ch2(&response);
 
-    /* CH1 + CH2 */
-    EXPECT_EQ(datagram_callback_count, (uint32_t)2);
-
-    /* Verify buffer has 2 entries */
-    EXPECT_EQ(DccRailcomDecoder_available(&test_context), (uint8_t)2);
+    EXPECT_EQ(uart_byte_count, (uint8_t)0);
 
 }
 
-// ============================================================================
-// Buffer tests
-// ============================================================================
-
-// @compliance DCC-S9.3.2-CS-015
-TEST(DccRailcomDecoder, read_returns_buffered_datagram) {
+TEST(DccRailcomEncoder, send_ch2_null_uart_no_crash) {
 
     reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    /* Send 2 CH1 bytes */
-    uint8_t raw[2];
-    raw[0] = 0xAC;
-    raw[1] = 0xAB;
-
-    load_uart_bytes(raw, 2);
-    DccRailcomDecoder_begin_cutout(&test_context,42);
-    DccRailcomDecoder_run(&test_context);
-
-    EXPECT_EQ(DccRailcomDecoder_available(&test_context), (uint8_t)1);
-
-    dcc_railcom_datagram_t read_datagram;
-    EXPECT_TRUE(DccRailcomDecoder_read(&test_context, &read_datagram));
-    EXPECT_TRUE(read_datagram.valid);
-    EXPECT_EQ(read_datagram.datagram_id, (uint8_t)0);
-
-    EXPECT_EQ(DccRailcomDecoder_available(&test_context), (uint8_t)0);
-
-}
-
-TEST(DccRailcomDecoder, read_empty_returns_false) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    dcc_railcom_datagram_t read_datagram;
-    EXPECT_FALSE(DccRailcomDecoder_read(&test_context, &read_datagram));
-
-}
-
-// ============================================================================
-// Run guard tests
-// ============================================================================
-
-TEST(DccRailcomDecoder, run_without_cutout_does_nothing) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    /* Load bytes but don't begin cutout */
-    uint8_t raw[2] = {0xAC, 0xAB};
-    load_uart_bytes(raw, 2);
-
-    DccRailcomDecoder_run(&test_context);
-
-    EXPECT_EQ(datagram_callback_count, (uint32_t)0);
-
-}
-
-TEST(DccRailcomDecoder, run_with_null_uart_does_nothing) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    interface.uart_read = NULL;
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    DccRailcomDecoder_begin_cutout(&test_context,1);
-    DccRailcomDecoder_run(&test_context);
-
-    EXPECT_EQ(datagram_callback_count, (uint32_t)0);
-
-}
-
-// ============================================================================
-// No UART data in cutout
-// ============================================================================
-
-TEST(DccRailcomDecoder, cutout_no_data) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    /* No bytes loaded */
-    DccRailcomDecoder_begin_cutout(&test_context,1);
-    DccRailcomDecoder_run(&test_context);
-
-    EXPECT_EQ(datagram_callback_count, (uint32_t)0);
-    EXPECT_EQ(DccRailcomDecoder_available(&test_context), (uint8_t)0);
-
-}
-
-// ============================================================================
-// Address correlation
-// ============================================================================
-
-TEST(DccRailcomDecoder, cutout_address_tagged_correctly) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    uint8_t raw[2] = {0xAC, 0xAB};
-    load_uart_bytes(raw, 2);
-
-    DccRailcomDecoder_begin_cutout(&test_context,9999);
-    DccRailcomDecoder_run(&test_context);
-
-    EXPECT_EQ(last_datagram_address, (uint16_t)9999);
-
-}
-
-// ============================================================================
-// Single byte (CH1 only, no CH2 — 1 byte is insufficient for CH1)
-// ============================================================================
-
-TEST(DccRailcomDecoder, single_byte_no_decode) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    uint8_t raw[1] = {0xAC};
-    load_uart_bytes(raw, 1);
-
-    DccRailcomDecoder_begin_cutout(&test_context,1);
-    DccRailcomDecoder_run(&test_context);
-
-    /* 1 byte is not enough for CH1 (needs 2) */
-    EXPECT_EQ(datagram_callback_count, (uint32_t)0);
-
-}
-
-// ============================================================================
-// 3 bytes: CH1 (2 bytes) + CH2 insufficient (1 byte)
-// ============================================================================
-
-TEST(DccRailcomDecoder, three_bytes_ch1_only) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    uint8_t raw[3] = {0xAC, 0xAB, 0xD3};
-    load_uart_bytes(raw, 3);
-
-    DccRailcomDecoder_begin_cutout(&test_context,1);
-    DccRailcomDecoder_run(&test_context);
-
-    /* CH1 should decode (2 bytes), CH2 needs at least 2 bytes */
-    EXPECT_EQ(datagram_callback_count, (uint32_t)1);
-    EXPECT_EQ(last_datagram_channel, (uint8_t)DCC_RAILCOM_CH1);
-
-}
-
-// ============================================================================
-// End cutout tests
-// ============================================================================
-
-TEST(DccRailcomDecoder, end_cutout_does_not_crash) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    DccRailcomDecoder_end_cutout(&test_context);
-
-}
-
-// ============================================================================
-// Buffer overflow tests
-// ============================================================================
-
-// @compliance DCC-S9.3.2-CS-015
-TEST(DccRailcomDecoder, buffer_overflow_drops_oldest) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    /* Push 5 datagrams into depth-4 buffer — oldest should be dropped */
-    uint8_t second_bytes[5] = {0xAB, 0xD3, 0xA3, 0xC5, 0xCA};
-    uint8_t expected_data[4] = {0x02, 0x03, 0x04, 0x05};
-    uint8_t cutout_index;
-    uint8_t read_index;
-
-    for (cutout_index = 0; cutout_index < 5; cutout_index++) {
-
-        uint8_t raw[2];
-        raw[0] = 0xAC;
-        raw[1] = second_bytes[cutout_index];
-
-        load_uart_bytes(raw, 2);
-        DccRailcomDecoder_begin_cutout(&test_context,cutout_index + 1);
-        DccRailcomDecoder_run(&test_context);
-
-    }
-
-    EXPECT_EQ(datagram_callback_count, (uint32_t)5);
-    EXPECT_EQ(DccRailcomDecoder_available(&test_context), (uint8_t)4);
-
-    for (read_index = 0; read_index < 4; read_index++) {
-
-        dcc_railcom_datagram_t read_datagram;
-        EXPECT_TRUE(DccRailcomDecoder_read(&test_context, &read_datagram));
-        EXPECT_EQ(read_datagram.data[0], expected_data[read_index]);
-
-    }
-
-    dcc_railcom_datagram_t read_datagram;
-    EXPECT_FALSE(DccRailcomDecoder_read(&test_context, &read_datagram));
-
-}
-
-// ============================================================================
-// CH1 partial invalid tests
-// ============================================================================
-
-TEST(DccRailcomDecoder, ch1_first_valid_second_invalid) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    /* First byte valid (0xAC->0x00), second byte invalid (0x00->0xFF) */
-    uint8_t raw[2] = {0xAC, 0x00};
-    load_uart_bytes(raw, 2);
-
-    DccRailcomDecoder_begin_cutout(&test_context,1);
-    DccRailcomDecoder_run(&test_context);
-
-    EXPECT_EQ(datagram_callback_count, (uint32_t)0);
-
-}
-
-// ============================================================================
-// CH2 invalid byte tests
-// ============================================================================
-
-TEST(DccRailcomDecoder, ch2_invalid_byte_stops_decode) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    /* CH1 valid, CH2 first byte invalid */
-    uint8_t raw[4] = {0xAC, 0xAB, 0x00, 0xA3};
-    load_uart_bytes(raw, 4);
-
-    DccRailcomDecoder_begin_cutout(&test_context,1);
-    DccRailcomDecoder_run(&test_context);
-
-    /* Only CH1 should decode, CH2 aborted due to invalid byte */
-    EXPECT_EQ(datagram_callback_count, (uint32_t)1);
-    EXPECT_EQ(last_datagram_channel, (uint8_t)DCC_RAILCOM_CH1);
-
-}
-
-// ============================================================================
-// NULL callback tests
-// ============================================================================
-
-TEST(DccRailcomDecoder, ch1_null_on_datagram_still_buffers) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    interface.on_datagram = NULL;
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    uint8_t raw[2] = {0xAC, 0xAB};
-    load_uart_bytes(raw, 2);
-
-    DccRailcomDecoder_begin_cutout(&test_context,1);
-    DccRailcomDecoder_run(&test_context);
-
-    EXPECT_EQ(datagram_callback_count, (uint32_t)0);
-    EXPECT_EQ(DccRailcomDecoder_available(&test_context), (uint8_t)1);
-
-    dcc_railcom_datagram_t read_datagram;
-    EXPECT_TRUE(DccRailcomDecoder_read(&test_context, &read_datagram));
-    EXPECT_TRUE(read_datagram.valid);
-
-}
-
-TEST(DccRailcomDecoder, ch2_null_on_datagram_still_buffers) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    interface.on_datagram = NULL;
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    uint8_t raw[4] = {0xAC, 0xAB, 0xD3, 0xA3};
-    load_uart_bytes(raw, 4);
-
-    DccRailcomDecoder_begin_cutout(&test_context,1);
-    DccRailcomDecoder_run(&test_context);
-
-    EXPECT_EQ(datagram_callback_count, (uint32_t)0);
-    EXPECT_EQ(DccRailcomDecoder_available(&test_context), (uint8_t)2);
-
-}
-
-// ============================================================================
-// Max UART byte limit tests
-// ============================================================================
-
-TEST(DccRailcomDecoder, max_8_uart_bytes_hits_loop_limit) {
-
-    reset_mocks();
-    interface_dcc_railcom_decoder_t interface = make_interface();
-    DccRailcomDecoder_initialize(&test_context, &interface);
-
-    /* 2 CH1 + 6 CH2 = 8 bytes (max), loop exits via condition not break */
-    uint8_t raw[8] = {0xAC, 0xAB, 0xD3, 0xA3, 0xC5, 0xCA, 0xB3, 0x95};
-    load_uart_bytes(raw, 8);
-
-    DccRailcomDecoder_begin_cutout(&test_context,1);
-    DccRailcomDecoder_run(&test_context);
-
-    EXPECT_EQ(datagram_callback_count, (uint32_t)2);
-    EXPECT_EQ(DccRailcomDecoder_available(&test_context), (uint8_t)2);
+    interface_dcc_railcom_encoder_t interface;
+    memset(&interface, 0, sizeof(interface));
+    interface.uart_write = NULL;
+    DccRailcomEncoder_initialize(&interface);
+
+    dcc_railcom_response_t response;
+    memset(&response, 0, sizeof(response));
+    response.datagram_id = 7;
+    response.data[0] = 0xFF;
+    response.count = 1;
+
+    DccRailcomEncoder_send_ch2(&response);
+
+    EXPECT_EQ(uart_byte_count, (uint8_t)0);
 
 }

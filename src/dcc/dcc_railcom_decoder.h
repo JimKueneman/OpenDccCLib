@@ -24,25 +24,25 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * @file dcc_railcom_decoder.h
- * @brief RailCom 4/8 decoding, cutout management, and receive buffer.
+ * @file dcc_railcom_encoder.h
+ * @brief RailCom 4/8 encoding and datagram transmission for decoders.
  *
- * @details Decodes RailCom bytes received during cutout windows. Manages
- * a circular buffer of decoded datagrams tagged with the DCC address of the
- * packet that preceded the cutout. Disabled at runtime if railcom_uart_read
- * is NULL in the config.
+ * @details Encodes 6-bit data values into 8-bit DC-balanced codewords per
+ * NMRA RP-9.3.2. Provides functions to send Channel 1 and Channel 2
+ * datagrams via the interface's uart_write callback. Disabled at runtime if
+ * uart_write is NULL.
  *
  * @author Jim Kueneman
  * @date 27 Jun 2026
  */
 
-#ifndef __DCC_RAILCOM_DECODER__
-#define __DCC_RAILCOM_DECODER__
+#ifndef __DCC_RAILCOM_ENCODER__
+#define __DCC_RAILCOM_ENCODER__
 
 #include "dcc_types.h"
 #include "dcc_defines.h"
 
-#if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_COMMAND_STATION)
+#if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_DECODER)
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,86 +51,58 @@ extern "C" {
     /** @brief Interface struct -- dependencies injected by dcc_config.c */
 typedef struct {
 
-        /** @brief Read one byte from RailCom UART. Returns true if byte available. */
-    bool (*uart_read)(uint8_t *byte);
+        /** @brief Transmit one 4/8-encoded byte. NULL = no RailCom responses. */
+    void (*uart_write)(uint8_t byte);
 
-        /**
-         * @brief User callback: RailCom datagram decoded. NULL = no notification.
-         *        Fired from DccRailcomDecoder_run(), NOT ISR context.
-         */
-    void (*on_datagram)(uint16_t address, uint8_t channel, const dcc_railcom_datagram_t *datagram);
+} interface_dcc_railcom_encoder_t;
 
-} interface_dcc_railcom_decoder_t;
+    /**
+     * @brief Initialize the RailCom encoder module.
+     * @param interface Pointer to populated interface struct.
+     */
+extern void DccRailcomEncoder_initialize(const interface_dcc_railcom_encoder_t *interface);
 
-    /** @brief Instance context for the RailCom decoder module.
+    /**
+     * @brief Encode a single 6-bit value to an 8-bit RailCom codeword.
+     * @param value 6-bit data value (0x00-0x3F).
+     * @return 8-bit DC-balanced codeword, or 0x00 if value is out of range.
+     */
+extern uint8_t DccRailcomEncoder_encode_byte(uint8_t value);
+
+    /**
+     * @brief Send a raw RailCom special code word (bypasses the 4/8 table).
+     * @param code_word Raw 8-bit code word to transmit (e.g.
+     *        @ref DCC_RAILCOM_CODE_WORD_ACK or @ref DCC_RAILCOM_CODE_WORD_NACK).
      *
-     *  @details Holds all per-instance state that was formerly file-scope static.
-     *  Allocate one of these per DCC output channel that uses RailCom.
+     * @details Special code words (ACK/NACK) per the 2026 draft S-9.3.2 are
+     * transmitted verbatim over the same UART write path as encoded bytes,
+     * but are NOT run through the 4/8 encode table.
      */
-typedef struct {
-
-    const interface_dcc_railcom_decoder_t *interface;
-    dcc_railcom_datagram_t buffer[USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH];
-    uint8_t buffer_head;
-    uint8_t buffer_tail;
-    uint8_t buffer_count;
-    dcc_address_t cutout_address;
-    volatile bool cutout_pending;
-
-} dcc_railcom_decoder_context_t;
+extern void DccRailcomEncoder_send_code_word(uint8_t code_word);
 
     /**
-     * @brief Initialize the RailCom decoder module.
-     * @param context Pointer to @ref dcc_railcom_decoder_context_t instance.
-     * @param interface Pointer to populated @ref interface_dcc_railcom_decoder_t struct.
+     * @brief Send a Channel 1 datagram (2 encoded bytes, 12-bit payload).
+     * @param datagram_id Datagram ID (4 bits, 0-15).
+     * @param data Data byte (8 bits).
+     *
+     * @details Combines the 4-bit ID and 8-bit data into a 12-bit value,
+     * splits into two 6-bit halves, encodes each, and sends via UART.
      */
-    extern void DccRailcomDecoder_initialize(dcc_railcom_decoder_context_t *context, const interface_dcc_railcom_decoder_t *interface);
+extern void DccRailcomEncoder_send_ch1(uint8_t datagram_id, uint8_t data);
 
     /**
-     * @brief Main loop processing for the RailCom decoder.
-     * @param context Pointer to @ref dcc_railcom_decoder_context_t instance.
+     * @brief Send a Channel 2 datagram (up to 6 encoded bytes).
+     * @param response Pointer to the response datagram to encode and send.
+     *
+     * @details First two bytes encode the 12-bit combined ID+data[0]. Any
+     * additional data bytes are encoded individually as 6-bit values.
      */
-extern void DccRailcomDecoder_run(dcc_railcom_decoder_context_t *context);
-
-    /**
-     * @brief Begin a RailCom cutout window for a given address.
-     * @param context Pointer to @ref dcc_railcom_decoder_context_t instance.
-     * @param address The DCC address associated with this cutout.
-     */
-    extern void DccRailcomDecoder_begin_cutout(dcc_railcom_decoder_context_t *context, dcc_address_t address);
-
-    /**
-     * @brief End the current RailCom cutout window.
-     * @param context Pointer to @ref dcc_railcom_decoder_context_t instance.
-     */
-extern void DccRailcomDecoder_end_cutout(dcc_railcom_decoder_context_t *context);
-
-    /**
-     * @brief Read the next decoded RailCom datagram from the buffer.
-     * @param context Pointer to @ref dcc_railcom_decoder_context_t instance.
-     * @param datagram Pointer to @ref dcc_railcom_datagram_t to fill with decoded data.
-     * @return true if a datagram was available, false if buffer empty.
-     */
-    extern bool DccRailcomDecoder_read(dcc_railcom_decoder_context_t *context, dcc_railcom_datagram_t *datagram);
-
-    /**
-     * @brief Return the number of decoded datagrams available in the buffer.
-     * @param context Pointer to @ref dcc_railcom_decoder_context_t instance.
-     * @return Number of datagrams waiting to be read.
-     */
-extern uint8_t DccRailcomDecoder_available(const dcc_railcom_decoder_context_t *context);
-
-    /**
-     * @brief Decode a single RailCom 4/8 encoded byte.
-     * @param encoded The 8-bit codeword received from UART.
-     * @return 6-bit decoded value, or DCC_RAILCOM_DECODE_INVALID/ACK/NACK.
-     */
-extern uint8_t DccRailcomDecoder_decode_byte(uint8_t encoded);
+extern void DccRailcomEncoder_send_ch2(const dcc_railcom_response_t *response);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* DCC_COMPILE_RAILCOM && DCC_COMPILE_COMMAND_STATION */
+#endif /* DCC_COMPILE_RAILCOM && DCC_COMPILE_DECODER */
 
-#endif /* __DCC_RAILCOM_DECODER__ */
+#endif /* __DCC_RAILCOM_ENCODER__ */
