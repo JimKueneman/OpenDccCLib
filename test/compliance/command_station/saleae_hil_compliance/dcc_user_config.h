@@ -63,6 +63,10 @@
 // Increase if you see scheduler-full errors; decrease to save RAM.
 #define USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT    24
 
+// Ops-mode preamble bits the CS transmits. RailCom build: >= 16 required
+// (S-9.3.2 sec 2.4), 18 recommended for post-cutout relock margin.
+#define USER_DEFINED_DCC_PREAMBLE_BITS_OPS       18
+
 // Max locos with automatic speed/function refresh. Each loco uses one
 // scheduler slot permanently. Must be <= SCHEDULER_SLOT_COUNT minus headroom
 // for one-shot packets (accessory, CV, etc.).

@@ -120,6 +120,21 @@ extern "C" {
 #error "USER_DEFINED_DCC_ACK_MAX_DURATION_US must be defined in dcc_user_config.h"
 #endif
 
+#ifndef USER_DEFINED_DCC_PREAMBLE_BITS_OPS
+#error "USER_DEFINED_DCC_PREAMBLE_BITS_OPS must be defined in dcc_user_config.h"
+#endif
+#if defined(DCC_COMPILE_RAILCOM)
+#if USER_DEFINED_DCC_PREAMBLE_BITS_OPS < 16
+#error "RailCom (S-9.3.2 sec 2.4) requires the command station to send >= 16 preamble bits"
+#elif USER_DEFINED_DCC_PREAMBLE_BITS_OPS < 18
+#warning "USER_DEFINED_DCC_PREAMBLE_BITS_OPS 16-17 is S-9.3.2-legal but at the bare post-cutout relock margin; 18+ recommended"
+#endif
+#else
+#if USER_DEFINED_DCC_PREAMBLE_BITS_OPS < 14
+#error "S-9.2 requires the command station to send >= 14 preamble bits"
+#endif
+#endif
+
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
 // =============================================================================

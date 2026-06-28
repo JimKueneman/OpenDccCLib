@@ -925,7 +925,8 @@ TEST(DccDefines, bit_timing_constants) {
 
 // @compliance DCC-S9.1-CS-003, DCC-S9.1-DEC-002
 TEST(DccDefines, preamble_constants) {
-    EXPECT_EQ(DCC_PREAMBLE_BITS_OPS, 16);   /* 16 so a RailCom cutout leaves >= 11 driven */
+    EXPECT_EQ(DCC_PREAMBLE_BITS_OPS, USER_DEFINED_DCC_PREAMBLE_BITS_OPS); /* sourced from user config */
+    EXPECT_GE(DCC_PREAMBLE_BITS_OPS, 16);   /* RailCom build floor (S-9.3.2 sec 2.4): >= 16 */
     EXPECT_EQ(DCC_PREAMBLE_BITS_SERVICE, 20);
     EXPECT_EQ(DCC_PREAMBLE_BITS_DECODER_MIN, 10);
 }

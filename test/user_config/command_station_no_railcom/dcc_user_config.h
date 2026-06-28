@@ -27,6 +27,7 @@
 
 // Buffer & pool sizes (shared across all gate configs).
 #define USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT      16
+#define USER_DEFINED_DCC_PREAMBLE_BITS_OPS         16
 #define USER_DEFINED_DCC_MAX_LOCOS                  8
 #define USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH       4
 #define USER_DEFINED_DCC_SERVICE_MODE_RETRIES       3

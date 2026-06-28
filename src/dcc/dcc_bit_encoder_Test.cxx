@@ -191,10 +191,10 @@ TEST(DccBitEncoder, tick_preamble_is_all_one_bits) {
     DccApplicationCommandStationPacket_load_idle(&pkt);
     DccBitEncoder_load_packet(&context, &pkt);
 
-    /* Idle packet: 16-bit preamble (DCC_PREAMBLE_BITS_OPS).
-     * IDLE→PREAMBLE transition = 1 one-bit (2 ticks), then 16 preamble
-     * one-bits count down = 32 more ticks. Total = 34 ticks before start bit.
-     * Pump 28 ticks to stay well within the preamble (all one-bits). */
+    /* Idle packet preamble = DCC_PREAMBLE_BITS_OPS (set per user config).
+     * IDLE->PREAMBLE transition = 1 one-bit (2 ticks), then the preamble
+     * one-bits count down. Pump 28 ticks -- well within even a 16-bit
+     * preamble (32 ticks), so every tick here is a one-bit toggle. */
     pump_tick_isr(&context, 28);
 
     /* Every tick should have a toggle (all one-bits) */
@@ -224,20 +224,20 @@ TEST(DccBitEncoder, tick_zero_bit_takes_four_ticks) {
     DccApplicationCommandStationPacket_load_idle(&pkt);
     DccBitEncoder_load_packet(&context, &pkt);
 
-    /* Idle packet: 16-bit preamble (DCC_PREAMBLE_BITS_OPS).
-     * The IDLE→PREAMBLE transition itself produces 1 one-bit, then
-     * preamble_count counts down from 16 producing 16 more one-bits.
-     * Total one-bits before start bit: 17 = 34 ticks.
-     * Start bit (zero-bit) = 4 ticks. Pump 38 ticks total. */
-    pump_tick_isr(&context, 38);
+    /* Idle packet preamble (DCC_PREAMBLE_BITS_OPS, set per user config).
+     * The IDLE->PREAMBLE transition produces 1 one-bit, then preamble_count
+     * produces DCC_PREAMBLE_BITS_OPS more: (1 + OPS) one-bits before the start
+     * bit, each = 2 ticks / 2 toggles. Start bit (zero) = 4 ticks / 2 toggles. */
+    const uint32_t preamble_toggles = (uint32_t)(1 + DCC_PREAMBLE_BITS_OPS) * 2;
+    pump_tick_isr(&context, preamble_toggles + 4);
 
-    /* 34 preamble toggles + 2 start bit toggles = 36 total */
-    EXPECT_EQ(toggle_call_count, (uint32_t)36);
+    /* preamble toggles + 2 start bit toggles */
+    EXPECT_EQ(toggle_call_count, preamble_toggles + 2);
 
     /* Verify the start bit toggles are spaced 2 ticks apart */
-    ASSERT_GE(toggle_log_count, (uint32_t)36);
-    uint32_t first_zero_toggle = toggle_log[34];   /* first half of start bit */
-    uint32_t second_zero_toggle = toggle_log[35];   /* second half of start bit */
+    ASSERT_GE(toggle_log_count, preamble_toggles + 2);
+    uint32_t first_zero_toggle = toggle_log[preamble_toggles];      /* first half of start bit */
+    uint32_t second_zero_toggle = toggle_log[preamble_toggles + 1]; /* second half of start bit */
     EXPECT_EQ(second_zero_toggle - first_zero_toggle, (uint32_t)2);
 
 }

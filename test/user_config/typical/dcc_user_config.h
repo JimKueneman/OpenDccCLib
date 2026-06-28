@@ -43,6 +43,9 @@
 /** @brief Max concurrent active packets in the scheduler */
 #define USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT    16
 
+/** @brief Ops-mode preamble bits the CS transmits (RailCom: >=16 req, 18 rec) */
+#define USER_DEFINED_DCC_PREAMBLE_BITS_OPS       18
+
 /** @brief Max locos with auto-refresh */
 #define USER_DEFINED_DCC_MAX_LOCOS                8
 
