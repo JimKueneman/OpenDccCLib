@@ -950,6 +950,8 @@ void DccConfig_initialize(const dcc_config_t *config) {
 
     }
 
+    _railcom_encoder_interface.on_railcom_request = config->on_railcom_request;
+
     DccRailcomDecoder_initialize(&_railcom_encoder_interface);
 #endif /* DCC_COMPILE_RAILCOM */
 

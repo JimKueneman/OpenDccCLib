@@ -54,6 +54,13 @@ typedef struct {
         /** @brief Transmit one 4/8-encoded byte. NULL = no RailCom responses. */
     void (*uart_write)(uint8_t byte);
 
+        /** @brief App hook: a command addressed to this decoder was recognized before
+         *  the XOR. The app fills @p out for Channel 2 and returns the reply status
+         *  (DATA / ACK / BUSY / NACK / NONE). NULL = no Channel 2 (ADR only). Must be
+         *  fast and non-blocking -- it runs while the XOR byte is being received. */
+    dcc_railcom_reply_status_enum (*on_railcom_request)(const uint8_t *instruction,
+            uint8_t instruction_count, dcc_railcom_response_t *out);
+
 } interface_dcc_railcom_decoder_t;
 
     /**

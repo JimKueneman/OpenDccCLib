@@ -330,6 +330,12 @@ typedef struct {
          *  disable hardware interrupt or set a flag to skip. NULL = no blanking.
          *  Required if using RailCom. */
     void (*decoder_edge_irq_enable)(bool enabled);
+
+        /** @brief App hook: a command addressed to this decoder was recognized before
+         *  the XOR. Fill @p out for Channel 2 and return the reply status (DATA / ACK /
+         *  BUSY / NACK / NONE). NULL = ADR only, no Channel 2. Must be fast/non-blocking. */
+    dcc_railcom_reply_status_enum (*on_railcom_request)(const uint8_t *instruction,
+            uint8_t instruction_count, dcc_railcom_response_t *out);
 #endif /* DCC_COMPILE_RAILCOM */
 
     // =========================================================================

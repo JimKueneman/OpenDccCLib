@@ -376,6 +376,9 @@ extern "C" {
     /** @brief NACK special code word (raw byte, bypasses 4/8 table) */
 #define DCC_RAILCOM_CODE_WORD_NACK          0x3C
 
+    /** @brief BUSY special code word (raw byte) -- decoder busy, retry later (Table 2) */
+#define DCC_RAILCOM_CODE_WORD_BUSY          0xE1
+
 // =============================================================================
 // Idle / Reset Packet Constants
 // =============================================================================

@@ -36,6 +36,8 @@
 
 #if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_DECODER)
 
+#include <string.h>
+
 // =============================================================================
 // Static state
 // =============================================================================
@@ -57,6 +59,12 @@ static uint8_t _pending_ch1[DCC_RAILCOM_CH1_MAX_BYTES];
     /** @brief A complete addressed command was recognized; the next byte is the XOR. */
 static bool _pending_armed;
 
+    /** @brief Encoded Channel 2 bytes (datagram or raw token) pending transmit. */
+static uint8_t _pending_ch2[DCC_RAILCOM_DATAGRAM_MAX_BYTES + 1];
+
+    /** @brief Number of pending Channel 2 bytes (0 = no Channel 2 this cutout). */
+static uint8_t _pending_ch2_count;
+
 // =============================================================================
 // Public API
 // =============================================================================
@@ -66,6 +74,7 @@ void DccRailcomDecoder_initialize(const interface_dcc_railcom_decoder_t *interfa
     _interface = interface;
     _adr_alternate = false;
     _pending_armed = false;
+    _pending_ch2_count = 0;
 
 }
 
@@ -444,7 +453,72 @@ static void _fill_adr(void) {
 }
 
     /**
-     * @brief Clock the pending Channel 1 bytes out via the UART interface.
+     * @brief Fill the pending Channel 2 slot from the app's reply to the recognized
+     *  command: DATA encodes a datagram; ACK/BUSY/NACK load the raw token code word;
+     *  NONE (or no hook) leaves Channel 2 empty.
+     * @param data Packet bytes received so far.
+     * @param count Number of bytes in data.
+     */
+static void _fill_ch2(const uint8_t *data, uint8_t count) {
+
+    dcc_railcom_response_t out;
+    dcc_railcom_reply_status_enum status;
+    uint8_t address_bytes;
+
+    _pending_ch2_count = 0;
+
+    if (!_interface || !_interface->on_railcom_request) {
+
+        return;
+
+    }
+
+    address_bytes = _address_byte_count(data[0]);
+    memset(&out, 0, sizeof(out));
+
+    status = _interface->on_railcom_request(&data[address_bytes],
+            (uint8_t)(count - address_bytes), &out);
+
+    switch (status) {
+
+        case DCC_RAILCOM_REPLY_DATA:
+
+            _pending_ch2_count = DccRailcomUtilities_encode_ch2(&out, _pending_ch2);
+
+            break;
+
+        case DCC_RAILCOM_REPLY_ACK:
+
+            _pending_ch2[0] = DCC_RAILCOM_CODE_WORD_ACK;
+            _pending_ch2_count = 1;
+
+            break;
+
+        case DCC_RAILCOM_REPLY_NACK:
+
+            _pending_ch2[0] = DCC_RAILCOM_CODE_WORD_NACK;
+            _pending_ch2_count = 1;
+
+            break;
+
+        case DCC_RAILCOM_REPLY_BUSY:
+
+            _pending_ch2[0] = DCC_RAILCOM_CODE_WORD_BUSY;
+            _pending_ch2_count = 1;
+
+            break;
+
+        case DCC_RAILCOM_REPLY_NONE:
+        default:
+
+            break;
+
+    }
+
+}
+
+    /**
+     * @brief Clock the pending Channel 1 bytes (then Channel 2, if any) out via UART.
      */
 static void _transmit_pending(void) {
 
@@ -459,6 +533,12 @@ static void _transmit_pending(void) {
     for (byte_index = 0; byte_index < DCC_RAILCOM_CH1_MAX_BYTES; byte_index++) {
 
         _interface->uart_write(_pending_ch1[byte_index]);
+
+    }
+
+    for (byte_index = 0; byte_index < _pending_ch2_count; byte_index++) {
+
+        _interface->uart_write(_pending_ch2[byte_index]);
 
     }
 
@@ -501,6 +581,7 @@ void DccRailcomDecoder_on_byte_received(const uint8_t *data, uint8_t count) {
             && type == _decoder_address_type && address == _decoder_address) {
 
         _fill_adr();
+        _fill_ch2(data, count);
         _pending_armed = true;
 
     }

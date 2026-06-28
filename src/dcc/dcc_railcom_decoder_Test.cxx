@@ -32,10 +32,28 @@ static void mock_uart_write(uint8_t byte) {
 
 }
 
+static dcc_railcom_reply_status_enum mock_request_status;
+static dcc_railcom_response_t mock_request_response;
+static uint32_t request_callback_count;
+
+static dcc_railcom_reply_status_enum mock_on_railcom_request(const uint8_t *instruction,
+        uint8_t instruction_count, dcc_railcom_response_t *out) {
+
+    (void)instruction;
+    (void)instruction_count;
+    request_callback_count++;
+    *out = mock_request_response;
+    return mock_request_status;
+
+}
+
 static void reset_mocks(void) {
 
     memset(uart_bytes, 0, sizeof(uart_bytes));
     uart_byte_count = 0;
+    mock_request_status = DCC_RAILCOM_REPLY_NONE;
+    memset(&mock_request_response, 0, sizeof(mock_request_response));
+    request_callback_count = 0;
 
 }
 
@@ -457,5 +475,72 @@ TEST(DccRailcomDecoder, dispatch_adr_alternates_high_then_low) {
     EXPECT_EQ(uart_byte_count, (uint8_t)4);
     /* ADR1 and ADR2 encode different datagram IDs -> first byte differs */
     EXPECT_NE(uart_bytes[0], uart_bytes[2]);
+
+}
+
+// ============================================================================
+// Dispatch: Channel 2 from the app's on_railcom_request reply
+// ============================================================================
+
+TEST(DccRailcomDecoder, dispatch_ch2_data_after_adr) {
+
+    reset_mocks();
+    interface_dcc_railcom_decoder_t interface = make_interface();
+    interface.on_railcom_request = mock_on_railcom_request;
+    DccRailcomDecoder_initialize(&interface);
+    DccRailcomDecoder_set_address(3, DCC_ADDRESS_SHORT);
+
+    /* app answers with a 1-byte Ch2 datagram -> 2 encoded bytes */
+    mock_request_status = DCC_RAILCOM_REPLY_DATA;
+    mock_request_response.datagram_id = 0;
+    mock_request_response.data[0] = 0x01;
+    mock_request_response.count = 1;
+
+    uint8_t data[] = { 0x03, 0x60, 0x63 };
+    DccRailcomDecoder_on_byte_received(data, 1);
+    DccRailcomDecoder_on_byte_received(data, 2);
+    DccRailcomDecoder_on_byte_received(data, 3);
+
+    EXPECT_EQ(request_callback_count, (uint32_t)1);
+    EXPECT_EQ(uart_byte_count, (uint8_t)4);   /* 2 ADR (Ch1) + 2 Ch2 */
+
+}
+
+TEST(DccRailcomDecoder, dispatch_ch2_none_only_adr) {
+
+    reset_mocks();
+    interface_dcc_railcom_decoder_t interface = make_interface();
+    interface.on_railcom_request = mock_on_railcom_request;
+    DccRailcomDecoder_initialize(&interface);
+    DccRailcomDecoder_set_address(3, DCC_ADDRESS_SHORT);
+
+    mock_request_status = DCC_RAILCOM_REPLY_NONE;
+
+    uint8_t data[] = { 0x03, 0x60, 0x63 };
+    DccRailcomDecoder_on_byte_received(data, 1);
+    DccRailcomDecoder_on_byte_received(data, 2);
+    DccRailcomDecoder_on_byte_received(data, 3);
+
+    EXPECT_EQ(uart_byte_count, (uint8_t)2);   /* ADR only */
+
+}
+
+TEST(DccRailcomDecoder, dispatch_ch2_ack_token) {
+
+    reset_mocks();
+    interface_dcc_railcom_decoder_t interface = make_interface();
+    interface.on_railcom_request = mock_on_railcom_request;
+    DccRailcomDecoder_initialize(&interface);
+    DccRailcomDecoder_set_address(3, DCC_ADDRESS_SHORT);
+
+    mock_request_status = DCC_RAILCOM_REPLY_ACK;
+
+    uint8_t data[] = { 0x03, 0x60, 0x63 };
+    DccRailcomDecoder_on_byte_received(data, 1);
+    DccRailcomDecoder_on_byte_received(data, 2);
+    DccRailcomDecoder_on_byte_received(data, 3);
+
+    EXPECT_EQ(uart_byte_count, (uint8_t)3);   /* 2 ADR + 1 raw token */
+    EXPECT_EQ(uart_bytes[2], (uint8_t)DCC_RAILCOM_CODE_WORD_ACK);
 
 }
