@@ -74,9 +74,48 @@ uint8_t DccRailcomUtilities_encode_byte(uint8_t value) {
 
 }
 
+void DccRailcomUtilities_encode_ch1(uint8_t datagram_id, uint8_t data, uint8_t *out) {
+
+    uint16_t combined = ((uint16_t)(datagram_id & 0x0F) << 8) | data;
+
+    out[0] = DccRailcomUtilities_encode_byte((uint8_t)((combined >> 6) & 0x3F));
+    out[1] = DccRailcomUtilities_encode_byte((uint8_t)(combined & 0x3F));
+
+}
+
+uint8_t DccRailcomUtilities_encode_ch2(const dcc_railcom_response_t *response, uint8_t *out) {
+
+    uint16_t combined;
+    uint8_t count = 0;
+    uint8_t byte_index;
+
+    if (response->count < 1) {
+
+        return 0;
+
+    }
+
+    /* First two encoded bytes: 4-bit ID + 8-bit data[0] = 12-bit combined */
+    combined = ((uint16_t)(response->datagram_id & 0x0F) << 8) | response->data[0];
+    out[count++] = DccRailcomUtilities_encode_byte((uint8_t)((combined >> 6) & 0x3F));
+    out[count++] = DccRailcomUtilities_encode_byte((uint8_t)(combined & 0x3F));
+
+    /* Additional data bytes encoded individually as 6-bit values */
+    for (byte_index = 1; byte_index < response->count; byte_index++) {
+
+        out[count++] = DccRailcomUtilities_encode_byte(response->data[byte_index] & 0x3F);
+
+    }
+
+    return count;
+
+}
+
 #endif /* DCC_COMPILE_DECODER || DCC_COMPILE_ACCESSORY_DECODER */
 
 #if defined(DCC_COMPILE_COMMAND_STATION)
+
+#include <string.h>
 
     /**
      * @brief 4/8 decode table: maps an 8-bit codeword to its 6-bit value or token.
@@ -140,6 +179,81 @@ static const uint8_t _decode_table[256] = {
 uint8_t DccRailcomUtilities_decode_byte(uint8_t encoded) {
 
     return _decode_table[encoded];
+
+}
+
+bool DccRailcomUtilities_decode_ch1(uint8_t byte0, uint8_t byte1, dcc_railcom_datagram_t *out) {
+
+    uint8_t decoded_0 = DccRailcomUtilities_decode_byte(byte0);
+    uint8_t decoded_1 = DccRailcomUtilities_decode_byte(byte1);
+    uint16_t combined;
+
+    memset(out, 0, sizeof(*out));
+
+    if (decoded_0 >= 0x40 || decoded_1 >= 0x40) {
+
+        return false;
+
+    }
+
+    combined = ((uint16_t)decoded_0 << 6) | decoded_1;
+
+    out->datagram_id = (uint8_t)((combined >> 8) & 0x0F);
+    out->data[0] = (uint8_t)(combined & 0xFF);
+    out->count = 1;
+    out->valid = true;
+
+    return true;
+
+}
+
+bool DccRailcomUtilities_decode_ch2(const uint8_t *raw_bytes, uint8_t raw_count, dcc_railcom_datagram_t *out) {
+
+    uint8_t decoded_bytes[DCC_RAILCOM_CH2_MAX_BYTES];
+    uint8_t valid_count = 0;
+    uint8_t byte_index;
+    uint8_t decoded_value;
+    uint16_t combined;
+
+    memset(out, 0, sizeof(*out));
+
+    for (byte_index = 0; byte_index < raw_count && byte_index < DCC_RAILCOM_CH2_MAX_BYTES; byte_index++) {
+
+        decoded_value = DccRailcomUtilities_decode_byte(raw_bytes[byte_index]);
+
+        if (decoded_value >= 0x40) {
+
+            return false;
+
+        }
+
+        decoded_bytes[valid_count] = decoded_value;
+        valid_count++;
+
+    }
+
+    if (valid_count < 2) {
+
+        return false;
+
+    }
+
+    combined = ((uint16_t)decoded_bytes[0] << 6) | decoded_bytes[1];
+
+    out->datagram_id = (uint8_t)((combined >> 8) & 0x0F);
+    out->data[0] = (uint8_t)(combined & 0xFF);
+    out->count = 1;
+
+    for (byte_index = 2; byte_index < valid_count && out->count < DCC_RAILCOM_DATAGRAM_MAX_BYTES; byte_index++) {
+
+        out->data[out->count] = decoded_bytes[byte_index];
+        out->count++;
+
+    }
+
+    out->valid = true;
+
+    return true;
 
 }
 

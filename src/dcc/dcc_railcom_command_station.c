@@ -65,11 +65,7 @@ static void _buffer_push(dcc_railcom_command_station_context_t *context, const d
      */
 static void _decode_channel_1(dcc_railcom_command_station_context_t *context, const uint8_t *raw_bytes, uint8_t raw_count) {
 
-    uint8_t decoded_0;
-    uint8_t decoded_1;
-    uint16_t combined;
     dcc_railcom_datagram_t datagram;
-    memset(&datagram, 0, sizeof(dcc_railcom_datagram_t));
 
     if (raw_count < DCC_RAILCOM_CH1_MAX_BYTES) {
 
@@ -77,21 +73,11 @@ static void _decode_channel_1(dcc_railcom_command_station_context_t *context, co
 
     }
 
-    decoded_0 = DccRailcomUtilities_decode_byte(raw_bytes[0]);
-    decoded_1 = DccRailcomUtilities_decode_byte(raw_bytes[1]);
-
-    if (decoded_0 >= 0x40 || decoded_1 >= 0x40) {
+    if (!DccRailcomUtilities_decode_ch1(raw_bytes[0], raw_bytes[1], &datagram)) {
 
         return;
 
     }
-
-    combined = ((uint16_t)decoded_0 << 6) | decoded_1;
-
-    datagram.datagram_id = (uint8_t)((combined >> 8) & 0x0F);
-    datagram.data[0] = (uint8_t)(combined & 0xFF);
-    datagram.count = 1;
-    datagram.valid = true;
 
     _buffer_push(context, &datagram);
 
@@ -111,16 +97,7 @@ static void _decode_channel_1(dcc_railcom_command_station_context_t *context, co
      */
 static void _decode_channel_2(dcc_railcom_command_station_context_t *context, const uint8_t *raw_bytes, uint8_t raw_count) {
 
-    uint8_t ch2_start = DCC_RAILCOM_CH1_MAX_BYTES;
-    uint8_t ch2_count;
-    uint8_t decoded_bytes[DCC_RAILCOM_CH2_MAX_BYTES];
-    uint8_t valid_count = 0;
-    uint8_t byte_index;
-    uint8_t decoded_value;
-    bool all_valid = true;
-    uint16_t combined;
     dcc_railcom_datagram_t datagram;
-    memset(&datagram, 0, sizeof(dcc_railcom_datagram_t));
 
     if (raw_count <= DCC_RAILCOM_CH1_MAX_BYTES) {
 
@@ -128,44 +105,12 @@ static void _decode_channel_2(dcc_railcom_command_station_context_t *context, co
 
     }
 
-    ch2_count = raw_count - ch2_start;
-
-    for (byte_index = 0; byte_index < ch2_count && byte_index < DCC_RAILCOM_CH2_MAX_BYTES; byte_index++) {
-
-        decoded_value = DccRailcomUtilities_decode_byte(raw_bytes[ch2_start + byte_index]);
-
-        if (decoded_value >= 0x40) {
-
-            all_valid = false;
-            break;
-
-        }
-
-        decoded_bytes[valid_count] = decoded_value;
-        valid_count++;
-
-    }
-
-    if (!all_valid || valid_count < 2) {
+    if (!DccRailcomUtilities_decode_ch2(&raw_bytes[DCC_RAILCOM_CH1_MAX_BYTES],
+            (uint8_t)(raw_count - DCC_RAILCOM_CH1_MAX_BYTES), &datagram)) {
 
         return;
 
     }
-
-    combined = ((uint16_t)decoded_bytes[0] << 6) | decoded_bytes[1];
-
-    datagram.datagram_id = (uint8_t)((combined >> 8) & 0x0F);
-    datagram.data[0] = (uint8_t)(combined & 0xFF);
-    datagram.count = 1;
-
-    for (byte_index = 2; byte_index < valid_count && datagram.count < DCC_RAILCOM_DATAGRAM_MAX_BYTES; byte_index++) {
-
-        datagram.data[datagram.count] = decoded_bytes[byte_index];
-        datagram.count++;
-
-    }
-
-    datagram.valid = true;
 
     _buffer_push(context, &datagram);
 

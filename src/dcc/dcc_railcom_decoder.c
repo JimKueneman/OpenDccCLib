@@ -68,9 +68,7 @@ void DccRailcomDecoder_send_code_word(uint8_t code_word) {
 
 void DccRailcomDecoder_send_ch1(uint8_t datagram_id, uint8_t data) {
 
-    uint16_t combined;
-    uint8_t high_six_bits;
-    uint8_t low_six_bits;
+    uint8_t encoded[DCC_RAILCOM_CH1_MAX_BYTES];
 
     if (!_interface->uart_write) {
 
@@ -78,20 +76,17 @@ void DccRailcomDecoder_send_ch1(uint8_t datagram_id, uint8_t data) {
 
     }
 
-    combined = ((uint16_t)(datagram_id & 0x0F) << 8) | data;
-    high_six_bits = (uint8_t)((combined >> 6) & 0x3F);
-    low_six_bits = (uint8_t)(combined & 0x3F);
+    DccRailcomUtilities_encode_ch1(datagram_id, data, encoded);
 
-    _interface->uart_write(DccRailcomUtilities_encode_byte(high_six_bits));
-    _interface->uart_write(DccRailcomUtilities_encode_byte(low_six_bits));
+    _interface->uart_write(encoded[0]);
+    _interface->uart_write(encoded[1]);
 
 }
 
 void DccRailcomDecoder_send_ch2(const dcc_railcom_response_t *response) {
 
-    uint16_t combined;
-    uint8_t high_six_bits;
-    uint8_t low_six_bits;
+    uint8_t encoded[DCC_RAILCOM_DATAGRAM_MAX_BYTES + 1];
+    uint8_t count;
     uint8_t byte_index;
 
     if (!_interface->uart_write) {
@@ -100,24 +95,11 @@ void DccRailcomDecoder_send_ch2(const dcc_railcom_response_t *response) {
 
     }
 
-    if (response->count < 1) {
+    count = DccRailcomUtilities_encode_ch2(response, encoded);
 
-        return;
+    for (byte_index = 0; byte_index < count; byte_index++) {
 
-    }
-
-    /* First two encoded bytes: 4-bit ID + 8-bit data[0] = 12-bit combined */
-    combined = ((uint16_t)(response->datagram_id & 0x0F) << 8) | response->data[0];
-    high_six_bits = (uint8_t)((combined >> 6) & 0x3F);
-    low_six_bits = (uint8_t)(combined & 0x3F);
-
-    _interface->uart_write(DccRailcomUtilities_encode_byte(high_six_bits));
-    _interface->uart_write(DccRailcomUtilities_encode_byte(low_six_bits));
-
-    /* Additional data bytes encoded individually as 6-bit values */
-    for (byte_index = 1; byte_index < response->count; byte_index++) {
-
-        _interface->uart_write(DccRailcomUtilities_encode_byte(response->data[byte_index] & 0x3F));
+        _interface->uart_write(encoded[byte_index]);
 
     }
 
