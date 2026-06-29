@@ -2,7 +2,7 @@
  * ti_driverlib_dcc_driver.h -- Hardware driver for DCC on MSPM0G3507.
  *
  * PORTING GUIDE: To run on a different MCU, create a new driver file that
- * implements the same four functions below using your MCU's HAL.  Then
+ * implements the same functions below using your MCU's HAL.  Then
  * update decoder.c to #include your file and wire the function pointers
  * in the dcc_config_t struct.
  *
@@ -33,6 +33,10 @@ extern void TI_DccDriver_unlock_shared_resources(void);
 /* Return the current time in microseconds from a free-running counter.
  * The counter wraps at ~4295 seconds (32-bit overflow). */
 extern uint32_t TI_DccDriver_get_timestamp_usec(void);
+
+/* Blocking microsecond delay for the RailCom Tx bit-bang, accurate at the 4 us
+ * bit period via a 20 MHz (50 ns/tick) one-shot timer. */
+extern void TI_DccDriver_railcom_delay_us(uint16_t us);
 
 #ifdef __cplusplus
 }

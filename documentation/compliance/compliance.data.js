@@ -7075,11 +7075,6 @@ window.COMPLIANCE =
             ],
             "tests": [
               {
-                "name": "DccRailcomDecoder.send_code_word_ack_raw",
-                "file": "dcc_railcom_decoder_Test.cxx",
-                "desc": "emits ACK 0xF0 raw"
-              },
-              {
                 "name": "DccRailcomUtilities.decode_byte_ack_0xF0",
                 "file": "dcc_railcom_utilities_Test.cxx",
                 "desc": "decodes 0xF0 as ACK"
@@ -7120,11 +7115,6 @@ window.COMPLIANCE =
               "DCC_RAILCOM_CODE_WORD_NACK"
             ],
             "tests": [
-              {
-                "name": "DccRailcomDecoder.send_code_word_nack_raw",
-                "file": "dcc_railcom_decoder_Test.cxx",
-                "desc": "emits NACK 0x3C raw"
-              },
               {
                 "name": "DccRailcomUtilities.decode_byte_nack_0x3C",
                 "file": "dcc_railcom_utilities_Test.cxx",
@@ -7170,11 +7160,6 @@ window.COMPLIANCE =
                 "name": "DccRailcomCommandStation.ch1_valid_2_bytes",
                 "file": "dcc_railcom_command_station_Test.cxx",
                 "desc": "assembles a valid 2-byte Ch1 datagram"
-              },
-              {
-                "name": "DccRailcomDecoder.send_ch1_basic",
-                "file": "dcc_railcom_decoder_Test.cxx",
-                "desc": "encodes a basic Ch1 datagram"
               }
             ],
             "hilChecks": []
@@ -7216,11 +7201,6 @@ window.COMPLIANCE =
                 "name": "DccRailcomCommandStation.ch2_valid_4_bytes",
                 "file": "dcc_railcom_command_station_Test.cxx",
                 "desc": "assembles a valid 4-byte Ch2 datagram"
-              },
-              {
-                "name": "DccRailcomDecoder.send_ch2_multiple_data_bytes",
-                "file": "dcc_railcom_decoder_Test.cxx",
-                "desc": "encodes a Ch2 datagram with multiple data bytes"
               }
             ],
             "hilChecks": []

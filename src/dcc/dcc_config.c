@@ -280,6 +280,20 @@ static bool _ack_pulse_active = false;
     /** @brief Timestamp when ACK pulse started (microseconds) */
 static uint32_t _ack_pulse_start_usec = 0;
 
+#if defined(DCC_COMPILE_RAILCOM)
+    /**
+     * @brief Bit decoder on_packet_received dispatch for a RailCom decoder. Runs at the
+     *  packet end-bit edge: fire the time-critical RailCom Tx first (it bit-bangs the
+     *  cutout, blocking), then queue the packet for deferred instruction dispatch.
+     */
+static void _on_packet_received_dispatch(const uint8_t *data, uint8_t byte_count) {
+
+    DccRailcomDecoder_transmit(data, byte_count);
+    DccPacketDecoder_enqueue(data, byte_count);
+
+}
+#endif /* DCC_COMPILE_RAILCOM */
+
 #endif /* DCC_COMPILE_DECODER */
 
 #ifdef DCC_COMPILE_COMMAND_STATION
@@ -930,8 +944,14 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _failsafe_interface.on_failsafe_exited = config->on_failsafe_exited;
     DccFailsafe_initialize(&_failsafe_interface);
 
-    /* Wire bit decoder interface — complete packets go to packet decoder */
+    /* Wire bit decoder interface — complete packets go to packet decoder. With RailCom,
+     * route through a dispatch that fires the time-critical Tx (bit-bangs the cutout)
+     * before queuing the packet for deferred instruction dispatch. */
+#if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_DECODER)
+    _bit_decoder_interface.on_packet_received = &_on_packet_received_dispatch;
+#else
     _bit_decoder_interface.on_packet_received = &DccPacketDecoder_enqueue;
+#endif /* DCC_COMPILE_RAILCOM && DCC_COMPILE_DECODER */
 #if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_DECODER)
     /* Per-byte feed to the RailCom Tx dispatch (recognize + answer before the XOR) */
     _bit_decoder_interface.on_byte_received = &DccRailcomDecoder_on_byte_received;
@@ -940,16 +960,13 @@ void DccConfig_initialize(const dcc_config_t *config) {
     DccBitDecoder_initialize(&_bit_decoder_interface);
 
 #if defined(DCC_COMPILE_RAILCOM)
-    /* Wire RailCom encoder interface */
-    _railcom_encoder_interface.uart_write = (void *)0;
-
-    if (config->railcom_tx_pin_set) {
-
-        /* RailCom Tx is available — wire the bit-bang pin setter */
-        _railcom_encoder_interface.uart_write = (void *)0;
-
-    }
-
+    /* Wire RailCom Tx engine: bit-bang pin + the app's cycle-accurate delay, the
+     * shared-resource lock (4us bit timing) and edge-IRQ mask (the decoder's injected
+     * current self-triggers the edge ISR during the cutout). */
+    _railcom_encoder_interface.tx_pin_set = config->railcom_tx_pin_set;
+    _railcom_encoder_interface.delay_us = config->railcom_delay_us;
+    _railcom_encoder_interface.lock_shared_resources = config->lock_shared_resources;
+    _railcom_encoder_interface.unlock_shared_resources = config->unlock_shared_resources;
     _railcom_encoder_interface.on_railcom_request = config->on_railcom_request;
 
     DccRailcomDecoder_initialize(&_railcom_encoder_interface);

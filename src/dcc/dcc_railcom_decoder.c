@@ -85,59 +85,6 @@ void DccRailcomDecoder_set_address(dcc_address_t address, dcc_address_type_enum 
 
 }
 
-void DccRailcomDecoder_send_code_word(uint8_t code_word) {
-
-    if (!_interface->uart_write) {
-
-        return;
-
-    }
-
-    /* Special code words (ACK 0xF0/0x0F, NACK 0x3C) are transmitted raw,
-     * bypassing the 4/8 encode table (2026 draft S-9.3.2). */
-    _interface->uart_write(code_word);
-
-}
-
-void DccRailcomDecoder_send_ch1(uint8_t datagram_id, uint8_t data) {
-
-    uint8_t encoded[DCC_RAILCOM_CH1_MAX_BYTES];
-
-    if (!_interface->uart_write) {
-
-        return;
-
-    }
-
-    DccRailcomUtilities_encode_ch1(datagram_id, data, encoded);
-
-    _interface->uart_write(encoded[0]);
-    _interface->uart_write(encoded[1]);
-
-}
-
-void DccRailcomDecoder_send_ch2(const dcc_railcom_response_t *response) {
-
-    uint8_t encoded[DCC_RAILCOM_DATAGRAM_MAX_BYTES + 1];
-    uint8_t count;
-    uint8_t byte_index;
-
-    if (!_interface->uart_write) {
-
-        return;
-
-    }
-
-    count = DccRailcomUtilities_encode_ch2(response, encoded);
-
-    for (byte_index = 0; byte_index < count; byte_index++) {
-
-        _interface->uart_write(encoded[byte_index]);
-
-    }
-
-}
-
 // =============================================================================
 // Decoder-side recognizer -- pure DCC packet-length logic (no side effects)
 // =============================================================================
@@ -518,27 +465,73 @@ static void _fill_ch2(const uint8_t *data, uint8_t count) {
 }
 
     /**
-     * @brief Clock the pending Channel 1 bytes (then Channel 2, if any) out via UART.
+     * @brief Bit-bang one byte as a 250 kbaud UART frame: start bit "0", 8 data bits
+     *  least-significant first, stop bit "1" (S-9.3.2 sec 2.4), 4us per bit. Timing comes
+     *  from the app's delay_us, which must be accurate at the 4us bit period.
+     */
+static void _transmit_byte(uint8_t value) {
+
+    uint8_t bit;
+
+    _interface->tx_pin_set(false);                  /* start bit */
+    _interface->delay_us(DCC_RAILCOM_TX_BIT_US);
+
+    for (bit = 0; bit < 8; bit++) {
+
+        _interface->tx_pin_set((value >> bit) & 0x01);
+        _interface->delay_us(DCC_RAILCOM_TX_BIT_US);
+
+    }
+
+    _interface->tx_pin_set(true);                   /* stop bit */
+    _interface->delay_us(DCC_RAILCOM_TX_BIT_US);
+
+}
+
+    /**
+     * @brief Bit-bang the pending ADR (Channel 1) and any Channel 2 reply into the cutout,
+     *  timed off the packet end-bit edge: blank -> Ch1 -> gap -> Ch2 (S-9.3.2 sec 2.4).
+     *  Runs with all interrupts locked (4us bit timing); the lock also masks the DCC edge
+     *  IRQ, so the decoder's own injected current cannot self-trigger it. Blocks ~454us.
      */
 static void _transmit_pending(void) {
 
     uint8_t byte_index;
 
-    if (!_interface || !_interface->uart_write) {
+    if (!_interface || !_interface->tx_pin_set || !_interface->delay_us) {
 
         return;
 
     }
 
-    for (byte_index = 0; byte_index < DCC_RAILCOM_CH1_MAX_BYTES; byte_index++) {
+    if (_interface->lock_shared_resources) {
 
-        _interface->uart_write(_pending_ch1[byte_index]);
+        _interface->lock_shared_resources();
 
     }
 
+    _interface->tx_pin_set(true);                   /* idle (no current) through the blank */
+    _interface->delay_us(DCC_RAILCOM_TX_BLANK_US);  /* end-bit edge -> Ch1 start (T_TS1) */
+
+    for (byte_index = 0; byte_index < DCC_RAILCOM_CH1_MAX_BYTES; byte_index++) {
+
+        _transmit_byte(_pending_ch1[byte_index]);
+
+    }
+
+    _interface->delay_us(DCC_RAILCOM_TX_GAP_US);    /* Ch1 end -> Ch2 start (T_TS2) */
+
     for (byte_index = 0; byte_index < _pending_ch2_count; byte_index++) {
 
-        _interface->uart_write(_pending_ch2[byte_index]);
+        _transmit_byte(_pending_ch2[byte_index]);
+
+    }
+
+    _interface->tx_pin_set(true);                   /* leave the line idle */
+
+    if (_interface->unlock_shared_resources) {
+
+        _interface->unlock_shared_resources();
 
     }
 
@@ -556,16 +549,9 @@ void DccRailcomDecoder_on_byte_received(const uint8_t *data, uint8_t count) {
 
     }
 
-    /* The byte after a recognized command is its XOR: validate, then transmit. */
+    /* Already recognized this packet -- wait for the end-bit edge (transmit). */
     if (_pending_armed) {
 
-        if (_xor_valid(data, count)) {
-
-            _transmit_pending();
-
-        }
-
-        _pending_armed = false;
         return;
 
     }
@@ -583,6 +569,26 @@ void DccRailcomDecoder_on_byte_received(const uint8_t *data, uint8_t count) {
         _fill_adr();
         _fill_ch2(data, count);
         _pending_armed = true;
+
+    }
+
+}
+
+void DccRailcomDecoder_transmit(const uint8_t *data, uint8_t count) {
+
+    /* Only respond to a command we recognized as addressed to us before its XOR. */
+    if (!_pending_armed) {
+
+        return;
+
+    }
+
+    _pending_armed = false;
+
+    /* Validate the complete packet's XOR; transmit ADR (+ Ch2) only if it passes. */
+    if (_xor_valid(data, count)) {
+
+        _transmit_pending();
 
     }
 

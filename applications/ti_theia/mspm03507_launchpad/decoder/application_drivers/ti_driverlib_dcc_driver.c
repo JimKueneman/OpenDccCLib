@@ -75,3 +75,24 @@ void TIMESTAMP_TIMER_INST_IRQHandler(void) {
     }
 
 }
+
+/* Blocking microsecond delay for the RailCom Tx bit-bang.  Uses a one-shot
+ * 20 MHz hardware timer (20 ticks/us, 50 ns resolution) so the 4 us bit period
+ * is accurate -- the 1 MHz timestamp timer is too coarse (1 us = 25% of a bit).
+ *
+ * PORTING: Replace with your MCU's equivalent one-shot timer or a cycle-accurate
+ * busy-wait.  The requirement is sub-microsecond accuracy at a 4 us bit. */
+void TI_DccDriver_railcom_delay_us(uint16_t us) {
+
+    DL_TimerG_setLoadValue(DELAY_TIMER_INST, (uint16_t)(us * 20u));   /* 20 ticks/us @ 50 ns */
+    DL_TimerG_startCounter(DELAY_TIMER_INST);
+
+    while (!DL_TimerG_getRawInterruptStatus(DELAY_TIMER_INST, DL_TIMER_INTERRUPT_ZERO_EVENT)) {
+
+        /* spin until the counter reaches zero */
+
+    }
+
+    DL_TimerG_clearInterruptStatus(DELAY_TIMER_INST, DL_TIMER_INTERRUPT_ZERO_EVENT);
+
+}

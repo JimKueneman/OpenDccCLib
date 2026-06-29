@@ -381,6 +381,21 @@ extern "C" {
 #define DCC_RAILCOM_CODE_WORD_BUSY          0xE1
 
 // =============================================================================
+// Decoder RailCom Tx timing (S-9.3.2 sec 2.4, from the packet end-bit edge)
+// =============================================================================
+
+    /** @brief One UART bit period. 250 kbit/s +-2% -> 4us per bit. */
+#define DCC_RAILCOM_TX_BIT_US               4
+
+    /** @brief Blank from the end-bit edge to Channel 1 start (T_TS1 = 80us). The
+     *  cutout has already opened by then (T_CS <= 32us), so the line is free. */
+#define DCC_RAILCOM_TX_BLANK_US             80
+
+    /** @brief Gap from Channel 1 end to Channel 2 start. Ch1 is 2 bytes x 10 bits
+     *  x 4us = 80us, so the gap is T_TS2 (193) - T_TS1 (80) - 80 = 33us. */
+#define DCC_RAILCOM_TX_GAP_US               33
+
+// =============================================================================
 // Idle / Reset Packet Constants
 // =============================================================================
 

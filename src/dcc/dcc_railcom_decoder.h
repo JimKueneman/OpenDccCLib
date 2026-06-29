@@ -25,12 +25,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @file dcc_railcom_decoder.h
- * @brief RailCom 4/8 encoding and datagram transmission for decoders.
+ * @brief RailCom decoder-side transmit engine.
  *
- * @details Encodes 6-bit data values into 8-bit DC-balanced codewords per
- * NMRA RP-9.3.2. Provides functions to send Channel 1 and Channel 2
- * datagrams via the interface's uart_write callback. Disabled at runtime if
- * uart_write is NULL.
+ * @details Recognizes a DCC command addressed to this decoder before its XOR byte,
+ * arms the ADR (Channel 1) reply plus the app's optional Channel 2 reply, and -- at the
+ * packet end-bit edge -- bit-bangs the 4/8-encoded response into the RailCom cutout
+ * (S-9.3.2 sec 2.4) via the interface's tx_pin_set, timed off the app's delay_us and
+ * bracketed by the shared-resource lock + edge-IRQ mask. Disabled if tx_pin_set is NULL.
  *
  * @author Jim Kueneman
  * @date 28 Jun 2026
@@ -51,8 +52,20 @@ extern "C" {
     /** @brief Interface struct -- dependencies injected by dcc_config.c */
 typedef struct {
 
-        /** @brief Transmit one 4/8-encoded byte. NULL = no RailCom responses. */
-    void (*uart_write)(uint8_t byte);
+        /** @brief Set the RailCom Tx line to a logical UART level (true = "1"/mark/no
+         *  current, false = "0"/space/current sourced). The app maps it to its current
+         *  source. NULL = no RailCom Tx (the engine recognizes but never transmits). */
+    void (*tx_pin_set)(bool level);
+
+        /** @brief Busy-wait the given microseconds. Must be accurate at the 4us bit period
+         *  (cycle-accurate, not a us-granular timer). REQUIRED when tx_pin_set is set. */
+    void (*delay_us)(uint16_t microseconds);
+
+        /** @brief Mask all interrupts for the transmit window (protects the 4us bit timing). */
+    void (*lock_shared_resources)(void);
+
+        /** @brief Restore interrupts after the transmit window. */
+    void (*unlock_shared_resources)(void);
 
         /** @brief App hook: a command addressed to this decoder was recognized before
          *  the XOR. The app fills @p out for Channel 2 and returns the reply status
@@ -82,34 +95,19 @@ extern void DccRailcomDecoder_initialize(const interface_dcc_railcom_decoder_t *
 extern void DccRailcomDecoder_set_address(dcc_address_t address, dcc_address_type_enum type);
 
     /**
-     * @brief Send a raw RailCom special code word (bypasses the 4/8 table).
-     * @param code_word Raw 8-bit code word to transmit (e.g.
-     *        @ref DCC_RAILCOM_CODE_WORD_ACK or @ref DCC_RAILCOM_CODE_WORD_NACK).
+     * @brief Transmit the armed RailCom reply into the cutout (call at the packet end-bit
+     *  edge, from the bit decoder's on_packet_received).
      *
-     * @details Special code words (ACK/NACK) per the 2026 draft S-9.3.2 are
-     * transmitted verbatim over the same UART write path as encoded bytes,
-     * but are NOT run through the 4/8 encode table.
-     */
-extern void DccRailcomDecoder_send_code_word(uint8_t code_word);
-
-    /**
-     * @brief Send a Channel 1 datagram (2 encoded bytes, 12-bit payload).
-     * @param datagram_id Datagram ID (4 bits, 0-15).
-     * @param data Data byte (8 bits).
+     * @details No-op unless a command addressed to this decoder was recognized while its
+     *  bytes arrived (see @ref DccRailcomDecoder_on_byte_received). Re-validates the XOR of
+     *  the complete packet, and only then bit-bangs ADR (Channel 1) plus the app's optional
+     *  Channel 2 reply -- blank, Ch1, gap, Ch2 -- timed off the end-bit edge per S-9.3.2
+     *  sec 2.4. Blocks for the ~454us cutout with interrupts masked; intended for ISR context.
      *
-     * @details Combines the 4-bit ID and 8-bit data into a 12-bit value,
-     * splits into two 6-bit halves, encodes each, and sends via UART.
+     * @param data Complete packet bytes including the trailing XOR byte.
+     * @param count Number of bytes in @p data.
      */
-extern void DccRailcomDecoder_send_ch1(uint8_t datagram_id, uint8_t data);
-
-    /**
-     * @brief Send a Channel 2 datagram (up to 6 encoded bytes).
-     * @param response Pointer to the response datagram to encode and send.
-     *
-     * @details First two bytes encode the 12-bit combined ID+data[0]. Any
-     * additional data bytes are encoded individually as 6-bit values.
-     */
-extern void DccRailcomDecoder_send_ch2(const dcc_railcom_response_t *response);
+extern void DccRailcomDecoder_transmit(const uint8_t *data, uint8_t count);
 
 // =============================================================================
 // Decoder-side recognizer (pure)
@@ -153,12 +151,13 @@ extern bool DccRailcomDecoder_packet_address(const uint8_t *data, uint8_t count,
             dcc_address_t *address, dcc_address_type_enum *type);
 
     /**
-     * @brief Feed one assembled packet byte to the RailCom Tx dispatch.
+     * @brief Feed one assembled packet byte to the RailCom Tx recognizer.
      *
      * @details Wired (in dcc_config) to the bit decoder's on_byte_received. As bytes
-     *  arrive it recognizes a complete command addressed to this decoder (before the
-     *  XOR), arms the ADR reply, and on the XOR byte -- if the packet validates --
-     *  clocks the reply out via uart_write for the app to place in the cutout.
+     *  arrive it recognizes a complete command addressed to this decoder (the next byte is
+     *  the XOR) and arms the ADR reply plus the app's optional Channel 2 reply (firing
+     *  on_railcom_request before the XOR). The transmit itself happens later, at the
+     *  end-bit edge, in @ref DccRailcomDecoder_transmit.
      *
      * @param data Packet bytes assembled so far.
      * @param count Number of bytes in @p data.

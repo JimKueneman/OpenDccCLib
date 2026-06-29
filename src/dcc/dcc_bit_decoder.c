@@ -29,7 +29,7 @@
  * assembly for DCC decoder.
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 28 Jun 2026
  */
 
 #include "dcc_bit_decoder.h"
@@ -129,6 +129,25 @@ static void _on_bit_separator(bool is_one) {
     if (is_one) {
 
         /* End bit — packet complete */
+#if defined(DCC_COMPILE_RAILCOM)
+        /* RailCom: on_packet_received fires the Tx, which masks/unmasks the DCC edge IRQ
+         * for the cutout. Reset the assembler to a clean preamble search with a skipped
+         * first edge BEFORE that callback, so a queued/stale edge after unmask lands as the
+         * discarded baseline -- not a mid-packet event. The end bit is NOT counted as a
+         * preamble bit (the cutout gaps it from the next packet's preamble). */
+        {
+            uint8_t saved_count = _byte_count;
+
+            _reset_to_preamble();
+            _first_edge = true;
+
+            if (saved_count >= 2 && _interface->on_packet_received) {
+
+                _interface->on_packet_received(_packet_buffer, saved_count);
+
+            }
+        }
+#else
         if (_byte_count >= 2 && _interface->on_packet_received) {
 
             _interface->on_packet_received(_packet_buffer, _byte_count);
@@ -138,6 +157,7 @@ static void _on_bit_separator(bool is_one) {
         /* The end bit also counts as first preamble bit */
         _state = DECODE_SEEKING_PREAMBLE;
         _preamble_count = 1;
+#endif /* DCC_COMPILE_RAILCOM */
 
     } else {
 

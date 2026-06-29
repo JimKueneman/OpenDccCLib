@@ -54,17 +54,25 @@ const dcc_config_t dcc_config = {
     .cv_write_indexed        = &CallbacksDcc_cv_write_indexed,
     .cv29_apply_supported_features = &CallbacksDcc_cv29_apply_supported_features,
 
+    /* --- RailCom Tx hardware (REQUIRED as a group if supporting RailCom;
+     *     both NULL = no RailCom Tx) ---
+     * The library bit-bangs the cutout reply: railcom_tx_pin_set drives the
+     * current source and railcom_delay_us provides the cycle-accurate 4 us bit
+     * timing. lock_shared_resources masks the DCC edge IRQ during the cutout,
+     * so the decoder's injected current cannot self-trigger it. */
+    .railcom_tx_pin_set            = NULL,
+    .railcom_delay_us              = &TI_DccDriver_railcom_delay_us,
+
+    /* --- ACK pulse hardware (service-mode acknowledge; NULL = no ACK) --- */
+    .start_ack_pulse               = &AckPulseDriver_start,
+    .stop_ack_pulse                = &AckPulseDriver_stop,
+
     /* --- Application callbacks (OPTIONAL, NULL = no notification) ---
      * Each of these fires when the library decodes the corresponding DCC
      * command.  Set any to NULL if you do not need that command type.
      *
      * NOTE: Callbacks run from main-loop context (the ISR only captures
      * timestamps; the main loop drains them into the bit decoder). */
-    .railcom_tx_pin_set            = NULL,
-    .decoder_edge_irq_enable       = NULL,
-
-    .start_ack_pulse               = &AckPulseDriver_start,
-    .stop_ack_pulse                = &AckPulseDriver_stop,
 
     .on_speed_command              = &CallbacksDcc_on_speed_command,
     .on_emergency_stop_command     = &CallbacksDcc_on_emergency_stop,

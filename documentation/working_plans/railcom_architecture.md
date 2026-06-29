@@ -69,21 +69,28 @@ code words, sent raw (bypass the 4/8 table).
 
 ## 3. Message taxonomy (what actually rides the cutout)
 
-| Message | Dir | Ch | Placement (§3.1) | Solicited? | **Handled by** | ID | §  |
-|---|---|---|---|---|---|---|---|
-| **ADR** (address) | dec→CS | 1 | P1 · immediate | unsolicited | **library** (addr cache) | ID1/ID2 | 5.2 |
-| **DYN** (speed, fuel, flags) | dec→CS | 2 | P1 · immediate | unsolicited | **app** (Ch2 slot) | ID7 | 5.4 |
-| **POM** read/write | dec→CS | 2 | **P2 · deferred** | solicited (BUSY→result) | **library** (`cv_read`/`cv_write`) | ID0 | 5.1 |
-| **EXT** (location / "where am I") | dec→CS | 2 | P1 · immediate | solicited | **app** (Ch2 slot) | ID3 | 5.3 |
-| **XF / filling** (refuel) | dec→CS | 2 | P1 · immediate | solicited | **app** (Ch2 slot) | ID7 | 5.3.2 |
-| **SRQ** (service request) | acc→CS | 1 | **P3 · repeating** | unsolicited (attention) | **app · raises** | none | 6.1 |
-| **STAT1 / STAT2** (status/aspect) | acc→CS | 2 | P1 · immediate | mixed | **app** (Ch2 slot) | ID4 / ID3 | 6.3 / 6.7 |
-| **TIME**, **ERROR** | acc→CS | 2 | P1 · immediate | mixed | **app** (Ch2 slot) | ID5 / ID6 | 6.4 / 6.5 |
-| **ACK / NACK / BUSY** | dec→CS | 2 | P1 · immediate | token | **library** (cmd outcome) | — | Table 2 |
+Per addressed cutout (mobile decoder): **Channel 1 always carries ADR** (the address —
+ADR_HI / ADR_LO on alternating cutouts); **Channel 2 always carries a reply** (data, or an
+ACK/NACK/BUSY token — never empty). The row is the DCC command that triggered the cutout.
 
-*Placement values point at the §3.1 diagrams: **P1** immediate · **P2** deferred (POM only) ·
-**P3** repeating (SRQ). Channel (1/2) is in the Ch column; the µs windows are in the §3.1
-anatomy diagram.*
+| Triggering command | Channel 1 | Channel 2 | Solicited? | Ch2 by | § |
+|---|---|---|---|---|---|
+| Plain command (speed / fn) | ADR_HI / ADR_LO (alt) | **ACK** | — feedback | library | 3.1 |
+| **POM** read (Read 1 / 4 B) | ADR_HI / ADR_LO (alt) | data (ID0) · **BUSY** | solicited | library (`cv_read`) | 5.1 |
+| **POM** write / write-bit | ADR_HI / ADR_LO (alt) | **ACK** · **NACK** · **BUSY** | solicited | library (`cv_write`) | 5.1 |
+| **EXT** (locate) | ADR_HI / ADR_LO (alt) | data (ID3) · ACK | solicited | app | 5.3 |
+| **DYN** (telemetry) | ADR_HI / ADR_LO (alt) | data (ID7) · ACK | unsolicited | app | 5.4 |
+| **XF** (filling) | ADR_HI / ADR_LO (alt) | data (ID7) · **NACK**¹ | solicited | app | 5.3.2 |
+| Unimplemented RailCom fn | ADR_HI / ADR_LO (alt) | **NACK** | solicited | library | 4.1 |
+
+*Accessory (stationary) is the mirror: Channel 1 carries **SRQ** (attention, repeats until
+served) instead of ADR; Channel 2 carries STAT1/STAT2 (ID4/ID3), TIME (ID5), ERROR (ID6), or
+accessory POM (ID0). Detailed when the accessory module lands — §6.*
+
+*¹ NACK on XF only if filling isn't implemented (else the tank datagram). **Token rules:**
+**BUSY** = POM-family only — the one deferred / cross-cutout reply (CS repeats until the result) ·
+**NACK** = unimplemented-function / failed-write · **ACK** = default reception feedback when
+there's no data. ADR_HI / ADR_LO alternate across successive cutouts; µs windows in §3.1.*
 
 **Key reframe:** the *common* traffic is **unsolicited** — ADR on Ch1 every cutout, DYN on
 Ch2 — not POM. POM is the rare transaction that interrupts the steady broadcast.

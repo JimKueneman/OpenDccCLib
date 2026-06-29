@@ -17,6 +17,7 @@ const SYSTICK = scripting.addModule("/ti/driverlib/SYSTICK");
 const TIMER   = scripting.addModule("/ti/driverlib/TIMER", {}, false);
 const TIMER1  = TIMER.addInstance();
 const TIMER2  = TIMER.addInstance();
+const TIMER3  = TIMER.addInstance();
 const UART    = scripting.addModule("/ti/driverlib/UART", {}, false);
 const UART1   = UART.addInstance();
 
@@ -89,6 +90,9 @@ TIMER2.$name              = "ACK_PULSE_TIMER";
 TIMER2.interruptPriority  = "2";
 TIMER2.peripheral.$assign = "TIMA1";
 
+TIMER3.$name       = "DELAY_TIMER";
+TIMER3.timerPeriod = "50.00 ns";
+
 UART1.$name                            = "UART_CMD";
 UART1.targetBaudRate                   = 230400;
 UART1.enabledInterrupts                = ["RX"];
@@ -120,4 +124,5 @@ Board.peripheral.swdioPin.$suggestSolution         = "PA19";
 GPIO2.associatedPins[0].pin.$suggestSolution       = "PB1";
 GPIO2.associatedPins[1].pin.$suggestSolution       = "PB3";
 GPIO2.associatedPins[2].pin.$suggestSolution       = "PB2";
+TIMER3.peripheral.$suggestSolution                 = "TIMG0";
 UART1.peripheral.$suggestSolution                  = "UART0";

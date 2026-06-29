@@ -325,11 +325,12 @@ typedef struct {
          *  NULL = no RailCom responses. */
     void (*railcom_tx_pin_set)(bool high);
 
-        /** @brief Enable or disable the DCC edge-detect interrupt during RailCom cutout.
-         *  Called with false at end bit before cutout, true after cutout ends. User may
-         *  disable hardware interrupt or set a flag to skip. NULL = no blanking.
-         *  Required if using RailCom. */
-    void (*decoder_edge_irq_enable)(bool enabled);
+        /** @brief Busy-wait the given microseconds for the RailCom Tx bit-bang. Must be
+         *  accurate at the 4us bit period -- a cycle-accurate spin (e.g. a DWT cycle
+         *  counter), NOT a microsecond-granular timer (its +-1us rounding is +-25% on a
+         *  4us bit and the detector UART will not lock). REQUIRED when railcom_tx_pin_set
+         *  is set; NULL = no RailCom Tx. */
+    void (*railcom_delay_us)(uint16_t microseconds);
 
         /** @brief App hook: a command addressed to this decoder was recognized before
          *  the XOR. Fill @p out for Channel 2 and return the reply status (DATA / ACK /
