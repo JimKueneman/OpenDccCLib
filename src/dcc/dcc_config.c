@@ -483,13 +483,84 @@ static void _shared_timer_release(void) {
 #if defined(DCC_COMPILE_RAILCOM)
 /* =========================================================================
  * RailCom cutout bridge: the bit encoder's end bit arms the cutout timer.
- * The encoder runs continuously (no cutout-complete wait) -- the driver blanks
- * its own output between the begin/end hooks -- so on_cutout_complete is unused.
+ * The encoder runs continuously -- the driver blanks its own output between
+ * the begin/end hooks -- so on_cutout_complete is not needed for that
+ * purpose. It is needed for a second one: telling the command station
+ * library when a cutout's bytes are ready to be read.
+ *
+ * DccRailcomCommandStation_begin_cutout() tags the upcoming cutout's decoded
+ * bytes with a DCC address and is the only thing that sets cutout_pending;
+ * without it DccRailcomCommandStation_run() returns immediately and no
+ * RailCom byte is ever decoded. It must be called when the cutout COMPLETES
+ * (the CH2 -> IDLE transition, reported through on_cutout_complete), not when
+ * it begins: at cutout begin neither channel's bytes have been captured yet
+ * (Channel 1 opens ~80 us later, Channel 2 a few hundred us after that), so
+ * a cutout_pending flag set that early lets the next
+ * DccRailcomCommandStation_run() poll read stale bytes left in the UART from
+ * an earlier cutout -- Channel 1 and Channel 2 datagrams then show up
+ * intermittently mislabeled.
+ *
+ * The address to tag with is remembered from the most recently sent packet
+ * (_main_railcom_pending_address). Nothing overwrites it before the cutout
+ * completes, because the next packet cannot go out until this cutout has
+ * finished.
  * ========================================================================= */
+
+static dcc_address_t _main_railcom_pending_address = 0;
+
+    /* Short (1-127) and long/extended (0xC0-0xE7 + a second byte, S-9.2.1)
+     * address forms only -- covers real locomotive traffic, which is what
+     * RailCom POM/ADR replies are tagged against. Broadcast, accessory,
+     * idle, and reserved leading bytes fall through to 0 (untagged) --
+     * the address is only a label for decoded datagrams, not used for
+     * routing. */
+static dcc_address_t _decode_main_packet_address(const dcc_packet_t *packet) {
+
+    if (!packet || packet->byte_count == 0) {
+
+        return 0;
+
+    }
+
+    uint8_t b0 = packet->data[0];
+
+    if (b0 >= 0xC0 && b0 <= 0xE7 && packet->byte_count >= 2) {
+
+        return (dcc_address_t)(((b0 & 0x3F) << 8) | packet->data[1]);
+
+    }
+
+    if (b0 >= 1 && b0 <= 127) {
+
+        return (dcc_address_t)b0;
+
+    }
+
+    return 0;
+
+}
+
+static void _main_on_packet_sent_wrapper(const dcc_packet_t *packet) {
+
+    _main_railcom_pending_address = _decode_main_packet_address(packet);
+
+    if (_configuration_pointer && _configuration_pointer->on_packet_sent) {
+
+        _configuration_pointer->on_packet_sent(packet);
+
+    }
+
+}
 
 static void _railcom_cutout_begin_wrapper(void) {
 
     DccRailcomCutout_begin(&_railcom_cutout_context);
+
+}
+
+static void _railcom_cutout_complete_wrapper(void) {
+
+    DccRailcomCommandStation_begin_cutout(&_main_railcom_context, _main_railcom_pending_address);
 
 }
 #endif /* DCC_COMPILE_RAILCOM */
@@ -654,7 +725,15 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _main_scheduler_interface.load_packet = &_main_load_packet;
     _main_scheduler_interface.is_encoder_idle = &_main_is_encoder_idle;
     _main_scheduler_interface.build_idle_packet = &DccApplicationCommandStationPacket_load_idle;
+#if defined(DCC_COMPILE_RAILCOM)
+    /* Routes through the address-tracking wrapper above (still forwards to
+     * config->on_packet_sent itself) instead of assigning it directly --
+     * needed so the cutout-complete hook knows which address to tag decoded
+     * bytes with. See the RailCom cutout bridge comment above. */
+    _main_scheduler_interface.on_packet_sent = &_main_on_packet_sent_wrapper;
+#else
     _main_scheduler_interface.on_packet_sent = config->on_packet_sent;
+#endif
 
     DccScheduler_initialize(&_main_scheduler_context, &_main_scheduler_interface);
 
@@ -679,7 +758,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _railcom_cutout_interface.end_railcom_cutout = (void *)0;
     _railcom_cutout_interface.uart_rx_enable = (void *)0;
     _railcom_cutout_interface.uart_rx_disable = (void *)0;
-    _railcom_cutout_interface.on_cutout_complete = (void *)0;  /* encoder runs continuously */
+    _railcom_cutout_interface.on_cutout_complete = (void *)0;  /* only if main_track.railcom is configured, below */
 
     if (config->main_track.railcom) {
 
@@ -687,6 +766,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
         _railcom_cutout_interface.end_railcom_cutout = config->main_track.railcom->end_railcom_cutout;
         _railcom_cutout_interface.uart_rx_enable = config->main_track.railcom->uart_rx_enable;
         _railcom_cutout_interface.uart_rx_disable = config->main_track.railcom->uart_rx_disable;
+        _railcom_cutout_interface.on_cutout_complete = &_railcom_cutout_complete_wrapper;
 
     }
 
