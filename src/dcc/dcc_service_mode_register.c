@@ -104,17 +104,35 @@ static void _on_preset_complete(dcc_service_mode_result_t result) {
     _active_context->register_state = REGISTER_STATE_COMMAND;
     _build_register_packet(&packet, _active_context->register_number, _active_context->value, _active_context->is_write);
 
+    bool started;
+
     if (_active_context->is_write) {
 
         uint8_t recovery = (_active_context->register_number == 1)
                            ? DCC_SERVICE_MODE_RECOVERY_COUNT_LONG
                            : DCC_SERVICE_MODE_RECOVERY_COUNT;
 
-        _active_context->interface->begin_operation(&packet, &_on_command_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, recovery);
+        started = _active_context->interface->begin_operation(&packet, &_on_command_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, recovery);
 
     } else {
 
-        _active_context->interface->begin_operation(&packet, &_on_command_complete, false, DCC_SERVICE_MODE_REGISTER_VERIFY_REPEAT, 0);
+        started = _active_context->interface->begin_operation(&packet, &_on_command_complete, false, DCC_SERVICE_MODE_REGISTER_VERIFY_REPEAT, 0);
+
+    }
+
+    /* begin_operation() refuses to start when the shared context is not idle.
+     * Fail cleanly rather than leave this state machine stuck in COMMAND with
+     * no completion callback ever arriving (which would also reject every
+     * later call, since the state never returns to IDLE). */
+    if (!started) {
+
+        _active_context->register_state = REGISTER_STATE_IDLE;
+
+        if (_active_context->interface->on_complete) {
+
+            _active_context->interface->on_complete(DCC_SERVICE_MODE_BUSY);
+
+        }
 
     }
 
