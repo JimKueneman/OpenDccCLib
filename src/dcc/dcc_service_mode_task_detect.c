@@ -132,7 +132,16 @@ static void _begin_direct_read(void) {
 
 }
 
+static void _begin_register(void); /* forward declaration for the skip-ahead below */
+
 static void _begin_paged(void) {
+
+    if (!_context.interface->paged_verify) {
+
+        _begin_register(); /* Paged mode not compiled in; nothing to probe. */
+        return;
+
+    }
 
     if (_context.value_known) {
 
@@ -159,7 +168,16 @@ static void _begin_paged(void) {
 
 }
 
+static void _begin_address(void); /* forward declaration for the skip-ahead below */
+
 static void _begin_register(void) {
+
+    if (!_context.interface->register_verify) {
+
+        _begin_address(); /* Register mode not compiled in; nothing to probe. */
+        return;
+
+    }
 
     if (_context.value_known) {
 
@@ -187,6 +205,13 @@ static void _begin_register(void) {
 }
 
 static void _begin_address(void) {
+
+    if (!_context.interface->address_verify) {
+
+        _finish(); /* Address-only mode not compiled in; detection is done. */
+        return;
+
+    }
 
     _context.scan_value = 0;
     _context.state = DCC_TASK_DETECT_STATE_PROBE_ADDRESS_SCAN;
@@ -221,6 +246,16 @@ bool DccServiceModeTaskDetect_detect_mode(dcc_service_mode_task_on_detect_callba
     _context.read_bit        = 0;
     _context.ack_result      = false;
     _context.on_detect       = on_detect;
+
+    if (!_context.interface->direct_verify_bit) {
+
+        /* Direct mode not compiled in; skip straight to Paged. _begin_paged()
+         * sets its own state, and reports through on_detect if it in turn
+         * has to fail/skip further -- this call still counts as "started". */
+        _begin_paged();
+        return true;
+
+    }
 
     _context.state           = DCC_TASK_DETECT_STATE_PROBE_DIRECT_0;
 
