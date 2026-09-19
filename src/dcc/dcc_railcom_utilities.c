@@ -230,7 +230,14 @@ bool DccRailcomUtilities_decode_ch2(const uint8_t *raw_bytes, uint8_t raw_count,
 
         if (decoded_value >= 0x40) {
 
-            return false;
+            /* ACK (0xFE), NACK (0xFD), or invalid (0xFF). S-9.3.2 lets a
+             * decoder fill the unused remainder of the 36-bit Channel 2 data
+             * channel with ACK, so a datagram shorter than the window is
+             * normally followed by ACK bytes. Stop consuming bytes here and
+             * decode whatever came before, instead of discarding an already-
+             * decoded valid datagram (e.g. a 2-byte POM reply) because ACK
+             * filler follows it. */
+            break;
 
         }
 

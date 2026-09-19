@@ -215,6 +215,43 @@ TEST(DccRailcomUtilities, decode_ch2_invalid_byte) {
 
 }
 
+TEST(DccRailcomUtilities, decode_ch2_ack_padding_after_datagram) {
+
+    dcc_railcom_datagram_t datagram;
+    /* 0x00, 0x01, then the rest of the 6-byte window filled with ACK */
+    uint8_t raw[] = { 0xAC, 0xAA, 0x0F, 0x0F, 0x0F, 0x0F };
+
+    EXPECT_TRUE(DccRailcomUtilities_decode_ch2(raw, 6, &datagram));
+    EXPECT_EQ(datagram.datagram_id, (uint8_t)0);
+    EXPECT_EQ(datagram.data[0], (uint8_t)0x01);
+    EXPECT_EQ(datagram.count, (uint8_t)1);
+    EXPECT_TRUE(datagram.valid);
+
+}
+
+TEST(DccRailcomUtilities, decode_ch2_pom_reply_from_real_decoder) {
+
+    dcc_railcom_datagram_t datagram;
+    /* Captured from a decoder answering a POM verify of a CV that holds 40
+     * (0x28): id 0, value 0x28, remaining window bytes ACK (0x0F). */
+    uint8_t raw[] = { 0xAC, 0xE2, 0x0F, 0x0F, 0x0F, 0x0F };
+
+    EXPECT_TRUE(DccRailcomUtilities_decode_ch2(raw, 6, &datagram));
+    EXPECT_EQ(datagram.datagram_id, (uint8_t)0);
+    EXPECT_EQ(datagram.data[0], (uint8_t)0x28);
+    EXPECT_EQ(datagram.count, (uint8_t)1);
+
+}
+
+TEST(DccRailcomUtilities, decode_ch2_all_ack_returns_false) {
+
+    dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F };
+
+    EXPECT_FALSE(DccRailcomUtilities_decode_ch2(raw, 6, &datagram));
+
+}
+
 // ============================================================================
 // Encode table matches NMRA S-9.3.2 Table 2
 // ============================================================================
