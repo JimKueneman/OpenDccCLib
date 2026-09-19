@@ -29,13 +29,13 @@
  *
  * @details Determines ALL supported service modes, returned as a
  * DCC_SERVICE_MODE_SUPPORTED_* bitmask:
- *   1. Direct  — spec method (§E lines 95-99): two bit-verifies of CV#8 bit 7,
+ *   1. Direct  -- spec method (§E lines 95-99): two bit-verifies of CV#8 bit 7,
  *      one with value 0 and one with value 1; ACK of either => Direct supported.
  *      If supported, the remaining CV#8 bits are read so the byte value is known.
- *   2. Paged   — if the CV#8 value is already known, a single verify; otherwise a
+ *   2. Paged   -- if the CV#8 value is already known, a single verify; otherwise a
  *      0..255 scan of CV#8 (Manufacturer ID) that also learns the value.
- *   3. Register — same as Paged, against register 8 (= CV#8 mfg ID).
- *   4. Address-Only — separate 0..127 scan of CV#1 (cannot reach CV#8). NOT assumed
+ *   3. Register -- same as Paged, against register 8 (= CV#8 mfg ID).
+ *   4. Address-Only -- separate 0..127 scan of CV#1 (cannot reach CV#8). NOT assumed
  *      to be universally supported (the spec mandates it for command stations, not
  *      for every decoder).
  * If no stage acknowledges, supported_modes == 0 and result is NO_ACK.
@@ -50,7 +50,7 @@
 
 #include <string.h>
 
-/* CV#8 (Manufacturer ID) is a known-populated CV — the same one the spec uses
+/* CV#8 (Manufacturer ID) is a known-populated CV -- the same one the spec uses
  * for Direct detection. Register 8 maps to CV#8 (Mobile) / CV#520 (Accessory). */
 #define DCC_DETECT_CV          8u
 #define DCC_DETECT_BIT         7u
@@ -102,12 +102,33 @@ static void _finish(void) {
 
 }
 
+/* Same shape as _finish(), but for a primitive call that failed to start --
+ * reports the given result (e.g. DCC_SERVICE_MODE_BUSY) instead of deriving
+ * SUCCESS/NO_ACK from supported_modes, and always resets to IDLE so a later
+ * detect_mode() call isn't permanently locked out. */
+static void _fail(dcc_service_mode_result_t result) {
+
+    _context.state = DCC_TASK_DETECT_STATE_IDLE;
+
+    if (_context.on_detect) {
+
+        _context.on_detect(result, _context.supported_modes);
+
+    }
+
+}
+
 static void _begin_direct_read(void) {
 
     /* CV#8 bit 7 already determined by detection; read bits 6..0 to complete the byte. */
     _context.read_bit = DCC_DETECT_BIT - 1u;
     _context.state = DCC_TASK_DETECT_STATE_READ_DIRECT;
-    _context.interface->direct_verify_bit(DCC_DETECT_CV, _context.read_bit, true);
+
+    if (!_context.interface->direct_verify_bit(DCC_DETECT_CV, _context.read_bit, true)) {
+
+        _fail(DCC_SERVICE_MODE_BUSY);
+
+    }
 
 }
 
@@ -116,13 +137,23 @@ static void _begin_paged(void) {
     if (_context.value_known) {
 
         _context.state = DCC_TASK_DETECT_STATE_PROBE_PAGED_VERIFY;
-        _context.interface->paged_verify(DCC_DETECT_CV, _context.value);
+
+        if (!_context.interface->paged_verify(DCC_DETECT_CV, _context.value)) {
+
+            _fail(DCC_SERVICE_MODE_BUSY);
+
+        }
 
     } else {
 
         _context.scan_value = 0;
         _context.state = DCC_TASK_DETECT_STATE_PROBE_PAGED_SCAN;
-        _context.interface->paged_verify(DCC_DETECT_CV, 0);
+
+        if (!_context.interface->paged_verify(DCC_DETECT_CV, 0)) {
+
+            _fail(DCC_SERVICE_MODE_BUSY);
+
+        }
 
     }
 
@@ -133,13 +164,23 @@ static void _begin_register(void) {
     if (_context.value_known) {
 
         _context.state = DCC_TASK_DETECT_STATE_PROBE_REGISTER_VERIFY;
-        _context.interface->register_verify(DCC_DETECT_REGISTER, _context.value);
+
+        if (!_context.interface->register_verify(DCC_DETECT_REGISTER, _context.value)) {
+
+            _fail(DCC_SERVICE_MODE_BUSY);
+
+        }
 
     } else {
 
         _context.scan_value = 0;
         _context.state = DCC_TASK_DETECT_STATE_PROBE_REGISTER_SCAN;
-        _context.interface->register_verify(DCC_DETECT_REGISTER, 0);
+
+        if (!_context.interface->register_verify(DCC_DETECT_REGISTER, 0)) {
+
+            _fail(DCC_SERVICE_MODE_BUSY);
+
+        }
 
     }
 
@@ -149,7 +190,12 @@ static void _begin_address(void) {
 
     _context.scan_value = 0;
     _context.state = DCC_TASK_DETECT_STATE_PROBE_ADDRESS_SCAN;
-    _context.interface->address_verify(0);
+
+    if (!_context.interface->address_verify(0)) {
+
+        _fail(DCC_SERVICE_MODE_BUSY);
+
+    }
 
 }
 
@@ -175,9 +221,15 @@ bool DccServiceModeTaskDetect_detect_mode(dcc_service_mode_task_on_detect_callba
     _context.read_bit        = 0;
     _context.ack_result      = false;
     _context.on_detect       = on_detect;
+
     _context.state           = DCC_TASK_DETECT_STATE_PROBE_DIRECT_0;
 
-    _context.interface->direct_verify_bit(DCC_DETECT_CV, DCC_DETECT_BIT, false);
+    if (!_context.interface->direct_verify_bit(DCC_DETECT_CV, DCC_DETECT_BIT, false)) {
+
+        _context.state = DCC_TASK_DETECT_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -202,7 +254,12 @@ void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_t re
             } else {
 
                 _context.state = DCC_TASK_DETECT_STATE_PROBE_DIRECT_1;
-                _context.interface->direct_verify_bit(DCC_DETECT_CV, DCC_DETECT_BIT, true);
+
+                if (!_context.interface->direct_verify_bit(DCC_DETECT_CV, DCC_DETECT_BIT, true)) {
+
+                    _fail(DCC_SERVICE_MODE_BUSY);
+
+                }
 
             }
 
@@ -240,7 +297,12 @@ void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_t re
             } else {
 
                 _context.read_bit--;
-                _context.interface->direct_verify_bit(DCC_DETECT_CV, _context.read_bit, true);
+
+                if (!_context.interface->direct_verify_bit(DCC_DETECT_CV, _context.read_bit, true)) {
+
+                    _fail(DCC_SERVICE_MODE_BUSY);
+
+                }
 
             }
 
@@ -274,7 +336,12 @@ void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_t re
             } else {
 
                 _context.scan_value++;
-                _context.interface->paged_verify(DCC_DETECT_CV, _context.scan_value);
+
+                if (!_context.interface->paged_verify(DCC_DETECT_CV, _context.scan_value)) {
+
+                    _fail(DCC_SERVICE_MODE_BUSY);
+
+                }
 
             }
 
@@ -308,7 +375,12 @@ void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_t re
             } else {
 
                 _context.scan_value++;
-                _context.interface->register_verify(DCC_DETECT_REGISTER, _context.scan_value);
+
+                if (!_context.interface->register_verify(DCC_DETECT_REGISTER, _context.scan_value)) {
+
+                    _fail(DCC_SERVICE_MODE_BUSY);
+
+                }
 
             }
 
@@ -328,7 +400,12 @@ void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_t re
             } else {
 
                 _context.scan_value++;
-                _context.interface->address_verify(_context.scan_value);
+
+                if (!_context.interface->address_verify(_context.scan_value)) {
+
+                    _fail(DCC_SERVICE_MODE_BUSY);
+
+                }
 
             }
 

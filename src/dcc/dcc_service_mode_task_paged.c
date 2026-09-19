@@ -128,7 +128,12 @@ static void _advance_scan(dcc_task_paged_state_enum next_on_found) {
 
             _context.value = modified;
             _context.state = DCC_TASK_PAGED_STATE_WRITE_BIT_WRITE;
-            _context.interface->paged_write(_context.cv, modified);
+
+            if (!_context.interface->paged_write(_context.cv, modified)) {
+
+                _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+            }
 
         }
 
@@ -139,7 +144,12 @@ static void _advance_scan(dcc_task_paged_state_enum next_on_found) {
     } else {
 
         _context.scan_value++;
-        _context.interface->paged_verify(_context.cv, _context.scan_value);
+
+        if (!_context.interface->paged_verify(_context.cv, _context.scan_value)) {
+
+            _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+        }
 
     }
 
@@ -150,7 +160,12 @@ static void _advance_write_cv(void) {
     _context.current_step++;
     _report_progress(DCC_TASK_PHASE_WRITE);
     _context.state = DCC_TASK_PAGED_STATE_WRITE_CV_VERIFY;
-    _context.interface->paged_verify(_context.cv, _context.value);
+
+    if (!_context.interface->paged_verify(_context.cv, _context.value)) {
+
+        _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+    }
 
 }
 
@@ -167,7 +182,12 @@ static void _advance_write_cv_verify(void) {
 static void _advance_write_bit_write(void) {
 
     _context.state = DCC_TASK_PAGED_STATE_WRITE_BIT_VERIFY;
-    _context.interface->paged_verify(_context.cv, _context.value);
+
+    if (!_context.interface->paged_verify(_context.cv, _context.value)) {
+
+        _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+    }
 
 }
 
@@ -208,7 +228,12 @@ bool DccServiceModeTaskPaged_read_cv(uint16_t cv, dcc_service_mode_task_on_compl
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_PAGED_STATE_READ_CV;
 
-    _context.interface->paged_verify(cv, 0);
+    if (!_context.interface->paged_verify(cv, 0)) {
+
+        _context.state = DCC_TASK_PAGED_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -236,7 +261,12 @@ bool DccServiceModeTaskPaged_write_cv(uint16_t cv, uint8_t value, dcc_service_mo
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_PAGED_STATE_WRITE_CV;
 
-    _context.interface->paged_write(cv, value);
+    if (!_context.interface->paged_write(cv, value)) {
+
+        _context.state = DCC_TASK_PAGED_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -271,7 +301,12 @@ bool DccServiceModeTaskPaged_read_bit(uint16_t cv, uint8_t bit, dcc_service_mode
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_PAGED_STATE_READ_BIT_READ_BYTE;
 
-    _context.interface->paged_verify(cv, 0);
+    if (!_context.interface->paged_verify(cv, 0)) {
+
+        _context.state = DCC_TASK_PAGED_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -307,7 +342,12 @@ bool DccServiceModeTaskPaged_write_bit(uint16_t cv, uint8_t bit, bool bit_value,
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_PAGED_STATE_WRITE_BIT_READ_BYTE;
 
-    _context.interface->paged_verify(cv, 0);
+    if (!_context.interface->paged_verify(cv, 0)) {
+
+        _context.state = DCC_TASK_PAGED_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 

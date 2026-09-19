@@ -104,9 +104,9 @@ static void _advance_read_cv(void) {
 
         _complete(DCC_SERVICE_MODE_SUCCESS, _context.value);
 
-    } else {
+    } else if (!_context.interface->verify_bit(_context.cv, _context.bit, true)) {
 
-        _context.interface->verify_bit(_context.cv, _context.bit, true);
+        _complete(DCC_SERVICE_MODE_BUSY, 0);
 
     }
 
@@ -117,7 +117,12 @@ static void _advance_write_cv(void) {
     _context.current_step++;
     _report_progress(DCC_TASK_PHASE_WRITE);
     _context.state = DCC_TASK_DIRECT_STATE_WRITE_CV_VERIFY;
-    _context.interface->verify_byte(_context.cv, _context.value);
+
+    if (!_context.interface->verify_byte(_context.cv, _context.value)) {
+
+        _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+    }
 
 }
 
@@ -141,7 +146,12 @@ static void _advance_read_bit(void) {
 static void _advance_write_bit(void) {
 
     _context.state = DCC_TASK_DIRECT_STATE_WRITE_BIT_VERIFY;
-    _context.interface->verify_bit(_context.cv, _context.bit, _context.bit_value);
+
+    if (!_context.interface->verify_bit(_context.cv, _context.bit, _context.bit_value)) {
+
+        _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+    }
 
 }
 
@@ -183,7 +193,12 @@ bool DccServiceModeTaskDirect_read_cv(uint16_t cv, dcc_service_mode_task_on_comp
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_DIRECT_STATE_READ_CV;
 
-    _context.interface->verify_bit(cv, 0, true);
+    if (!_context.interface->verify_bit(cv, 0, true)) {
+
+        _context.state = DCC_TASK_DIRECT_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -211,7 +226,12 @@ bool DccServiceModeTaskDirect_write_cv(uint16_t cv, uint8_t value, dcc_service_m
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_DIRECT_STATE_WRITE_CV;
 
-    _context.interface->write_byte(cv, value);
+    if (!_context.interface->write_byte(cv, value)) {
+
+        _context.state = DCC_TASK_DIRECT_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -244,7 +264,12 @@ bool DccServiceModeTaskDirect_read_bit(uint16_t cv, uint8_t bit, dcc_service_mod
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_DIRECT_STATE_READ_BIT;
 
-    _context.interface->verify_bit(cv, bit, true);
+    if (!_context.interface->verify_bit(cv, bit, true)) {
+
+        _context.state = DCC_TASK_DIRECT_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -278,7 +303,12 @@ bool DccServiceModeTaskDirect_write_bit(uint16_t cv, uint8_t bit, bool bit_value
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_DIRECT_STATE_WRITE_BIT;
 
-    _context.interface->write_bit(cv, bit, bit_value);
+    if (!_context.interface->write_bit(cv, bit, bit_value)) {
+
+        _context.state = DCC_TASK_DIRECT_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 

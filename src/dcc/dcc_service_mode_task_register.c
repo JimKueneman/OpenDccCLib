@@ -149,7 +149,12 @@ static void _advance_scan(bool to_write_bit) {
 
             _context.value = modified;
             _context.state = DCC_TASK_REGISTER_STATE_WRITE_BIT_WRITE;
-            _context.interface->register_write(_context.reg, modified);
+
+            if (!_context.interface->register_write(_context.reg, modified)) {
+
+                _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+            }
 
         } else if (_context.state == DCC_TASK_REGISTER_STATE_READ_BIT_READ_BYTE) {
 
@@ -169,7 +174,12 @@ static void _advance_scan(bool to_write_bit) {
     } else {
 
         _context.scan_value++;
-        _context.interface->register_verify(_context.reg, _context.scan_value);
+
+        if (!_context.interface->register_verify(_context.reg, _context.scan_value)) {
+
+            _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+        }
 
     }
 
@@ -180,7 +190,12 @@ static void _advance_write_cv(void) {
     _context.current_step++;
     _report_progress(DCC_TASK_PHASE_WRITE);
     _context.state = DCC_TASK_REGISTER_STATE_WRITE_CV_VERIFY;
-    _context.interface->register_verify(_context.reg, _context.value);
+
+    if (!_context.interface->register_verify(_context.reg, _context.value)) {
+
+        _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+    }
 
 }
 
@@ -197,7 +212,12 @@ static void _advance_write_cv_verify(void) {
 static void _advance_write_bit_write(void) {
 
     _context.state = DCC_TASK_REGISTER_STATE_WRITE_BIT_VERIFY;
-    _context.interface->register_verify(_context.reg, _context.value);
+
+    if (!_context.interface->register_verify(_context.reg, _context.value)) {
+
+        _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+    }
 
 }
 
@@ -248,7 +268,12 @@ bool DccServiceModeTaskRegister_read_cv(uint16_t cv, dcc_decoder_type_enum decod
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_REGISTER_STATE_READ_CV;
 
-    _context.interface->register_verify(reg, 0);
+    if (!_context.interface->register_verify(reg, 0)) {
+
+        _context.state = DCC_TASK_REGISTER_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -279,7 +304,12 @@ bool DccServiceModeTaskRegister_write_cv(uint16_t cv, uint8_t value, dcc_decoder
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_REGISTER_STATE_WRITE_CV;
 
-    _context.interface->register_write(reg, value);
+    if (!_context.interface->register_write(reg, value)) {
+
+        _context.state = DCC_TASK_REGISTER_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -317,7 +347,12 @@ bool DccServiceModeTaskRegister_read_bit(uint16_t cv, uint8_t bit, dcc_decoder_t
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_REGISTER_STATE_READ_BIT_READ_BYTE;
 
-    _context.interface->register_verify(reg, 0);
+    if (!_context.interface->register_verify(reg, 0)) {
+
+        _context.state = DCC_TASK_REGISTER_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -356,7 +391,12 @@ bool DccServiceModeTaskRegister_write_bit(uint16_t cv, uint8_t bit, bool bit_val
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_REGISTER_STATE_WRITE_BIT_READ_BYTE;
 
-    _context.interface->register_verify(reg, 0);
+    if (!_context.interface->register_verify(reg, 0)) {
+
+        _context.state = DCC_TASK_REGISTER_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -396,7 +436,12 @@ bool DccServiceModeTaskRegister_verify_value(uint16_t cv, uint8_t value, dcc_dec
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_REGISTER_STATE_VERIFY_VALUE;
 
-    _context.interface->register_verify(reg, value);
+    if (!_context.interface->register_verify(reg, value)) {
+
+        _context.state = DCC_TASK_REGISTER_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -416,7 +461,12 @@ bool DccServiceModeTaskRegister_factory_reset(dcc_service_mode_task_on_complete_
     _context.on_progress  = NULL;
     _context.state        = DCC_TASK_REGISTER_STATE_FACTORY_RESET;
 
-    _context.interface->register_write(8, 8);
+    if (!_context.interface->register_write(8, 8)) {
+
+        _context.state = DCC_TASK_REGISTER_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
