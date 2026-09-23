@@ -76,6 +76,42 @@ extern "C" {
      *  Only ever expanded inside command-station code. */
 #define DCC_PREAMBLE_BITS_OPS               USER_DEFINED_DCC_PREAMBLE_BITS_OPS
 
+// =============================================================================
+// One-shot packet repeat defaults (repeat_count as set by the packet builders)
+//
+// repeat_count is how many times the scheduler sends a ONE-SHOT packet: it is
+// decremented after each send and the slot is dropped at 0, so a packet handed
+// over with 0 is NEVER transmitted. Auto-refresh slots ignore it. Every builder
+// therefore sets a spec-correct default; an application may still override the
+// field after the builder returns.
+// =============================================================================
+
+    /** @brief WRITE BYTE / WRITE BIT: "two identical packets are needed before the
+     *  decoder shall modify a configuration variable" -- loco POM (S-9.2.1 sec
+     *  2.3.7.3) and accessory decoders, which use "the same method" (sec 2.4.3). */
+#define DCC_REPEAT_CV_WRITE                 2
+
+    /** @brief VERIFY BYTE / VERIFY BIT act on the first packet received (S-9.2.1 sec 2.3.7.3). */
+#define DCC_REPEAT_CV_VERIFY                1
+
+    /** @brief Model date "is transmitted (at least three times) only if changed" (S-9.2.1 sec 2.3.6.2). */
+#define DCC_REPEAT_MODEL_DATE               3
+
+    /** @brief Model time "at most once every (model) minute" (S-9.2.1 sec 2.3.6.2) and
+     *  system time (sec 2.3.6.3): one send per update. */
+#define DCC_REPEAT_TIME                     1
+
+    /** @brief Accessory NOP (RailCom poll) and the accessory basic/extended STOP
+     *  builders: one send. Maintainer policy; the spec gives no count. */
+#define DCC_REPEAT_ACCESSORY_NOP            1
+#define DCC_REPEAT_ACCESSORY_STOP           1
+
+    /** @brief Every one-shot the spec leaves uncounted -- speed, function groups,
+     *  F13-F68, accessory ON/OFF, consist, binary state, analog, reset, idle.
+     *  S-9.2 sec C only asks that packets be "repeated as frequently as possible",
+     *  so this is a maintainer policy: 2 = one repeat to survive a single lost packet. */
+#define DCC_REPEAT_ONE_SHOT_DEFAULT         2
+
     /** @brief Minimum preamble bits for service mode */
 #define DCC_PREAMBLE_BITS_SERVICE           20
 

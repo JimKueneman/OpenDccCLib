@@ -136,7 +136,7 @@ static bool _func_expansion(dcc_packet_t *packet, dcc_address_t address, dcc_add
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
     return true;
 
@@ -207,7 +207,7 @@ static bool _cv_ops_common(dcc_packet_t *packet, dcc_address_t address, dcc_addr
      * operation."); VERIFY BYTE (p.8) acts on the first packet it receives.
      * The scheduler decrements repeat_count after each send and drops the
      * slot at 0 (dcc_scheduler.c), so a write has to start at 2. */
-    packet->repeat_count = (cv_instruction_prefix == DCC_CV_LONG_WRITE) ? 2 : 1;
+    packet->repeat_count = (cv_instruction_prefix == DCC_CV_LONG_WRITE) ? DCC_REPEAT_CV_WRITE : DCC_REPEAT_CV_VERIFY;
 
     return true;
 
@@ -224,7 +224,7 @@ void DccApplicationCommandStationPacket_load_idle(dcc_packet_t *packet) {
     packet->data[2] = DCC_IDLE_XOR_BYTE;
     packet->byte_count = 3;
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
 }
 
@@ -235,7 +235,7 @@ void DccApplicationCommandStationPacket_load_reset(dcc_packet_t *packet) {
     packet->data[2] = DCC_RESET_BYTE;
     packet->byte_count = 3;
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
 }
 
@@ -253,7 +253,7 @@ void DccApplicationCommandStationPacket_load_estop_all(dcc_packet_t *packet, boo
     _append_xor(packet);   /* error byte = data[0] ^ data[1] = copy of byte two */
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
 }
 
@@ -291,7 +291,7 @@ bool DccApplicationCommandStationPacket_load_speed_128(dcc_packet_t *packet, dcc
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
     return true;
 
@@ -347,7 +347,7 @@ bool DccApplicationCommandStationPacket_load_speed_28(dcc_packet_t *packet, dcc_
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
     return true;
 
@@ -383,7 +383,7 @@ bool DccApplicationCommandStationPacket_load_speed_14(dcc_packet_t *packet, dcc_
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
     return true;
 
@@ -413,7 +413,7 @@ bool DccApplicationCommandStationPacket_load_func_group_1(dcc_packet_t *packet, 
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
     return true;
 
@@ -439,7 +439,7 @@ bool DccApplicationCommandStationPacket_load_func_group_2a(dcc_packet_t *packet,
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
     return true;
 
@@ -465,7 +465,7 @@ bool DccApplicationCommandStationPacket_load_func_group_2b(dcc_packet_t *packet,
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
     return true;
 
@@ -544,7 +544,7 @@ bool DccApplicationCommandStationPacket_load_accessory_basic(dcc_packet_t *packe
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
     return true;
 
@@ -573,7 +573,7 @@ bool DccApplicationCommandStationPacket_load_accessory_extended(dcc_packet_t *pa
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
     return true;
 
@@ -601,7 +601,7 @@ bool DccApplicationCommandStationPacket_load_accessory_nop(dcc_packet_t *packet,
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ACCESSORY_NOP;
 
     return true;
 
@@ -640,7 +640,7 @@ bool DccApplicationCommandStationPacket_load_accessory_basic_stop(dcc_packet_t *
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 1;
+    packet->repeat_count = DCC_REPEAT_ACCESSORY_STOP;
 
     return true;
 
@@ -675,7 +675,7 @@ bool DccApplicationCommandStationPacket_load_accessory_extended_stop(dcc_packet_
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 1;
+    packet->repeat_count = DCC_REPEAT_ACCESSORY_STOP;
 
     return true;
 
@@ -735,7 +735,7 @@ static bool _acc_basic_cv_common(dcc_packet_t *packet, uint16_t board_address, u
      * transmission was never caught. 2026-09-24: fixed alongside the same
      * write/verify split S-9.2.1 p.9 requires for the loco POM builders --
      * two identical packets for a write, one for a verify. */
-    packet->repeat_count = is_write ? 2 : 1;
+    packet->repeat_count = is_write ? DCC_REPEAT_CV_WRITE : DCC_REPEAT_CV_VERIFY;
 
     return true;
 
@@ -781,7 +781,7 @@ static bool _acc_extended_cv_common(dcc_packet_t *packet, uint16_t address, uint
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
     /* Same never-sent bug and the same write/verify split as
      * _acc_basic_cv_common() above -- see its 2026-09-24 comment. */
-    packet->repeat_count = is_write ? 2 : 1;
+    packet->repeat_count = is_write ? DCC_REPEAT_CV_WRITE : DCC_REPEAT_CV_VERIFY;
 
     return true;
 
@@ -952,7 +952,7 @@ bool DccApplicationCommandStationPacket_load_cv_bit_pom(dcc_packet_t *packet, dc
      * same as WRITE BYTE ("a configuration variable access acknowledgment
      * will be generated in response to the second identical WRITE BIT
      * instruction"); VERIFY BIT, like VERIFY BYTE, acts on the first. */
-    packet->repeat_count = write ? 2 : 1;
+    packet->repeat_count = write ? DCC_REPEAT_CV_WRITE : DCC_REPEAT_CV_VERIFY;
 
     return true;
 
@@ -994,7 +994,7 @@ bool DccApplicationCommandStationPacket_load_consist_set(dcc_packet_t *packet, d
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
     return true;
 
@@ -1041,7 +1041,7 @@ bool DccApplicationCommandStationPacket_load_binary_state_short(dcc_packet_t *pa
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
     return true;
 
@@ -1081,7 +1081,7 @@ bool DccApplicationCommandStationPacket_load_binary_state_long(dcc_packet_t *pac
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
     return true;
 
@@ -1115,7 +1115,7 @@ bool DccApplicationCommandStationPacket_load_analog_function(dcc_packet_t *packe
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_ONE_SHOT_DEFAULT;
 
     return true;
 
@@ -1134,7 +1134,7 @@ void DccApplicationCommandStationPacket_load_system_time(dcc_packet_t *packet, u
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_TIME;
 
 }
 
@@ -1158,7 +1158,7 @@ bool DccApplicationCommandStationPacket_load_model_time(dcc_packet_t *packet, ui
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_TIME;
 
     return true;
 
@@ -1185,7 +1185,7 @@ bool DccApplicationCommandStationPacket_load_model_date(dcc_packet_t *packet, ui
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    packet->repeat_count = DCC_REPEAT_MODEL_DATE;
 
     return true;
 

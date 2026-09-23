@@ -40,6 +40,8 @@ static void verify_xor(const dcc_packet_t *pkt) {
 TEST(DccPacketEncoder, idle_packet_bytes) {
     dcc_packet_t pkt;
     DccApplicationCommandStationPacket_load_idle(&pkt);
+    /* repeat_count: one-shot default (S-9.2 sec C leaves the count open; policy 2) */
+    EXPECT_EQ(pkt.repeat_count, 2);
 
     EXPECT_EQ(pkt.data[0], 0xFF);
     EXPECT_EQ(pkt.data[1], 0x00);
@@ -70,6 +72,8 @@ TEST(DccPacketEncoder, idle_packet_xor_valid) {
 TEST(DccPacketEncoder, reset_packet_bytes) {
     dcc_packet_t pkt;
     DccApplicationCommandStationPacket_load_reset(&pkt);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
 
     EXPECT_EQ(pkt.data[0], 0x00);
     EXPECT_EQ(pkt.data[1], 0x00);
@@ -94,6 +98,8 @@ TEST(DccPacketEncoder, speed128_short_addr_forward) {
     bool ok = DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[0], 3);           /* short address */
     EXPECT_EQ(pkt.data[1], 0x3F);        /* advanced ops 128-step */
     EXPECT_EQ(pkt.data[2], 0x80 | 50);   /* direction=forward, speed=50 */
@@ -187,6 +193,8 @@ TEST(DccPacketEncoder, estop_all_packet) {
     dcc_packet_t pkt;
     /* isPanic=true -> S-9.2 baseline broadcast stop, S=1 (stop delivering energy) */
     DccApplicationCommandStationPacket_load_estop_all(&pkt, true);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
 
     EXPECT_EQ(pkt.data[0], 0x00);  /* broadcast address          */
     EXPECT_EQ(pkt.data[1], 0x51);  /* 01DC000S: D=0 C=1 S=1       */
@@ -224,6 +232,8 @@ TEST(DccPacketEncoder, speed28_stop) {
     bool ok = DccApplicationCommandStationPacket_load_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 0, true);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[0], 3);
     /* Forward + stop: 011 00000 = 0x60 */
     EXPECT_EQ(pkt.data[1], 0x60);
@@ -322,6 +332,8 @@ TEST(DccPacketEncoder, speed14_stop_forward_headlight_on) {
     bool ok = DccApplicationCommandStationPacket_load_speed_14(&pkt, 3, DCC_ADDRESS_SHORT, 0, true, true);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[0], 3);
     /* Forward + FL on + stop: 011 1 0000 = 0x70 */
     EXPECT_EQ(pkt.data[1], 0x70);
@@ -375,6 +387,8 @@ TEST(DccPacketEncoder, func_group1_all_off) {
     bool ok = DccApplicationCommandStationPacket_load_func_group_1(&pkt, 3, DCC_ADDRESS_SHORT, 0x00);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[0], 3);
     /* 100 00000 = 0x80 */
     EXPECT_EQ(pkt.data[1], 0x80);
@@ -433,6 +447,8 @@ TEST(DccPacketEncoder, func_group2a_all_off) {
     bool ok = DccApplicationCommandStationPacket_load_func_group_2a(&pkt, 3, DCC_ADDRESS_SHORT, 0x00);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     /* 1011 0000 = 0xB0 */
     EXPECT_EQ(pkt.data[1], 0xB0);
     verify_xor(&pkt);
@@ -458,6 +474,8 @@ TEST(DccPacketEncoder, func_group2b_all_off) {
     bool ok = DccApplicationCommandStationPacket_load_func_group_2b(&pkt, 3, DCC_ADDRESS_SHORT, 0x00);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     /* 1010 0000 = 0xA0 */
     EXPECT_EQ(pkt.data[1], 0xA0);
     verify_xor(&pkt);
@@ -484,6 +502,8 @@ TEST(DccPacketEncoder, func_f13_f20_short_addr) {
     bool ok = DccApplicationCommandStationPacket_load_func_f13_f20(&pkt, 3, DCC_ADDRESS_SHORT, 0xA5);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[0], 3);
     EXPECT_EQ(pkt.data[1], DCC_FEAT_F13_F20);  /* 0xDE */
     EXPECT_EQ(pkt.data[2], 0xA5);
@@ -496,6 +516,8 @@ TEST(DccPacketEncoder, func_f21_f28_long_addr) {
     bool ok = DccApplicationCommandStationPacket_load_func_f21_f28(&pkt, 1234, DCC_ADDRESS_LONG, 0xFF);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[0], 0xC4);
     EXPECT_EQ(pkt.data[1], 0xD2);
     EXPECT_EQ(pkt.data[2], DCC_FEAT_F21_F28);  /* 0xDF */
@@ -509,6 +531,8 @@ TEST(DccPacketEncoder, func_f29_f36_instruction_byte) {
     bool ok = DccApplicationCommandStationPacket_load_func_f29_f36(&pkt, 3, DCC_ADDRESS_SHORT, 0x01);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[1], DCC_FEAT_F29_F36);  /* 0xD8 */
     EXPECT_EQ(pkt.data[2], 0x01);
     verify_xor(&pkt);
@@ -519,6 +543,8 @@ TEST(DccPacketEncoder, func_f37_f44_instruction_byte) {
     bool ok = DccApplicationCommandStationPacket_load_func_f37_f44(&pkt, 3, DCC_ADDRESS_SHORT, 0x00);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[1], DCC_FEAT_F37_F44);  /* 0xD9 */
     verify_xor(&pkt);
 }
@@ -528,6 +554,8 @@ TEST(DccPacketEncoder, func_f45_f52_instruction_byte) {
     bool ok = DccApplicationCommandStationPacket_load_func_f45_f52(&pkt, 3, DCC_ADDRESS_SHORT, 0x80);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[1], DCC_FEAT_F45_F52);  /* 0xDA */
     verify_xor(&pkt);
 }
@@ -537,6 +565,8 @@ TEST(DccPacketEncoder, func_f53_f60_instruction_byte) {
     bool ok = DccApplicationCommandStationPacket_load_func_f53_f60(&pkt, 3, DCC_ADDRESS_SHORT, 0x55);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[1], DCC_FEAT_F53_F60);  /* 0xDB */
     EXPECT_EQ(pkt.data[2], 0x55);
     verify_xor(&pkt);
@@ -548,6 +578,8 @@ TEST(DccPacketEncoder, func_f61_f68_instruction_byte) {
     bool ok = DccApplicationCommandStationPacket_load_func_f61_f68(&pkt, 3, DCC_ADDRESS_SHORT, 0xAA);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[1], DCC_FEAT_F61_F68);  /* 0xDC */
     EXPECT_EQ(pkt.data[2], 0xAA);
     verify_xor(&pkt);
@@ -570,6 +602,8 @@ TEST(DccPacketEncoder, accessory_basic_addr5_output2_activate) {
     bool ok = DccApplicationCommandStationPacket_load_accessory_basic(&pkt, 5, 2, true);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     /* Byte 1: 10 000101 = 0x85 (address low 6 = 5) */
     EXPECT_EQ(pkt.data[0], 0x85);
     /* Byte 2: 1 111 1 010 = 0xFA (high 3 inverted = ~0 = 7, activate, output 2) */
@@ -638,6 +672,8 @@ TEST(DccPacketEncoder, accessory_extended_addr0_aspect5) {
     bool ok = DccApplicationCommandStationPacket_load_accessory_extended(&pkt, 0, 5);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     /* Byte 1: 10 000000 = 0x80 */
     EXPECT_EQ(pkt.data[0], 0x80);
     /* Byte 2: 0 111 0 00 1 = 0x71 (high inverted = ~0 & 7 = 7, bits 9-10 = 0) */
@@ -678,6 +714,8 @@ TEST(DccPacketEncoder, accessory_nop_addr1_basic) {
     bool ok = DccApplicationCommandStationPacket_load_accessory_nop(&pkt, 1, false);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: accessory NOP: once */
+    EXPECT_EQ(pkt.repeat_count, 1);
     EXPECT_EQ(pkt.data[0], 0x81);   /* 10AAAAAA, low 6 = 1 */
     EXPECT_EQ(pkt.data[1], 0x78);   /* 0AAA1AAT: high3 inv=111, NOP bit3=1, T=0 */
     EXPECT_EQ(pkt.byte_count, 3);   /* addr + instruction + XOR */
@@ -949,6 +987,8 @@ TEST(DccPacketEncoder, consist_set_normal) {
     bool ok = DccApplicationCommandStationPacket_load_consist_set(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[0], 3);
     EXPECT_EQ(pkt.data[1], DCC_CONSIST_SET_NORMAL);  /* 0x12 */
     EXPECT_EQ(pkt.data[2], 50);
@@ -988,6 +1028,8 @@ TEST(DccPacketEncoder, consist_clear) {
     bool ok = DccApplicationCommandStationPacket_load_consist_clear(&pkt, 3, DCC_ADDRESS_SHORT);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[1], DCC_CONSIST_SET_NORMAL);  /* 0x12 */
     EXPECT_EQ(pkt.data[2], 0);  /* address 0 = clear */
     verify_xor(&pkt);
@@ -1016,6 +1058,8 @@ TEST(DccPacketEncoder, binary_state_short_activate) {
     bool ok = DccApplicationCommandStationPacket_load_binary_state_short(&pkt, 3, DCC_ADDRESS_SHORT, 42, true);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[0], 3);
     EXPECT_EQ(pkt.data[1], DCC_FEAT_BINARY_STATE_SHORT);  /* 0xDD */
     /* Data: 1 0101010 = 0xAA (active + state 42) */
@@ -1075,6 +1119,8 @@ TEST(DccPacketEncoder, binary_state_long_activate) {
     bool ok = DccApplicationCommandStationPacket_load_binary_state_long(&pkt, 3, DCC_ADDRESS_SHORT, 1000, true);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[0], 3);
     EXPECT_EQ(pkt.data[1], DCC_FEAT_BINARY_STATE_LONG);  /* 0xC0 */
     /* Low byte: 1 1101000 = 0x80 | 104 = 0xE8 */
@@ -1117,6 +1163,8 @@ TEST(DccPacketEncoder, analog_function_volume) {
     bool ok = DccApplicationCommandStationPacket_load_analog_function(&pkt, 3, DCC_ADDRESS_SHORT, 1, 128);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: one-shot default */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[0], 3);
     EXPECT_EQ(pkt.data[1], DCC_ADV_OPS_ANALOG_FUNCTION);  /* 0x3D */
     EXPECT_EQ(pkt.data[2], 1);    /* output number */
@@ -1147,6 +1195,8 @@ TEST(DccPacketEncoder, analog_function_long_addr) {
 TEST(DccPacketEncoder, system_time_zero) {
     dcc_packet_t pkt;
     DccApplicationCommandStationPacket_load_system_time(&pkt, 0);
+    /* repeat_count: S-9.2.1 sec 2.3.6.3: system time once per update */
+    EXPECT_EQ(pkt.repeat_count, 1);
 
     EXPECT_EQ(pkt.data[0], 0x00);                  /* broadcast address 0 */
     EXPECT_EQ(pkt.data[1], DCC_FEAT_SYSTEM_TIME);  /* 0xC2, 110-00010 */
@@ -1203,6 +1253,8 @@ TEST(DccPacketEncoder, model_time_representative) {
         &pkt, 30, DCC_DAY_OF_WEEK_WEDNESDAY, 14, false, 8);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: S-9.2.1 sec 2.3.6.2: time at most once per model minute */
+    EXPECT_EQ(pkt.repeat_count, 1);
     EXPECT_EQ(pkt.data[0], 0x00);              /* broadcast address 0 */
     EXPECT_EQ(pkt.data[1], DCC_FEAT_TIME_DATE);/* 0xC1, 110-00001 */
     EXPECT_EQ(pkt.data[2], 0x1E);              /* CC=00, minutes=30 */
@@ -1259,6 +1311,8 @@ TEST(DccPacketEncoder, model_date_representative) {
     bool ok = DccApplicationCommandStationPacket_load_model_date(&pkt, 23, 6, 2026);
 
     EXPECT_TRUE(ok);
+    /* repeat_count: S-9.2.1 sec 2.3.6.2: date at least three times */
+    EXPECT_EQ(pkt.repeat_count, 3);
     EXPECT_EQ(pkt.data[0], 0x00);
     EXPECT_EQ(pkt.data[1], DCC_FEAT_TIME_DATE);
     EXPECT_EQ(pkt.data[2], 0x57);             /* 010TTTTT, day=23 */
