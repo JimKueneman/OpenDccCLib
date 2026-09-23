@@ -687,3 +687,95 @@ TEST(DccScheduler, null_on_packet_sent_in_refresh_path) {
     DccScheduler_run(&context);
     EXPECT_EQ(load_packet_count, (uint32_t)1);
 }
+
+// ============================================================================
+// Builder -> scheduler integration: a builder's packet handed over UNTOUCHED
+// (no repeat_count override) is transmitted exactly repeat_count times, and at
+// least once. This is the path the RP2350 port broke on: the builders used to
+// set repeat_count = 0, which the scheduler treats as "nothing left to send",
+// and every test and firmware overwrote the field before it could show. The
+// tests above set the count on purpose (they test the scheduler); this one
+// must NOT.
+// ============================================================================
+
+/* Insert `pkt` as-is and count how many times the scheduler loads THAT packet
+ * before it falls back to idle. */
+static uint32_t sends_of_untouched(const dcc_packet_t *pkt, dcc_address_t address,
+                                   dcc_tag_enum tag, dcc_priority_enum priority) {
+    reset_mocks();
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface = make_interface();
+    DccScheduler_initialize(&context, &interface);
+
+    if (!DccScheduler_insert(&context, pkt, address, tag, priority, false)) {
+        return 0;
+    }
+
+    uint32_t sends = 0;
+    for (int run = 0; run < 8; run++) {
+        DccScheduler_run(&context);
+        DccScheduler_on_packet_complete(&context);
+        if (last_loaded_packet.byte_count == pkt->byte_count &&
+            memcmp(last_loaded_packet.data, pkt->data, pkt->byte_count) == 0) {
+            sends++;
+        } else {
+            break;      /* idle went out: the one-shot slot is exhausted */
+        }
+    }
+    return sends;
+}
+
+#define EXPECT_TRANSMITS_UNTOUCHED(pkt, addr, tag, prio, label)                         \
+    do {                                                                                 \
+        uint32_t sends = sends_of_untouched(&(pkt), (addr), (tag), (prio));              \
+        EXPECT_GE(sends, (uint32_t)1) << label << ": never transmitted";                 \
+        EXPECT_EQ(sends, (uint32_t)(pkt).repeat_count) << label << ": repeat_count " \
+            << (unsigned)(pkt).repeat_count << " but sent " << sends << " time(s)";     \
+    } while (0)
+
+TEST(DccScheduler, builder_packets_transmit_untouched_exactly_repeat_count_times) {
+    dcc_packet_t pkt;
+
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, "speed_128");
+    DccApplicationCommandStationPacket_load_speed_28(&pkt, 3, DCC_ADDRESS_SHORT, 10, true);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, "speed_28");
+    DccApplicationCommandStationPacket_load_speed_14(&pkt, 3, DCC_ADDRESS_SHORT, 5, true, true);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, "speed_14");
+    DccApplicationCommandStationPacket_load_estop_all(&pkt, true);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 0, DCC_TAG_SPEED, DCC_PRIORITY_ESTOP, "estop_all");
+    DccApplicationCommandStationPacket_load_reset(&pkt);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 0, DCC_TAG_SPEED, DCC_PRIORITY_ESTOP, "reset");
+    DccApplicationCommandStationPacket_load_func_group_1(&pkt, 3, DCC_ADDRESS_SHORT, 0x01);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 3, DCC_TAG_FUNC_GROUP_1, DCC_PRIORITY_FUNCTION, "func_group_1");
+    DccApplicationCommandStationPacket_load_func_f13_f20(&pkt, 3, DCC_ADDRESS_SHORT, 0x80);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 3, DCC_TAG_FUNC_F13_F20, DCC_PRIORITY_FUNCTION, "func_f13_f20");
+    DccApplicationCommandStationPacket_load_accessory_basic(&pkt, 5, 2, true);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 5, DCC_TAG_ACCESSORY, DCC_PRIORITY_ACCESSORY, "accessory_basic");
+    DccApplicationCommandStationPacket_load_accessory_extended(&pkt, 5, 3);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 5, DCC_TAG_ACCESSORY, DCC_PRIORITY_ACCESSORY, "accessory_extended");
+    DccApplicationCommandStationPacket_load_accessory_nop(&pkt, 5, false);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 5, DCC_TAG_ACCESSORY, DCC_PRIORITY_ACCESSORY, "accessory_nop");
+    DccApplicationCommandStationPacket_load_consist_set(&pkt, 3, DCC_ADDRESS_SHORT, 10, true);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 3, DCC_TAG_CONSIST, DCC_PRIORITY_FUNCTION, "consist_set");
+    DccApplicationCommandStationPacket_load_binary_state_short(&pkt, 3, DCC_ADDRESS_SHORT, 1, true);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 3, DCC_TAG_BINARY_STATE, DCC_PRIORITY_FUNCTION, "binary_state_short");
+    DccApplicationCommandStationPacket_load_analog_function(&pkt, 3, DCC_ADDRESS_SHORT, 1, 100);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 3, DCC_TAG_ANALOG_FUNC, DCC_PRIORITY_FUNCTION, "analog_function");
+    DccApplicationCommandStationPacket_load_system_time(&pkt, 1000);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 0, DCC_TAG_SPEED, DCC_PRIORITY_FUNCTION, "system_time");
+    DccApplicationCommandStationPacket_load_model_time(&pkt, 30, DCC_DAY_OF_WEEK_MONDAY, 12, false, 1);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 0, DCC_TAG_SPEED, DCC_PRIORITY_FUNCTION, "model_time");
+    DccApplicationCommandStationPacket_load_model_date(&pkt, 23, 9, 2026);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 0, DCC_TAG_SPEED, DCC_PRIORITY_FUNCTION, "model_date");
+    DccApplicationCommandStationPacket_load_cv_write_pom(&pkt, 3, DCC_ADDRESS_SHORT, 1, 8);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 3, DCC_TAG_CV, DCC_PRIORITY_CV, "cv_write_pom");
+    DccApplicationCommandStationPacket_load_cv_verify_pom(&pkt, 3, DCC_ADDRESS_SHORT, 1, 8);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 3, DCC_TAG_CV, DCC_PRIORITY_CV, "cv_verify_pom");
+    DccApplicationCommandStationPacket_load_cv_bit_pom(&pkt, 3, DCC_ADDRESS_SHORT, 1, 5, true, true);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 3, DCC_TAG_CV, DCC_PRIORITY_CV, "cv_bit_pom write");
+    DccApplicationCommandStationPacket_load_accessory_basic_cv_write(&pkt, 1, 0, 7, 42);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 1, DCC_TAG_CV, DCC_PRIORITY_CV, "accessory_basic_cv_write");
+    DccApplicationCommandStationPacket_load_accessory_basic_cv_verify(&pkt, 1, 0, 7, 42);
+    EXPECT_TRANSMITS_UNTOUCHED(pkt, 1, DCC_TAG_CV, DCC_PRIORITY_CV, "accessory_basic_cv_verify");
+}
