@@ -99,6 +99,13 @@ typedef struct {
          *  machine so the toggle has deterministic, minimal latency. */
     bool toggle_next;
 
+        /** @brief Set by the END_BIT handler, consumed on the following tick.
+         *  The state machine runs one half-bit ahead of the wire (it advances on
+         *  the tick that starts a bit's second half), so the end bit's LAST edge
+         *  is the pin toggle of the tick after the handler. S-9.3.2 measures
+         *  T_CS from that edge; railcom_cutout_begin() fires on that tick. */
+    bool railcom_cutout_arm_pending;
+
 } dcc_bit_encoder_context_t;
 
     /**

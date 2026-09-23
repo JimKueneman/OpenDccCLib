@@ -21,14 +21,21 @@ static bool packet_complete_called = false;
 static uint32_t cutout_begin_count = 0;
 static uint32_t packet_complete_count = 0;
 
+/* Tick number (see tick_number below) at which each hook last fired. */
+static uint32_t cutout_begin_tick = 0;
+static uint32_t packet_complete_tick = 0;
+static uint32_t tick_number = 0;
+
 static void mock_railcom_cutout_begin(void) {
     cutout_begin_called = true;
     cutout_begin_count++;
+    cutout_begin_tick = tick_number;
 }
 
 static void mock_on_packet_complete(void) {
     packet_complete_called = true;
     packet_complete_count++;
+    packet_complete_tick = tick_number;
 }
 
 static void reset_mocks(void) {
@@ -36,6 +43,8 @@ static void reset_mocks(void) {
     packet_complete_called = false;
     cutout_begin_count = 0;
     packet_complete_count = 0;
+    cutout_begin_tick = 0;
+    packet_complete_tick = 0;
 }
 
 // ============================================================================
@@ -49,7 +58,6 @@ static uint32_t toggle_call_count = 0;
 #define MAX_TOGGLE_LOG 512
 static uint32_t toggle_log[MAX_TOGGLE_LOG];
 static uint32_t toggle_log_count = 0;
-static uint32_t tick_number = 0;
 
 static void mock_pin_toggle(void) {
 
@@ -281,13 +289,132 @@ TEST(DccBitEncoder, tick_railcom_cutout_arms_timer_continuously) {
      * act on the cutout-active strobe. The encoder keeps clocking either way. */
     pump_tick_isr(&context, 400);
 
-    EXPECT_TRUE(cutout_begin_called);     /* cutout timer armed at the end bit */
+    EXPECT_TRUE(cutout_begin_called);     /* cutout timer armed at the end bit's last edge */
     EXPECT_TRUE(packet_complete_called);  /* completed immediately, did NOT stall */
 
     /* Bit stream never pauses: encoder keeps producing toggles after the end bit. */
     uint32_t toggles_before = toggle_call_count;
     pump_tick_isr(&context, 4);
     EXPECT_GT(toggle_call_count, toggles_before);
+
+}
+
+/* Tick at which a bit's FIRST edge is driven, given the tick model the ISR
+ * implements (one-bit = 2 ticks, toggles on both; zero-bit = 4 ticks, toggles
+ * on the 1st and 3rd). Derived from S-9.1 bit timing and the 58 us tick, not
+ * from the encoder: ticks 0-1 are the IDLE->PREAMBLE transition one-bit, then
+ * the preamble one-bits, then per byte a zero start bit and 8 data bits. */
+static uint32_t end_bit_first_edge_tick(const dcc_packet_t *pkt) {
+
+    uint32_t ticks = 2u + 2u * pkt->preamble_bits;
+
+    for (uint8_t b = 0; b < pkt->byte_count; b++) {
+
+        ticks += 4u;                                          /* start bit (zero) */
+
+        for (int bit = 7; bit >= 0; bit--) {
+
+            ticks += ((pkt->data[b] >> bit) & 0x01) ? 2u : 4u;
+
+        }
+
+    }
+
+    return ticks;
+
+}
+
+static bool toggle_logged_at(uint32_t tick) {
+
+    for (uint32_t i = 0; i < toggle_log_count; i++) {
+
+        if (toggle_log[i] == tick) {
+
+            return true;
+
+        }
+
+    }
+
+    return false;
+
+}
+
+TEST(DccBitEncoder, tick_railcom_cutout_armed_on_end_bit_last_edge) {
+
+    /* S-9.3.2 Table 1: T_CS is measured from the zero crossing of the packet
+     * end bit's LAST edge. The end bit is a one-bit: first edge at tick E,
+     * mid-bit edge at E+1, last edge at E+2. The cutout timer must be armed on
+     * the tick whose toggle drives E+2 -- not on E+1, where the END_BIT handler
+     * runs (that would tri-state the H-bridge 32 us before the last edge and
+     * truncate the end bit's second half; issue #3). */
+    reset_tick_mocks();
+    dcc_bit_encoder_context_t context;
+    interface_dcc_bit_encoder_t interface = make_tick_interface(true);
+    DccBitEncoder_initialize(&context, &interface);
+    DccBitEncoder_start(&context);
+
+    dcc_packet_t pkt;
+    DccApplicationCommandStationPacket_load_idle(&pkt);
+    DccBitEncoder_load_packet(&context, &pkt);
+
+    const uint32_t end_bit_first_edge = end_bit_first_edge_tick(&pkt);
+    const uint32_t end_bit_last_edge  = end_bit_first_edge + 2u;
+
+    pump_tick_isr(&context, end_bit_last_edge + 8u);
+
+    ASSERT_TRUE(packet_complete_called);
+    ASSERT_TRUE(cutout_begin_called);
+
+    /* The three edges of the end bit were all driven, one tick apart. */
+    EXPECT_TRUE(toggle_logged_at(end_bit_first_edge));
+    EXPECT_TRUE(toggle_logged_at(end_bit_first_edge + 1u));
+    EXPECT_TRUE(toggle_logged_at(end_bit_last_edge));
+
+    /* Packet-complete fires when the state machine leaves END_BIT: the tick
+     * that drives the mid-bit edge (one half-bit ahead of the wire). */
+    EXPECT_EQ(packet_complete_tick, end_bit_first_edge + 1u);
+
+    /* The cutout is armed on the tick that drives the last edge. */
+    EXPECT_EQ(cutout_begin_tick, end_bit_last_edge);
+    EXPECT_EQ(cutout_begin_tick, packet_complete_tick + 1u);
+    EXPECT_EQ(cutout_begin_count, (uint32_t)1);
+
+}
+
+TEST(DccBitEncoder, tick_railcom_cutout_arm_cancelled_by_stop) {
+
+    /* stop() between the END_BIT handler and the next tick must drop the
+     * pending arm: a stopped encoder never starts a cutout. */
+    reset_tick_mocks();
+    dcc_bit_encoder_context_t context;
+    interface_dcc_bit_encoder_t interface = make_tick_interface(true);
+    DccBitEncoder_initialize(&context, &interface);
+    DccBitEncoder_start(&context);
+
+    dcc_packet_t pkt;
+    DccApplicationCommandStationPacket_load_idle(&pkt);
+    DccBitEncoder_load_packet(&context, &pkt);
+
+    while (!packet_complete_called) {
+
+        pump_tick_isr(&context, 1);
+
+    }
+
+    EXPECT_FALSE(cutout_begin_called);   /* not yet: arm is deferred one tick */
+
+    DccBitEncoder_stop(&context);
+    pump_tick_isr(&context, 8);
+
+    EXPECT_FALSE(cutout_begin_called);
+    EXPECT_EQ(cutout_begin_count, (uint32_t)0);
+
+    /* A restart does not resurrect the stale arm either. */
+    DccBitEncoder_start(&context);
+    pump_tick_isr(&context, 8);
+
+    EXPECT_EQ(cutout_begin_count, (uint32_t)0);
 
 }
 

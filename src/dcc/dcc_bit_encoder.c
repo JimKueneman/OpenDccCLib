@@ -45,6 +45,7 @@ void DccBitEncoder_initialize(dcc_bit_encoder_context_t *context, const interfac
     context->tick_counter = 0;
     context->current_bit_is_one = true;
     context->toggle_next = false;
+    context->railcom_cutout_arm_pending = false;
 
 }
 
@@ -78,6 +79,7 @@ void DccBitEncoder_start(dcc_bit_encoder_context_t *context) {
     context->state = DCC_BIT_STATE_IDLE;
     context->half_bit = 0;
     context->toggle_next = true;
+    context->railcom_cutout_arm_pending = false;
 
 }
 
@@ -85,6 +87,7 @@ void DccBitEncoder_stop(dcc_bit_encoder_context_t *context) {
 
     context->running = false;
     context->state = DCC_BIT_STATE_IDLE;
+    context->railcom_cutout_arm_pending = false;
 
 }
 
@@ -148,10 +151,17 @@ static void _tick_handle_end_bit(dcc_bit_encoder_context_t *context) {
      * the packet and keeps clocking the next preamble, so the DCC bit stream is
      * continuous and identical with or without RailCom. The application/hardware
      * decides whether to act on the strobe (mux the H-bridge into the cutout). The
-     * 16-bit ops preamble (DCC_PREAMBLE_BITS_OPS) covers the cutout window. */
+     * 16-bit ops preamble (DCC_PREAMBLE_BITS_OPS) covers the cutout window.
+     *
+     * NOT armed here: this handler runs on the tick that STARTS the end bit's
+     * second half, one half-bit before the end bit's last edge. S-9.3.2 Table 1
+     * measures T_CS (26-32 us) from the zero crossing of that last edge, so
+     * arming from here would tri-state the H-bridge inside the end bit and
+     * truncate its second half (issue #3). The arm is deferred to the next
+     * tick, whose pin toggle IS the last edge -- see DccBitEncoder_tick_isr(). */
     if (context->interface->railcom_cutout_begin) {
 
-        context->interface->railcom_cutout_begin();
+        context->railcom_cutout_arm_pending = true;
 
     }
 
@@ -183,6 +193,22 @@ void DccBitEncoder_tick_isr(dcc_bit_encoder_context_t *context) {
     /* Continuous-clock RailCom: there is no cutout WAIT state. The encoder keeps
      * clocking through the cutout window; the driver blanks its own output between
      * the begin/end hooks (T_CS..T_CE). So the bit stream never pauses here. */
+
+    /* ---- Deferred cutout arm (see _tick_handle_end_bit) ----
+     * The pin toggle the caller performed just before this call drove the
+     * packet end bit's last edge. Arm the cutout timer now so its DELAY
+     * (T_CS) is measured from that edge, as S-9.3.2 Table 1 requires. */
+    if (context->railcom_cutout_arm_pending) {
+
+        context->railcom_cutout_arm_pending = false;
+
+        if (context->interface->railcom_cutout_begin) {
+
+            context->interface->railcom_cutout_begin();
+
+        }
+
+    }
 
     /* ---- Tick counting: decide whether this was a half-bit boundary ---- */
     context->tick_counter++;
