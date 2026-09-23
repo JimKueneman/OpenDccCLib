@@ -802,6 +802,8 @@ TEST(DccPacketEncoder, cv_write_ops_short_addr) {
     bool ok = DccApplicationCommandStationPacket_load_cv_write_pom(&pkt, 3, DCC_ADDRESS_SHORT, 1, 200);
 
     EXPECT_TRUE(ok);
+    /* one-shot packet: the scheduler never sends a packet whose repeat_count is 0 */
+    EXPECT_EQ(pkt.repeat_count, 1);
     EXPECT_EQ(pkt.data[0], 3);
     /* CV 1 → wire 0 = 0x000. Instruction: 1110 1100 | 0x00 = 0xEC */
     EXPECT_EQ(pkt.data[1], 0xEC);
@@ -863,6 +865,8 @@ TEST(DccPacketEncoder, cv_verify_ops_short_addr) {
     bool ok = DccApplicationCommandStationPacket_load_cv_verify_pom(&pkt, 3, DCC_ADDRESS_SHORT, 29, 0x25);
 
     EXPECT_TRUE(ok);
+    /* one-shot packet: the scheduler never sends a packet whose repeat_count is 0 */
+    EXPECT_EQ(pkt.repeat_count, 1);
     EXPECT_EQ(pkt.data[0], 3);
     /* CV 29 → wire 28 = 0x01C. Instruction: 0xE4 | 0x00 = 0xE4 */
     EXPECT_EQ(pkt.data[1], 0xE4);
@@ -883,6 +887,8 @@ TEST(DccPacketEncoder, cv_bit_ops_write_bit3_high) {
     bool ok = DccApplicationCommandStationPacket_load_cv_bit_pom(&pkt, 3, DCC_ADDRESS_SHORT, 29, 3, true, true);
 
     EXPECT_TRUE(ok);
+    /* one-shot packet: the scheduler never sends a packet whose repeat_count is 0 */
+    EXPECT_EQ(pkt.repeat_count, 1);
     EXPECT_EQ(pkt.data[0], 3);
     /* CV 29 → wire 28. Instruction: 0xE8 | 0x00 = 0xE8 */
     EXPECT_EQ(pkt.data[1], 0xE8);
@@ -899,6 +905,8 @@ TEST(DccPacketEncoder, cv_bit_ops_verify_bit0_low) {
     bool ok = DccApplicationCommandStationPacket_load_cv_bit_pom(&pkt, 3, DCC_ADDRESS_SHORT, 1, 0, false, false);
 
     EXPECT_TRUE(ok);
+    /* one-shot packet: the scheduler never sends a packet whose repeat_count is 0 */
+    EXPECT_EQ(pkt.repeat_count, 1);
     /* Bit byte: 111 0 0 000 = 0xE0 (verify, value=0, position=0) */
     EXPECT_EQ(pkt.data[3], 0xE0);
     verify_xor(&pkt);
