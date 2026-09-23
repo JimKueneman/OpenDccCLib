@@ -86,14 +86,27 @@ foreach(testsourcefile ${TESTS})
         ${LINK_LIBS}
         ${END_GROUP}
     )
-    add_custom_command(TARGET ${testname}
-        POST_BUILD
-        COMMAND ./${testname}
-        # Forces the coverage report to be regenerated if tests are run.
-        COMMAND rm -rf gcovr
-    )
-    add_dependencies(TARGET_GCOV ${testname})
+    # Collected for the serial test run below (see "Run the tests").
+    list(APPEND TEST_TARGETS ${testname})
 endforeach(testsourcefile ${TESTS})
+
+# =============================================================================
+# Run the tests -- SERIALLY, after every test executable is built.
+#
+# Every test binary links the same --coverage-instrumented library objects, so
+# they all write the same .gcda counter files. Running them as per-target
+# POST_BUILD steps under a parallel build (-j) lets several binaries write the
+# same counters at once, which silently corrupts them: per-file coverage then
+# reads far below the truth (task modules showed 1-2% in place of 77-90%). One
+# ordered command list keeps compilation parallel but executes the suite one
+# binary at a time, after clearing counters left by an earlier run so the
+# report reflects exactly one pass. gate_* counters belong to the compile-gate
+# smoke builds and are excluded from the report, so they are left alone.
+# =============================================================================
+set(TEST_RUN_COMMANDS)
+foreach(testtarget ${TEST_TARGETS})
+    list(APPEND TEST_RUN_COMMANDS COMMAND ./${testtarget})
+endforeach(testtarget ${TEST_TARGETS})
 
 # =============================================================================
 # Compile-gate matrix — prove each real-world single-role config compiles+links.
@@ -184,13 +197,17 @@ dcc_gate_target(accessory
 dcc_gate_target(accessory_no_railcom
     ${CS_MODULES} ${CS_RAILCOM} ${DEC_MODULES} ${DEC_RAILCOM} ${APP_RAILCOM} ${ACC_RAILCOM} ${DEC_ACC_RAILCOM})
 
-# Generate the HTML coverage report
+# Run the tests serially (see above), then generate the HTML coverage report.
+# Re-runs whenever any test executable is rebuilt.
 add_custom_command(OUTPUT gcovr/coverage.html
+    COMMAND find ${CMAKE_BINARY_DIR} -name *.gcda -not -path *gate_* -delete
+    ${TEST_RUN_COMMANDS}
     COMMAND mkdir -p gcovr
     # --exclude-directories drops the compile-gate build trees (gate_*.dir): on
     # Apple clang the -fno-*coverage override is ignored, so those guarded-out
     # builds would otherwise fold into the typical-build coverage numbers.
     COMMAND gcovr --gcov-ignore-parse-errors=all --html-details gcovr/coverage.html --exclude=_deps.* --exclude=.*_Test.* --exclude-directories=.*gate_.* -r ${ROOT_DIR} .
     COMMAND ln -sf ${CMAKE_SOURCE_DIR}/build/gcovr/coverage.html ${CMAKE_SOURCE_DIR}/
+    DEPENDS ${TEST_TARGETS}
     VERBATIM
 )
