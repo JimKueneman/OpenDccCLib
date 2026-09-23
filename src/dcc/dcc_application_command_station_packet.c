@@ -920,7 +920,12 @@ bool DccApplicationCommandStationPacket_load_cv_bit_pom(dcc_packet_t *packet, dc
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    /* One-shot send: see _cv_ops_common()'s comment above -- this builder does
+     * not route through it (bit manipulation has its own instruction byte
+     * layout) and was missed when that fix landed there. Same bug, same fix:
+     * a CV bit write/verify built with repeat_count = 0 is accepted into a
+     * scheduler slot but never selected for transmission. */
+    packet->repeat_count = 1;
 
     return true;
 
