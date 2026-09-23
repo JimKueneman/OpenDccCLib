@@ -21,6 +21,8 @@ const TIMER1  = TIMER.addInstance();
 const TIMER2  = TIMER.addInstance();
 const UART    = scripting.addModule("/ti/driverlib/UART", {}, false);
 const UART1   = UART.addInstance();
+const UART2   = UART.addInstance();
+const UART3   = UART.addInstance();
 
 /**
  * Write custom configuration values to the imported modules.
@@ -130,6 +132,30 @@ UART1.rxPinConfig.$name                = "ti_driverlib_gpio_GPIOPinGeneric1";
 UART1.rxPinConfig.hideOutputInversion  = scripting.forceWrite(false);
 UART1.rxPinConfig.onlyInternalResistor = scripting.forceWrite(false);
 UART1.rxPinConfig.passedPeripheralType = scripting.forceWrite("Digital");
+
+/* RailCom loopback (HIL only, S-9.3.2 CS-010..015). RAILCOM_RX is the command
+ * station's 250 kbaud RailCom receiver (RX only, PB16 = J2.11); MOCK_RC_TX is the
+ * mock decoder transmitter (TX only, PB6 = J2.13). A jumper PB6 -> PB16 loops the
+ * mock reply into the real receive path; Saleae D6 taps PB16. */
+UART2.$name                            = "RAILCOM_RX";
+UART2.direction                        = "RX";
+UART2.targetBaudRate                   = 250000;
+UART2.enableFIFO                       = true;
+UART2.rxFifoThreshold                  = "DL_UART_RX_FIFO_LEVEL_ONE_ENTRY";
+UART2.enabledInterrupts                = ["RX"];
+UART2.interruptPriority                = "1";
+UART2.peripheral.$assign               = "UART2";
+UART2.peripheral.rxPin.$assign         = "PB16";
+
+UART3.$name                            = "MOCK_RC_TX";
+UART3.direction                        = "TX";
+UART3.targetBaudRate                   = 250000;
+UART3.enableFIFO                       = true;
+UART3.txFifoThreshold                  = "DL_UART_TX_FIFO_LEVEL_EMPTY";
+UART3.enabledInterrupts                = ["TX"];
+UART3.interruptPriority                = "1";
+UART3.peripheral.$assign               = "UART1";
+UART3.peripheral.txPin.$assign         = "PB6";
 
 /**
  * Pinmux solution for unlocked pins/peripherals. This ensures that minor changes to the automatic solver in a future

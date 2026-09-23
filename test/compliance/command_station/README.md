@@ -13,7 +13,7 @@ What's in this folder:
 | `run_all.py` | runs every suite into one combined HTML report |
 | `compliance_lib.py` | **symlink** → `../compliance_lib.py` (shared Saleae/serial/decode); also makes `reports/` land here |
 | `reports/` | generated HTML reports (auto-created, gitignored) |
-| `HIL_SETUP.md` | bench wiring (pins, Saleae channels, jumpers) + how to run |
+| `HIL_SETUP.md` | bench wiring (pins, Saleae channels, the mock-ACK and RailCom loopback jumpers) + how to run |
 | `saleae_hil_compliance/` | the CS **DUT firmware** (CCS project) |
 | `saleae_hil_compliance.theia-workspace` | open this in CCS to load the firmware project |
 

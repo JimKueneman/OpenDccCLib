@@ -15,6 +15,7 @@ import os
 import csv
 import html
 import math
+import bisect
 import tempfile
 import datetime
 
@@ -415,6 +416,58 @@ def trigger_command(command, pre_seconds=None, after_seconds=None,
     print(f"[uart] CLEAR + TRIG + {cmds} under hardware trigger")
     return capture_triggered(stimulus, trigger_channel=trigger_channel,
                              pre_seconds=pre_seconds, after_seconds=after_seconds)
+
+
+def packet_address(data):
+    """DCC address a main-track packet is addressed to, per S-9.2.1 address
+    partitions: 1-127 short, 0xC0-0xE7 + next byte long (14-bit). Idle,
+    broadcast, accessory and reserved leading bytes return 0. Used to check
+    which address the DUT tags a RailCom reply with."""
+    if not data:
+        return 0
+    b0 = data[0]
+    if 0xC0 <= b0 <= 0xE7 and len(data) >= 2:
+        return ((b0 & 0x3F) << 8) | data[1]
+    if 1 <= b0 <= 127:
+        return b0
+    return 0
+
+
+def decode_uart(rows, baud=250_000, t_start=None, t_end=None):
+    """Independent async-serial decoder (8N1, idle high, LSB first) over a
+    Saleae transition list [(t_s, level)]. Returns [(t_start_bit_s, byte,
+    frame_ok)] -- frame_ok is False when the stop bit is not high. Used to read
+    the RailCom loopback line (D6) without trusting either UART peripheral."""
+    if not rows:
+        return []
+    bit = 1.0 / baud
+    times = [r[0] for r in rows]
+    levels = [r[1] for r in rows]
+
+    def level_at(t):
+        i = bisect.bisect_right(times, t) - 1
+        return levels[i] if i >= 0 else levels[0]
+
+    out = []
+    i = 1
+    while i < len(rows):
+        t, v = rows[i]
+        if v == 0 and rows[i - 1][1] == 1 and (t_start is None or t >= t_start) \
+                and (t_end is None or t <= t_end):
+            # start bit at t; sample each data bit mid-cell
+            byte = 0
+            for b in range(8):
+                if level_at(t + (1.5 + b) * bit):
+                    byte |= 1 << b
+            stop_ok = level_at(t + 9.5 * bit) == 1
+            out.append((t, byte, stop_ok))
+            # skip transitions inside this frame
+            t_next = t + 10 * bit
+            while i < len(rows) and rows[i][0] < t_next:
+                i += 1
+            continue
+        i += 1
+    return out
 
 
 def first_non_idle(decoded, idle):

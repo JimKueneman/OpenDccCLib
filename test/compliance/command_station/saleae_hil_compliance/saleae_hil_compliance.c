@@ -30,6 +30,7 @@
 
 #include "application_drivers/ti_driverlib_dcc_driver.h"
 #include "application_drivers/ti_driverlib_uart_driver.h"
+#include "application_drivers/ti_driverlib_railcom_loopback.h"
 #include "application_callbacks/callbacks_dcc.h"
 #include "uart_command_parser.h"
 
@@ -52,21 +53,27 @@
 /* separate cutout-active SIGNAL: begin/end (TI_DccDriver_main_cutout_begin/    */
 /* end) raise/drop PB2 (DCC_MIRROR). Real H-bridge hardware would mux on that   */
 /* signal to tristate the track during the window; here PB2 is just the Saleae  */
-/* cutout-window marker. Fires only when RAILCOM ON has been sent AND .railcom  */
-/* is wired. uart_rx_* / uart_read are NULL: no RailCom receive path on this    */
-/* rig.                                                                        */
+/* cutout-window marker. The cutout runs on every packet whenever .railcom is   */
+/* wired (there is no runtime RailCom on/off in this firmware).                 */
+/*                                                                            */
+/* Receive path (HIL loopback): uart_read pulls bytes from RAILCOM_RX (UART2,   */
+/* PB16), fed by the mock decoder transmitter MOCK_RC_TX (UART1, PB6) through a */
+/* board jumper -- see ti_driverlib_railcom_loopback.h. The uart_rx_* hooks    */
+/* both mirror the window to PB18 for the Saleae AND gate the receiver.        */
 /* ========================================================================== */
 
 static const dcc_railcom_hw_t _main_railcom_hw = {
     .begin_railcom_cutout       = &TI_DccDriver_main_cutout_begin,
     .end_railcom_cutout         = &TI_DccDriver_main_cutout_end,
     /* Mirror the channel-window open/close edges to the RAILCOM_RX_WINDOW probe pin so
-     * the Saleae can time the interior sub-windows (Ch1/Ch2) -- S-9.3.2 CS-005/006.
-     * Not a real Rx path; this bench has no RailCom receiver. */
+     * the Saleae can time the interior sub-windows (Ch1/Ch2) -- S-9.3.2 CS-005/006 --
+     * and open/close the loopback receiver's gate on the same edges. */
     .uart_rx_enable             = &TI_DccDriver_railcom_window_open,
     .uart_rx_disable            = &TI_DccDriver_railcom_window_close,
-    .uart_read                  = NULL,
-    .on_railcom_datagram_result = NULL,
+    /* Real receive path: RAILCOM_RX UART (PB16) via the loopback ring; decoded
+     * datagrams are reported on the command UART as RC RESULT lines. */
+    .uart_read                  = &TI_RailcomLoopback_uart_read,
+    .on_railcom_datagram_result = &CallbacksDcc_on_railcom_datagram,
 };
 
 static const dcc_config_t dcc_config = {
@@ -194,6 +201,7 @@ int main(void) {
     // Initialize hardware drivers before the DCC library
     TI_DccDriver_initialize();
     TI_UartDriver_initialize();
+    TI_RailcomLoopback_initialize();   /* RailCom RX + mock decoder TX (HIL loopback) */
 
     // Pass our configuration to the DCC library. After this call the library
     // is ready but track power is still off. Call DccApplicationCommandStationMainTrack_power_on()

@@ -14,6 +14,7 @@
 // sufficient for timeout calculations.
 
 #include "ti_driverlib_dcc_driver.h"
+#include "ti_driverlib_railcom_loopback.h"   /* HIL RailCom loopback hooks */
 #include "ti_msp_dl_config.h"
 #include <ti/driverlib/driverlib.h>
 #include <ti/driverlib/m0p/dl_interrupt.h>
@@ -237,12 +238,14 @@ void TI_DccDriver_main_pin_toggle(void) {
 void TI_DccDriver_main_cutout_begin(void) {
 
     DL_GPIO_setPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_RAILCOM_CUTOUT_PIN);
+    TI_RailcomLoopback_on_cutout_begin();    /* flush the receive ring, arm the window count */
 }
 
 /* Cutout-active signal (T_CE): drop PB2 -- the H-bridge resumes driving the track. */
 void TI_DccDriver_main_cutout_end(void) {
 
     DL_GPIO_clearPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_RAILCOM_CUTOUT_PIN);
+    TI_RailcomLoopback_on_cutout_end();      /* gate closed; LATE-mode mock fires here */
 }
 
 /* Channel-window marker (RAILCOM_RX_WINDOW pin). The cutout state machine calls
@@ -260,6 +263,7 @@ void TI_DccDriver_railcom_window_open(void) {
 #ifdef GPIO_GRP_SALEAE_RAILCOM_RX_WINDOW_PIN
     DL_GPIO_setPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_RAILCOM_RX_WINDOW_PIN);
 #endif
+    TI_RailcomLoopback_on_window_open();     /* receiver gate open; WINDOW-mode mock transmits */
 }
 
 void TI_DccDriver_railcom_window_close(void) {
@@ -267,6 +271,7 @@ void TI_DccDriver_railcom_window_close(void) {
 #ifdef GPIO_GRP_SALEAE_RAILCOM_RX_WINDOW_PIN
     DL_GPIO_clearPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_RAILCOM_RX_WINDOW_PIN);
 #endif
+    TI_RailcomLoopback_on_window_close();    /* receiver gate closed */
 }
 
 void TI_DccDriver_svc_pin_toggle(void) {

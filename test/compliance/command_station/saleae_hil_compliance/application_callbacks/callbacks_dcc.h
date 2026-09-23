@@ -57,6 +57,18 @@ extern void CallbacksDcc_set_mock_ack_early(bool early);
 extern void CallbacksDcc_arm_railcom_cancel(void);
 extern void CallbacksDcc_railcom_cancel_tick(void);
 
+#if defined(DCC_COMPILE_RAILCOM)
+// RailCom datagram decoded by the library (HIL loopback, S-9.3.2 CS-010..015).
+// Wired to .on_railcom_datagram_result; fires from DccConfig_run() (main loop),
+// so it prints straight to the command UART:
+//   RC RESULT: addr=<dcc addr> ch=<1|2> id=<datagram id> n=<bytes> data=<hex..>
+// result_count() / reset_result_count() back the RC STATUS / RC MOCK OFF commands.
+extern void CallbacksDcc_on_railcom_datagram(uint16_t address, uint8_t channel,
+                                             const dcc_railcom_datagram_t *datagram);
+extern uint32_t CallbacksDcc_railcom_result_count(void);
+extern void CallbacksDcc_railcom_reset_result_count(void);
+#endif /* DCC_COMPILE_RAILCOM */
+
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
 #ifdef __cplusplus

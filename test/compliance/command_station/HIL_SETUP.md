@@ -41,13 +41,16 @@ LaunchPad flash) and the Python venv (in this repo). To bring it back up:
    - **D3 → PB4** — orange (service-track DCC out)
    - **D4 → PB9** — yellow (mock-ACK pin; for the S-9.2.3 ACK width cross-check)
    - **D5 → PB18** — green (RailCom Rx-window mirror / RAILCOM_RX_WINDOW; for the S-9.3.2 cutout sub-windows)
+   - **D6 → PB16** — blue (RailCom RX loopback / RAILCOM_RX; for the S-9.3.2 receive-path checks)
+   - **Jumpers:** PB24 → PB9 (mock ACK) and **PB6 → PB16** (mock RailCom decoder → RailCom RX)
 3. **Logic 2:** launch it; Preferences → **Automation** → enable the API (port **10430**). Leave it running.
 4. **Firmware:** already flashed. If the board was wiped, re-flash the `saleae_hil_compliance`
    Debug build from CCS. (After any service-mode test, tap **RESET** to clear singleton state.)
-   - **Rebuild + reflash required** for the newest checks: the S-9.3.2 cutout sub-window
-     timing (D5/PB18 mirror), the S-9.2.3 interrupted-ACK test (`SVC MOCKACK <us> GLITCH
-     <gap>`), and the `SVC REG/PAGED BITW|BITR` commands. The `RAILCOM_RX_WINDOW` pin is
-     already in the SysConfig; CCS regenerates the pin config on build.
+   - **Rebuild + reflash required** for the newest checks: the RailCom receive-path
+     loopback (`RC MOCK`, UART1/UART2 on PB6/PB16 in SysConfig), the S-9.3.2 cutout
+     sub-window timing (D5/PB18 mirror), the S-9.2.3 interrupted-ACK test (`SVC MOCKACK
+     <us> GLITCH <gap>`), and the `SVC REG/PAGED BITW|BITR` commands. CCS regenerates the
+     pin/UART config from the SysConfig on build.
 5. **Preflight:** `cd test/compliance && .venv/bin/python command_station/bench_preflight.py`
    — checks the DUT UART, the Saleae, and every probe channel, and names the wire colour +
    header pin of anything missing. Fix the bench until it passes.
@@ -77,10 +80,12 @@ Connect the Saleae digital channels to the LaunchPad pins and tie grounds togeth
 | **D3 (ch 3)**  | orange | **PB4**       | DCC service-track output       | S-9.2.3 service mode            |
 | **D4 (ch 4)**  | yellow | **PB9**       | Mock-ACK pin (PB24→PB9 loopback) | S-9.2.3 ACK width cross-check |
 | **D5 (ch 5)**  | green  | **PB18**      | RailCom Rx-window mirror (RAILCOM_RX_WINDOW) | S-9.3.2 cutout sub-windows |
+| **D6 (ch 6)**  | blue   | **PB16**      | RailCom RX loopback (RAILCOM_RX; PB6→PB16 jumper) | S-9.3.2 receive path |
 | **GND**        | gray   | **GND**       | common ground                  | always                          |
 
-These seven (D0, D1, D2, D3, D4, D5, GND) are the **current working setup** — wire all of them on
-re-assembly. The channel-to-pin map lives at the top of `test/compliance/compliance_lib.py`
+These eight (D0–D6, GND) plus the two jumpers are the **current working setup** — wire all of them
+on re-assembly. The loopback channel (6) is set in `command_station/s9_3_2_compliance.py`
+(`LOOPBACK_CHANNEL`). The channel-to-pin map lives at the top of `test/compliance/compliance_lib.py`
 (`DIGITAL_CHANNEL`=0, `TRIGGER_CHANNEL`=1); the S-9.3.2 cutout channel (2) and Rx-window
 channel (5) are set in `command_station/s9_3_2_compliance.py` (`CUTOUT_CHANNEL`, `WINDOW_CHANNEL`), and the
 S-9.2.3 service channel (3) and mock-ACK channel (4) in `command_station/s9_2_3_compliance.py`
@@ -93,6 +98,16 @@ S-9.2.3 service channel (3) and mock-ACK channel (4) in `command_station/s9_2_3_
 > suite reconstructs all five cutout states (S-9.3.2 CS-005/006). The pin is defined as
 > **RAILCOM_RX_WINDOW** in the `GPIO_GRP_SALEAE` group in SysConfig; until it exists the
 > firmware mirror compiles as a no-op and the sub-window checks report the pin as absent.
+
+> **RailCom receive loopback (D6/PB16 + jumper PB6→PB16).** The DUT's real RailCom
+> receive path is a 250 kbaud UART on **PB16** (`RAILCOM_RX`, UART2), gated by the
+> library's own channel-window hooks. A **mock decoder transmitter** on **PB6**
+> (`MOCK_RC_TX`, UART1) is jumpered into it; `RC MOCK <ch1hex> [<ch2hex>] [LATE]` arms one
+> reply that the next cutout plays at T_TS1 (Ch1) and T_TS2 (Ch2), exactly where a decoder
+> transmits. The library decodes it and the firmware prints `RC RESULT: addr=.. ch=.. id=..
+> data=..`. D6 taps PB16 so the suite checks the bytes, their 250 kbaud framing and their
+> position inside the D5 windows independently of the firmware. No bit-banging: both ends
+> are hardware UARTs. `RC MOCK OFF` disarms and zeroes the counters, `RC STATUS` shows them.
 
 > The **mock-ACK loopback** for the S-9.2.3 ACK test is an on-board **jumper**
 > **MOCK_ACK_DRIVE (PB24) → MOCK_ACK (PB9)**; **D4 taps PB9** so the suite independently
@@ -116,6 +131,8 @@ J3.21, J4.40 and J2.20 are all in the **top row**, matching the silkscreen next 
 | PB4  | J4.40 | 1  | right, inner | service-track DCC (SERVICE_MODE_DCC) | D3 orange |
 | PB9  | J1.7  | 7  | left, outer  | mock-ACK in (MOCK_ACK)            | D4 yellow |
 | PB18 | J3.25 | 5  | left, inner  | Rx-window mirror (RAILCOM_RX_WINDOW) | D5 green |
+| PB16 | J2.11 | 10 | right, outer | RailCom RX (RAILCOM_RX) — jumper target | D6 blue |
+| PB6  | J2.13 | 8  | right, outer | mock RailCom TX (MOCK_RC_TX) — jumper to J2.11 | — |
 | GND  | J3.22 or J2.20 | 2 / 1 | left inner / right outer | ground     | gray      |
 | PB24 | J1.6  | 6  | left, outer  | mock-ACK drive (MOCK_ACK_DRIVE) — jumper to J1.7 | — |
 | PB12 | J2.19 | 2  | right, outer | real ACK current-sense (ACK_IN)   | —         |
@@ -123,6 +140,8 @@ J3.21, J4.40 and J2.20 are all in the **top row**, matching the silkscreen next 
 
 Notes:
 - The **mock-ACK loopback jumper is J1.6 → J1.7**, two adjacent pins in the same column.
+- The **RailCom loopback jumper is J2.13 → J2.11**, two pins apart in the right outer column;
+  the blue D6 clip shares J2.11 with the jumper end, like the yellow clip on J1.7.
 - **PB24** also feeds the on-board thermistor divider through jumper **J9** by default. Pull J9
   to isolate it if the mock-ACK pulse ever looks loaded.
 - **PB18** and **PA15** pass through two fitted 0 Ω resistors each (the "RC filter" footprints);
@@ -261,6 +280,9 @@ SVC MOCKACK 6000         # HIL-only: inject a 6000us mock ACK -> ACK DETECTED / 
 SVC MOCKCV 8 0x5A        # HIL-only: mock decoder holds CV8=0x5A (read/write-back)
 SVC MOCKCV OFF           # HIL-only: disable the mock decoder
 TRIG                     # HIL-only: pulse PB3 on the next non-idle packet
+RC MOCK ACAA A5A3        # HIL-only: mock RailCom reply (Ch1 AC AA, Ch2 A5 A3) on the next cutout
+RC MOCK OFF              # HIL-only: disarm the mock, zero the loopback counters
+RC STATUS                # HIL-only: loopback counters (cutouts, rx_ok, rx_dropped, tx, results)
 ```
 
 The **mock decoder** (`SVC MOCKCV`) makes the bench behave like a decoder holding one

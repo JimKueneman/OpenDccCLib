@@ -19,6 +19,7 @@ Or via:          .venv/bin/python run_all.py
 
 import os
 import csv
+import time
 import bisect
 import tempfile
 import compliance_lib as lib
@@ -28,13 +29,17 @@ SPEC_TITLE = "RailCom cutout timing (command-station transmit)"
 SOURCE_PDF = "documentation/specs/s-9.3.2_railcom.pdf"
 ASPECT     = ("cutout-active strobe (ch2/PB2) vs the DECODED packet end bit's last edge (ch0/PB1), plus the "
               "RAILCOM_RX_WINDOW mirror (ch5/PB18) for the 5 interior sub-window boundaries; "
-              "3/4/5/6-byte packet mix: idle, short-addr speed, long-addr speed, POM CV")
+              "3/4/5/6-byte packet mix: idle, short-addr speed, long-addr speed, POM CV; "
+              "plus the RailCom RECEIVE path via the mock-decoder loopback (PB6 -> PB16, ch6)")
 
 # --- hardware ---
 CUTOUT_CHANNEL = 2          # ch2 = PB2 = cutout-active strobe (begin T_CS / end T_CE)
 WINDOW_CHANNEL = 5          # ch5 = RAILCOM_RX_WINDOW mirror pin: high while a Ch1/Ch2
                             # window is open (uart_rx_enable/disable edges). Set this
                             # to the Saleae channel you probe the new pin with.
+LOOPBACK_CHANNEL = 6        # ch6 = PB16 = RAILCOM_RX: the RailCom receive UART, fed by the
+                            # mock decoder transmitter (PB6) through a board jumper.
+RC_BAUD = 250_000           # S-9.3.2 RailCom bit rate
 
 # --- capture ---
 CAPTURE_SECONDS = 0.5       # 500 ms -> ~70 packets at ~7 ms/packet
@@ -483,6 +488,329 @@ def checks(rep, decoded, measurements):
     )
 
 
+
+# --------------------------------------------------------------------------
+# RailCom RECEIVE path via the mock-decoder loopback (CS-010..CS-014)
+#
+# The DUT's real receive path: RAILCOM_RX (UART2, PB16) -> .uart_read -> the
+# library's 4/8 decode + datagram assembly -> RC RESULT lines on the command
+# UART. Stimulus is the DUT's own mock transmitter (UART1, PB6), jumpered to
+# PB16 and started by the library's window-open hooks, so the bytes land
+# exactly where a decoder puts them. Saleae ch6 taps the jumper so every check
+# is grounded in what was on the wire, not in what the firmware says it sent.
+#
+# Host-side 4/8 encoder: transcribed from the S-9.3.2 draft (Apr 2026) Table 2,
+# independent of the library. One deliberate departure: the draft prints 0x0B as
+# 10001101, the same word it gives 0x0D -- a typesetting error (a 4-of-8 table
+# cannot repeat a word); RCN-217 and the 2012 S-9.3.2 give 0x96, used here.
+# --------------------------------------------------------------------------
+
+RC_CODE = [
+    0xAC, 0xAA, 0xA9, 0xA5, 0xA3, 0xA6, 0x9C, 0x9A,   # 0x00-0x07
+    0x99, 0x95, 0x93, 0x96, 0x8E, 0x8D, 0x8B, 0xB1,   # 0x08-0x0F  (0x0B: see note)
+    0xB2, 0xB4, 0xB8, 0x74, 0x72, 0x6C, 0x6A, 0x69,   # 0x10-0x17
+    0x65, 0x63, 0x66, 0x5C, 0x5A, 0x59, 0x55, 0x53,   # 0x18-0x1F
+    0x56, 0x4E, 0x4D, 0x4B, 0x47, 0x71, 0xE8, 0xE4,   # 0x20-0x27
+    0xE2, 0xD1, 0xC9, 0xC5, 0xD8, 0xD4, 0xD2, 0xCA,   # 0x28-0x2F
+    0xC6, 0xCC, 0x78, 0x17, 0x1B, 0x1D, 0x1E, 0x2E,   # 0x30-0x37
+    0x36, 0x3A, 0x27, 0x2B, 0x2D, 0x35, 0x39, 0x33,   # 0x38-0x3F
+]
+RC_ACK      = 0x0F     # Table 2: ACK (either form)
+RC_ACK_ALT  = 0xF0
+RC_NACK     = 0x3C     # Table 2: optional NACK
+RC_RESERVED = 0xE1     # Table 2: reserved (formerly BUSY), must be rejected
+RC_ID_POM, RC_ID_ADR1, RC_ID_ADR2, RC_ID_DYN = 0, 1, 2, 7
+
+assert len(set(RC_CODE)) == 64 and all(bin(w).count("1") == 4 for w in RC_CODE)
+
+
+def rc_encode12(datagram_id, data8):
+    """12-bit datagram (4-bit ID + 8 data bits) -> two 4/8 code words."""
+    v = ((datagram_id & 0x0F) << 8) | (data8 & 0xFF)
+    return [RC_CODE[(v >> 6) & 0x3F], RC_CODE[v & 0x3F]]
+
+
+def rc_encode6(values):
+    """Extra 6-bit data words (Channel 2 tail) -> code words."""
+    return [RC_CODE[v & 0x3F] for v in values]
+
+
+def _hex(bs):
+    return "".join(f"{b:02X}" for b in bs) if bs else "-"
+
+
+def _rc_session(port):
+    """Open the command UART for the loopback cases (one port for the series)."""
+    import serial
+    s = serial.Serial(port, lib.SERIAL_BAUD, timeout=0.2)
+    time.sleep(0.15)
+    s.reset_input_buffer()
+    return s
+
+
+def _rc_cmd(s, cmd, settle=0.15):
+    s.reset_input_buffer()
+    s.write((cmd + "\r").encode())
+    time.sleep(settle)
+    return s.read(600).decode(errors="replace")
+
+
+def _rc_status(s):
+    """Parse 'RC STATUS: armed=.. cutouts=.. rx_ok=.. rx_dropped=.. tx=.. results=..'."""
+    txt = _rc_cmd(s, "RC STATUS")
+    line = next((l for l in txt.splitlines() if "RC STATUS:" in l), "")
+    out = {}
+    for kv in line.split("RC STATUS:")[-1].split():
+        if "=" in kv:
+            k, v = kv.split("=", 1)
+            out[k] = int(v)
+    return out
+
+
+def _rc_results(s, quiet=0.25, total=1.5):
+    """Collect RC RESULT lines until the UART goes quiet. Returns list of dicts."""
+    end = time.time() + total
+    buf, last = "", time.time()
+    while time.time() < end:
+        chunk = s.read(512).decode(errors="replace")
+        if chunk:
+            buf += chunk
+            last = time.time()
+        elif time.time() - last > quiet and "RC RESULT" in buf:
+            break
+    res = []
+    for line in buf.splitlines():
+        if "RC RESULT:" not in line:
+            continue
+        d = {}
+        body = line.split("RC RESULT:")[-1].strip()
+        for kv in body.split():
+            if "=" in kv:
+                k, v = kv.split("=", 1)
+                d[k] = v
+        d["addr"] = int(d.get("addr", -1)); d["ch"] = int(d.get("ch", 0))
+        d["id"] = int(d.get("id", -1)); d["n"] = int(d.get("n", 0))
+        data = body.split("data=")[-1].strip() if "data=" in body else ""
+        d["data"] = [int(x, 16) for x in data.split()] if data else []
+        res.append(d)
+    return res
+
+
+def _rc_case(s, ch1, ch2, late=False, seconds=0.3, arm_delay=0.03):
+    """Arm one mock reply inside a live capture of ch0/ch2/ch5/ch6, then gather the
+    DUT's RC RESULT lines and counters. Returns a dict with everything a check needs."""
+    _rc_cmd(s, "RC MOCK OFF", settle=0.1)
+    cmd = f"RC MOCK {_hex(ch1)} {_hex(ch2)}" + (" LATE" if late else "")
+    chans = [lib.DIGITAL_CHANNEL, CUTOUT_CHANNEL, WINDOW_CHANNEL, LOOPBACK_CHANNEL]
+    s.reset_input_buffer()
+
+    def stimulus():
+        time.sleep(arm_delay)                 # a few cutouts first, then arm
+        s.write((cmd + "\r").encode())
+
+    with tempfile.TemporaryDirectory() as d:
+        paths = lib.capture_to_csv_multi(chans, d, stimulus=stimulus, capture_seconds=seconds)
+        rows = {ch: lib.read_transitions(paths[ch]) for ch in chans}
+    results = _rc_results(s)
+    status = _rc_status(s)
+
+    frames = lib.decode_uart(rows[LOOPBACK_CHANNEL], baud=RC_BAUD)
+    return {"cmd": cmd, "ch1": ch1, "ch2": ch2, "late": late, "rows": rows,
+            "frames": frames, "results": results, "status": status}
+
+
+def _tagged_address(case):
+    """From the capture: the address of the packet whose cutout carried the mock
+    bytes (the last decoded packet ending before the first ch6 start bit)."""
+    if not case["frames"]:
+        return None, None
+    t6 = case["frames"][0][0]
+    dec = lib.decode(case["rows"][lib.DIGITAL_CHANNEL])
+    ends = dec["packet_end_times"]
+    i = bisect.bisect_left(ends, t6) - 1
+    if i < 0:
+        return None, None
+    return lib.packet_address(dec["packets"][i][1]), (t6 - ends[i]) * 1e6
+
+
+def _windows(case):
+    """[(open_s, close_s)] of the RAILCOM_RX_WINDOW mirror highs around the mock bytes."""
+    rows = case["rows"][WINDOW_CHANNEL]
+    out, t_rise = [], None
+    for t, v in rows:
+        if v == 1:
+            t_rise = t
+        elif v == 0 and t_rise is not None:
+            out.append((t_rise, t)); t_rise = None
+    return out
+
+
+def _wire_checks(rep, case, clause):
+    """Saleae-side truth for a WINDOW-mode reply: the bytes on ch6 are the queued
+    bytes, framed at 250 kbaud, each inside the right channel window."""
+    bit = 1.0 / RC_BAUD
+    frames = case["frames"]
+    queued = list(case["ch1"]) + list(case["ch2"])
+    got = [b for _, b, _ in frames]
+    rep.check(clause, f"ch6 carries the queued bytes ({_hex(queued)})",
+              got == queued and all(ok for _, _, ok in frames),
+              f"decoded {len(frames)} frame(s) on ch6: {_hex(got)}; "
+              f"stop bits ok: {all(ok for _, _, ok in frames)}")
+    if len(frames) >= 2:
+        gaps = [(frames[i + 1][0] - frames[i][0]) * 1e6 for i in range(len(frames) - 1)
+                if (frames[i + 1][0] - frames[i][0]) < 60e-6]          # back-to-back only
+        rep.check(clause, "250 kbaud framing (40 us per byte, back-to-back)",
+                  all(38.0 <= g <= 44.0 for g in gaps) if gaps else False,
+                  (f"n={len(gaps)} start-to-start min={min(gaps):.2f} mean={sum(gaps)/len(gaps):.2f} "
+                   f"max={max(gaps):.2f} us (limits 38-44)") if gaps else "no back-to-back bytes")
+    wins = _windows(case)
+    n1 = len(case["ch1"])
+    placed = []
+    for k, (t0, _, _) in enumerate(frames):
+        t_end = t0 + 10 * bit
+        w = next(((a, b) for a, b in wins if a <= t0 <= b), None)
+        placed.append(w is not None and t_end <= w[1] + 2e-6)
+    # Ch1 bytes must all sit in ONE window, Ch2 bytes in the NEXT one
+    win_of = [next((i for i, (a, b) in enumerate(wins) if a <= t0 <= b), None)
+              for t0, _, _ in frames]
+    same1 = len(set(win_of[:n1])) <= 1 and None not in win_of[:n1]
+    same2 = len(set(win_of[n1:])) <= 1 and None not in win_of[n1:]
+    ordered = (not case["ch1"] or not case["ch2"] or
+               (win_of[0] is not None and win_of[n1] is not None and win_of[n1] == win_of[0] + 1))
+    rep.check(clause, "every byte starts and ends inside its channel window (ch5)",
+              bool(frames) and all(placed) and same1 and same2 and ordered,
+              f"{sum(placed)}/{len(placed)} inside a window; Ch1 in window {set(win_of[:n1])}, "
+              f"Ch2 in window {set(win_of[n1:])}")
+
+
+def _expect(rep, clause, name, case, ch, dg_id, data, present=True):
+    """Assert the DUT reported (or did not report) a datagram on channel ch."""
+    hits = [r for r in case["results"] if r["ch"] == ch]
+    if not present:
+        rep.check(clause, name, not hits,
+                  f"ch{ch} results: {len(hits)} (expected none); all: {case['results']}")
+        return
+    ok = len(hits) == 1 and hits[0]["id"] == dg_id and hits[0]["data"] == list(data)
+    rep.check(clause, name, ok,
+              f"expected ch{ch} id={dg_id} data={_hex(data)}; got "
+              + (f"id={hits[0]['id']} n={hits[0]['n']} data={_hex(hits[0]['data'])}" if hits
+                 else "no ch%d result" % ch)
+              + (f" (+{len(hits) - 1} extra)" if len(hits) > 1 else ""))
+
+
+def _address_check(rep, clause, case):
+    """The DUT tagged the reply with the address of the packet whose cutout it rode."""
+    tagged, dt_us = _tagged_address(case)
+    got = {r["addr"] for r in case["results"]}
+    rep.check(clause, "reply tagged with the address of the packet before its cutout",
+              tagged is not None and got == {tagged},
+              f"wire: packet addr {tagged}, bytes {dt_us:.0f} us after its end bit; "
+              f"DUT tagged {sorted(got)}" if tagged is not None else "no ch6 bytes captured")
+
+
+def railcom_loopback_tests(rep, port):
+    """S-9.3.2 CS-010..CS-014 on the wire, through the DUT's real receive path."""
+    s = _rc_session(port)
+    try:
+        _rc_cmd(s, "CLEAR", 0.1)
+        _rc_cmd(s, "SPEED 3 50 FWD 128", 0.15)        # every packet addressed to 3
+        pom_val = 0x2A
+
+        # --- CS-013: Channel 1 two-byte datagram (ADR1 for a short address) -----
+        clause = "S-9.3.2 §3.4 (Channel 1 datagram)"
+        c = _rc_case(s, rc_encode12(RC_ID_ADR1, 0x00), [])
+        # @compliance DCC-S9.3.2-CS-013
+        _expect(rep, clause, "Ch1 ADR1 datagram decoded (id=1, data=00)", c, 1, RC_ID_ADR1, [0x00])
+        _expect(rep, clause, "no Channel 2 datagram when none was sent", c, 2, 0, [], present=False)
+        _wire_checks(rep, c, clause)
+        _address_check(rep, clause, c)
+
+        # --- CS-014 + CS-010: Channel 2 POM read-back after a Ch1 ADR2 -------------
+        clause = "S-9.3.2 §3.4 (Channel 2 datagram)"
+        c = _rc_case(s, rc_encode12(RC_ID_ADR2, 3), rc_encode12(RC_ID_POM, pom_val))
+        # @compliance DCC-S9.3.2-CS-014
+        _expect(rep, clause, f"Ch2 POM read-back decoded (id=0, data={pom_val:02X})", c, 2, RC_ID_POM, [pom_val])
+        # @compliance DCC-S9.3.2-CS-010
+        _expect(rep, clause, "Ch1 ADR2 decoded alongside it (id=2, data=03)", c, 1, RC_ID_ADR2, [0x03])
+        _wire_checks(rep, c, clause)
+        _address_check(rep, clause, c)
+
+        # --- CS-014: a 4-byte Channel 2 datagram (DYN: id 7 + data + 2 extra words) --
+        c = _rc_case(s, rc_encode12(RC_ID_ADR1, 0x00),
+                     rc_encode12(RC_ID_DYN, 0x55) + rc_encode6([0x12, 0x3F]))
+        _expect(rep, clause, "4-byte Ch2 datagram: id=7 data=55 12 3F", c, 2, RC_ID_DYN, [0x55, 0x12, 0x3F])
+        _wire_checks(rep, c, clause)
+
+        # --- CS-011: ACK padding after the datagram (both ACK forms) ---------------
+        clause = "S-9.3.2 §3.3 (ACK code words)"
+        c = _rc_case(s, rc_encode12(RC_ID_ADR1, 0x00),
+                     rc_encode12(RC_ID_POM, pom_val) + [RC_ACK, RC_ACK_ALT])
+        # @compliance DCC-S9.3.2-CS-011
+        _expect(rep, clause, "Ch2 datagram kept when followed by ACK 0x0F 0xF0 padding", c, 2, RC_ID_POM, [pom_val])
+        _wire_checks(rep, c, clause)
+        c = _rc_case(s, rc_encode12(RC_ID_ADR1, 0x00), [RC_ACK, RC_ACK, RC_ACK_ALT, RC_ACK_ALT])
+        _expect(rep, clause, "all-ACK Channel 2 yields no datagram", c, 2, 0, [], present=False)
+        _expect(rep, clause, "  ...while its Ch1 still decodes", c, 1, RC_ID_ADR1, [0x00])
+
+        # --- CS-012: NACK -----------------------------------------------------------
+        clause = "S-9.3.2 §3.3 (NACK code word)"
+        c = _rc_case(s, rc_encode12(RC_ID_ADR1, 0x00), [RC_NACK, RC_NACK])
+        # @compliance DCC-S9.3.2-CS-012
+        _expect(rep, clause, "NACK-only Channel 2 yields no data datagram", c, 2, 0, [], present=False)
+        _expect(rep, clause, "  ...while its Ch1 still decodes", c, 1, RC_ID_ADR1, [0x00])
+
+        # --- CS-010: invalid / reserved code words are rejected ----------------------
+        clause = "S-9.3.2 §3.1 (4/8 code, invalid words)"
+        c = _rc_case(s, [RC_CODE[0x01], 0xFF], rc_encode12(RC_ID_POM, pom_val))
+        _expect(rep, clause, "Ch1 with a non-4/8 byte (0xFF) is rejected", c, 1, 0, [], present=False)
+        _expect(rep, clause, "  ...Ch2 after it still decodes", c, 2, RC_ID_POM, [pom_val])
+        c = _rc_case(s, rc_encode12(RC_ID_ADR1, 0x00), [RC_RESERVED, RC_CODE[0x02]])
+        _expect(rep, clause, "Ch2 starting with reserved 0xE1 yields no datagram", c, 2, 0, [], present=False)
+
+        # --- receive gate: bytes outside every window never become a datagram --------
+        clause = "S-9.3.2 §3.2 (receive gated to the channel windows)"
+        c = _rc_case(s, rc_encode12(RC_ID_ADR2, 3), rc_encode12(RC_ID_POM, pom_val), late=True)
+        rep.check(clause, "bytes sent at T_CE (gate closed) produce no RC RESULT",
+                  not c["results"] and len(c["frames"]) == 4,
+                  f"{len(c['frames'])} frames on ch6 after the cutout; results: {c['results']}")
+        rep.check(clause, "DUT counted them as dropped-outside-window, none accepted",
+                  c["status"].get("rx_dropped", 0) >= 4 and c["status"].get("rx_ok", 0) == 0,
+                  f"RC STATUS after: {c['status']}")
+
+        # --- address tagging under a two-loco stream (PR #1 two-stage capture) --------
+        clause = "S-9.3.2 §3.4 (reply address tagging)"
+        _rc_cmd(s, "SPEED 200 50 FWD 128", 0.15)      # now packets alternate 3 / 200
+        tags_ok, seen = [], []
+        for k in range(8):
+            # vary the arm phase against the ~7 ms packet cadence so the reply lands
+            # on packets of BOTH addresses across the trials, not always the same one
+            c = _rc_case(s, rc_encode12(RC_ID_ADR1, 0x00), [], arm_delay=0.03 + k * 0.00175)
+            tagged, _ = _tagged_address(c)
+            got = {r["addr"] for r in c["results"]}
+            seen.append((tagged, sorted(got)))
+            tags_ok.append(tagged is not None and got == {tagged})
+        addrs_hit = {t for t, _ in seen if t}
+        rep.check(clause, "with locos 3 and 200 streaming, each reply carries its own packet's address",
+                  all(tags_ok) and addrs_hit == {3, 200},
+                  f"(wire addr, DUT tag) per trial: {seen}; addresses exercised: {sorted(addrs_hit)}"
+                  + ("" if addrs_hit == {3, 200} else " -- both 3 and 200 must be hit"))
+
+        # --- KNOWN LIMITATION: Channel 2-only reply --------------------------------
+        # The library splits the raw bytes by COUNT (first two = Ch1, rest = Ch2),
+        # not by window. A decoder with Ch1 disabled (CV28 bit 0) sends only Ch2;
+        # its first two bytes are then misread as a Ch1 datagram. Kept as an
+        # EXPECTED FAILURE until the receive path tags bytes by window.
+        clause = "S-9.3.2 §3.4 (Channel 2-only reply) [known limitation]"
+        c = _rc_case(s, [], rc_encode12(RC_ID_POM, pom_val))
+        _expect(rep, clause, "Ch2-only reply reported on Channel 2 (EXPECTED TO FAIL: "
+                             "library splits by byte count, not by window)", c, 2, RC_ID_POM, [pom_val])
+        _wire_checks(rep, c, clause)
+
+        _rc_cmd(s, "RC MOCK OFF", 0.1)
+        _rc_cmd(s, "CLEAR", 0.1)
+    finally:
+        s.close()
+
 # --------------------------------------------------------------------------
 # Entry points
 # --------------------------------------------------------------------------
@@ -499,6 +827,7 @@ def run():
     if port is not None:
         configurable_timing_test(rep, port)
         cancel_midcutout_test(rep, port)
+        railcom_loopback_tests(rep, port)
     return rep.finish()
 
 
@@ -517,7 +846,7 @@ def main():
     except Exception as e:
         print(f"\nERROR: {e}\n"
               f"Check: Logic 2 running, Automation API enabled (port "
-              f"{lib.AUTOMATION_PORT}), device connected, ch2/PB2 wired.\n")
+              f"{lib.AUTOMATION_PORT}), device connected, ch2/PB2, ch5/PB18, ch6/PB16 wired.\n")
         return 2
     path = lib.write_html([rep.as_dict()], lib.report_path("s9_3_2"),
                           title=f"NMRA {SPEC_DOC} Compliance Report")

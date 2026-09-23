@@ -20,6 +20,7 @@
 #include "ti_msp_dl_config.h"
 #include "application_drivers/ti_driverlib_uart_driver.h"
 #include "application_drivers/ti_driverlib_dcc_driver.h"
+#include "application_drivers/ti_driverlib_railcom_loopback.h"
 #include "dcc_lib/dcc_config.h"
 #include "dcc_lib/dcc_application_command_station_main_track.h"
 #include "dcc_lib/dcc_application_command_station_service_track.h"
@@ -1190,6 +1191,104 @@ static void _cmd_railcom(char *tokens[], int count) {
 }
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
+#if defined(DCC_COMPILE_COMMAND_STATION) && defined(DCC_COMPILE_RAILCOM)
+// RailCom loopback (HIL: S-9.3.2 CS-010..015). The host 4/8-encodes a reply and
+// arms it here; the next cutout plays it through MOCK_RC_TX -> jumper -> RAILCOM_RX
+// and the library's real receive path reports what it decoded (RC RESULT lines).
+//   RC MOCK <ch1hex|-> [<ch2hex|->] [LATE]  -- raw bytes as contiguous hex, "-" = none
+//   RC MOCK OFF                              -- disarm and zero the counters
+//   RC STATUS                                -- loopback counters
+static bool _parse_hex_bytes(const char *tok, uint8_t *out, uint8_t max, uint8_t *n) {
+
+    size_t len = strlen(tok);
+    *n = 0;
+
+    if (strcmp(tok, "-") == 0) {
+        return true;
+    }
+    if (len == 0 || (len & 1u) || (len / 2) > max) {
+        return false;
+    }
+
+    for (size_t i = 0; i < len; i += 2) {
+
+        uint8_t v = 0;
+
+        for (int k = 0; k < 2; k++) {
+
+            char c = tok[i + (size_t)k];
+            v = (uint8_t)(v << 4);
+
+            if (c >= '0' && c <= '9')      v |= (uint8_t)(c - '0');
+            else if (c >= 'A' && c <= 'F') v |= (uint8_t)(c - 'A' + 10);
+            else if (c >= 'a' && c <= 'f') v |= (uint8_t)(c - 'a' + 10);
+            else return false;
+        }
+        out[(*n)++] = v;
+    }
+    return true;
+}
+
+static void _cmd_rc(char *tokens[], int count) {
+
+    if (count >= 2 && strcmp(tokens[1], "STATUS") == 0) {
+
+        rc_loopback_stats_t s;
+        TI_RailcomLoopback_get_stats(&s);
+        snprintf(_resp_buf, sizeof(_resp_buf),
+                 "RC STATUS: armed=%u cutouts=%lu rx_ok=%lu rx_dropped=%lu tx=%lu results=%lu",
+                 s.armed ? 1u : 0u, (unsigned long)s.cutouts, (unsigned long)s.rx_accepted,
+                 (unsigned long)s.rx_dropped, (unsigned long)s.tx_bytes,
+                 (unsigned long)CallbacksDcc_railcom_result_count());
+        _respond(_resp_buf);
+        return;
+    }
+
+    if (count >= 3 && strcmp(tokens[1], "MOCK") == 0) {
+
+        if (strcmp(tokens[2], "OFF") == 0) {
+            TI_RailcomLoopback_disarm();
+            TI_RailcomLoopback_reset_stats();
+            CallbacksDcc_railcom_reset_result_count();
+            _respond("OK: RC mock off (disarmed, counters zeroed)");
+            return;
+        }
+
+        uint8_t ch1[2], ch2[6], n1 = 0, n2 = 0;
+        rc_loopback_mode_t mode = RC_LOOPBACK_MODE_WINDOW;
+        int next = 3;
+
+        if (!_parse_hex_bytes(tokens[2], ch1, 2, &n1)) {
+            _respond("ERR: usage: RC MOCK <ch1hex|-> [<ch2hex|->] [LATE]  (ch1: 1-2 bytes, ch2: 1-6 bytes)");
+            return;
+        }
+        if (count > next && strcmp(tokens[next], "LATE") != 0) {
+            if (!_parse_hex_bytes(tokens[next], ch2, 6, &n2)) {
+                _respond("ERR: usage: RC MOCK <ch1hex|-> [<ch2hex|->] [LATE]  (ch1: 1-2 bytes, ch2: 1-6 bytes)");
+                return;
+            }
+            next++;
+        }
+        if (count > next && strcmp(tokens[next], "LATE") == 0) {
+            mode = RC_LOOPBACK_MODE_LATE;
+        }
+
+        if (!TI_RailcomLoopback_arm(ch1, n1, ch2, n2, mode)) {
+            _respond("ERR: RC MOCK needs 1-2 ch1 bytes and/or 1-6 ch2 bytes");
+            return;
+        }
+
+        snprintf(_resp_buf, sizeof(_resp_buf),
+                 "OK: RC mock armed ch1=%u ch2=%u mode=%s (plays on the next cutout)",
+                 n1, n2, (mode == RC_LOOPBACK_MODE_LATE) ? "LATE" : "WINDOW");
+        _respond(_resp_buf);
+        return;
+    }
+
+    _respond("ERR: usage: RC MOCK <ch1hex|-> [<ch2hex|->] [LATE] | RC MOCK OFF | RC STATUS");
+}
+#endif /* DCC_COMPILE_COMMAND_STATION && DCC_COMPILE_RAILCOM */
+
 // Send a broadcast reset packet (00 00 00) once on the main track. Exposed so
 // the HIL harness can verify the S-9.2 reset-packet encoding on the wire.
 static void _cmd_reset(void) {
@@ -1506,6 +1605,8 @@ static void _cmd_help(void) {
     _respond("  SVC ADDR WRITE|VERIFY <addr> | READ");
     _respond("  SVC MOCKACK <width_us>  (HIL: inject mock ACK pulse, test width window)");
     _respond("  SVC MOCKCV <cv> <value> | OFF  (HIL: mock decoder for read/write-back)");
+    _respond("  RC MOCK <ch1hex|-> [<ch2hex|->] [LATE]  (HIL: mock RailCom reply on next cutout)");
+    _respond("  RC MOCK OFF | RC STATUS  (HIL: disarm + zero counters | loopback counters)");
     _respond("  CONSIST <addr> SET <ca> [NORMAL|REVERSE]");
     _respond("  CONSIST <addr> CLEAR");
     _respond("  BSS <addr> <1-127> <ON|OFF>");
@@ -1593,6 +1694,10 @@ void UartCommandParser_process(void) {
 #ifdef DCC_COMPILE_COMMAND_STATION
     else if (strcmp(tokens[0], "RAILCOM") == 0)
         _cmd_railcom(tokens, count);
+#endif
+#if defined(DCC_COMPILE_COMMAND_STATION) && defined(DCC_COMPILE_RAILCOM)
+    else if (strcmp(tokens[0], "RC") == 0)
+        _cmd_rc(tokens, count);
 #endif
     else if (strcmp(tokens[0], "HELP") == 0)
         _cmd_help();

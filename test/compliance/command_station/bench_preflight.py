@@ -17,6 +17,7 @@ Checks each layer in order and stops at the first one that fails:
                     D1 shows the one TRIG pulse
                     D2 shows one cutout-width strobe per packet, aligned to D0 packet ends
                     D5 shows the two Rx-window pulses inside each D2 strobe
+                    D6 shows the mock RailCom reply bytes, and the DUT decodes them
                     D3 decodes as service-mode packets (>= 20-bit preamble)
                     D4 shows the 6 ms mock-ACK pulse (and the DUT reports ACK DETECTED)
 
@@ -45,8 +46,10 @@ CHANNELS = {
     3: ("orange", "PB4",  "J4.40", "service-track DCC (SERVICE_MODE_DCC)"),
     4: ("yellow", "PB9",  "J1.7",  "mock-ACK in (MOCK_ACK; jumper from PB24/J1.6)"),
     5: ("green",  "PB18", "J3.25", "RailCom Rx-window mirror (RAILCOM_RX_WINDOW)"),
+    6: ("blue",   "PB16", "J2.11", "RailCom RX loopback (RAILCOM_RX; jumper from PB6/J2.13)"),
 }
-MAIN_CH, TRIG_CH, CUTOUT_CH, SVC_CH, ACK_CH, WINDOW_CH = 0, 1, 2, 3, 4, 5
+MAIN_CH, TRIG_CH, CUTOUT_CH, SVC_CH, ACK_CH, WINDOW_CH, LOOP_CH = 0, 1, 2, 3, 4, 5, 6
+RC_MOCK_BYTES = [0xAC, 0xAA, 0xA5, 0xA3]   # 4/8 words: Ch1 = AC AA, Ch2 = A5 A3
 
 # --- expectations (loose: this is a wiring check, the spec suites do the precision) -----
 MAIN_CAPTURE_S      = 0.5      # SPEED already streaming; TRIG lands inside; ~70 packets
@@ -200,13 +203,16 @@ def check_main_side(rep, port):
 
         def stimulus():
             s.write(b"TRIG\r")               # -> one PB3 pulse on the next non-idle packet
+            s.write(b"RC MOCK ACAA A5A3\r")   # -> one mock RailCom reply on the next cutout
 
-        chans = [MAIN_CH, TRIG_CH, CUTOUT_CH, WINDOW_CH]
+        chans = [MAIN_CH, TRIG_CH, CUTOUT_CH, WINDOW_CH, LOOP_CH]
         with tempfile.TemporaryDirectory() as d:
             paths = lib.capture_to_csv_multi(chans, d, stimulus=stimulus,
                                              capture_seconds=MAIN_CAPTURE_S)
             rows = {ch: lib.read_transitions(paths[ch]) for ch in chans}
-        s.read(512)                           # drain the TRIG reply
+        time.sleep(0.2)
+        replies = s.read(2048).decode(errors="replace")   # TRIG + RC MOCK replies, RC RESULT lines
+        s.write(b"RC MOCK OFF\r"); time.sleep(0.1); s.read(512)
 
     # --- D0: decodes as DCC ------------------------------------------------
     dec = lib.decode(rows[MAIN_CH])
@@ -293,8 +299,27 @@ def check_main_side(rep, port):
               bool(p5) and frac >= 0.9,
               f"{inside}/{len(p5)} window pulses inside a D2 high ({frac*100:.0f}%)")
 
+    # --- D6: the mock reply bytes on the loopback line, decoded by the DUT ------
+    frames = lib.decode_uart(rows[LOOP_CH], baud=250_000)
+    got = [b for _, b, _ in frames]
+    n_results = replies.count("RC RESULT:")
+    clause, name = _label(LOOP_CH)
+    ok6 = got == RC_MOCK_BYTES and n_results == 2
+    hint = ""
+    if not rows[LOOP_CH]:
+        hint = (" -- no edges: blue wire on PB16/J2.11? PB6->PB16 jumper (J2.13->J2.11)? "
+                "firmware built before the loopback existed (rebuild + reflash)?")
+    elif got != RC_MOCK_BYTES:
+        hint = " -- bytes differ from what was queued: baud/framing or a noisy jumper"
+    elif n_results != 2:
+        hint = " -- bytes on the wire but the DUT did not report both datagrams (receive path)"
+    rep.check(clause, f"{name}: mock reply bytes on the wire and decoded by the DUT", ok6,
+              f"ch6 frames: {' '.join(f'{b:02X}' for b in got) or 'none'} "
+              f"(queued {' '.join(f'{b:02X}' for b in RC_MOCK_BYTES)}); "
+              f"RC RESULT lines: {n_results}{hint}")
+
     lib.send_command(port, "CLEAR", settle=0.05)
-    return ok0 and ok1 and ok2 and ok5
+    return ok0 and ok1 and ok2 and ok5 and ok6
 
 
 # ----------------------------------------------------------------------------

@@ -7020,13 +7020,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "nobs",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "decode_byte inverts the 4/8 mapping and rejects invalid words.",
             "gtest": "",
-            "hil": "Wire datagram content not decoded by the HIL suite. Not wire-observable."
+            "hil": "Wire: mock reply through the DUT's real receive path (PB6->PB16 loopback, ch6). Valid words decode to the expected datagram; a non-4/8 byte (0xFF) and reserved 0xE1 are rejected on the wire."
           },
           "refs": {
             "symbols": [
@@ -7049,7 +7049,18 @@ window.COMPLIANCE =
                 "desc": "rejects the three S-9.3.2 Table 2 reserved four-ones code words (0xE1, 0xC3, 0x87)"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "4/8 decode of a looped-back reply",
+                "file": "command_station/s9_3_2_compliance.py",
+                "desc": "Ch1/Ch2 code words on ch6 decode to the expected datagram (RC RESULT)"
+              },
+              {
+                "label": "invalid-codeword rejection",
+                "file": "command_station/s9_3_2_compliance.py",
+                "desc": "0xFF in Ch1 and reserved 0xE1 leading Ch2 yield no datagram"
+              }
+            ]
           }
         },
         {
@@ -7071,13 +7082,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "nobs",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "ACK is transmitted raw as 0xF0.",
             "gtest": "",
-            "hil": "Not measured on the wire. Not wire-observable."
+            "hil": "Wire: Ch2 datagram followed by ACK 0x0F and 0xF0 padding is kept; an all-ACK Ch2 yields no datagram."
           },
           "refs": {
             "symbols": [
@@ -7090,7 +7101,13 @@ window.COMPLIANCE =
                 "desc": "decodes 0xF0 as ACK"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "ACK padding after a Ch2 datagram",
+                "file": "command_station/s9_3_2_compliance.py",
+                "desc": "datagram kept when followed by 0x0F 0xF0; all-ACK Channel 2 yields none"
+              }
+            ]
           }
         },
         {
@@ -7112,13 +7129,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "nobs",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "NACK is transmitted raw as 0x3C.",
             "gtest": "",
-            "hil": "Not measured on the wire. Not wire-observable."
+            "hil": "Wire: a NACK-only Channel 2 (0x3C 0x3C) yields no data datagram while Ch1 still decodes."
           },
           "refs": {
             "symbols": [
@@ -7131,7 +7148,13 @@ window.COMPLIANCE =
                 "desc": "decodes 0x3C as NACK"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "NACK-only Channel 2",
+                "file": "command_station/s9_3_2_compliance.py",
+                "desc": "0x3C words produce no data datagram; Ch1 unaffected"
+              }
+            ]
           }
         },
         {
@@ -7153,13 +7176,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "nobs",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Ch1 is a 2-byte datagram carrying a 12-bit payload.",
             "gtest": "",
-            "hil": "Channel content not decoded on the wire. Not wire-observable."
+            "hil": "Wire: a 2-byte Ch1 ADR1 reply decodes as id=1 data=00 and is tagged with the address of the packet before its cutout; bytes framed at 250 kbaud inside the Ch1 window (ch5)."
           },
           "refs": {
             "symbols": [
@@ -7172,7 +7195,13 @@ window.COMPLIANCE =
                 "desc": "assembles a valid 2-byte Ch1 datagram"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "Ch1 datagram on the wire",
+                "file": "command_station/s9_3_2_compliance.py",
+                "desc": "2-byte ADR1 reply decoded; 250 kbaud framing; inside the Ch1 window; tagged with the packet's address"
+              }
+            ]
           }
         },
         {
@@ -7194,13 +7223,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "nobs",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "Ch2 is a multi-byte (4+) datagram.",
             "gtest": "",
-            "hil": "Channel content not decoded on the wire. Not wire-observable."
+            "hil": "Wire: 2-byte POM read-back and a 4-byte DYN datagram decode with the expected id/data; bytes inside the Ch2 window (ch5)."
           },
           "refs": {
             "symbols": [
@@ -7213,7 +7242,13 @@ window.COMPLIANCE =
                 "desc": "assembles a valid 4-byte Ch2 datagram"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "Ch2 datagram on the wire",
+                "file": "command_station/s9_3_2_compliance.py",
+                "desc": "POM read-back (2 bytes) and DYN (4 bytes) decoded; inside the Ch2 window"
+              }
+            ]
           }
         },
         {

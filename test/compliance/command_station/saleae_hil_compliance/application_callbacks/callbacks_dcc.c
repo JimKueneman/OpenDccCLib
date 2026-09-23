@@ -8,6 +8,7 @@
 #include "dcc_lib/dcc_defines.h"   /* DCC_SERVICE_MODE_ACK_BLANK_PACKETS */
 #include "application_drivers/ti_driverlib_uart_driver.h"
 #include "application_drivers/ti_driverlib_dcc_driver.h"
+#include <stdio.h>
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
@@ -242,5 +243,46 @@ void CallbacksDcc_railcom_cancel_tick(void) {
 
     _railcom_prev_active = active;
 }
+
+
+// ---------------------------------------------------------------------------
+// RailCom datagram result (HIL loopback). The library decoded a Channel 1 or
+// Channel 2 datagram from the bytes it read through .uart_read during the last
+// cutout; report it with the address it was tagged with so the host can check
+// content, channel AND the two-stage address capture on the wire.
+// ---------------------------------------------------------------------------
+#if defined(DCC_COMPILE_RAILCOM)
+
+static volatile uint32_t _rc_result_count = 0;
+
+void CallbacksDcc_on_railcom_datagram(uint16_t address, uint8_t channel,
+                                      const dcc_railcom_datagram_t *datagram) {
+
+    char line[96];
+    int  n = snprintf(line, sizeof(line), "RC RESULT: addr=%u ch=%u id=%u n=%u data=",
+                      (unsigned)address, (channel == DCC_RAILCOM_CH1) ? 1u : 2u,
+                      (unsigned)datagram->datagram_id, (unsigned)datagram->count);
+
+    for (uint8_t i = 0; i < datagram->count && n > 0 && n < (int)sizeof(line) - 4; i++) {
+        n += snprintf(&line[n], sizeof(line) - (size_t)n, "%02X%s",
+                      datagram->data[i], (i + 1 < datagram->count) ? " " : "");
+    }
+
+    _rc_result_count++;
+    TI_UartDriver_write_string(line);
+    TI_UartDriver_write_string("\r\n");
+}
+
+uint32_t CallbacksDcc_railcom_result_count(void) {
+
+    return _rc_result_count;
+}
+
+void CallbacksDcc_railcom_reset_result_count(void) {
+
+    _rc_result_count = 0;
+}
+
+#endif /* DCC_COMPILE_RAILCOM */
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
