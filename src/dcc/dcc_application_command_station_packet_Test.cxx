@@ -802,8 +802,9 @@ TEST(DccPacketEncoder, cv_write_ops_short_addr) {
     bool ok = DccApplicationCommandStationPacket_load_cv_write_pom(&pkt, 3, DCC_ADDRESS_SHORT, 1, 200);
 
     EXPECT_TRUE(ok);
-    /* one-shot packet: the scheduler never sends a packet whose repeat_count is 0 */
-    EXPECT_EQ(pkt.repeat_count, 1);
+    /* S-9.2.1 p.9: two identical packets are needed before the decoder
+     * modifies a CV via WRITE BYTE, so this one-shot slot starts at 2. */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[0], 3);
     /* CV 1 → wire 0 = 0x000. Instruction: 1110 1100 | 0x00 = 0xEC */
     EXPECT_EQ(pkt.data[1], 0xEC);
@@ -865,7 +866,8 @@ TEST(DccPacketEncoder, cv_verify_ops_short_addr) {
     bool ok = DccApplicationCommandStationPacket_load_cv_verify_pom(&pkt, 3, DCC_ADDRESS_SHORT, 29, 0x25);
 
     EXPECT_TRUE(ok);
-    /* one-shot packet: the scheduler never sends a packet whose repeat_count is 0 */
+    /* S-9.2.1 p.8: VERIFY BYTE acts on the first packet the decoder
+     * receives, unlike WRITE BYTE -- one-shot slot stays at 1. */
     EXPECT_EQ(pkt.repeat_count, 1);
     EXPECT_EQ(pkt.data[0], 3);
     /* CV 29 → wire 28 = 0x01C. Instruction: 0xE4 | 0x00 = 0xE4 */
@@ -887,8 +889,9 @@ TEST(DccPacketEncoder, cv_bit_ops_write_bit3_high) {
     bool ok = DccApplicationCommandStationPacket_load_cv_bit_pom(&pkt, 3, DCC_ADDRESS_SHORT, 29, 3, true, true);
 
     EXPECT_TRUE(ok);
-    /* one-shot packet: the scheduler never sends a packet whose repeat_count is 0 */
-    EXPECT_EQ(pkt.repeat_count, 1);
+    /* S-9.2.1 p.9: WRITE BIT needs the same two identical packets as
+     * WRITE BYTE before the decoder acts on it. */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[0], 3);
     /* CV 29 → wire 28. Instruction: 0xE8 | 0x00 = 0xE8 */
     EXPECT_EQ(pkt.data[1], 0xE8);
@@ -905,7 +908,7 @@ TEST(DccPacketEncoder, cv_bit_ops_verify_bit0_low) {
     bool ok = DccApplicationCommandStationPacket_load_cv_bit_pom(&pkt, 3, DCC_ADDRESS_SHORT, 1, 0, false, false);
 
     EXPECT_TRUE(ok);
-    /* one-shot packet: the scheduler never sends a packet whose repeat_count is 0 */
+    /* S-9.2.1 p.9: VERIFY BIT, like VERIFY BYTE, acts on the first packet. */
     EXPECT_EQ(pkt.repeat_count, 1);
     /* Bit byte: 111 0 0 000 = 0xE0 (verify, value=0, position=0) */
     EXPECT_EQ(pkt.data[3], 0xE0);
@@ -1379,6 +1382,9 @@ TEST(DccPacketEncoder, acc_basic_cv_write_addr5_pair2_cv1) {
     bool ok = DccApplicationCommandStationPacket_load_accessory_basic_cv_write(&pkt, 5, 2, 1, 200);
 
     EXPECT_TRUE(ok);
+    /* One-shot slot (dcc_scheduler.c drops repeat_count == 0 without ever
+     * sending); S-9.2.1 p.9 also needs two identical packets for WRITE BYTE. */
+    EXPECT_EQ(pkt.repeat_count, 2);
     /* Byte 0: 10 000101 = 0x85 (address low 6 = 5) */
     EXPECT_EQ(pkt.data[0], 0x85);
     /* Byte 1: 1 111 1 10 0 = 0xFC (high inv=~0&7=7, bit3=1, A1A0=10, bit0=0) */
@@ -1434,6 +1440,8 @@ TEST(DccPacketEncoder, acc_basic_cv_verify_cv29) {
     bool ok = DccApplicationCommandStationPacket_load_accessory_basic_cv_verify(&pkt, 5, 0, 29, 0x25);
 
     EXPECT_TRUE(ok);
+    /* One-shot slot, but VERIFY BYTE acts on the first packet (S-9.2.1 p.8). */
+    EXPECT_EQ(pkt.repeat_count, 1);
     /* Byte 2: 0xE4 (CV long verify) */
     EXPECT_EQ(pkt.data[2], 0xE4);
     /* CV 29 → wire 28 → low = 28 */
@@ -1451,6 +1459,8 @@ TEST(DccPacketEncoder, acc_basic_cv_bit_write_bit3_high) {
     bool ok = DccApplicationCommandStationPacket_load_accessory_basic_cv_bit(&pkt, 5, 1, 29, 3, true, true);
 
     EXPECT_TRUE(ok);
+    /* One-shot slot; WRITE BIT needs two identical packets, same as WRITE BYTE. */
+    EXPECT_EQ(pkt.repeat_count, 2);
     /* Byte 2: 0xE8 (CV long bit) */
     EXPECT_EQ(pkt.data[2], 0xE8);
     /* CV 29 → wire 28 → low = 28 */
@@ -1465,6 +1475,8 @@ TEST(DccPacketEncoder, acc_basic_cv_bit_verify_bit0_low) {
     bool ok = DccApplicationCommandStationPacket_load_accessory_basic_cv_bit(&pkt, 5, 0, 1, 0, false, false);
 
     EXPECT_TRUE(ok);
+    /* One-shot slot; VERIFY BIT, like VERIFY BYTE, acts on the first packet. */
+    EXPECT_EQ(pkt.repeat_count, 1);
     /* Bit byte: 111 0 0 000 = 0xE0 (verify, value=0, position=0) */
     EXPECT_EQ(pkt.data[4], 0xE0);
     verify_xor(&pkt);
@@ -1485,6 +1497,8 @@ TEST(DccPacketEncoder, acc_extended_cv_write_addr0_cv1) {
     bool ok = DccApplicationCommandStationPacket_load_accessory_extended_cv_write(&pkt, 0, 1, 200);
 
     EXPECT_TRUE(ok);
+    /* One-shot slot; S-9.2.1 p.9 needs two identical packets for WRITE BYTE. */
+    EXPECT_EQ(pkt.repeat_count, 2);
     /* Byte 0: 10 000000 = 0x80 */
     EXPECT_EQ(pkt.data[0], 0x80);
     /* Byte 1: 0 111 0 00 1 = 0x71 (high inv=~0&7=7, bits 9-10=0) */
@@ -1539,6 +1553,8 @@ TEST(DccPacketEncoder, acc_extended_cv_verify_cv29) {
     bool ok = DccApplicationCommandStationPacket_load_accessory_extended_cv_verify(&pkt, 0, 29, 0x25);
 
     EXPECT_TRUE(ok);
+    /* One-shot slot, but VERIFY BYTE acts on the first packet (S-9.2.1 p.8). */
+    EXPECT_EQ(pkt.repeat_count, 1);
     EXPECT_EQ(pkt.data[2], 0xE4);
     EXPECT_EQ(pkt.data[3], 28);
     EXPECT_EQ(pkt.data[4], 0x25);
@@ -1554,10 +1570,24 @@ TEST(DccPacketEncoder, acc_extended_cv_bit_write_bit7_high) {
     bool ok = DccApplicationCommandStationPacket_load_accessory_extended_cv_bit(&pkt, 0, 1, 7, true, true);
 
     EXPECT_TRUE(ok);
+    /* One-shot slot; WRITE BIT needs two identical packets, same as WRITE BYTE. */
+    EXPECT_EQ(pkt.repeat_count, 2);
     EXPECT_EQ(pkt.data[2], 0xE8);
     EXPECT_EQ(pkt.data[3], 0x00);
     /* Bit byte: 111 1 1 111 = 0xFF (write=1, value=1, position=7) */
     EXPECT_EQ(pkt.data[4], 0xFF);
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, acc_extended_cv_bit_verify_bit0_low) {
+    dcc_packet_t pkt;
+    bool ok = DccApplicationCommandStationPacket_load_accessory_extended_cv_bit(&pkt, 0, 1, 0, false, false);
+
+    EXPECT_TRUE(ok);
+    /* One-shot slot; VERIFY BIT, like VERIFY BYTE, acts on the first packet. */
+    EXPECT_EQ(pkt.repeat_count, 1);
+    /* Bit byte: 111 0 0 000 = 0xE0 (verify, value=0, position=0) */
+    EXPECT_EQ(pkt.data[4], 0xE0);
     verify_xor(&pkt);
 }
 
