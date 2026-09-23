@@ -26,6 +26,7 @@ static dcc_packet_t last_begin_packet;
 static dcc_service_mode_step_callback_t last_begin_callback;
 static uint32_t begin_operation_count;
 static bool begin_operation_return;
+static uint32_t begin_operation_fail_on_call;  /* 0 = disabled; N = the Nth call (1-based) returns false */
 static bool common_idle_value;
 
 static dcc_service_mode_result_t complete_result;
@@ -47,6 +48,12 @@ static bool mock_begin_operation(const dcc_packet_t *packet,
     last_command_repeat = command_repeat;
     last_recovery_count = recovery_count;
     begin_operation_count++;
+
+    if (begin_operation_fail_on_call != 0 && begin_operation_count == begin_operation_fail_on_call) {
+
+        return false;
+
+    }
 
     return begin_operation_return;
 
@@ -72,6 +79,7 @@ static void reset_mocks(void) {
     last_begin_callback = NULL;
     begin_operation_count = 0;
     begin_operation_return = true;
+    begin_operation_fail_on_call = 0;
     last_is_write_operation = false;
     last_command_repeat = 0;
     last_recovery_count = 0;
@@ -267,6 +275,50 @@ TEST(DccServiceModeAddress, write_busy_rejected) {
     common_idle_value = false;
     EXPECT_FALSE(DccServiceModeAddress_write(&test_context, 1));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
+
+}
+
+// Jim Kueneman's review of upstream PR #2 (2026-09-23): confirmed _begin_with_preset() already
+// resets address_state to IDLE on a failed preset start (unlike paged's equivalent, which did
+// not -- see dcc_service_mode_paged_Test.cxx). Untested either way; pins it down.
+TEST(DccServiceModeAddress, write_preset_begin_operation_fails_resets_to_idle) {
+
+    reset_mocks();
+    interface_dcc_service_mode_address_t interface = make_interface();
+    DccServiceModeAddress_initialize(&test_context, &interface);
+
+    begin_operation_fail_on_call = 1;  /* the page-preset call itself fails to start */
+    EXPECT_FALSE(DccServiceModeAddress_write(&test_context, 1));
+    EXPECT_EQ(begin_operation_count, (uint32_t)1);
+    EXPECT_EQ(complete_count, (uint32_t)0);  /* no callback for a call that never started */
+
+    /* A following call must be accepted, not rejected by a stuck address_state. */
+    begin_operation_fail_on_call = 0;
+    EXPECT_TRUE(DccServiceModeAddress_write(&test_context, 1));
+    EXPECT_EQ(begin_operation_count, (uint32_t)2);
+
+}
+
+TEST(DccServiceModeAddress, write_command_begin_operation_fails_completes_busy) {
+
+    reset_mocks();
+    interface_dcc_service_mode_address_t interface = make_interface();
+    DccServiceModeAddress_initialize(&test_context, &interface);
+
+    DccServiceModeAddress_write(&test_context, 1);
+    ASSERT_NE(last_begin_callback, (dcc_service_mode_step_callback_t)NULL);
+
+    begin_operation_fail_on_call = 2;  /* the address-command call fails to start */
+    last_begin_callback(DCC_SERVICE_MODE_SUCCESS);  /* preset completes, triggers the command */
+
+    EXPECT_EQ(begin_operation_count, (uint32_t)2);
+    EXPECT_EQ(complete_count, (uint32_t)1);
+    EXPECT_EQ(complete_result, DCC_SERVICE_MODE_BUSY);
+
+    /* A following call must be accepted, not rejected by a stuck address_state. */
+    begin_operation_fail_on_call = 0;
+    EXPECT_TRUE(DccServiceModeAddress_write(&test_context, 1));
+    EXPECT_EQ(begin_operation_count, (uint32_t)3);
 
 }
 
