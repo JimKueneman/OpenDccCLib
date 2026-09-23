@@ -231,6 +231,26 @@ void DccServiceModeTaskDetect_initialize(const interface_dcc_service_mode_task_d
 
 }
 
+/* Return value and on_detect timing are NOT symmetric across the two ways this can fail to
+ * really start, by design choice, not oversight -- flagged in Jim Kueneman's review of
+ * upstream PR #2 (2026-09-23), documented here rather than unified (see that PR's discussion
+ * for why: unifying would mean propagating a start/fail result up through the whole
+ * _begin_paged() -> _begin_register() -> _begin_address() cascade, each of which can also
+ * legitimately complete synchronously with a genuine "no modes supported" result, not just
+ * fail to start).
+ *
+ *   - Direct wired, direct_verify_bit() fails to start: returns false, on_detect is NOT
+ *     called. The false return is the only signal.
+ *   - Direct not wired (or every mode unwired, cascading all the way through _begin_paged()/
+ *     _begin_register()/_begin_address()): this function calls the next stage and returns
+ *     true UNCONDITIONALLY. If that stage's own probe then fails to start -- or there is
+ *     nothing left to probe at all -- the resulting _fail()/_finish() call fires on_detect
+ *     SYNCHRONOUSLY, before this function has returned to its own caller.
+ *
+ * A caller that assumes "true means wait for the callback" can therefore see on_detect fire
+ * before it has finished handling this call. See dcc_service_mode_task_detect_Test.cxx's
+ * "Synchronous-callback asymmetry" tests, which pin down both sides so a future change that
+ * unifies this does not silently change behavior. */
 bool DccServiceModeTaskDetect_detect_mode(dcc_service_mode_task_on_detect_callback_t on_detect) {
 
     if (_context.state != DCC_TASK_DETECT_STATE_IDLE) {
