@@ -17,14 +17,17 @@ spec-faithful. For how it drives a decoder DUT, see
 
 The player exposes exactly two signals, on the **same PB pins** the CS rig uses for D0/D1:
 
-| Saleae | LaunchPad pin | Signal |
-|:--:|:--:|---|
-| **D0 (ch 0)** | **PB1** | `DCC_OUT` — the played waveform |
-| **D1 (ch 1)** | **PB3** | `TRIG` — pulses during the segment chosen by `TRIG <index>` |
-| **GND** | **GND** | common ground |
+| Saleae | Wire | LaunchPad pin | Signal |
+|:--:|:--:|:--:|---|
+| **D0 (ch 0)** | black | **PB1** | `DCC_OUT` — the played waveform |
+| **D1 (ch 1)** | brown | **PB3** | `TRIG` — pulses during the segment chosen by `TRIG <index>` |
+| **GND** | gray | **GND** | common ground |
 
 Both boards are the same LaunchPad pinout, so the existing **D0→PB1 / D1→PB3** probes land
 correctly when you move them onto the player — **no probe moving, no channel reconfig**.
+For where these pins sit on the LaunchPad's 40-pin headers, see **LaunchPad header locations**
+in [`../command_station/HIL_SETUP.md`](../command_station/HIL_SETUP.md) (PB1 = J4.39, PB3 = J1.10,
+GND = J3.22 / J2.20).
 `compliance_lib.py` captures `ch0` (DCC) / `ch1` (trigger) by default (`DIGITAL_CHANNEL=0`,
 `TRIGGER_CHANNEL=1`), so the `command_station/` `s9_1` / `s9_2` wire-decode reads these unchanged.
 

@@ -24,15 +24,19 @@ pins on the Saleae. The player is DCC-agnostic; all DCC semantics are composed o
 
 ## Wiring (Saleae channels — decoder `GPIO_GRP_SALEAE`)
 
-| Saleae | Pin | Signal | Source / notes |
-|:--:|:--:|---|---|
-| **D0** | **PB1** | DCC line | player `DCC_OUT`(PB1) → decoder `DCC_IN`(PB1) via jumper; Saleae taps the line |
-| **D1** | **PB3** | decoder `ACK_OUT` | service-mode ACK pulse (active-high, 6 ms) |
-| **D2** | **PB2** | decoder `RAILCOM_TX` | reserved — RailCom-Tx not yet wired in firmware |
-| **GND** | **GND** | common ground | across both boards **and** the Saleae |
+| Saleae | Wire | Pin | Signal | Source / notes |
+|:--:|:--:|:--:|---|---|
+| **D0** | black | **PB1** | DCC line | player `DCC_OUT`(PB1) → decoder `DCC_IN`(PB1) via jumper; Saleae taps the line |
+| **D1** | brown | **PB3** | decoder `ACK_OUT` | service-mode ACK pulse (active-high, 6 ms) |
+| **D2** | red | **PB2** | decoder `RAILCOM_TX` | reserved — RailCom-Tx not yet wired in firmware |
+| **GND** | gray | **GND** | common ground | across both boards **and** the Saleae |
 
 These reuse the **same PB pins / Saleae channels as the command-station rig** (D0/PB1, D2/PB2;
 D1/PB3 carries ACK here instead of the CS trigger) — no probe-moving, no channel reconfig.
+
+For where these pins sit on the LaunchPad's 40-pin headers, see **LaunchPad header locations**
+in [`../command_station/HIL_SETUP.md`](../command_station/HIL_SETUP.md) (PB1 = J4.39, PB3 = J1.10,
+PB2 = J1.9, GND = J3.22 / J2.20).
 
 ## Serial ports
 

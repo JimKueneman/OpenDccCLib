@@ -32,14 +32,15 @@ Tear-down: just unplug. Nothing is stored on the bench except the firmware (alre
 LaunchPad flash) and the Python venv (in this repo). To bring it back up:
 
 1. **USB:** plug in the **LaunchPad** (XDS110 — gives the UART + flashing) and the **Saleae**.
-2. **Probe wires** (Saleae → LaunchPad), common ground first:
-   - **D0 → PB1** (main DCC out)
-   - **D1 → PB3** (test trigger / PACKET_LOAD)
-   - **D2 → PB2** (RailCom cutout-active strobe / DCC_MIRROR)
-   - **D3 → PB4** (service-track DCC out)
-   - **D4 → PB9** (mock-ACK pin; for the S-9.2.3 ACK width cross-check)
-   - **D5 → PB18** (RailCom Rx-window mirror / RAILCOM_RX_WINDOW; for the S-9.3.2 cutout sub-windows)
-   - **GND → GND**
+2. **Probe wires** (Saleae → LaunchPad), common ground first. Wire colors are the bench's
+   Saleae harness colors:
+   - **GND → GND** — gray
+   - **D0 → PB1** — black (main DCC out)
+   - **D1 → PB3** — brown (test trigger / PACKET_LOAD)
+   - **D2 → PB2** — red (RailCom cutout-active strobe / DCC_MIRROR)
+   - **D3 → PB4** — orange (service-track DCC out)
+   - **D4 → PB9** — yellow (mock-ACK pin; for the S-9.2.3 ACK width cross-check)
+   - **D5 → PB18** — green (RailCom Rx-window mirror / RAILCOM_RX_WINDOW; for the S-9.3.2 cutout sub-windows)
 3. **Logic 2:** launch it; Preferences → **Automation** → enable the API (port **10430**). Leave it running.
 4. **Firmware:** already flashed. If the board was wiped, re-flash the `saleae_hil_compliance`
    Debug build from CCS. (After any service-mode test, tap **RESET** to clear singleton state.)
@@ -47,8 +48,11 @@ LaunchPad flash) and the Python venv (in this repo). To bring it back up:
      timing (D5/PB18 mirror), the S-9.2.3 interrupted-ACK test (`SVC MOCKACK <us> GLITCH
      <gap>`), and the `SVC REG/PAGED BITW|BITR` commands. The `RAILCOM_RX_WINDOW` pin is
      already in the SysConfig; CCS regenerates the pin config on build.
-5. **Run:** `cd test/compliance && .venv/bin/python command_station/run_all.py`
-   (single suite, e.g. `.venv/bin/python command_station/s9_2_1_compliance.py`). If the venv is missing, recreate it — §3c.
+5. **Preflight:** `cd test/compliance && .venv/bin/python command_station/bench_preflight.py`
+   — checks the DUT UART, the Saleae, and every probe channel, and names the wire colour +
+   header pin of anything missing. Fix the bench until it passes.
+6. **Run:** `.venv/bin/python command_station/run_all.py` (or `--preflight` to fold step 5 in;
+   single suite, e.g. `.venv/bin/python command_station/s9_2_1_compliance.py`). If the venv is missing, recreate it — §3c.
 
 That's the whole bench. Details, troubleshooting, and the pending mock-ACK item are below.
 
@@ -65,15 +69,15 @@ That's the whole bench. Details, troubleshooting, and the pending mock-ACK item 
 
 Connect the Saleae digital channels to the LaunchPad pins and tie grounds together:
 
-| Saleae channel | LaunchPad pin | Signal                         | Used by                         |
-|:--------------:|:-------------:|--------------------------------|---------------------------------|
-| **D0 (ch 0)**  | **PB1**       | DCC main-track output          | all suites                      |
-| **D1 (ch 1)**  | **PB3**       | Test trigger (PACKET_LOAD)     | triggered captures              |
-| **D2 (ch 2)**  | **PB2**       | RailCom cutout-active strobe (DCC_MIRROR) | S-9.3.2 cutout timing |
-| **D3 (ch 3)**  | **PB4**       | DCC service-track output       | S-9.2.3 service mode            |
-| **D4 (ch 4)**  | **PB9**       | Mock-ACK pin (PB24→PB9 loopback) | S-9.2.3 ACK width cross-check |
-| **D5 (ch 5)**  | **PB18**      | RailCom Rx-window mirror (RAILCOM_RX_WINDOW) | S-9.3.2 cutout sub-windows |
-| **GND**        | **GND**       | common ground                  | always                          |
+| Saleae channel | Wire   | LaunchPad pin | Signal                         | Used by                         |
+|:--------------:|:------:|:-------------:|--------------------------------|---------------------------------|
+| **D0 (ch 0)**  | black  | **PB1**       | DCC main-track output          | all suites                      |
+| **D1 (ch 1)**  | brown  | **PB3**       | Test trigger (PACKET_LOAD)     | triggered captures              |
+| **D2 (ch 2)**  | red    | **PB2**       | RailCom cutout-active strobe (DCC_MIRROR) | S-9.3.2 cutout timing |
+| **D3 (ch 3)**  | orange | **PB4**       | DCC service-track output       | S-9.2.3 service mode            |
+| **D4 (ch 4)**  | yellow | **PB9**       | Mock-ACK pin (PB24→PB9 loopback) | S-9.2.3 ACK width cross-check |
+| **D5 (ch 5)**  | green  | **PB18**      | RailCom Rx-window mirror (RAILCOM_RX_WINDOW) | S-9.3.2 cutout sub-windows |
+| **GND**        | gray   | **GND**       | common ground                  | always                          |
 
 These seven (D0, D1, D2, D3, D4, D5, GND) are the **current working setup** — wire all of them on
 re-assembly. The channel-to-pin map lives at the top of `test/compliance/compliance_lib.py`
@@ -96,6 +100,41 @@ S-9.2.3 service channel (3) and mock-ACK channel (4) in `command_station/s9_2_3_
 > `documentation/compliance/ComplianceOverview.md`.
 
 > Ground first. A missing common ground gives garbled or absent captures.
+
+### LaunchPad header locations
+
+Where the wired pins sit on the LaunchPad's 40-pin BoosterPack headers, so you can find them
+with a wire in hand. Orient the board with the **USB connector at the top**. Each side has two
+10-pin columns: **left = J1 (outer) / J3 (inner)**, **right = J2 (outer) / J4 (inner)**. J1.1,
+J3.21, J4.40 and J2.20 are all in the **top row**, matching the silkscreen next to the headers.
+
+| MCU pin | Header | Row from top | Side / column | Signal | Saleae |
+|:--:|:--:|:--:|---|---|---|
+| PB1  | J4.39 | 2  | right, inner | main-track DCC (MAIN_DCC)         | D0 black  |
+| PB3  | J1.10 | 10 | left, outer  | test trigger (PACKET_LOAD)        | D1 brown  |
+| PB2  | J1.9  | 9  | left, outer  | cutout strobe (RAILCOM_CUTOUT)    | D2 red    |
+| PB4  | J4.40 | 1  | right, inner | service-track DCC (SERVICE_MODE_DCC) | D3 orange |
+| PB9  | J1.7  | 7  | left, outer  | mock-ACK in (MOCK_ACK)            | D4 yellow |
+| PB18 | J3.25 | 5  | left, inner  | Rx-window mirror (RAILCOM_RX_WINDOW) | D5 green |
+| GND  | J3.22 or J2.20 | 2 / 1 | left inner / right outer | ground     | gray      |
+| PB24 | J1.6  | 6  | left, outer  | mock-ACK drive (MOCK_ACK_DRIVE) — jumper to J1.7 | — |
+| PB12 | J2.19 | 2  | right, outer | real ACK current-sense (ACK_IN)   | —         |
+| PA15 | J3.30 | 10 | left, inner  | ISR timing scope aid (ISR_TIME)   | —         |
+
+Notes:
+- The **mock-ACK loopback jumper is J1.6 → J1.7**, two adjacent pins in the same column.
+- **PB24** also feeds the on-board thermistor divider through jumper **J9** by default. Pull J9
+  to isolate it if the mock-ACK pulse ever looks loaded.
+- **PB18** and **PA15** pass through two fitted 0 Ω resistors each (the "RC filter" footprints);
+  the filter capacitors are unpopulated, so the pins are effectively direct.
+- **PA10/PA11** (UART_CMD) appear on J4.34/J4.33, but jumpers **J21/J22** route them to the
+  XDS110 backchannel by default. Leave them alone — the harness talks over USB.
+- The LED pins (PB22/PB26/PB27) are not on the 40-pin headers.
+
+![LP-MSPM0G3507 BoosterPack header pinout](LP-MSPM0G3507_boosterpack_pinout.png)
+
+*Figure 2-10 from TI SLAU873E, "MSPM0G3507 LaunchPad Development Kit User's Guide",
+September 2026. Copyright Texas Instruments. Reproduced for bench reference only.*
 
 ### Mock-ACK loopback for the S-9.2.3 ACK test (one jumper)
 
@@ -156,10 +195,19 @@ The firmware boots with the track powered **off**; the harness powers it on over
 All commands run from `test/compliance/`. The DUT serial port is **auto-detected** among
 `/dev/cu.usbmodem*` at **230400 baud** — no need to specify it normally.
 
+**Check the bench first** (after any re-wiring):
+```bash
+cd test/compliance
+.venv/bin/python command_station/bench_preflight.py
+```
+It stops at the first layer that fails — DUT UART, then Logic 2 / Saleae, then each probe
+channel — and prints a per-channel table with the wire colour and header pin. Everything
+below assumes it passes.
+
 **Run everything:**
 ```bash
 cd test/compliance
-.venv/bin/python command_station/run_all.py
+.venv/bin/python command_station/run_all.py            # add --preflight to run the bench check first
 ```
 
 **Run a single spec suite:**
@@ -220,6 +268,9 @@ real ACK path (PB24→PB9), including the failure case when it is OFF. No extra 
 reuses the mock-ACK loopback jumper.
 
 ## 9. Troubleshooting
+
+First run `command_station/bench_preflight.py` — it isolates the layer (UART / Saleae / a
+specific probe) and names the wire colour and header pin. Then:
 
 | Symptom                                   | Likely cause / fix                                             |
 |-------------------------------------------|---------------------------------------------------------------|
