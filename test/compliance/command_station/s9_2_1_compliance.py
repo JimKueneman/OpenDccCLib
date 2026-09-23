@@ -425,6 +425,39 @@ def run():
                   f"'{cmd}' -> [{_hx(exp)}] seen {reps}x in the window "
                   f"(spec needs >= {2 if lo == 2 else 1}; library default {lo})")
 
+    # --- repeat policy for every other one-shot builder group, on the wire, with the
+    # LIBRARY defaults (the bench firmware no longer overrides any count). Spec-set
+    # values: date >= 3 (2.3.6.2), time once (2.3.6.2/2.3.6.3). The rest are the
+    # library's DCC_REPEAT_ONE_SHOT_DEFAULT / _ACCESSORY_NOP policy (S-9.2 sec C
+    # gives no count). REFRESH OFF makes speed/function commands one-shots.
+    exact = {c: e for c, e, _, _ in EXACT}
+    lib.send_command(lib.find_dut_port(), "REFRESH OFF", settle=0.2)
+    for cmd, exp, clause, label, want in [
+        ("SPEED 3 64 FWD",    exact["SPEED 3 64 FWD"],    "one-shot default", "speed (REFRESH OFF) sent twice",        2),
+        ("FUNC 3 1 ON",       exact["FUNC 3 1 ON"],       "one-shot default", "function group 1 sent twice",           2),
+        ("FUNC 3 13 ON",      exact["FUNC 3 13 ON"],      "one-shot default", "F13-F20 expansion sent twice",          2),
+        ("ESTOP 3",           exact["SPEED 3 1 FWD"],     "one-shot default", "addressed e-stop sent twice",           2),
+        ("ESTOP",             [0x00, 0x51, 0x51],         "one-shot default", "broadcast e-stop sent twice",           2),
+        ("STOP",              [0x00, 0x50, 0x50],         "one-shot default", "broadcast stop sent twice",             2),
+        ("RESET",             [0x00, 0x00, 0x00],         "one-shot default", "broadcast reset sent twice",            2),
+        ("ACC 1 0 ON",        exact["ACC 1 0 ON"],        "one-shot default", "basic accessory ON sent twice",         2),
+        ("ACCE 1 5",          exact["ACCE 1 5"],          "one-shot default", "extended accessory aspect sent twice",  2),
+        ("NOP 1",             exact["NOP 1"],             "accessory NOP",    "accessory NOP sent once",               1),
+        ("CONSIST 3 SET 5",   exact["CONSIST 3 SET 5"],   "one-shot default", "consist set sent twice",                2),
+        ("BSS 3 1 ON",        exact["BSS 3 1 ON"],        "one-shot default", "binary state sent twice",               2),
+        ("ANALOG 3 1 64",     exact["ANALOG 3 1 64"],     "one-shot default", "analog function sent twice",            2),
+        ("SYSTIME 1",         exact["SYSTIME 1"],         "§2.3.6.3",         "system time sent once",                 1),
+        ("MTIME 30 2 14 0 8", exact["MTIME 30 2 14 0 8"], "§2.3.6.2",         "model time sent once",                  1),
+        ("MDATE 15 6 2026",   exact["MDATE 15 6 2026"],   "§2.3.6.2",         "model date sent three times",           3),
+    ]:
+        # 60 ms post-trigger: three back-to-back 6-byte date packets (~9 ms each)
+        # overrun the default 30 ms window.
+        dec, _ = lib.trigger_command(cmd, after_seconds=0.06)
+        reps = _reps(dec, exp)
+        rep.check(SPEC_DOC + " " + clause, label, reps == want,
+                  f"'{cmd}' -> [{_hx(exp)}] seen {reps}x in the window (library default {want})")
+    lib.send_command(lib.find_dut_port(), "REFRESH ON", settle=0.2)
+
     # --- refresh policy (S-9.2.1: binary state shall NOT be refreshed) ---
     dec, _ = lib.trigger_command("BSS 3 1 ON")
     got = _target(dec)

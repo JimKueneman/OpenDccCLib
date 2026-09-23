@@ -779,3 +779,32 @@ TEST(DccScheduler, builder_packets_transmit_untouched_exactly_repeat_count_times
     DccApplicationCommandStationPacket_load_accessory_basic_cv_verify(&pkt, 1, 0, 7, 42);
     EXPECT_TRANSMITS_UNTOUCHED(pkt, 1, DCC_TAG_CV, DCC_PRIORITY_CV, "accessory_basic_cv_verify");
 }
+
+// An application that sets repeat_count AFTER the builder returns must win over
+// the builder's default -- in both directions. The bench firmware and the
+// RP2350 port both rely on this.
+TEST(DccScheduler, application_override_of_repeat_count_wins) {
+    dcc_packet_t pkt;
+
+    /* builder default 2, overridden down to 1: exactly one send, then idle */
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    ASSERT_EQ(pkt.repeat_count, 2);
+    pkt.repeat_count = 1;
+    EXPECT_EQ(sends_of_untouched(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED), (uint32_t)1);
+
+    /* builder default 2, overridden up to 4 */
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    pkt.repeat_count = 4;
+    EXPECT_EQ(sends_of_untouched(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED), (uint32_t)4);
+
+    /* builder default 1 (CV verify), overridden up to 3 */
+    DccApplicationCommandStationPacket_load_cv_verify_pom(&pkt, 3, DCC_ADDRESS_SHORT, 1, 8);
+    ASSERT_EQ(pkt.repeat_count, 1);
+    pkt.repeat_count = 3;
+    EXPECT_EQ(sends_of_untouched(&pkt, 3, DCC_TAG_CV, DCC_PRIORITY_CV), (uint32_t)3);
+
+    /* and an explicit 0 still means "never sent" -- the contract the defaults exist for */
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    pkt.repeat_count = 0;
+    EXPECT_EQ(sends_of_untouched(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED), (uint32_t)0);
+}
