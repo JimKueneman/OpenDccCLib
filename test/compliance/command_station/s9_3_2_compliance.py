@@ -222,7 +222,7 @@ def _capture_and_measure(port):
         #   idle (3 bytes) runs as background after CLEAR resets auto-refresh.
         #   SPEED 3   -> short-addr 128-step: 4 bytes  (auto-refresh)
         #   SPEED 200 -> long-addr 128-step:  5 bytes  (auto-refresh)
-        #   CV WRITE  -> long-addr POM CV:    6 bytes  (one-shot, repeat=3)
+        #   CV WRITE  -> long-addr POM CV:    6 bytes  (one-shot, library default 2 sends)
         lib.send_command(port, "CLEAR",                settle=0.02)
         lib.send_command(port, "SPEED 3 50 FWD 128",   settle=0.02)
         lib.send_command(port, "SPEED 200 50 FWD 128", settle=0.02)

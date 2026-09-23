@@ -3695,6 +3695,11 @@ window.COMPLIANCE =
                 "label": "CV-POM write CV1=8 (1110 11)",
                 "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check of POM write"
+              },
+              {
+                "label": "CV-POM write repeat",
+                "file": "command_station/s9_2_1_compliance.py",
+                "desc": "write sent exactly twice on the wire with the library default (S-9.2.1 two identical packets)"
               }
             ]
           }
@@ -3744,6 +3749,11 @@ window.COMPLIANCE =
                 "label": "CV-POM verify CV1=8 (1110 01)",
                 "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check of POM verify"
+              },
+              {
+                "label": "CV-POM verify repeat",
+                "file": "command_station/s9_2_1_compliance.py",
+                "desc": "verify sent once on the wire with the library default"
               }
             ]
           }
@@ -3793,6 +3803,11 @@ window.COMPLIANCE =
                 "label": "CV-POM bit-manipulation packet (1110 10)",
                 "file": "command_station/s9_2_1_compliance.py",
                 "desc": "CV BIT wire bytes equal cv_bit_pom()."
+              },
+              {
+                "label": "CV-POM bit write repeat",
+                "file": "command_station/s9_2_1_compliance.py",
+                "desc": "bit write sent exactly twice on the wire with the library default"
               }
             ]
           }
@@ -3894,6 +3909,11 @@ window.COMPLIANCE =
                 "label": "basic accessory CV write/verify/bit",
                 "file": "command_station/s9_2_1_compliance.py",
                 "desc": "ACC CV wire bytes equal accessory_basic_cv()."
+              },
+              {
+                "label": "basic accessory CV write repeat",
+                "file": "command_station/s9_2_1_compliance.py",
+                "desc": "sent exactly twice on the wire (S-9.2.1 2.4.3, same method as loco)"
               }
             ]
           }
@@ -3941,6 +3961,11 @@ window.COMPLIANCE =
                 "label": "extended accessory CV write/verify/bit",
                 "file": "command_station/s9_2_1_compliance.py",
                 "desc": "ACCE CV wire bytes equal accessory_extended_cv()."
+              },
+              {
+                "label": "extended accessory CV write repeat",
+                "file": "command_station/s9_2_1_compliance.py",
+                "desc": "sent exactly twice on the wire (S-9.2.1 2.4.3, same method as loco)"
               }
             ]
           }

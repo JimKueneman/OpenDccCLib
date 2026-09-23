@@ -161,6 +161,13 @@ static int _tokenize(char *line, char *tokens[], int max_tokens) {
 
 // Schedule a packet on the main track. When auto_refresh is true the packet
 // is added to the scheduler's auto-refresh list; otherwise it is sent once.
+/* repeat_count policy on this bench: the CV / POM builders (loco and accessory)
+ * are sent with the LIBRARY default so the S-9.2.1 suite exercises it. Every
+ * other one-shot builder still defaults to 0 in the library, which the scheduler
+ * treats as "nothing left to send", so those handlers keep forcing repeat_count
+ * = 3 below. Remove those overrides only once the library's per-builder default
+ * table lands (planned: 2 for CV/bit writes and F13-F68, 3 for date, 1 for time,
+ * NOP and the accessory stops, 2 for everything the spec leaves uncounted). */
 static bool _schedule_main_track(const dcc_packet_t *packet, dcc_address_t address,
                                  dcc_tag_enum tag, dcc_priority_enum priority,
                                  bool auto_refresh) {
@@ -572,7 +579,7 @@ static void _cmd_acc(char *tokens[], int count) {
             _respond("ERR: invalid ACC CV parameters");
             return;
         }
-        packet.repeat_count = 3;
+        /* No repeat_count override: library default (write 2 / verify 1), see _cmd_cv. */
 
         if (!_schedule_main_track(&packet, board, DCC_TAG_CV,
                                   DCC_PRIORITY_CV, false)) {
@@ -651,7 +658,7 @@ static void _cmd_acce(char *tokens[], int count) {
             _respond("ERR: invalid ACCE CV parameters");
             return;
         }
-        packet.repeat_count = 3;
+        /* No repeat_count override: library default (write 2 / verify 1), see _cmd_cv. */
 
         if (!_schedule_main_track(&packet, addr, DCC_TAG_CV,
                                   DCC_PRIORITY_CV, false)) {
@@ -762,7 +769,9 @@ static void _cmd_cv(char *tokens[], int count) {
         _respond("ERR: invalid CV parameters");
         return;
     }
-    packet.repeat_count = 3;
+    /* No repeat_count override: the library builders own the S-9.2.1 default
+     * (WRITE / bit WRITE = 2 identical packets, VERIFY = 1), and the S-9.2.1
+     * HIL suite counts the repeats on the wire to prove it. */
 
     if (!_schedule_main_track(&packet, addr, DCC_TAG_CV,
                               DCC_PRIORITY_CV, false)) {

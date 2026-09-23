@@ -405,6 +405,26 @@ def run():
         rep.check(SPEC_DOC + " " + clause, label, got == exp,
                   f"'{cmd}' -> got [{_hx(got)}] expected [{_hx(exp)}]")
 
+    # --- CV / POM repeat policy, on the wire, with the LIBRARY defaults (no firmware
+    # override): S-9.2.1 §2.3.7.3 needs two identical packets before a decoder
+    # modifies a CV (WRITE BYTE and WRITE BIT); VERIFY acts on the first packet.
+    # §2.4.3 applies the same method to accessory decoders. The trigger capture
+    # holds ~30 ms after the packet under test, several packet times, so every
+    # repeat of a one-shot lands inside it.
+    # @compliance DCC-S9.2.1-CS-013, DCC-S9.2.1-CS-014, DCC-S9.2.1-CS-015, DCC-S9.2.1-CS-026, DCC-S9.2.1-CS-027
+    for cmd, exp, clause, label, lo, hi in [
+        ("CV WRITE 3 1 8",        cv_write_pom(3, 1, 8),                      "§2.3.7.3", "CV-POM write sent twice (two identical packets)", 2, 2),
+        ("CV VERIFY 3 1 8",       cv_verify_pom(3, 1, 8),                     "§2.3.7.3", "CV-POM verify sent once",                         1, 1),
+        ("CV BIT 3 1 5 1",        cv_bit_pom(3, 1, 5, 1),                     "§2.3.7.3", "CV-POM bit write sent twice",                     2, 2),
+        ("ACC CV WRITE 1 0 7 42", accessory_basic_cv(1, 0, 7, 42, CV_WRITE), "§2.4.3",   "basic accessory CV write sent twice",             2, 2),
+        ("ACCE CV WRITE 1 7 42",  accessory_extended_cv(1, 7, 42, CV_WRITE), "§2.4.3",   "extended accessory CV write sent twice",          2, 2),
+    ]:
+        dec, _ = lib.trigger_command(cmd)
+        reps = _reps(dec, exp)
+        rep.check(SPEC_DOC + " " + clause, label, lo <= reps <= hi,
+                  f"'{cmd}' -> [{_hx(exp)}] seen {reps}x in the window "
+                  f"(spec needs >= {2 if lo == 2 else 1}; library default {lo})")
+
     # --- refresh policy (S-9.2.1: binary state shall NOT be refreshed) ---
     dec, _ = lib.trigger_command("BSS 3 1 ON")
     got = _target(dec)
