@@ -26,7 +26,7 @@ import compliance_lib as lib
 SPEC_DOC   = "S-9.3.2"
 SPEC_TITLE = "RailCom cutout timing (command-station transmit)"
 SOURCE_PDF = "documentation/specs/s-9.3.2_railcom.pdf"
-ASPECT     = ("cutout-active strobe (ch2/PB2) vs DCC end-bit (ch0/PB1), plus the "
+ASPECT     = ("cutout-active strobe (ch2/PB2) vs the DECODED packet end bit's last edge (ch0/PB1), plus the "
               "RAILCOM_RX_WINDOW mirror (ch5/PB18) for the 5 interior sub-window boundaries; "
               "3/4/5/6-byte packet mix: idle, short-addr speed, long-addr speed, POM CV")
 
@@ -55,12 +55,16 @@ T_CE_MAX_US = 488.0
 WIN_MIN_US  = T_CE_MIN_US - T_CS_MAX_US    # 422.0
 WIN_MAX_US  = T_CE_MAX_US - T_CS_MIN_US    # 462.0
 
-# --- search window for the end-bit trailing edge on ch0 ---
-# The last ch0 transition before each ch2 rising edge within this band is the
-# end-bit transition that arms the cutout one-shot timer.  Widened beyond the
-# spec limits to absorb jitter without missing the edge.
-_REF_LO_US = 10.0
-_REF_HI_US = 50.0
+# --- T_CS / T_CE reference: the DECODED packet end bit's last edge ---
+# S-9.3.2 Table 1 measures every cutout parameter from the zero crossing of the
+# packet end bit's LAST edge. The reference is taken from the decoded packet
+# (compliance_lib.decode -> packet_end_times), NOT from "the last ch0 edge
+# before the strobe": the DUT's logic pin keeps clocking through the cutout, so
+# that edge can be the end bit's MID-bit transition -- a cutout armed one
+# half-bit early (issue #3) then measured as a perfect 26 us. Each strobe rise
+# is paired with the nearest packet end within +/-_REF_MATCH_US so an early
+# cutout reports a NEGATIVE T_CS instead of a false pass.
+_REF_MATCH_US = 150.0
 
 
 # --------------------------------------------------------------------------
@@ -77,28 +81,35 @@ def _falling_edges(rows):
     return [rows[i][0] for i in range(1, len(rows)) if rows[i][1] == 0]
 
 
-def _find_ref(ch0_times, t_rise_s):
-    """Return the last ch0 transition in [t_rise - _REF_HI_US, t_rise - _REF_LO_US],
-    or None if no transition falls in that band.  ch0_times must be sorted."""
-    lo = t_rise_s - _REF_HI_US * 1e-6
-    hi = t_rise_s - _REF_LO_US * 1e-6
-    idx_hi = bisect.bisect_right(ch0_times, hi)
-    idx_lo = bisect.bisect_left(ch0_times, lo)
-    return ch0_times[idx_hi - 1] if idx_lo < idx_hi else None
+def _nearest_packet_end(end_times, t_rise_s):
+    """Return the packet end-bit last-edge time nearest to t_rise_s if it lies
+    within +/-_REF_MATCH_US, else None.  end_times must be sorted."""
+    idx = bisect.bisect_left(end_times, t_rise_s)
+    best = None
+    for cand in (idx - 1, idx):
+        if 0 <= cand < len(end_times):
+            d = abs(t_rise_s - end_times[cand])
+            if d <= _REF_MATCH_US * 1e-6 and (best is None or d < abs(t_rise_s - best)):
+                best = end_times[cand]
+    return best
 
 
-def _measure_cutouts(ch0_rows, ch2_rows):
-    """Return list of (t_cs_us, t_ce_us, win_us) for each matched cutout window.
+def _measure_cutouts(decoded, ch2_rows):
+    """Return (measurements, unmatched) where measurements is a list of
+    (t_cs_us, t_ce_us, win_us) per cutout window and unmatched counts the
+    strobe rises with no decoded packet end within +/-_REF_MATCH_US.
 
     Pairs each ch2 rising edge with the first following falling edge within
-    600 µs, then computes T_CS and T_CE relative to the last ch0 transition
-    before the rising edge (the end-bit trailing edge).
+    600 us, then computes T_CS and T_CE relative to the decoded packet's
+    end-bit last edge (S-9.3.2 Table 1 reference).  T_CS is NEGATIVE when the
+    cutout begins before the end bit has finished.
     """
-    ch0_times = [r[0] for r in ch0_rows]   # sorted ascending from CSV
+    end_times = sorted(decoded["packet_end_times"])
     rises = _rising_edges(ch2_rows)
     falls = _falling_edges(ch2_rows)
 
     results = []
+    unmatched = 0
     fall_idx = 0
     for t_rise in rises:
         # advance fall_idx past falls that are at or before this rise
@@ -108,15 +119,16 @@ def _measure_cutouts(ch0_rows, ch2_rows):
             continue                         # no matching fall -- boundary artifact
         t_fall = falls[fall_idx]
 
-        ref = _find_ref(ch0_times, t_rise)
+        ref = _nearest_packet_end(end_times, t_rise)
         if ref is None:
-            continue                         # no ch0 edge in search band -- skip
+            unmatched += 1                   # strobe with no decoded packet end nearby
+            continue
 
         t_cs = (t_rise - ref) * 1e6
         t_ce = (t_fall - ref) * 1e6
         results.append((t_cs, t_ce, t_ce - t_cs))
 
-    return results
+    return results, unmatched
 
 
 def _measure_substates(ch2_rows, win_rows):
@@ -246,14 +258,15 @@ def _capture_and_measure(port):
         win_rows = _read_channel_transitions(csv_path, win_col)
 
     decoded      = lib.decode(ch0_rows)
-    measurements = _measure_cutouts(ch0_rows, ch2_rows)
+    measurements, unmatched = _measure_cutouts(decoded, ch2_rows)
     substates, n_ord, n_unord = _measure_substates(ch2_rows, win_rows)
 
     n_wins = len(_rising_edges(ch2_rows))
     print(f"[decode] ch0: {len(ch0_rows)} transitions, "
           f"{len(decoded['packets'])} packets decoded")
     print(f"[decode] ch2: {len(ch2_rows)} transitions, "
-          f"{n_wins} cutout-window rises, {len(measurements)} matched")
+          f"{n_wins} cutout-window rises, {len(measurements)} matched to a decoded "
+          f"packet end, {unmatched} unmatched")
     print(f"[decode] ch{WINDOW_CHANNEL} (RAILCOM_RX_WINDOW): {len(win_rows)} transitions, "
           f"{n_ord} sub-window sets ordered, {n_unord} mis-ordered")
 
@@ -448,14 +461,14 @@ def checks(rep, decoded, measurements):
 
     # 2. T_CS  @compliance DCC-S9.3.2-CS-001
     rep.check(
-        "S-9.3.2 §3.2", "T_CS 26-32 us  (end-bit edge → cutout start)",
+        "S-9.3.2 §3.2", "T_CS 26-32 us  (end-bit LAST edge → cutout start)",
         all(T_CS_MIN_US <= v <= T_CS_MAX_US for v in t_cs_vals),
         lib.sigma_margin_detail(t_cs_vals, T_CS_MIN_US, T_CS_MAX_US) + " us",
     )
 
     # 3. T_CE  @compliance DCC-S9.3.2-CS-002
     rep.check(
-        "S-9.3.2 §3.2", "T_CE 454-488 us  (end-bit edge → cutout end)",
+        "S-9.3.2 §3.2", "T_CE 454-488 us  (end-bit LAST edge → cutout end)",
         all(T_CE_MIN_US <= v <= T_CE_MAX_US for v in t_ce_vals),
         lib.sigma_margin_detail(t_ce_vals, T_CE_MIN_US, T_CE_MAX_US) + " us",
     )
