@@ -6989,6 +6989,11 @@ window.COMPLIANCE =
                 "name": "DccRailcomUtilities.round_trip_all_values",
                 "file": "dcc_railcom_utilities_Test.cxx",
                 "desc": "encode/decode round-trips all 64 values"
+              },
+              {
+                "name": "DccRailcomUtilities.encode_byte_matches_spec_table",
+                "file": "dcc_railcom_utilities_Test.cxx",
+                "desc": "every one of the 64 encoded code words matches the S-9.3.2 Table 2 value at that index"
               }
             ],
             "hilChecks": []
@@ -7037,6 +7042,11 @@ window.COMPLIANCE =
                 "name": "DccRailcomUtilities.decode_byte_invalid_0x00",
                 "file": "dcc_railcom_utilities_Test.cxx",
                 "desc": "rejects an invalid code word"
+              },
+              {
+                "name": "DccRailcomUtilities.decode_byte_reserved_codewords_invalid",
+                "file": "dcc_railcom_utilities_Test.cxx",
+                "desc": "rejects the three S-9.3.2 Table 2 reserved four-ones code words (0xE1, 0xC3, 0x87)"
               }
             ],
             "hilChecks": []
