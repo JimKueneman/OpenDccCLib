@@ -473,6 +473,66 @@ TEST(DccServiceModeTaskDetect, nothing_supported_reports_zero_and_no_ack) {
 }
 
 // ============================================================================
+// Synchronous-callback asymmetry (Jim Kueneman's review of upstream PR #2, 2026-09-23)
+//
+// detect_mode() does not behave the same way when the FIRST probe it tries cannot start.
+// Direct (when wired) is tried directly in detect_mode() itself: if direct_verify_bit() fails
+// to start, detect_mode() resets to IDLE and returns false, with NO on_detect call at all --
+// the caller's "false" return is the only signal. But when direct is NOT wired (or every mode
+// is unwired, cascading all the way to _begin_address()'s "nothing left to probe" case),
+// detect_mode() calls _begin_paged() (or the next stage) and returns true UNCONDITIONALLY --
+// and if THAT stage's own probe fails to start (or there is nothing left to probe), the
+// resulting _fail()/_finish() call fires on_detect SYNCHRONOUSLY, before detect_mode() has
+// even returned to its caller. A caller that assumes "true means wait for the callback" can
+// therefore see on_detect fire before it has finished handling the detect_mode() call itself.
+//
+// Deliberately documented rather than restructured for this PR: Jim offered "return false
+// when the first available stage cannot start" as the alternative, but unifying the two paths
+// would mean propagating a real start/fail result up through the whole _begin_paged() ->
+// _begin_register() -> _begin_address() cascade (each of which can itself legitimately
+// complete synchronously with a genuine result, not just fail to start) -- a larger change
+// than this test suite exercises and riskier to get right without being able to run these
+// tests for real (no g++/cmake on this machine). These two tests pin down the CURRENT,
+// documented behavior on both sides of the asymmetry so a future change that unifies them
+// will have to touch a test, not silently change behavior.
+// ============================================================================
+
+TEST(DccServiceModeTaskDetect, direct_verify_bit_fails_to_start_returns_false_no_callback) {
+
+    setup();
+    direct_verify_bit_return = false;
+
+    EXPECT_FALSE(DccServiceModeTaskDetect_detect_mode(mock_on_detect));
+    EXPECT_EQ(on_detect_count, (uint32_t)0);  /* no callback at all for this path */
+
+    /* A following call must be accepted, not rejected by a stuck state. */
+    direct_verify_bit_return = true;
+    EXPECT_TRUE(DccServiceModeTaskDetect_detect_mode(mock_on_detect));
+
+}
+
+TEST(DccServiceModeTaskDetect, all_modes_unwired_completes_synchronously_before_return) {
+
+    setup();
+    _test_interface.direct_verify_bit = NULL;
+    _test_interface.paged_verify      = NULL;
+    _test_interface.register_verify   = NULL;
+    _test_interface.address_verify    = NULL;
+    DccServiceModeTaskDetect_initialize(&_test_interface);
+
+    /* on_detect has already fired by the time this call returns -- the cascade reaches
+     * _begin_address()'s "nothing left to probe" case, which calls _finish() synchronously,
+     * entirely inside this one call. */
+    bool started = DccServiceModeTaskDetect_detect_mode(mock_on_detect);
+
+    EXPECT_TRUE(started);
+    EXPECT_EQ(on_detect_count, (uint32_t)1);
+    EXPECT_EQ(on_detect_result, DCC_SERVICE_MODE_NO_ACK);
+    EXPECT_EQ(on_detect_modes, (uint8_t)0);
+
+}
+
+// ============================================================================
 // Probe targeting
 // ============================================================================
 

@@ -25,6 +25,7 @@ static dcc_packet_t captured_packets[8];
 static dcc_service_mode_step_callback_t captured_callbacks[8];
 static uint32_t begin_operation_count;
 static bool begin_operation_return;
+static uint32_t begin_operation_fail_on_call;  /* 0 = disabled; N = the Nth call (1-based) returns false */
 static bool common_idle_value;
 
 static dcc_service_mode_result_t complete_result;
@@ -51,6 +52,12 @@ static bool mock_begin_operation(const dcc_packet_t *packet,
 
     begin_operation_count++;
 
+    if (begin_operation_fail_on_call != 0 && begin_operation_count == begin_operation_fail_on_call) {
+
+        return false;
+
+    }
+
     return begin_operation_return;
 
 }
@@ -75,6 +82,7 @@ static void reset_mocks(void) {
     memset(captured_callbacks, 0, sizeof(captured_callbacks));
     begin_operation_count = 0;
     begin_operation_return = true;
+    begin_operation_fail_on_call = 0;
     memset(captured_is_write, 0, sizeof(captured_is_write));
     memset(captured_recovery_count, 0, sizeof(captured_recovery_count));
     common_idle_value = true;
@@ -307,6 +315,59 @@ TEST(DccServiceModePaged, write_cv1025_rejected) {
 
     EXPECT_FALSE(DccServiceModePaged_write(&test_context, 1025, 0x55));
     EXPECT_EQ(begin_operation_count, (uint32_t)0);
+
+}
+
+// Jim Kueneman's review of upstream PR #2 (2026-09-23): DccServiceModePaged_write()/_verify()
+// returned begin_operation()'s result directly without resetting paged_state on failure,
+// leaving it stuck in PAGE_SELECT forever -- every later paged call rejected. Fixed by
+// resetting to PAGED_STATE_IDLE on a failed start, matching what the address/register
+// primitives already did. This pins the fix down: the page-select begin_operation itself
+// fails, and a FOLLOWING call must be accepted, not rejected by a stuck state.
+TEST(DccServiceModePaged, write_page_select_begin_operation_fails_resets_to_idle) {
+
+    reset_mocks();
+    interface_dcc_service_mode_paged_t interface = make_interface();
+    DccServiceModePaged_initialize(&test_context, &interface);
+
+    begin_operation_fail_on_call = 1;  /* the page-select call itself fails to start */
+    EXPECT_FALSE(DccServiceModePaged_write(&test_context, 1, 0x55));
+    EXPECT_EQ(begin_operation_count, (uint32_t)1);
+    /* No on_complete for a call that never started -- matches the address/register
+     * primitives, which also just return false here with no callback. */
+    EXPECT_EQ(complete_count, (uint32_t)0);
+
+    /* A following call must be accepted, not rejected by a stuck paged_state. */
+    begin_operation_fail_on_call = 0;
+    EXPECT_TRUE(DccServiceModePaged_write(&test_context, 1, 0x55));
+    EXPECT_EQ(begin_operation_count, (uint32_t)2);
+
+}
+
+// Same bug class, the OTHER begin_operation call in this state machine: the data-access step
+// (triggered from _on_page_select_complete once page-select finishes). Unlike the page-select
+// call above, this path already reset paged_state and fired on_complete(BUSY) correctly before
+// this fix -- Jim asked for the test either way, since nothing exercised the failure branch.
+TEST(DccServiceModePaged, write_data_access_begin_operation_fails_completes_busy) {
+
+    reset_mocks();
+    interface_dcc_service_mode_paged_t interface = make_interface();
+    DccServiceModePaged_initialize(&test_context, &interface);
+
+    DccServiceModePaged_write(&test_context, 1, 0x55);
+    ASSERT_NE(captured_callbacks[0], (dcc_service_mode_step_callback_t)NULL);
+
+    begin_operation_fail_on_call = 2;  /* the data-access call fails to start */
+    captured_callbacks[0](DCC_SERVICE_MODE_SUCCESS);  /* page-select completes, triggers data access */
+
+    EXPECT_EQ(begin_operation_count, (uint32_t)2);
+    EXPECT_EQ(complete_count, (uint32_t)1);
+    EXPECT_EQ(complete_result, DCC_SERVICE_MODE_BUSY);
+
+    /* A following call must be accepted, not rejected by a stuck paged_state. */
+    begin_operation_fail_on_call = 0;
+    EXPECT_TRUE(DccServiceModePaged_write(&test_context, 1, 0x55));
+    EXPECT_EQ(begin_operation_count, (uint32_t)3);
 
 }
 

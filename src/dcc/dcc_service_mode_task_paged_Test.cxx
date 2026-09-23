@@ -225,6 +225,40 @@ TEST(DccServiceModeTaskPaged, read_cv_busy_rejected) {
 
 }
 
+// Jim Kueneman's review of upstream PR #2 (2026-09-23): representative "per task" tests for
+// this file -- primitive fails to start at entry, and primitive fails to start mid-chain (the
+// scan-advance's own paged_verify retry). write_cv/read_bit/write_bit follow the identical
+// shape and were not each duplicated here.
+TEST(DccServiceModeTaskPaged, read_cv_paged_verify_fails_at_entry_returns_false_and_idle) {
+
+    setup();
+    paged_verify_return = false;
+
+    EXPECT_FALSE(DccServiceModeTaskPaged_read_cv(1, mock_on_complete, mock_on_progress));
+    EXPECT_EQ(on_complete_count, (uint32_t)0);  /* never started -- no callback */
+
+    paged_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskPaged_read_cv(1, mock_on_complete, mock_on_progress));
+
+}
+
+TEST(DccServiceModeTaskPaged, read_cv_paged_verify_fails_mid_scan_completes_busy) {
+
+    setup();
+    DccServiceModeTaskPaged_read_cv(1, mock_on_complete, mock_on_progress);
+
+    /* Value 0 comes back NO_ACK; the scan advance tries value 1 and fails to start. */
+    paged_verify_return = false;
+    step_no_ack();
+
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+
+    paged_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskPaged_read_cv(1, mock_on_complete, mock_on_progress));
+
+}
+
 // ============================================================================
 // read_cv — first call issues verify with value 0
 // ============================================================================
