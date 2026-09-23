@@ -1,6 +1,6 @@
 # OpenDccCLib — Architecture (As-Built)
 
-> **Verified against commit `c4dc61e` (2026-04-21).**
+> **Verified against commit `a451be7` (2026-09-23).**
 > This document describes the library **as it is implemented today**. For the
 > original design intent (which predates the role-first naming refactor), see
 > [archive/OpenDccCLib_Requirements.md](archive/OpenDccCLib_Requirements.md).
@@ -49,11 +49,17 @@ both CS and DECODER for booster/repeater use.
 Set in `dcc_user_config.h`:
 
 - `USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT` — max concurrent active scheduler slots
-- `USER_DEFINED_DCC_MAX_LOCOS` — max autorefresh locomotives
+- `USER_DEFINED_DCC_MAX_LOCOS` — locomotives tracked by the application's loco table
+- `USER_DEFINED_DCC_PREAMBLE_BITS_OPS` — operations-mode preamble (>= 14; >= 16 with RailCom)
 - `USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH` — RailCom receive ring-buffer depth
 - `USER_DEFINED_DCC_SERVICE_MODE_RETRIES`
-- `USER_DEFINED_DCC_ACK_THRESHOLD_MA`, `..._ACK_MIN_DURATION_US`, `..._ACK_MAX_DURATION_US`
-- `USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS`
+- `USER_DEFINED_DCC_ACK_THRESHOLD_MA`, `..._ACK_MIN_DURATION_US`, `..._ACK_MAX_DURATION_US`, `..._ACK_DROPOUT_TOLERANCE_US`
+- `USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS`, `..._DECODER_PACKET_QUEUE_DEPTH` (>= 2, one slot reserved)
+
+One-shot packet repeat counts are not user constants: the builders set them from the
+`DCC_REPEAT_*` table in `dcc_defines.h` (CV write 2, verify 1, date 3, time 1, accessory
+NOP/stop 1, everything else 2); an application may overwrite `repeat_count` after a builder
+returns, and 0 means the scheduler never sends the packet.
 
 ## 4. The `dcc_config_t` struct
 
@@ -68,12 +74,17 @@ clocked at `DCC_ONE_BIT_HALF_PERIOD_US` = 58 µs) plus a RailCom one-shot timer
 (`railcom_timer_start/stop`). Per-channel hardware is described by `dcc_output_hw_t`
 for `main_track` and `service_track` (each with `timer_start/stop`, `pin_toggle`,
 `track_power_set`, optional `current_sense_read`, and an optional nested
-`dcc_railcom_hw_t`). Optional callbacks: `on_packet_sent`, `on_service_mode_result`,
-`on_accessory_srq`.
+`dcc_railcom_hw_t`), plus the five RailCom cutout periods (0 = spec default). Optional
+callbacks: `on_packet_sent`, `on_accessory_srq`, and `on_railcom_datagram_result` inside
+`dcc_railcom_hw_t`. Service-mode results are delivered per call through the task
+callbacks (`on_complete`, `on_progress`, `on_detect`), not through a config callback.
 
-**Decoder:** required `cv_read`/`cv_write`; NULL-optional `railcom_tx_pin_set`,
-`decoder_edge_irq_enable`, `start_ack_pulse`/`stop_ack_pulse`; and a set of
-`on_*_command` notification callbacks. Note the CV callbacks
+**Decoder:** required `cv_read`/`cv_write`/`cv29_apply_supported_features`; NULL-optional
+`factory_reset`, `cv_read_indexed`/`cv_write_indexed`, `railcom_tx_pin_set` +
+`railcom_delay_us` + `on_railcom_request`, `start_ack_pulse`/`stop_ack_pulse`; and a set of
+`on_*_command` notification callbacks plus `on_failsafe_entered/exited`. The DCC edge
+interrupt is masked during a RailCom transmit through `lock_shared_resources`; there is no
+separate edge-IRQ hook. Note the CV callbacks
 (`on_cv_write_command`, `on_cv_verify_command`, `on_cv_bit_command`) carry a
 `bool service_mode` argument so the application can distinguish service-mode
 programming from POM.
@@ -86,6 +97,7 @@ programming from POM.
 - `DccConfig_run()` — main loop; **all application callbacks fire from here**
 - `DccConfig_58us_timer_isr()` — [CS] shared bit timer
 - `DccConfig_railcom_oneshot_timer_isr()` — [CS] RailCom cutout state machine
+- `DccConfig_set_railcom_cutout_timing()`, `DccConfig_cancel_railcom_cutout()`, `DccConfig_railcom_cutout_is_active()` — [CS] runtime cutout control
 - `DccConfig_100ms_timer_tick()` — [CS] timeouts / housekeeping
 - `DccConfig_decoder_edge_isr(uint32_t timestamp_usec)` — [DECODER] input-capture edge
 
@@ -118,13 +130,16 @@ programming from POM.
 | `dcc_scheduler` | CS | Priority queue, duplicate combining, auto-refresh round-robin; one-shots are sent `repeat_count` times (the builders set the `DCC_REPEAT_*` defaults, 0 = never sent) |
 | `dcc_bit_encoder` | CS | ISR bit framing from the shared fixed-period timer |
 | `dcc_railcom_cutout` | CS | RailCom cutout timer state machine |
-| `dcc_railcom_command_station` | CS | 4/8 decode of received RailCom, receive buffer |
+| `dcc_railcom_command_station` | CS | Receive drain after each cutout, Ch1/Ch2 datagram assembly, receive ring, address tagging |
+| `dcc_railcom_utilities` | CS + DECODER | 4/8 code words (S-9.3.2 Table 2): encode for the decoder roles, decode for the command station |
 | `dcc_service_mode_common` | CS | Shared ACK detection, reset sequencing, retry |
-| `dcc_service_mode_{direct,paged,register,address}` | CS | Per-mode programming state machines |
+| `dcc_service_mode_{direct,paged,register,address}` | CS | Per-mode programming primitives |
+| `dcc_service_mode_task_{direct,paged,register,address,detect}` | CS | Read/write/verify orchestration on the primitives; mode detection |
 | `dcc_bit_decoder` | DECODER | Edge-timestamp → bit classification → byte assembly |
-| `dcc_packet_decoder` | DECODER | Parse bytes → structured commands, XOR, address match, dispatch |
-| `dcc_cv_storage` | DECODER | CV abstraction, decoder lock, factory reset, fail-safe |
-| `dcc_railcom_decoder` | DECODER | 4/8 encode of decoder RailCom responses |
+| `dcc_packet_decoder` | DECODER | Parse bytes → structured commands, XOR, address match, deferred dispatch queue |
+| `dcc_cv_storage` | DECODER | CV abstraction, decoder lock, factory reset, indexed CVs, CV29 feature mask |
+| `dcc_failsafe` | DECODER | S-9.2.4 packet time-out (CV11 in 100 ms units) |
+| `dcc_railcom_decoder` | DECODER | RailCom transmit engine (bit-bang) and reply arming |
 
 Each module owns an `interface_dcc_<module>_t` of function pointers, populated by
 `dcc_config.c`. This makes every dependency mockable in unit tests and lets an
@@ -146,8 +161,11 @@ Three contexts, with a deliberately small locked region:
   on threaded hosts they must be protected by the user's `lock/unlock`.
 
 The handoff between the ISR-level bit encoder and the main-loop scheduler is
-double-buffered: the ISR reads the active buffer and sets a completion flag; the
-main loop swaps buffers under `lock_shared_resources`/`unlock_shared_resources`.
+single-buffered: the encoder holds one active packet and a `packet_loaded` flag; the ISR
+clears the flag at the end bit and the main loop loads the next packet under
+`lock_shared_resources`/`unlock_shared_resources`. The cutout arm is deferred one tick so it
+lands on the end bit's last edge, because the encoder's state machine runs a half-bit ahead
+of the wire.
 
 ## 8. Key invariants
 
@@ -155,5 +173,5 @@ main loop swaps buffers under `lock_shared_resources`/`unlock_shared_resources`.
 2. Every new function/type is wrapped in the appropriate `DCC_COMPILE_*` guard.
 3. No dynamic memory; all sizing comes from `USER_DEFINED_DCC_*` constants.
 4. CV numbers are 1-based everywhere; the 0-based wire encoding is confined to the
-   packet encoder.
+   packet builders (`dcc_application_command_station_packet.c`).
 5. Callbacks are main-loop only; ISRs do pin/flag work and defer notification.

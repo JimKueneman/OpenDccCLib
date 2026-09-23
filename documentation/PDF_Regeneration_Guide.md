@@ -1,16 +1,26 @@
 # PDF Regeneration Guide
 
-> **Verified against commit `c4dc61e` (2026-04-21), written 2026-06-22.**
+> **Verified against commit `a451be7` (2026-09-23); written 2026-06-22, mechanism rebuilt 2026-09-23.**
 > This document explains how to regenerate the five OpenDccCLib PDFs and — more
 > importantly — **what to pull from the current source** so each rebuild reflects
 > the latest code. It describes the *general* content and structure of each
 > document, not the exact prose. Treat the code as the source of truth; if this
 > guide and the code disagree, the code wins.
 
-The previous PDFs were produced by a hand-authored generator whose content was
-hardcoded and drifted out of sync with the library. That generator was removed.
-When regenerating, **re-derive every factual table and code reference from the
-files listed below** instead of copying the old text.
+The PDFs are now built from Markdown sources in `documentation/guides/` by
+`documentation/guides/build_pdfs.py` (ReportLab only):
+
+```
+python3 documentation/guides/build_pdfs.py                      # all five
+python3 documentation/guides/build_pdfs.py DeveloperGuide_Decoder
+```
+
+Each `guides/<name>.md` renders to `documentation/<name>.pdf`. The generator understands a
+small Markdown subset (front matter, `##`/`###`/`####` headings, paragraphs, lists, pipe
+tables, fenced code, `>` note boxes) and applies the house style of §4 automatically. The
+PDFs are tracked in git so readers get them without a build; regenerate and commit them
+together with the source edits. When editing a guide, **re-derive every factual table and
+code reference from the files listed below** instead of trusting the prose that is there.
 
 ---
 
@@ -24,7 +34,7 @@ files listed below** instead of copying the old text.
 | `DeveloperGuide_Decoder.pdf` | Developer guide | Integrators / porters | Full explanation of the decoder-side stack and how to port it |
 | `OpenDccCLib_Brochure.pdf` | Marketing one-pager | Evaluators | Sell the library: features, coverage, getting started |
 
-All five are **generated artifacts** — keep them git-ignored (see `.gitignore`).
+All five are **generated artifacts**, but they are committed alongside their Markdown sources so the repository always carries a readable copy; regenerate them whenever a source in §3 changes.
 
 ---
 
@@ -66,7 +76,7 @@ read for current values. If the code changed, these are what changed with it.
 | **Reference-board pin assignments** (wiring tables) | The application projects: `applications/ti_theia/mspm03507_launchpad/command_station/` and `.../decoder/` (SysConfig / `ti_msp_dl_config`, and the `.c` entry points) | **Verify every pin** — the old PDFs disagreed with the loopback wiring (see §6) |
 | **Example `main()` / main-loop shape** | The app entry files: `command_station/command_station.c`, `decoder/decoder.c` | Copy the real loop, not a paraphrase |
 | **UART CLI command list** (QSG command tables) | `command_station/uart_command_parser.c/.h`, `decoder/decoder_command_parser.c/.h` | Commands change as the demo evolves |
-| **Test suite list & counts** | `src/dcc/*_Test.cxx` + `src/dcc/CMakeLists.txt`; run the suite for live counts | Currently 23 test binaries; report counts only if freshly measured |
+| **Test suite list & counts** | `src/dcc/*_Test.cxx` + `src/dcc/CMakeLists.txt`; run the suite (`cd test && make`) for live counts | 29 test binaries at 2026-09-23; report counts only if freshly measured |
 | **Coverage numbers** (brochure / dev-guide stats) | Build the tests and read the gcovr report under `test/build/gcovr/` | Don't quote stale figures; measure at rebuild time |
 | **Status / known limitations / pending features** | `documentation/compliance/ComplianceOverview.md` | If a guide describes a feature, confirm it's actually "implemented" there (e.g. RailCom cutout retiming is pending) |
 | **License / author / repo URL** | repo `LICENSE`/file headers, `README.md` | |
@@ -119,11 +129,10 @@ For each, the **outline is a starting skeleton** — adjust to match the code. T
 The retired PDFs had baked-in errors. Confirm each against current source before
 publishing:
 
-1. **RailCom cutout timing.** Old text said the H-bridge tristates at "T_CS = 88µs."
-   Per spec, T_CS is 26–32µs; 88µs is roughly T_TS1. The current code still uses an
-   88µs delay (a known pending fix — see `ComplianceOverview.md`). State whatever
-   `dcc_defines.h` actually defines **and** flag it as the in-progress retiming, or
-   omit precise numbers until that lands. Don't reprint "T_CS = 88µs" as correct.
+1. **RailCom cutout timing.** T_CS is 26 µs after the packet end bit's LAST edge
+   (`DCC_RAILCOM_CUTOUT_START_DELAY_US`), measured on the bench at 27.8–28.0 µs since the
+   arm-at-last-edge fix of 2026-09-23 (issue #3). Never reprint the pre-June "T_CS = 88 µs"
+   text, and do not describe the cutout as armed from the end-bit handler's own tick.
 2. **Module names.** Old file trees referenced `dcc_packet_encoder.h/c`. The
    role-first module is `dcc_application_command_station_packet`; the old one was
    removed (2026-09-23), so never reprint it. Use the names in
@@ -139,8 +148,13 @@ publishing:
 5. **Pin tables.** The QSGs, the decoder guide, and the loopback `README.md` did not
    agree on pin assignments. Treat the application project's SysConfig as
    authoritative and make all docs match it.
-6. **Counts & stats.** "23 test suites / N source files / ~lines / coverage %" — only
-   publish numbers you measured on the current tree at rebuild time.
+6. **Counts & stats.** Only publish numbers measured on the current tree at rebuild
+   time: `cd test && make` prints per-binary totals and writes `test/coverage.html`.
+7. **Repeat counts.** Every one-shot builder sets a `DCC_REPEAT_*` default; the example
+   application and the bench firmware override nothing. Do not describe `repeat_count = 3`
+   or any application-side override as the normal path.
+8. **Receive path.** The `dcc_railcom_hw_t` hooks carry a gating contract (accept bytes only
+   inside the channel windows, flush at cutout begin); quote it from `dcc_config.h`.
 
 ---
 

@@ -16,7 +16,7 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 
 - **Roles:** Command Station, Decoder, Accessory Decoder — `DCC_COMPILE_COMMAND_STATION` / `_DECODER` / `_ACCESSORY_DECODER`.
 - **Service modes:** Direct, Paged, Register, Address — all implemented.
-- **Tests:** 28 host unit-test binaries, 1158 tests passing (host, mocked drivers); ≈99% line coverage. Green host tests inject mock drivers — see **Known defects** (decoder RailCom Tx), which they cannot catch.
+- **Tests:** 29 host unit-test binaries, 1130 tests passing (host, mocked drivers); 95.3% line / 97.7% function / 87.6% branch coverage (gcovr, 2026-09-23). Green host tests inject mock drivers — see **Known defects** (decoder RailCom Tx), which they cannot catch.
 - **Hardware-in-loop:** Saleae HIL compliance suites — S-9.1 electrical/timing, S-9.2 baseline, S-9.2.1 packets (incl. per-builder repeat counts on the wire), S-9.2.3 service mode (210 checks incl. the mock-ACK loopback), S-9.3.2 RailCom cutout timing + sub-windows + the **receive path via the mock-decoder loopback**, and the scheduler suite — preceded by `bench_preflight.py`, which proves the seven probes and both jumpers before a run. Plus the two-board MSPM0 loopback suite (manual gate, not CI).
 
 ---
@@ -24,7 +24,7 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 ## Summary
 
 - **Strong, fully-tested core:** packet encoding (speed/function/accessory/CV-POM/consist/binary-state/analog), scheduler, bit encoder, all four service modes (full §E page-preset sequences), bit/packet decoder, CV storage, RailCom 4/8 encode+decode, decoder-side RailCom responses, accessory-decoder RailCom. 1158 unit tests, ~99% line coverage.
-- **Compliance deviations — ALL FIXED 2026-06-22** (see [archive/compliance_deviation_fixes.md](../archive/compliance_deviation_fixes.md); 1158 tests pass):
+- **Compliance deviations — ALL FIXED 2026-06-22** (see [archive/compliance_deviation_fixes.md](../archive/compliance_deviation_fixes.md)):
   - ✅ **RailCom cutout** rebuilt as a 5-state machine (DELAY/SETTLING/CH1/GAP/CH2) with spec timing (T_CS 26 / T_TS1 80 / T_TC1 177 / T_TS2 193 / T_CE 454 µs), now user-configurable via `dcc_config_t` (0 = spec default).
   - ✅ Bit-encoder comment corrected to "single-buffered" (matches the code).
   - ✅ ACK detection now enforces the upper bound (`DCC_ACK_MAX_SAMPLES`); an over-long pulse is rejected as over-current, not an ACK.
@@ -32,13 +32,11 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
   - ✅ Speed-restriction (`00111110`) **removed** (byte reserved for Zimo East-West).
   - ✅ RailCom decoder-response **datagram IDs aligned to the 2026 draft**; ACK/NACK now sent as 4/8 special code words; CS-side decode-table bug fixed (`0x0F`→ACK, `0x3C`→NACK).
 - **Top functional gaps (not implemented):**
-  - ❌ **Fail-safe / CV11 packet timeout (S-9.2.4)** — only dead callback declarations + an unused `#define`.
   - ❌ **XPOM** (S-9.2.1 §2.3.7.4) — no command-station encoder.
-  - ❌ **Time/Date & System Time** packets (S-9.2.1) — unused `#define` only.
-  - ❌ **Accessory NOP** packet encoder — only auto-schedule comments.
-  - ❌ **Indexed CVs (CV31/32)** decoder paging — defines only.
-  - ❌ **Factory reset (CV8)** — write-permission exception only, no reset-to-defaults logic.
   - ❌ **Logon / Data Spaces (S-9.2.1.1)** — absent. *Released standard (2022), not draft-only — the 2026 draft only expands it.* Out of current scope.
+  - ⚠️ **Decoder-side RailCom Tx** on the reference board — engine and encoders exist and are unit-tested, but the demo has no current-source circuit, so `railcom_tx_pin_set` is NULL there (see Known defects).
+  - ⚠️ **Channel 2-only RailCom replies** are misread as Channel 1 by the command station (bytes are split by count, not by window) — open issue; the S-9.3.2 HIL suite keeps a deliberately failing case.
+  - *Previously listed here and since implemented:* fail-safe / CV11 (`dcc_failsafe`), time/date and system time packets, accessory NOP, indexed CVs (CV31/32 hooks), factory reset on CV8.
 - **Housekeeping:** the pre-refactor modules `dcc_application_service_track` and `dcc_application_main_track` still coexist with the role-first replacements; both are compiled and tested. `dcc_packet_encoder` was removed on 2026-09-23 (uncalled duplicate that had drifted).
 
 ---
