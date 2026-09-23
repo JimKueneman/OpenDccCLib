@@ -9,6 +9,7 @@ What's in this folder:
 | Item | What it is |
 |---|---|
 | `s9_*_compliance.py`, `library_compliance.py` | the spec suites (each exposes `run()`) |
+| `bench_preflight.py` | **run after re-wiring**: checks the DUT UART, the Saleae, and all six probe channels; names the wire colour + header pin of anything missing (`run_all.py --preflight` runs it first) |
 | `run_all.py` | runs every suite into one combined HTML report |
 | `compliance_lib.py` | **symlink** → `../compliance_lib.py` (shared Saleae/serial/decode); also makes `reports/` land here |
 | `reports/` | generated HTML reports (auto-created, gitignored) |
@@ -18,6 +19,7 @@ What's in this folder:
 
 Run from `test/compliance/`:
 ```bash
+.venv/bin/python command_station/bench_preflight.py    # wiring + Saleae check (after re-wiring)
 .venv/bin/python command_station/run_all.py            # all suites → one report
 .venv/bin/python command_station/s9_2_1_compliance.py  # a single suite
 ```

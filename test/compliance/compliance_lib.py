@@ -203,6 +203,8 @@ def decode(rows):
 
     Returns dict: bit_halves [(a_us,b_us,bit)], bits, packets [(preamble,[bytes])],
     packet_times (abs start time in s of each packet's preamble, parallel to
+    packets), packet_end_times (abs time in s of each packet's END BIT LAST EDGE,
+    i.e. the zero crossing S-9.3.2 measures the RailCom cutout from; parallel to
     packets), trimmed_runts (count at edges), interior_glitches (sub-floor pulses).
     """
     widths = [(rows[i][0] - rows[i - 1][0]) * 1e6 for i in range(1, len(rows))]
@@ -244,7 +246,7 @@ def decode(rows):
     bitstr = "".join(bits)
 
     # framing: preamble (>=12 ones) 0 {byte 0}* {byte} 1
-    packets, packet_times = [], []
+    packets, packet_times, packet_end_times = [], [], []
     n = len(bitstr)
     i = 0
     while i < n:
@@ -270,13 +272,19 @@ def decode(rows):
                 if data and complete:      # drop window-truncated partials
                     packets.append((run, data))
                     packet_times.append(bit_times[i])   # preamble start time
+                    # End bit = bit k-1. Its last edge is its own start plus its
+                    # two measured halves -- taken from the end bit itself, not
+                    # from whatever follows it, so a cutout or glitch after the
+                    # packet cannot move the reference.
+                    a_us, b_us, _ = bit_halves[k - 1]
+                    packet_end_times.append(bit_times[k - 1] + (a_us + b_us) * 1e-6)
                 i = k
                 continue
         i += 1
 
     return {"bit_halves": bit_halves, "bits": bitstr, "packets": packets,
-            "packet_times": packet_times, "trimmed_runts": trimmed_runts,
-            "interior_glitches": interior_glitches}
+            "packet_times": packet_times, "packet_end_times": packet_end_times,
+            "trimmed_runts": trimmed_runts, "interior_glitches": interior_glitches}
 
 
 def capture_and_decode():

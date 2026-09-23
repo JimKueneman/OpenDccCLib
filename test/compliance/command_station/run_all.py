@@ -6,7 +6,9 @@ Each suite module exposes run() -> Report (see s9_1_compliance.py). Add new
 spec modules to SUITES as they are written; they run in order, sharing the same
 bench config in compliance_lib.py.
 
-Run:  .venv/bin/python run_all.py
+Run:  .venv/bin/python run_all.py [--preflight]
+      --preflight runs bench_preflight.py first (UART, Saleae, all six probe
+      channels) and aborts with exit 2 if the bench is not wired up.
 Exit: 0 = all specs pass, 1 = at least one fail, 2 = setup/hardware error.
 """
 
@@ -19,6 +21,7 @@ import s9_2_1_compliance
 import s9_2_3_compliance
 import s9_3_2_compliance
 import library_compliance
+import bench_preflight
 
 SUITES = [
     s9_1_compliance,
@@ -33,8 +36,19 @@ SUITES = [
 def main():
     print("\n#### DCC FULL COMPLIANCE RUN ####")
     print(f"Suites: {', '.join(m.SPEC_DOC for m in SUITES)}")
+    results = []
     try:
-        results = [mod.run().as_dict() for mod in SUITES]
+        if "--preflight" in sys.argv:
+            pre = bench_preflight.run()
+            results.append(pre.as_dict())
+            if pre.failed:
+                print("\nBENCH PREFLIGHT FAILED -- fix the wiring above before running "
+                      "the spec suites.\n")
+                return 2
+        results += [mod.run().as_dict() for mod in SUITES]
+    except bench_preflight.SetupError as e:
+        print(f"\nBENCH NOT READY: {e}\n")
+        return 2
     except ImportError as e:
         print(f"\nMissing dependency: {e}\n"
               f"Run: pip install logic2-automation pyserial\n")
