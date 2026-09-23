@@ -198,8 +198,16 @@ static bool _cv_ops_common(dcc_packet_t *packet, dcc_address_t address, dcc_addr
      * built with repeat_count = 0 was accepted into a scheduler slot but
      * never selected for transmission. Matches the accessory-stop builders
      * (DccApplicationCommandStationPacket_load_accessory_*_stop), which
-     * correctly use repeat_count = 1. */
-    packet->repeat_count = 1;
+     * correctly use repeat_count = 1.
+     *
+     * repeat_count = 1 is right for verify, but S-9.2.1 p.9 "Type=11 WRITE
+     * BYTE" requires two identical packets before a decoder modifies a CV
+     * ("These two packets need not be back to back on the track. However
+     * any other packet to the same decoder will invalidate the write
+     * operation."); VERIFY BYTE (p.8) acts on the first packet it receives.
+     * The scheduler decrements repeat_count after each send and drops the
+     * slot at 0 (dcc_scheduler.c), so a write has to start at 2. */
+    packet->repeat_count = (cv_instruction_prefix == DCC_CV_LONG_WRITE) ? 2 : 1;
 
     return true;
 
@@ -692,9 +700,12 @@ bool DccApplicationCommandStationPacket_load_accessory_extended_stop(dcc_packet_
      *        DCC_CV_LONG_VERIFY, or DCC_CV_LONG_BIT).
      * @param wire_cv 0-based CV number (cv_number - 1).
      * @param data_byte Data or bit-manipulation byte.
+     * @param is_write true for a WRITE BYTE/WRITE BIT operation, false for
+     *        VERIFY BYTE/VERIFY BIT (the caller already knows which; for the
+     *        BIT case this is the same flag baked into data_byte's own C bit).
      * @return true if packet was built successfully.
      */
-static bool _acc_basic_cv_common(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair, uint8_t cv_instruction_prefix, uint16_t wire_cv, uint8_t data_byte) {
+static bool _acc_basic_cv_common(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair, uint8_t cv_instruction_prefix, uint16_t wire_cv, uint8_t data_byte, bool is_write) {
 
     /* Byte 0: 10AAAAAA — lower 6 bits of board address */
     packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)(board_address & 0x3F);
@@ -718,7 +729,13 @@ static bool _acc_basic_cv_common(dcc_packet_t *packet, uint16_t board_address, u
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    /* One-shot send: same bug as _cv_ops_common() (see its comment) -- these
+     * accessory CV ops-mode builders have no caller anywhere in this library
+     * yet, so a repeat_count = 0 that silently drops every packet before
+     * transmission was never caught. 2026-09-24: fixed alongside the same
+     * write/verify split S-9.2.1 p.9 requires for the loco POM builders --
+     * two identical packets for a write, one for a verify. */
+    packet->repeat_count = is_write ? 2 : 1;
 
     return true;
 
@@ -735,9 +752,11 @@ static bool _acc_basic_cv_common(dcc_packet_t *packet, uint16_t board_address, u
      * @param cv_instruction_prefix CV instruction prefix byte.
      * @param wire_cv 0-based CV number (cv_number - 1).
      * @param data_byte Data or bit-manipulation byte.
+     * @param is_write true for a WRITE BYTE/WRITE BIT operation, false for
+     *        VERIFY BYTE/VERIFY BIT.
      * @return true if packet was built successfully.
      */
-static bool _acc_extended_cv_common(dcc_packet_t *packet, uint16_t address, uint8_t cv_instruction_prefix, uint16_t wire_cv, uint8_t data_byte) {
+static bool _acc_extended_cv_common(dcc_packet_t *packet, uint16_t address, uint8_t cv_instruction_prefix, uint16_t wire_cv, uint8_t data_byte, bool is_write) {
 
     /* Byte 0: 10AAAAAA — lower 6 bits of address */
     packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)(address & 0x3F);
@@ -760,7 +779,9 @@ static bool _acc_extended_cv_common(dcc_packet_t *packet, uint16_t address, uint
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    /* Same never-sent bug and the same write/verify split as
+     * _acc_basic_cv_common() above -- see its 2026-09-24 comment. */
+    packet->repeat_count = is_write ? 2 : 1;
 
     return true;
 
@@ -778,7 +799,7 @@ bool DccApplicationCommandStationPacket_load_accessory_basic_cv_write(dcc_packet
 
     }
 
-    return _acc_basic_cv_common(packet, board_address, output_pair, DCC_CV_LONG_WRITE, cv_number - 1, value);
+    return _acc_basic_cv_common(packet, board_address, output_pair, DCC_CV_LONG_WRITE, cv_number - 1, value, true);
 
 }
 
@@ -790,7 +811,7 @@ bool DccApplicationCommandStationPacket_load_accessory_basic_cv_verify(dcc_packe
 
     }
 
-    return _acc_basic_cv_common(packet, board_address, output_pair, DCC_CV_LONG_VERIFY, cv_number - 1, value);
+    return _acc_basic_cv_common(packet, board_address, output_pair, DCC_CV_LONG_VERIFY, cv_number - 1, value, false);
 
 }
 
@@ -810,7 +831,7 @@ bool DccApplicationCommandStationPacket_load_accessory_basic_cv_bit(dcc_packet_t
                | (bit_value ? 0x08 : 0x00)
                | (bit_position & 0x07);
 
-    return _acc_basic_cv_common(packet, board_address, output_pair, DCC_CV_LONG_BIT, cv_number - 1, bit_byte);
+    return _acc_basic_cv_common(packet, board_address, output_pair, DCC_CV_LONG_BIT, cv_number - 1, bit_byte, write);
 
 }
 
@@ -822,7 +843,7 @@ bool DccApplicationCommandStationPacket_load_accessory_extended_cv_write(dcc_pac
 
     }
 
-    return _acc_extended_cv_common(packet, address, DCC_CV_LONG_WRITE, cv_number - 1, value);
+    return _acc_extended_cv_common(packet, address, DCC_CV_LONG_WRITE, cv_number - 1, value, true);
 
 }
 
@@ -834,7 +855,7 @@ bool DccApplicationCommandStationPacket_load_accessory_extended_cv_verify(dcc_pa
 
     }
 
-    return _acc_extended_cv_common(packet, address, DCC_CV_LONG_VERIFY, cv_number - 1, value);
+    return _acc_extended_cv_common(packet, address, DCC_CV_LONG_VERIFY, cv_number - 1, value, false);
 
 }
 
@@ -854,7 +875,7 @@ bool DccApplicationCommandStationPacket_load_accessory_extended_cv_bit(dcc_packe
                | (bit_value ? 0x08 : 0x00)
                | (bit_position & 0x07);
 
-    return _acc_extended_cv_common(packet, address, DCC_CV_LONG_BIT, cv_number - 1, bit_byte);
+    return _acc_extended_cv_common(packet, address, DCC_CV_LONG_BIT, cv_number - 1, bit_byte, write);
 
 }
 
@@ -924,8 +945,14 @@ bool DccApplicationCommandStationPacket_load_cv_bit_pom(dcc_packet_t *packet, dc
      * not route through it (bit manipulation has its own instruction byte
      * layout) and was missed when that fix landed there. Same bug, same fix:
      * a CV bit write/verify built with repeat_count = 0 is accepted into a
-     * scheduler slot but never selected for transmission. */
-    packet->repeat_count = 1;
+     * scheduler slot but never selected for transmission.
+     *
+     * And the same write/verify split as _cv_ops_common()'s repeat_count
+     * comment: S-9.2.1 p.9 requires two identical packets for WRITE BIT,
+     * same as WRITE BYTE ("a configuration variable access acknowledgment
+     * will be generated in response to the second identical WRITE BIT
+     * instruction"); VERIFY BIT, like VERIFY BYTE, acts on the first. */
+    packet->repeat_count = write ? 2 : 1;
 
     return true;
 
