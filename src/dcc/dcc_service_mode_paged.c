@@ -177,7 +177,14 @@ bool DccServiceModePaged_write(dcc_service_mode_paged_context_t *context, uint16
     _active_context = context;
     _build_register_packet(&packet, DCC_SERVICE_MODE_PAGE_REGISTER, page, true);
 
-    return context->interface->begin_operation(&packet, &_on_page_select_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT);
+    if (!context->interface->begin_operation(&packet, &_on_page_select_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT)) {
+
+        context->paged_state = PAGED_STATE_IDLE;
+        return false;
+
+    }
+
+    return true;
 
 }
 
@@ -214,7 +221,14 @@ bool DccServiceModePaged_verify(dcc_service_mode_paged_context_t *context, uint1
     _active_context = context;
     _build_register_packet(&packet, DCC_SERVICE_MODE_PAGE_REGISTER, page, true);
 
-    return context->interface->begin_operation(&packet, &_on_page_select_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT);
+    if (!context->interface->begin_operation(&packet, &_on_page_select_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT)) {
+
+        context->paged_state = PAGED_STATE_IDLE;
+        return false;
+
+    }
+
+    return true;
 
 }
 
