@@ -77,7 +77,7 @@ Address parsing: `40` = short (<=127) or long (>=128), `40S` = force short, `40L
 PB17 toggles on every packet sent (via `on_packet_sent` callback).
 PB15 reads ACK pulse from decoder (GPIO input for `current_sense_read`).
 
-All one-shot packets have `repeat_count = 3`.
+One-shot packets use the library builders' repeat defaults (`DCC_REPEAT_*` in `dcc_defines.h`): CV writes 2, verifies 1, date 3, time 1, accessory NOP/stop 1, everything else 2. The command station overrides nothing.
 
 ---
 
@@ -678,7 +678,7 @@ Cross-referenced against S-9.1, S-9.2, S-9.2.1, S-9.2.1.1, S-9.2.2, S-9.2.3, S-9
 | S-9.2.1 | Ops-mode CV write (long form) | TestCvOpsMode |
 | S-9.2.1 | Ops-mode CV verify | test_cv_verify |
 | S-9.2.1 | Ops-mode CV bit manipulation (write/clear) | test_cv_bit_write, test_cv_bit_clear |
-| S-9.2.1 | CV write requires >= 2 identical packets (repeat_count=3) | TestRepeatCounts |
+| S-9.2.1 | CV write requires >= 2 identical packets (library default repeat_count=2) | TestRepeatCounts |
 | S-9.2.2 | CV decoder lock: CV15 != CV16 blocks writes | TestCvDecoderLock |
 | S-9.2.2 | CV decoder lock: CV15/CV16 always writable | test_cv_write_blocked_when_locked |
 | S-9.2.2 | CV decoder unlock: CV15 == CV16 permits writes | test_cv_write_after_unlock |

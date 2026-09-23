@@ -115,7 +115,7 @@ programming from POM.
 | `dcc_config` | always | Wiring: builds every interface struct, owns all module contexts, `initialize()`/`run()`/ISR dispatch |
 | `dcc_types` | always | Typedefs, user-constant validation |
 | `dcc_defines` | always | Protocol constants: timing, instruction masks, CV numbers, RailCom IDs |
-| `dcc_scheduler` | CS | Priority queue, duplicate combining, auto-refresh round-robin |
+| `dcc_scheduler` | CS | Priority queue, duplicate combining, auto-refresh round-robin; one-shots are sent `repeat_count` times (the builders set the `DCC_REPEAT_*` defaults, 0 = never sent) |
 | `dcc_bit_encoder` | CS | ISR bit framing from the shared fixed-period timer |
 | `dcc_railcom_cutout` | CS | RailCom cutout timer state machine |
 | `dcc_railcom_command_station` | CS | 4/8 decode of received RailCom, receive buffer |

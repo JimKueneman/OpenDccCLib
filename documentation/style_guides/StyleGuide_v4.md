@@ -42,7 +42,7 @@ Any function that has a large number or long identifier names shall be split up 
 
 ~~~
 
-DccPacketEncoder_speed_128(
+DccApplicationCommandStationPacket_load_speed_128(
             packet,
             address,
             address_type,
@@ -72,7 +72,7 @@ return (
 
 ~~~
 
-extern bool DccPacketEncoder_speed_128(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t speed, bool direction);
+extern bool DccApplicationCommandStationPacket_load_speed_128(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t speed, bool direction);
 
 ~~~
 

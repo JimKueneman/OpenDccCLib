@@ -6587,7 +6587,7 @@ window.COMPLIANCE =
           "detail": {
             "impl": "DELAY state (26 us default) tristates the H-bridge to begin the cutout.",
             "gtest": "",
-            "hil": "On-wire envelope."
+            "hil": "T_CS measured on the Saleae from the DECODED packet end bit's last edge (compliance_lib packet_end_times) to the PB2 strobe rise, not from the last DCC edge before the strobe (that can be the end bit's mid-bit edge and masked issue #3). Bench 2026-09-23: 27.8-28.0 us."
           },
           "refs": {
             "symbols": [
@@ -6636,7 +6636,7 @@ window.COMPLIANCE =
           "detail": {
             "impl": "CH2 state expiry (cumulative 454 us) restores the H-bridge and ends the cutout.",
             "gtest": "",
-            "hil": ""
+            "hil": "T_CE measured from the decoded end bit's last edge to the PB2 strobe fall. Bench 2026-09-23: 473-478 us."
           },
           "refs": {
             "symbols": [

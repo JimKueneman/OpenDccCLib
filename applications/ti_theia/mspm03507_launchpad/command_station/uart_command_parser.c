@@ -158,6 +158,11 @@ static int _tokenize(char *line, char *tokens[], int max_tokens) {
 
 // Schedule a packet on the main track. When auto_refresh is true the packet
 // is added to the scheduler's auto-refresh list; otherwise it is sent once.
+/* repeat_count: no handler overrides it. Every builder in the library sets a
+ * spec-correct default (DCC_REPEAT_* in dcc_defines.h: CV writes 2, verifies 1,
+ * date 3, time 1, accessory NOP/stop 1, everything else 2). An application that
+ * wants a different count may still write packet.repeat_count after the builder
+ * returns; 0 means the scheduler never sends it. */
 static bool _schedule_main_track(const dcc_packet_t *packet, dcc_address_t address,
                                  dcc_tag_enum tag, dcc_priority_enum priority,
                                  bool auto_refresh) {
@@ -274,7 +279,6 @@ static void _cmd_speed(char *tokens[], int count) {
         _respond("ERR: invalid speed parameters");
         return;
     }
-    packet.repeat_count = 3;
 
     if (!_schedule_main_track(&packet, loco->address, DCC_TAG_SPEED,
                               DCC_PRIORITY_SPEED, _auto_refresh)) {
@@ -303,7 +307,6 @@ static void _cmd_estop(char *tokens[], int count) {
             _respond("ERR: invalid address");
             return;
         }
-        packet.repeat_count = 3;
 
         if (!_schedule_main_track(&packet, addr, DCC_TAG_SPEED,
                                   DCC_PRIORITY_ESTOP, false)) {
@@ -316,7 +319,6 @@ static void _cmd_estop(char *tokens[], int count) {
     } else {
         /* Broadcast emergency stop */
         DccApplicationCommandStationPacket_load_estop_all(&packet, true);
-        packet.repeat_count = 3;
 
         if (!_schedule_main_track(&packet, 0, DCC_TAG_SPEED,
                                   DCC_PRIORITY_ESTOP, false)) {
@@ -335,7 +337,6 @@ static void _cmd_stop(void) {
     dcc_packet_t packet;
     memset(&packet, 0, sizeof(packet));
     DccApplicationCommandStationPacket_load_estop_all(&packet, false);  /* S=0 */
-    packet.repeat_count = 3;
 
     if (!_schedule_main_track(&packet, 0, DCC_TAG_SPEED,
                               DCC_PRIORITY_ESTOP, false)) {
@@ -383,7 +384,6 @@ static void _cmd_func(char *tokens[], int count) {
 
         ok = DccApplicationCommandStationPacket_load_func_group_1(&packet, loco->address,
                                             loco->address_type, loco->func_fl_f4);
-        packet.repeat_count = 3;
         if (ok)
             ok = _schedule_main_track(&packet, loco->address, DCC_TAG_FUNC_GROUP_1,
                                       DCC_PRIORITY_FUNCTION, _auto_refresh);
@@ -399,7 +399,6 @@ static void _cmd_func(char *tokens[], int count) {
 
         ok = DccApplicationCommandStationPacket_load_func_group_2a(&packet, loco->address,
                                              loco->address_type, loco->func_f5_f8);
-        packet.repeat_count = 3;
         if (ok)
             ok = _schedule_main_track(&packet, loco->address, DCC_TAG_FUNC_GROUP_2A,
                                       DCC_PRIORITY_FUNCTION, _auto_refresh);
@@ -415,7 +414,6 @@ static void _cmd_func(char *tokens[], int count) {
 
         ok = DccApplicationCommandStationPacket_load_func_group_2b(&packet, loco->address,
                                              loco->address_type, loco->func_f9_f12);
-        packet.repeat_count = 3;
         if (ok)
             ok = _schedule_main_track(&packet, loco->address, DCC_TAG_FUNC_GROUP_2B,
                                       DCC_PRIORITY_FUNCTION, _auto_refresh);
@@ -431,7 +429,6 @@ static void _cmd_func(char *tokens[], int count) {
 
         ok = DccApplicationCommandStationPacket_load_func_f13_f20(&packet, loco->address,
                                             loco->address_type, loco->func_f13_f20);
-        packet.repeat_count = 3;
         if (ok)
             ok = _schedule_main_track(&packet, loco->address, DCC_TAG_FUNC_F13_F20,
                                       DCC_PRIORITY_FUNCTION, _auto_refresh);
@@ -447,7 +444,6 @@ static void _cmd_func(char *tokens[], int count) {
 
         ok = DccApplicationCommandStationPacket_load_func_f21_f28(&packet, loco->address,
                                             loco->address_type, loco->func_f21_f28);
-        packet.repeat_count = 3;
         if (ok)
             ok = _schedule_main_track(&packet, loco->address, DCC_TAG_FUNC_F21_F28,
                                       DCC_PRIORITY_FUNCTION, _auto_refresh);
@@ -463,7 +459,6 @@ static void _cmd_func(char *tokens[], int count) {
 
         ok = DccApplicationCommandStationPacket_load_func_f29_f36(&packet, loco->address,
                                             loco->address_type, loco->func_f29_f36);
-        packet.repeat_count = 3;
         if (ok)
             ok = _schedule_main_track(&packet, loco->address, DCC_TAG_FUNC_F29_F36,
                                       DCC_PRIORITY_FUNCTION, _auto_refresh);
@@ -479,7 +474,6 @@ static void _cmd_func(char *tokens[], int count) {
 
         ok = DccApplicationCommandStationPacket_load_func_f37_f44(&packet, loco->address,
                                             loco->address_type, loco->func_f37_f44);
-        packet.repeat_count = 3;
         if (ok)
             ok = _schedule_main_track(&packet, loco->address, DCC_TAG_FUNC_F37_F44,
                                       DCC_PRIORITY_FUNCTION, _auto_refresh);
@@ -495,7 +489,6 @@ static void _cmd_func(char *tokens[], int count) {
 
         ok = DccApplicationCommandStationPacket_load_func_f45_f52(&packet, loco->address,
                                             loco->address_type, loco->func_f45_f52);
-        packet.repeat_count = 3;
         if (ok)
             ok = _schedule_main_track(&packet, loco->address, DCC_TAG_FUNC_F45_F52,
                                       DCC_PRIORITY_FUNCTION, _auto_refresh);
@@ -511,7 +504,6 @@ static void _cmd_func(char *tokens[], int count) {
 
         ok = DccApplicationCommandStationPacket_load_func_f53_f60(&packet, loco->address,
                                             loco->address_type, loco->func_f53_f60);
-        packet.repeat_count = 3;
         if (ok)
             ok = _schedule_main_track(&packet, loco->address, DCC_TAG_FUNC_F53_F60,
                                       DCC_PRIORITY_FUNCTION, _auto_refresh);
@@ -527,7 +519,6 @@ static void _cmd_func(char *tokens[], int count) {
 
         ok = DccApplicationCommandStationPacket_load_func_f61_f68(&packet, loco->address,
                                             loco->address_type, loco->func_f61_f68);
-        packet.repeat_count = 3;
         if (ok)
             ok = _schedule_main_track(&packet, loco->address, DCC_TAG_FUNC_F61_F68,
                                       DCC_PRIORITY_FUNCTION, _auto_refresh);
@@ -586,7 +577,6 @@ static void _cmd_acc(char *tokens[], int count) {
             _respond("ERR: invalid ACC CV parameters");
             return;
         }
-        packet.repeat_count = 3;
 
         if (!_schedule_main_track(&packet, board, DCC_TAG_CV,
                                   DCC_PRIORITY_CV, false)) {
@@ -614,7 +604,6 @@ static void _cmd_acc(char *tokens[], int count) {
         _respond("ERR: invalid accessory parameters");
         return;
     }
-    packet.repeat_count = 3;
 
     if (!_schedule_main_track(&packet, board, DCC_TAG_ACCESSORY,
                               DCC_PRIORITY_ACCESSORY, false)) {
@@ -665,7 +654,6 @@ static void _cmd_acce(char *tokens[], int count) {
             _respond("ERR: invalid ACCE CV parameters");
             return;
         }
-        packet.repeat_count = 3;
 
         if (!_schedule_main_track(&packet, addr, DCC_TAG_CV,
                                   DCC_PRIORITY_CV, false)) {
@@ -692,7 +680,6 @@ static void _cmd_acce(char *tokens[], int count) {
         _respond("ERR: invalid parameters");
         return;
     }
-    packet.repeat_count = 3;
 
     if (!_schedule_main_track(&packet, addr, DCC_TAG_ACCESSORY,
                               DCC_PRIORITY_ACCESSORY, false)) {
@@ -724,7 +711,6 @@ static void _cmd_nop(char *tokens[], int count) {
         _respond("ERR: invalid NOP address");
         return;
     }
-    packet.repeat_count = 3;
 
     if (!_schedule_main_track(&packet, addr, DCC_TAG_ACCESSORY,
                               DCC_PRIORITY_ACCESSORY, false)) {
@@ -776,7 +762,6 @@ static void _cmd_cv(char *tokens[], int count) {
         _respond("ERR: invalid CV parameters");
         return;
     }
-    packet.repeat_count = 3;
 
     if (!_schedule_main_track(&packet, addr, DCC_TAG_CV,
                               DCC_PRIORITY_CV, false)) {
@@ -1085,7 +1070,6 @@ static void _cmd_consist(char *tokens[], int count) {
         _respond("ERR: invalid consist parameters");
         return;
     }
-    packet.repeat_count = 3;
 
     if (!_schedule_main_track(&packet, addr, DCC_TAG_CONSIST,
                               DCC_PRIORITY_FUNCTION, false)) {
@@ -1119,7 +1103,6 @@ static void _cmd_bss(char *tokens[], int count) {
         _respond("ERR: invalid binary state parameters");
         return;
     }
-    packet.repeat_count = 3;
 
     if (!_schedule_main_track(&packet, addr, DCC_TAG_BINARY_STATE,
                               DCC_PRIORITY_FUNCTION, false)) {
@@ -1154,7 +1137,6 @@ static void _cmd_bsl(char *tokens[], int count) {
         _respond("ERR: invalid binary state parameters");
         return;
     }
-    packet.repeat_count = 3;
 
     if (!_schedule_main_track(&packet, addr, DCC_TAG_BINARY_STATE,
                               DCC_PRIORITY_FUNCTION, false)) {
@@ -1188,7 +1170,6 @@ static void _cmd_analog(char *tokens[], int count) {
         _respond("ERR: invalid analog parameters");
         return;
     }
-    packet.repeat_count = 3;
 
     if (!_schedule_main_track(&packet, addr, DCC_TAG_ANALOG_FUNC,
                               DCC_PRIORITY_FUNCTION, false)) {
@@ -1213,7 +1194,6 @@ static void _cmd_reset(void) {
     dcc_packet_t packet;
     memset(&packet, 0, sizeof(packet));
     DccApplicationCommandStationPacket_load_reset(&packet);
-    packet.repeat_count = 3;
 
     if (!_schedule_main_track(&packet, 0, DCC_TAG_SPEED,
                               DCC_PRIORITY_ESTOP, false)) {
@@ -1236,7 +1216,6 @@ static void _cmd_systime(char *tokens[], int count) {
     memset(&packet, 0, sizeof(packet));
 
     DccApplicationCommandStationPacket_load_system_time(&packet, milliseconds);
-    packet.repeat_count = 3;
 
     if (!_schedule_main_track(&packet, 0, DCC_TAG_SPEED,
                               DCC_PRIORITY_ESTOP, false)) {
@@ -1268,7 +1247,6 @@ static void _cmd_mtime(char *tokens[], int count) {
         _respond("ERR: invalid MTIME parameters");
         return;
     }
-    packet.repeat_count = 3;
 
     if (!_schedule_main_track(&packet, 0, DCC_TAG_SPEED,
                               DCC_PRIORITY_ESTOP, false)) {
@@ -1298,7 +1276,6 @@ static void _cmd_mdate(char *tokens[], int count) {
         _respond("ERR: invalid MDATE parameters");
         return;
     }
-    packet.repeat_count = 3;
 
     if (!_schedule_main_track(&packet, 0, DCC_TAG_SPEED,
                               DCC_PRIORITY_ESTOP, false)) {

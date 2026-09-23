@@ -97,14 +97,27 @@ typedef struct {
     void (*end_railcom_cutout)(void);
 
         /** @brief Enable UART Rx for RailCom data reception.
-         *  Called by the library at T_TS1 and T_TS2. Required if using RailCom. */
+         *  Called by the library at T_TS1 (Channel 1 window opens) and T_TS2 (Channel 2
+         *  window opens). Required if using RailCom.
+         *
+         *  CONTRACT: the application must accept receiver bytes ONLY between an
+         *  enable and the following disable, and must discard anything received
+         *  outside those windows (e.g. the DCC drive waveform seen by the detector
+         *  between cutouts, or a stale byte from an earlier cutout). The library
+         *  reads whatever uart_read() returns at cutout complete and cannot tell a
+         *  window byte from a stray one. Gate in the RX interrupt or toggle the
+         *  peripheral's receiver; either way, flush at begin_railcom_cutout. */
     void (*uart_rx_enable)(void);
 
         /** @brief Disable UART Rx after RailCom data reception.
-         *  Called by the library at T_TC1 and T_CE. Required if using RailCom. */
+         *  Called by the library at T_TC1 (Channel 1 closes) and T_CE (Channel 2 closes
+         *  = cutout end). Required if using RailCom. See the gating contract above. */
     void (*uart_rx_disable)(void);
 
-        /** @brief Read one byte from the RailCom 250 kbaud UART. Returns true if byte available. */
+        /** @brief Read one byte from the RailCom 250 kbaud UART. Returns true if byte available.
+         *  Called from DccConfig_run() (main loop) after a cutout completes, repeatedly
+         *  until it returns false. Must return only bytes captured inside the two
+         *  channel windows of the cutout that just ended (see uart_rx_enable). */
     bool (*uart_read)(uint8_t *byte);
 
         /** @brief RailCom datagram decoded. Fired from DccConfig_run(), NOT ISR. NULL = no notification. */

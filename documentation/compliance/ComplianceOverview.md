@@ -17,7 +17,7 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 - **Roles:** Command Station, Decoder, Accessory Decoder — `DCC_COMPILE_COMMAND_STATION` / `_DECODER` / `_ACCESSORY_DECODER`.
 - **Service modes:** Direct, Paged, Register, Address — all implemented.
 - **Tests:** 28 host unit-test binaries, 1158 tests passing (host, mocked drivers); ≈99% line coverage. Green host tests inject mock drivers — see **Known defects** (decoder RailCom Tx), which they cannot catch.
-- **Hardware-in-loop:** Saleae HIL compliance suites (S-9.1 electrical/timing, S-9.2.1 packets, S-9.3.2 RailCom cutout, S-9.2.3 service mode — the last 150 checks incl. mock-ACK loopback) plus the two-board MSPM0 loopback suite (manual gate, not CI).
+- **Hardware-in-loop:** Saleae HIL compliance suites — S-9.1 electrical/timing, S-9.2 baseline, S-9.2.1 packets (incl. per-builder repeat counts on the wire), S-9.2.3 service mode (210 checks incl. the mock-ACK loopback), S-9.3.2 RailCom cutout timing + sub-windows + the **receive path via the mock-decoder loopback**, and the scheduler suite — preceded by `bench_preflight.py`, which proves the seven probes and both jumpers before a run. Plus the two-board MSPM0 loopback suite (manual gate, not CI).
 
 ---
 
@@ -39,7 +39,7 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
   - ❌ **Indexed CVs (CV31/32)** decoder paging — defines only.
   - ❌ **Factory reset (CV8)** — write-permission exception only, no reset-to-defaults logic.
   - ❌ **Logon / Data Spaces (S-9.2.1.1)** — absent. *Released standard (2022), not draft-only — the 2026 draft only expands it.* Out of current scope.
-- **Housekeeping:** old pre-refactor modules (`dcc_packet_encoder`, `dcc_application_service_track`, `dcc_application_main_track`) still coexist with the role-first replacements; both are compiled and tested.
+- **Housekeeping:** the pre-refactor modules `dcc_application_service_track` and `dcc_application_main_track` still coexist with the role-first replacements; both are compiled and tested. `dcc_packet_encoder` was removed on 2026-09-23 (uncalled duplicate that had drifted).
 
 ---
 
@@ -180,7 +180,7 @@ conformance gaps**, not draft features. (Per-feature detail is in the §1–8 ta
 | **Factory reset to defaults (CV8)** | Manufacturer convention | Partial | Write-permission exception only; no reset-to-defaults logic. |
 | **Logon / Data Spaces** | Released **S-9.2.1.1** (2022) | Not started | Partitions 253/254, CRC-8+XOR, Logon auto-registration, Data Spaces. Released, not draft-only — the 2026 draft (deltas §2) only expands it. |
 | **Decoder-side RailCom Tx integration** ⚠️ | Library | Needs design attention | See **Known defects** below. |
-| **Old/new module duplication** | Library | Cleanup | Retire pre-refactor `dcc_packet_encoder` / `dcc_application_main_track` / `dcc_application_service_track` now that the role-first modules exist. |
+| **Old/new module duplication** | Library | Cleanup | Retire pre-refactor `dcc_application_main_track` / `dcc_application_service_track` now that the role-first modules exist (`dcc_packet_encoder` already removed, 2026-09-23). |
 | **SUSI bus** | Draft **S-9.4.x** (new std) | Not started | Decoder-to-peripheral bus; out of current scope. Deltas §6. |
 | **E24 decoder interface** | Draft **S-9.1.1.6** (new std) | Not started | 28-pin small-scale decoder interface; out of current scope. Deltas §5. |
 
@@ -193,7 +193,34 @@ conformance gaps**, not draft features. (Per-feature detail is in the §1–8 ta
   Host unit tests cannot catch it (they inject a mock `uart_write`). Needs a bit-bang and/or UART
   backend. Tracked plan context: [archive/compliance_deviation_fixes.md](../archive/compliance_deviation_fixes.md).
 
-### Recently resolved (2026-06-22)
+### Recently resolved
+
+**2026-09-23**
+
+- **RailCom cutout armed half a bit early (issue #3, PR #4).** The bit encoder's state machine
+  runs on the tick that starts a bit's second half, so the cutout was armed from the end bit's
+  *mid-bit* edge and truncated the end bit on every packet (an ESU decoder on an RP2350 port
+  rejected everything). The arm is now deferred one tick to the end bit's last edge; the HIL
+  suite, which had been measuring T_CS from the same wrong edge, now measures from the decoded
+  packet's end-bit last edge. Bench: T_CS 27.8–28.0 µs (26–32).
+- **RailCom decode against a real decoder (PR #1, contributor).** Standard S-9.3.2 Table 2 4/8
+  code words, Channel 2 datagram kept when followed by ACK padding, `begin_cutout` wired at
+  cutout complete with a race-free two-stage address capture.
+- **Service mode silent hangs / crash (PR #2, contributor).** Primitive and task `begin_operation`
+  results are checked (BUSY instead of a stuck state machine); detect skips unwired stages.
+- **One-shot packets never transmitted.** Builders set `repeat_count = 0`, which the scheduler
+  treats as "nothing left to send"; hidden by every caller overriding the field (bench firmware
+  forced 3). PR #6 fixed the CV builders (write 2 per S-9.2.1 2.3.7.3 / 2.4.3, verify 1); the
+  library now owns a named default table (`DCC_REPEAT_*` in `dcc_defines.h`) for every builder,
+  the bench firmware overrides nothing, and S-9.2.1 counts every group's repeats on the wire.
+  Tests added for the two paths that let it hide: builder→scheduler untouched, and an application
+  override in both directions.
+- **`dcc_packet_encoder` removed** — an uncalled duplicate of the packet builders that still
+  carried the defect above.
+- **Bench:** `bench_preflight.py` (UART, Saleae, seven probes, both jumpers, wire colours and
+  header pins named), LaunchPad header map in `HIL_SETUP.md`, RailCom receive-path loopback.
+
+**2026-06-22**
 
 - The six compliance deviations (see Summary) — RailCom cutout retiming, accessory extended SRQ,
   ACK upper bound, speed-restriction removal, datagram-ID alignment + CS decode-table fix,
@@ -1025,9 +1052,11 @@ the [Known defects](#known-defects) section above.
 ### Test Coverage Matrix
 
 > **Host** = `src/dcc/*_Test.cxx` (gTest, mocked drivers). **HIL** =
-> `test/compliance/command_station/s9_3_2_compliance.py` (Saleae, on-wire). A blank HIL cell is the norm here:
-> the HIL suite measures only the **cutout timing envelope** — it does **not** decode Ch1/Ch2
-> datagram *content* on the wire, and the decoder Tx path is not hardware-wired (see above).
+> `test/compliance/command_station/s9_3_2_compliance.py` (Saleae, on-wire). The HIL suite measures the
+> cutout timing envelope from the decoded end bit's last edge, the five interior sub-windows from the
+> RAILCOM_RX_WINDOW mirror, and — since 2026-09-23 — the **command-station receive path** through the
+> mock-decoder loopback (see "How the receive path is HIL-tested" below). The decoder Tx path is still
+> not hardware-wired (see above), so decoder-side rows keep a blank HIL cell.
 
 #### Cutout timing & 5-state machine
 
@@ -1083,39 +1112,42 @@ the [Known defects](#known-defects) section above.
 
 ---
 
-### Why Ch1/Ch2 content is not HIL-tested
+### How the receive path is HIL-tested (mock-decoder loopback)
 
-This is a **deliberate boundary, not an untested hole.** The library's RailCom decode is pure
-logic — 4/8 codeword mapping, Ch1/Ch2 assembly, datagram buffering — and is exhaustively
-covered by host tests (`round_trip_all_values`, the channel-assembly and buffer-overflow tests).
-The library never touches the wire: it consumes bytes the **application** supplies through the
-interface struct (a hardware UART or a bit-banged read). Whether those bytes arrive, and whether
-a decoder emitted a correct datagram inside the cutout, are the **application's and the
-decoder's/hardware's** responsibilities — not the library's. At the end of the day the hardware
-and the decoder must meet their own requirements; the library's job is to encode/decode
-correctly given conforming bytes, which the host suite already proves.
+Until 2026-09-23 datagram *content* was deliberately not bench-tested: the rig had no RailCom
+receive path, and the decode logic is pure and host-tested. That boundary is retired. The bench
+firmware now wires the library's real receive hooks — `uart_read` on a 250 kbaud UART (PB16,
+`RAILCOM_RX`), gated by the library's own `uart_rx_enable`/`uart_rx_disable` window hooks and
+flushed at cutout begin — and adds a **mock decoder transmitter** (UART on PB6, `MOCK_RC_TX`)
+jumpered into it, exactly like the service-mode mock-ACK jumper. `RC MOCK <ch1hex> [<ch2hex>]
+[LATE]` arms one reply; the window-open hook plays Channel 1 at T_TS1 and Channel 2 at T_TS2,
+where a decoder transmits; LATE plays at T_CE to prove the gate. The library reports what it
+decoded (`RC RESULT: addr= ch= id= data=`), and Saleae **D6** taps the jumper so the suite checks
+the bytes, their 250 kbaud framing and their position inside the D5 windows independently of
+the firmware. The host-side 4/8 encoder is transcribed from the draft's Table 2 (the draft
+prints 0x0B as a duplicate of 0x0D — a typesetting error; 0x96 is used).
 
-So an on-wire content check adds **no confidence in the library** — the decode logic it would
-exercise is already proven on the host, more thoroughly than a wire capture could. We could not
-identify an on-wire test of datagram content with value for the library, and there is no
-transmitting decoder on the CS bench to produce that content in the first place.
+Bench-verified cases (CS-010..CS-014, `railcom_loopback_tests`): Ch1 and Ch2 datagrams incl. a
+4-byte one; ACK padding in both forms kept; all-ACK and NACK-only yield no data datagram;
+non-4/8 and reserved words rejected; bytes outside every window never become a datagram (and
+are counted as dropped); the reply is tagged with the address of the packet before its cutout,
+under two alternating locomotives (the #1 two-stage address capture, on the wire).
 
-**Possible future integration test (gated on hardware).** If a CS-side RailCom *receive* path is
-ever wired, the receive→decode→assemble chain could be validated on real hardware with a
-**mock-decoder loopback** — firmware driving 4/8 bytes onto the CS Rx line during the cutout,
-mirroring the service-mode mock-ACK loopback (PB24→PB9). That would exercise the *application's*
-UART-read timing and integration, still not the library's decode logic, and is out of scope
-until a detector path exists.
+**Known limitation, kept as an expected FAIL:** `dcc_railcom_command_station.c` splits the raw
+bytes by *count* (first two = Ch1, rest = Ch2), not by window, so a **Channel 2-only reply**
+(CV 28 bit 0 clears the Ch1 broadcast) is misread as a Ch1 datagram. The suite's "Channel 2-only
+reply [known limitation]" case fails on purpose until the receive path tags bytes by window.
+What the loopback still cannot prove is the analog side — a real bridge tri-stating and a real
+detector recovering a decoder's current pulses — which only a real decoder on a real track
+covers. CS-015 (receive ring depth) stays not-bench-observable.
 
 ### Other on-wire items not currently measured
 
 These concern the CS's **own** cutout output — testable in principle, simply not yet in the suite:
 
-- **Internal cutout phase boundaries** — the strobe marks only cutout begin/end, so the
-  SETTLING/GAP/channel-switch sub-windows are not externally visible on PB2; measuring them
-  would need the UART-enable transitions brought out to a probe.
 - **DCC signal integrity across the cutout** — the suite checks a packet-count-vs-cutout-count
-  match, not the main-track bit timing through the cutout window.
+  match, not the main-track bit timing through the cutout window. (The interior sub-window
+  boundaries *are* measured now, from the RAILCOM_RX_WINDOW mirror on PB18 / D5 — CS-005/006.)
 
 ---
 
