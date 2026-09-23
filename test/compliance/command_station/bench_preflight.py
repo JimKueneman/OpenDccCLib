@@ -27,6 +27,7 @@ Exit: 0 = bench OK, 1 = a wiring/signal check failed, 2 = setup error (no DUT / 
 Leaves the DUT with service mode exited, the scheduler cleared and track power OFF.
 """
 
+import re
 import sys
 import time
 import bisect
@@ -48,7 +49,7 @@ CHANNELS = {
 MAIN_CH, TRIG_CH, CUTOUT_CH, SVC_CH, ACK_CH, WINDOW_CH = 0, 1, 2, 3, 4, 5
 
 # --- expectations (loose: this is a wiring check, the spec suites do the precision) -----
-MAIN_CAPTURE_S      = 1.0      # CLEAR + SPEED + TRIG land inside; ~100 packets
+MAIN_CAPTURE_S      = 0.5      # SPEED already streaming; TRIG lands inside; ~70 packets
 SVC_CAPTURE_S       = 1.0      # SVC MOCKACK op: reset burst + verify + 6 ms pulse
 MIN_MAIN_PACKETS    = 5
 TRIG_PULSES_MIN     = 1        # one TRIG arm -> one pulse
@@ -118,7 +119,7 @@ def _wstats(ws):
 def check_dut(rep):
     import serial
 
-    port = lib.find_dut_port()
+    port = lib.find_dut_port() or lib.find_dut_port()   # one retry: first open can miss
     if not port:
         raise SetupError("no DUT answered STATUS on any /dev/cu.usbmodem* port -- LaunchPad "
                          "plugged in? CS firmware flashed? (the waveform player answers ID?, "
@@ -134,14 +135,17 @@ def check_dut(rep):
 
     n_lines = len(help_text.splitlines())
     is_hil = "MOCKACK" in help_text and "TRIG" in help_text
+    is_decoder = "ACK TEST" in help_text and "ADDR" in help_text
+    status = next((l.strip() for l in status.splitlines() if l.strip().startswith("STATUS:")),
+                  status.strip().splitlines()[-1] if status.strip() else "(no STATUS reply)")
     rep.check("DUT UART", f"{port} answers HELP with the HIL command set", is_hil,
               f"{n_lines} HELP lines; MOCKACK {'present' if 'MOCKACK' in help_text else 'MISSING'}, "
               f"TRIG {'present' if 'TRIG' in help_text else 'MISSING'}; "
-              f"{status.splitlines()[-1] if status else '(no STATUS reply)'}")
+              f"{status}")
     if not is_hil:
-        raise SetupError(f"{port} is a DCC firmware but not the saleae_hil_compliance "
-                         f"command-station build (HELP lacks SVC MOCKACK / TRIG) -- reflash "
-                         f"the command_station/ project")
+        what = ("the MOBILE-DECODER DUT build (mobile_decoder/ project)" if is_decoder
+                else "not the saleae_hil_compliance command-station build (HELP lacks SVC MOCKACK / TRIG)")
+        raise SetupError(f"{port} is running {what} -- flash the command_station/ project")
     return port
 
 
@@ -179,16 +183,30 @@ def check_saleae(rep):
 # 3a. main-track side: D0 DCC, D1 trigger, D2 cutout, D5 Rx-window  (one capture)
 # ----------------------------------------------------------------------------
 def check_main_side(rep, port):
-    def stimulus():
-        lib.send_command(port, "CLEAR",             settle=0.02)
-        lib.send_command(port, "SPEED 3 50 FWD 128", settle=0.02)   # non-idle stream
-        lib.send_command(port, "TRIG",              settle=0.02)   # -> one PB3 pulse
+    import serial
 
-    chans = [MAIN_CH, TRIG_CH, CUTOUT_CH, WINDOW_CH]
-    with tempfile.TemporaryDirectory() as d:
-        paths = lib.capture_to_csv_multi(chans, d, stimulus=stimulus,
-                                         capture_seconds=MAIN_CAPTURE_S)
-        rows = {ch: lib.read_transitions(paths[ch]) for ch in chans}
+    # SPEED is an auto-refresh slot: once accepted it streams continuously, so set it
+    # up BEFORE arming the capture. Only TRIG goes into the live window, written on an
+    # already-open port so it lands within milliseconds of the capture starting.
+    with serial.Serial(port, lib.SERIAL_BAUD, timeout=0.3) as s:
+        time.sleep(0.15)
+        for cmd in ("CLEAR", "SPEED 3 50 FWD 128"):
+            s.reset_input_buffer()
+            s.write((cmd + "\r").encode())
+            reply = _read_until_quiet(s, total=1.0)
+            if "OK" not in reply:
+                raise SetupError(f"DUT rejected '{cmd}': {reply.strip() or '(no reply)'}")
+        time.sleep(0.1)                       # a few non-idle packets on the wire first
+
+        def stimulus():
+            s.write(b"TRIG\r")               # -> one PB3 pulse on the next non-idle packet
+
+        chans = [MAIN_CH, TRIG_CH, CUTOUT_CH, WINDOW_CH]
+        with tempfile.TemporaryDirectory() as d:
+            paths = lib.capture_to_csv_multi(chans, d, stimulus=stimulus,
+                                             capture_seconds=MAIN_CAPTURE_S)
+            rows = {ch: lib.read_transitions(paths[ch]) for ch in chans}
+        s.read(512)                           # drain the TRIG reply
 
     # --- D0: decodes as DCC ------------------------------------------------
     dec = lib.decode(rows[MAIN_CH])
@@ -197,11 +215,12 @@ def check_main_side(rep, port):
     zeros = sum(1 for (_, _, c) in dec["bit_halves"] if c == "0")
     non_idle = sum(1 for (_, data) in pk if list(data) != [0xFF, 0x00, 0xFF])
     clause, name = _label(MAIN_CH)
-    ok0 = len(pk) >= MIN_MAIN_PACKETS and ones > 0 and zeros > 0
+    ok0 = len(pk) >= MIN_MAIN_PACKETS and non_idle >= 1 and ones > 0 and zeros > 0
     rep.check(clause, f"{name}: decodes as DCC packets", ok0,
               f"{len(rows[MAIN_CH])} transitions, {len(pk)} packets ({non_idle} non-idle), "
               f"{ones} one-bits / {zeros} zero-bits"
-              + ("" if rows[MAIN_CH] else " -- NO EDGES: black wire on PB1/J4.39? common GND?"))
+              + ("" if rows[MAIN_CH] else " -- NO EDGES: black wire on PB1/J4.39? common GND?")
+              + ("" if non_idle or not pk else " -- only idle: SPEED not on the wire"))
 
     # --- D1: exactly the one TRIG pulse ------------------------------------
     p1 = _high_pulses(rows[TRIG_CH])
@@ -209,7 +228,8 @@ def check_main_side(rep, port):
     ok1 = TRIG_PULSES_MIN <= len(p1) <= TRIG_PULSES_MAX
     hint = ""
     if not p1:
-        hint = " -- no pulse: brown wire on PB3/J1.10? (TRIG armed while SPEED streamed)"
+        hint = (" -- no pulse: brown wire on PB3/J1.10? (TRIG was armed while "
+                f"{non_idle} non-idle packets streamed)")
     elif len(p1) > TRIG_PULSES_MAX:
         hint = " -- toggling continuously: probe on a DCC pin, not PB3?"
     rep.check(clause, f"{name}: one TRIG pulse", ok1,
@@ -355,9 +375,9 @@ def _summary(rep):
     """Per-channel table with the wire colour and header pin, for the bench."""
     status = {}
     for c in rep.checks:
-        cl = c["clause"]
-        if cl.startswith("D") and " " in cl and "<->" not in cl:
-            ch = int(cl[1])
+        m = re.match(r"^D(\d) [a-z]+$", c["clause"])     # "D0 black", not "DUT UART"
+        if m:
+            ch = int(m.group(1))
             status[ch] = "FAIL" if c["status"] == "FAIL" or status.get(ch) == "FAIL" else "PASS"
     print("\n  ch  wire     pin    header  signal                                   result")
     print("  --  -------  -----  ------  ---------------------------------------  ------")

@@ -131,10 +131,12 @@ Notes:
   XDS110 backchannel by default. Leave them alone — the harness talks over USB.
 - The LED pins (PB22/PB26/PB27) are not on the 40-pin headers.
 
-![LP-MSPM0G3507 BoosterPack header pinout](LP-MSPM0G3507_boosterpack_pinout.png)
+![LP-MSPM0G3507 header silkscreen](LP-MSPM0G3507_header_silkscreen.png)
 
-*Figure 2-10 from TI SLAU873E, "MSPM0G3507 LaunchPad Development Kit User's Guide",
-September 2026. Copyright Texas Instruments. Reproduced for bench reference only.*
+*LP-MSPM0G3507 board silkscreen (Texas Instruments), header labels as printed on the board.
+Left pair: J1 is the outer column, J3 the inner; a row's left label is the J1 pin, its right
+label the J3 pin (row 5: PA26 outer, **PB18 inner**). Right pair: J4 inner, J2 outer. Header
+numbering cross-checked against TI SLAU873E Fig 2-10. Reproduced for bench reference only.*
 
 ### Mock-ACK loopback for the S-9.2.3 ACK test (one jumper)
 
