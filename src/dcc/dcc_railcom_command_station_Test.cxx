@@ -133,7 +133,7 @@ TEST(DccRailcomCommandStation, ch1_valid_2_bytes) {
     /* data[0] = 0x001 & 0xFF = 0x01 */
     uint8_t raw[2];
     raw[0] = 0xAC;  /* decodes to 0x00 */
-    raw[1] = 0xAB;  /* decodes to 0x01 */
+    raw[1] = 0xAA;  /* decodes to 0x01 */
 
     load_uart_bytes(raw, 2);
     DccRailcomCommandStation_begin_cutout(&test_context,42);
@@ -158,7 +158,7 @@ TEST(DccRailcomCommandStation, ch1_invalid_byte_skipped) {
     /* First byte invalid */
     uint8_t raw[2];
     raw[0] = 0x00;  /* invalid */
-    raw[1] = 0xAB;  /* valid */
+    raw[1] = 0xAA;  /* valid */
 
     load_uart_bytes(raw, 2);
     DccRailcomCommandStation_begin_cutout(&test_context,10);
@@ -184,11 +184,11 @@ TEST(DccRailcomCommandStation, ch2_valid_4_bytes) {
     /* 2 CH1 bytes + 4 CH2 bytes */
     uint8_t raw[6];
     raw[0] = 0xAC;  /* CH1 byte 0: decodes to 0x00 */
-    raw[1] = 0xAB;  /* CH1 byte 1: decodes to 0x01 */
-    raw[2] = 0xD3;  /* CH2 byte 0: decodes to 0x02 */
-    raw[3] = 0xA3;  /* CH2 byte 1: decodes to 0x03 */
-    raw[4] = 0xC5;  /* CH2 byte 2: decodes to 0x04 */
-    raw[5] = 0xCA;  /* CH2 byte 3: decodes to 0x05 */
+    raw[1] = 0xAA;  /* CH1 byte 1: decodes to 0x01 */
+    raw[2] = 0xA9;  /* CH2 byte 0: decodes to 0x02 */
+    raw[3] = 0xA5;  /* CH2 byte 1: decodes to 0x03 */
+    raw[4] = 0xA3;  /* CH2 byte 2: decodes to 0x04 */
+    raw[5] = 0xA6;  /* CH2 byte 3: decodes to 0x05 */
 
     load_uart_bytes(raw, 6);
     DccRailcomCommandStation_begin_cutout(&test_context,100);
@@ -208,9 +208,9 @@ TEST(DccRailcomCommandStation, ch2_valid_2_bytes_minimum) {
     /* 2 CH1 bytes + 2 CH2 bytes (minimum for valid CH2) */
     uint8_t raw[4];
     raw[0] = 0xAC;  /* CH1: decodes to 0x00 */
-    raw[1] = 0xAB;  /* CH1: decodes to 0x01 */
-    raw[2] = 0xD3;  /* CH2: decodes to 0x02 */
-    raw[3] = 0xA3;  /* CH2: decodes to 0x03 */
+    raw[1] = 0xAA;  /* CH1: decodes to 0x01 */
+    raw[2] = 0xA9;  /* CH2: decodes to 0x02 */
+    raw[3] = 0xA5;  /* CH2: decodes to 0x03 */
 
     load_uart_bytes(raw, 4);
     DccRailcomCommandStation_begin_cutout(&test_context,200);
@@ -238,7 +238,7 @@ TEST(DccRailcomCommandStation, read_returns_buffered_datagram) {
     /* Send 2 CH1 bytes */
     uint8_t raw[2];
     raw[0] = 0xAC;
-    raw[1] = 0xAB;
+    raw[1] = 0xAA;
 
     load_uart_bytes(raw, 2);
     DccRailcomCommandStation_begin_cutout(&test_context,42);
@@ -277,7 +277,7 @@ TEST(DccRailcomCommandStation, run_without_cutout_does_nothing) {
     DccRailcomCommandStation_initialize(&test_context, &interface);
 
     /* Load bytes but don't begin cutout */
-    uint8_t raw[2] = {0xAC, 0xAB};
+    uint8_t raw[2] = {0xAC, 0xAA};
     load_uart_bytes(raw, 2);
 
     DccRailcomCommandStation_run(&test_context);
@@ -329,7 +329,7 @@ TEST(DccRailcomCommandStation, cutout_address_tagged_correctly) {
     interface_dcc_railcom_command_station_t interface = make_interface();
     DccRailcomCommandStation_initialize(&test_context, &interface);
 
-    uint8_t raw[2] = {0xAC, 0xAB};
+    uint8_t raw[2] = {0xAC, 0xAA};
     load_uart_bytes(raw, 2);
 
     DccRailcomCommandStation_begin_cutout(&test_context,9999);
@@ -370,7 +370,7 @@ TEST(DccRailcomCommandStation, three_bytes_ch1_only) {
     interface_dcc_railcom_command_station_t interface = make_interface();
     DccRailcomCommandStation_initialize(&test_context, &interface);
 
-    uint8_t raw[3] = {0xAC, 0xAB, 0xD3};
+    uint8_t raw[3] = {0xAC, 0xAA, 0xA9};
     load_uart_bytes(raw, 3);
 
     DccRailcomCommandStation_begin_cutout(&test_context,1);
@@ -408,7 +408,7 @@ TEST(DccRailcomCommandStation, buffer_overflow_drops_oldest) {
     DccRailcomCommandStation_initialize(&test_context, &interface);
 
     /* Push 5 datagrams into depth-4 buffer — oldest should be dropped */
-    uint8_t second_bytes[5] = {0xAB, 0xD3, 0xA3, 0xC5, 0xCA};
+    uint8_t second_bytes[5] = {0xAA, 0xA9, 0xA5, 0xA3, 0xA6};
     uint8_t expected_data[4] = {0x02, 0x03, 0x04, 0x05};
     uint8_t cutout_index;
     uint8_t read_index;
@@ -473,7 +473,7 @@ TEST(DccRailcomCommandStation, ch2_invalid_byte_stops_decode) {
     DccRailcomCommandStation_initialize(&test_context, &interface);
 
     /* CH1 valid, CH2 first byte invalid */
-    uint8_t raw[4] = {0xAC, 0xAB, 0x00, 0xA3};
+    uint8_t raw[4] = {0xAC, 0xAA, 0x00, 0xA5};
     load_uart_bytes(raw, 4);
 
     DccRailcomCommandStation_begin_cutout(&test_context,1);
@@ -496,7 +496,7 @@ TEST(DccRailcomCommandStation, ch1_null_on_datagram_still_buffers) {
     interface.on_datagram = NULL;
     DccRailcomCommandStation_initialize(&test_context, &interface);
 
-    uint8_t raw[2] = {0xAC, 0xAB};
+    uint8_t raw[2] = {0xAC, 0xAA};
     load_uart_bytes(raw, 2);
 
     DccRailcomCommandStation_begin_cutout(&test_context,1);
@@ -518,7 +518,7 @@ TEST(DccRailcomCommandStation, ch2_null_on_datagram_still_buffers) {
     interface.on_datagram = NULL;
     DccRailcomCommandStation_initialize(&test_context, &interface);
 
-    uint8_t raw[4] = {0xAC, 0xAB, 0xD3, 0xA3};
+    uint8_t raw[4] = {0xAC, 0xAA, 0xA9, 0xA5};
     load_uart_bytes(raw, 4);
 
     DccRailcomCommandStation_begin_cutout(&test_context,1);
@@ -540,7 +540,7 @@ TEST(DccRailcomCommandStation, max_8_uart_bytes_hits_loop_limit) {
     DccRailcomCommandStation_initialize(&test_context, &interface);
 
     /* 2 CH1 + 6 CH2 = 8 bytes (max), loop exits via condition not break */
-    uint8_t raw[8] = {0xAC, 0xAB, 0xD3, 0xA3, 0xC5, 0xCA, 0xB3, 0x95};
+    uint8_t raw[8] = {0xAC, 0xAA, 0xA9, 0xA5, 0xA3, 0xA6, 0x9A, 0x99};
     load_uart_bytes(raw, 8);
 
     DccRailcomCommandStation_begin_cutout(&test_context,1);

@@ -191,7 +191,15 @@ static bool _cv_ops_common(dcc_packet_t *packet, dcc_address_t address, dcc_addr
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    /* One-shot send (not auto-refresh): the scheduler's _select_one_shot()
+     * skips any non-auto-refresh slot whose repeat_count is 0 -- that is its
+     * "nothing left to send" state (what the count is decremented to after a
+     * real send), not a valid starting value. A CV write / POM verify packet
+     * built with repeat_count = 0 was accepted into a scheduler slot but
+     * never selected for transmission. Matches the accessory-stop builders
+     * (DccApplicationCommandStationPacket_load_accessory_*_stop), which
+     * correctly use repeat_count = 1. */
+    packet->repeat_count = 1;
 
     return true;
 
@@ -912,7 +920,12 @@ bool DccApplicationCommandStationPacket_load_cv_bit_pom(dcc_packet_t *packet, dc
     _append_xor(packet);
 
     packet->preamble_bits = DCC_PREAMBLE_BITS_OPS;
-    packet->repeat_count = 0;
+    /* One-shot send: see _cv_ops_common()'s comment above -- this builder does
+     * not route through it (bit manipulation has its own instruction byte
+     * layout) and was missed when that fix landed there. Same bug, same fix:
+     * a CV bit write/verify built with repeat_count = 0 is accepted into a
+     * scheduler slot but never selected for transmission. */
+    packet->repeat_count = 1;
 
     return true;
 

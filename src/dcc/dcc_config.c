@@ -298,6 +298,53 @@ static void _on_packet_received_dispatch(const uint8_t *data, uint8_t byte_count
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
+#if defined(DCC_COMPILE_RAILCOM)
+/* =========================================================================
+ * RailCom address tracking: which DCC address a cutout's decoded bytes
+ * should be tagged with. Declared here, ahead of the wrapper functions
+ * below that populate it, because it is captured at packet-load/-complete
+ * time, not at cutout time -- see the RailCom cutout bridge comment further
+ * down for why two stages, not one.
+ * ========================================================================= */
+
+static dcc_address_t _main_railcom_loaded_address = 0;      /* set when a packet is handed to the encoder */
+static dcc_address_t _main_railcom_completed_address = 0;   /* promoted from _loaded once that packet's transmission finishes */
+
+    /* Short (1-127) and long/extended (0xC0-0xE7 + a second byte, S-9.2.1)
+     * address forms only -- covers real locomotive traffic, which is what
+     * RailCom POM/ADR replies are tagged against. Broadcast, accessory,
+     * idle, and reserved leading bytes fall through to 0 (untagged) --
+     * the address is only a label for decoded datagrams, not used for
+     * routing. Accessory RailCom replies therefore come back untagged;
+     * not handled here since nothing in this library decodes accessory
+     * RailCom today. */
+static dcc_address_t _decode_main_packet_address(const dcc_packet_t *packet) {
+
+    if (!packet || packet->byte_count == 0) {
+
+        return 0;
+
+    }
+
+    uint8_t b0 = packet->data[0];
+
+    if (b0 >= 0xC0 && b0 <= 0xE7 && packet->byte_count >= 2) {
+
+        return (dcc_address_t)(((b0 & 0x3F) << 8) | packet->data[1]);
+
+    }
+
+    if (b0 >= 1 && b0 <= 127) {
+
+        return (dcc_address_t)b0;
+
+    }
+
+    return 0;
+
+}
+#endif /* DCC_COMPILE_RAILCOM */
+
 /* =========================================================================
  * Main track wrapper functions
  *
@@ -307,11 +354,25 @@ static void _on_packet_received_dispatch(const uint8_t *data, uint8_t byte_count
 
 static void _main_on_packet_complete(void) {
 
+#if defined(DCC_COMPILE_RAILCOM)
+    /* The just-finished packet's address is frozen here, before the cutout
+     * it triggers can complete and before the next packet can possibly be
+     * loaded (DccScheduler_run() will not call load_packet() again until
+     * the packet_complete_flag this sets has been consumed) -- see the
+     * RailCom cutout bridge comment below for why this two-stage capture
+     * replaces recording the address in on_packet_sent. */
+    _main_railcom_completed_address = _main_railcom_loaded_address;
+#endif
+
     DccScheduler_on_packet_complete(&_main_scheduler_context);
 
 }
 
 static void _main_load_packet(const dcc_packet_t *packet) {
+
+#if defined(DCC_COMPILE_RAILCOM)
+    _main_railcom_loaded_address = _decode_main_packet_address(packet);
+#endif
 
     DccBitEncoder_load_packet(&_main_encoder_context, packet);
 
@@ -483,13 +544,51 @@ static void _shared_timer_release(void) {
 #if defined(DCC_COMPILE_RAILCOM)
 /* =========================================================================
  * RailCom cutout bridge: the bit encoder's end bit arms the cutout timer.
- * The encoder runs continuously (no cutout-complete wait) -- the driver blanks
- * its own output between the begin/end hooks -- so on_cutout_complete is unused.
+ * The encoder runs continuously -- the driver blanks its own output between
+ * the begin/end hooks -- so on_cutout_complete is not needed for that
+ * purpose. It is needed for a second one: telling the command station
+ * library when a cutout's bytes are ready to be read.
+ *
+ * DccRailcomCommandStation_begin_cutout() tags the upcoming cutout's decoded
+ * bytes with a DCC address and is the only thing that sets cutout_pending;
+ * without it DccRailcomCommandStation_run() returns immediately and no
+ * RailCom byte is ever decoded. It must be called when the cutout COMPLETES
+ * (the CH2 -> IDLE transition, reported through on_cutout_complete), not when
+ * it begins: at cutout begin neither channel's bytes have been captured yet
+ * (Channel 1 opens ~80 us later, Channel 2 a few hundred us after that), so
+ * a cutout_pending flag set that early lets the next
+ * DccRailcomCommandStation_run() poll read stale bytes left in the UART from
+ * an earlier cutout -- Channel 1 and Channel 2 datagrams then show up
+ * intermittently mislabeled.
+ *
+ * The address to tag with is _main_railcom_completed_address (declared
+ * above, ahead of _main_load_packet()/_main_on_packet_complete() which
+ * populate it) -- captured in two stages, not read directly from whatever
+ * packet was most recently sent. A single-stage capture (recording the
+ * address when a packet is dispatched, in on_packet_sent) races the
+ * scheduler: on_packet_sent and load_packet fire back to back for a NEW
+ * packet as soon as the PREVIOUS one's transmission ends, which is also the
+ * moment this cutout begins -- a fast enough main loop can dispatch that
+ * next packet, and overwrite the recorded address, before this cutout
+ * completes and reads it, mistagging the reply. The two-stage version does
+ * not have that race: _main_load_packet() records the address a packet is
+ * dispatched with (_loaded), and _main_on_packet_complete() promotes it to
+ * _completed once that same packet's transmission actually finishes --
+ * which is also the earliest point the scheduler will dispatch a new one,
+ * so _completed cannot change again until well after this cutout (~450 us)
+ * has read it and the next packet's own end bit arrives (comfortably longer
+ * -- the 16-bit preamble alone is ~1.9 ms).
  * ========================================================================= */
 
 static void _railcom_cutout_begin_wrapper(void) {
 
     DccRailcomCutout_begin(&_railcom_cutout_context);
+
+}
+
+static void _railcom_cutout_complete_wrapper(void) {
+
+    DccRailcomCommandStation_begin_cutout(&_main_railcom_context, _main_railcom_completed_address);
 
 }
 #endif /* DCC_COMPILE_RAILCOM */
@@ -654,6 +753,9 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _main_scheduler_interface.load_packet = &_main_load_packet;
     _main_scheduler_interface.is_encoder_idle = &_main_is_encoder_idle;
     _main_scheduler_interface.build_idle_packet = &DccApplicationCommandStationPacket_load_idle;
+    /* RailCom address tracking (when compiled in) happens in _main_load_packet()/
+     * _main_on_packet_complete() above, not here -- on_packet_sent stays a plain
+     * pass-through to the application's own callback either way. */
     _main_scheduler_interface.on_packet_sent = config->on_packet_sent;
 
     DccScheduler_initialize(&_main_scheduler_context, &_main_scheduler_interface);
@@ -679,7 +781,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _railcom_cutout_interface.end_railcom_cutout = (void *)0;
     _railcom_cutout_interface.uart_rx_enable = (void *)0;
     _railcom_cutout_interface.uart_rx_disable = (void *)0;
-    _railcom_cutout_interface.on_cutout_complete = (void *)0;  /* encoder runs continuously */
+    _railcom_cutout_interface.on_cutout_complete = (void *)0;  /* only if main_track.railcom is configured, below */
 
     if (config->main_track.railcom) {
 
@@ -687,6 +789,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
         _railcom_cutout_interface.end_railcom_cutout = config->main_track.railcom->end_railcom_cutout;
         _railcom_cutout_interface.uart_rx_enable = config->main_track.railcom->uart_rx_enable;
         _railcom_cutout_interface.uart_rx_disable = config->main_track.railcom->uart_rx_disable;
+        _railcom_cutout_interface.on_cutout_complete = &_railcom_cutout_complete_wrapper;
 
     }
 

@@ -53,6 +53,29 @@ static void mock_uart_rx_enable(void) {}
 static void mock_uart_rx_disable(void) {}
 static bool mock_uart_read(uint8_t *byte) { (void)byte; return false; }
 
+// Dedicated to the address race-condition regression test below (PR #1 review,
+// commit 4). mock_uart_read above always returns false and is shared by every
+// other RailCom test in this file; this one serves a settable buffer instead,
+// wired in only by that one test (overridden on its own dcc_railcom_hw_t after
+// make_railcom_hw()), so it never changes what any other test sees.
+static uint8_t railcom_race_uart_buffer[16];
+static uint8_t railcom_race_uart_count = 0;
+static uint8_t railcom_race_uart_index = 0;
+static bool mock_uart_read_from_buffer(uint8_t *byte) {
+    if (railcom_race_uart_index >= railcom_race_uart_count) return false;
+    *byte = railcom_race_uart_buffer[railcom_race_uart_index];
+    railcom_race_uart_index++;
+    return true;
+}
+
+static uint16_t railcom_race_result_address = 0xFFFF;
+static uint32_t railcom_race_result_count = 0;
+static void mock_railcom_datagram_result(uint16_t address, uint8_t channel, const dcc_railcom_datagram_t *datagram) {
+    (void)channel; (void)datagram;
+    railcom_race_result_address = address;
+    railcom_race_result_count++;
+}
+
 static dcc_railcom_hw_t make_railcom_hw(void) {
     dcc_railcom_hw_t rc;
     memset(&rc, 0, sizeof(rc));
@@ -624,6 +647,71 @@ TEST(DccConfig, railcom_cutout_full_cycle_via_isr) {
     DccConfig_railcom_oneshot_timer_isr();  /* CH1 -> GAP */
     DccConfig_railcom_oneshot_timer_isr();  /* GAP -> CH2 */
     DccConfig_railcom_oneshot_timer_isr();  /* CH2 -> IDLE, complete */
+
+    DccApplicationCommandStationMainTrack_power_off();
+}
+
+TEST(DccConfig, railcom_cutout_address_survives_a_packet_dispatched_during_the_cutout) {
+    /* Jim Kueneman's PR #1 review, commit 4 (2026-09-23): the address a cutout's
+     * decoded bytes get tagged with used to be recorded in on_packet_sent, which
+     * fires for a NEW packet as soon as the PREVIOUS one's transmission ends --
+     * the same instant this cutout begins. A main loop fast enough to dispatch
+     * that next packet before the cutout completes overwrote the recorded
+     * address before the cutout-complete wrapper read it, mistagging the reply.
+     * Reproduces the race directly: dispatch address 5, let its cutout begin,
+     * dispatch address 7 into the now-idle encoder before completing that
+     * cutout, then finish the cutout and confirm the decoded datagram is
+     * tagged with 5, not 7. */
+
+    railcom_race_uart_count = 0;
+    railcom_race_uart_index = 0;
+    railcom_race_result_address = 0xFFFF;
+    railcom_race_result_count = 0;
+
+    dcc_config_t cfg = make_test_config();
+    dcc_railcom_hw_t rc = make_railcom_hw();
+    rc.uart_read = mock_uart_read_from_buffer;
+    rc.on_railcom_datagram_result = mock_railcom_datagram_result;
+    cfg.main_track.railcom = &rc;
+    cfg.railcom_timer_start = mock_railcom_timer_start;
+    cfg.railcom_timer_stop = mock_railcom_timer_stop;
+    DccConfig_initialize(&cfg);
+    DccApplicationCommandStationMainTrack_power_on();
+
+    /* Packet A: short address 5 -- its cutout is the one under test. */
+    dcc_packet_t pkt_a = make_idle_packet();
+    pkt_a.data[0] = 5;
+    DccApplicationCommandStationMainTrack_send_packet(&pkt_a, 5, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
+    DccConfig_run();
+    pump_main_track_until_idle(200);   /* transmits A fully; end bit arms the cutout */
+
+    /* Packet B: short address 7, dispatched into the encoder while A's cutout
+     * is still open -- exactly the race window Jim described. repeat_count 1
+     * (make_idle_packet()) deactivates A's slot after one send, so this is
+     * the next one-shot the scheduler picks up, not a re-send of A. */
+    dcc_packet_t pkt_b = make_idle_packet();
+    pkt_b.data[0] = 7;
+    DccApplicationCommandStationMainTrack_send_packet(&pkt_b, 7, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
+    DccConfig_run();
+
+    /* A minimal valid Channel 1 datagram -- same encoding
+     * dcc_railcom_command_station_Test.cxx's ch1_valid_2_bytes uses -- so the
+     * decode path actually produces a result to check the address on. */
+    railcom_race_uart_buffer[0] = 0xAC;
+    railcom_race_uart_buffer[1] = 0xAA;
+    railcom_race_uart_count = 2;
+    railcom_race_uart_index = 0;
+
+    DccConfig_railcom_oneshot_timer_isr();  /* DELAY -> SETTLING */
+    DccConfig_railcom_oneshot_timer_isr();  /* SETTLING -> CH1 */
+    DccConfig_railcom_oneshot_timer_isr();  /* CH1 -> GAP */
+    DccConfig_railcom_oneshot_timer_isr();  /* GAP -> CH2 */
+    DccConfig_railcom_oneshot_timer_isr();  /* CH2 -> IDLE, begin_cutout(address) fires */
+
+    DccConfig_run();   /* on_railcom_datagram_result fires from here, not the ISR */
+
+    EXPECT_EQ(railcom_race_result_count, (uint32_t)1);
+    EXPECT_EQ(railcom_race_result_address, (uint16_t)5);
 
     DccApplicationCommandStationMainTrack_power_off();
 }

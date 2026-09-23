@@ -414,6 +414,42 @@ TEST(DccServiceModeTaskDirect, read_cv_returns_to_idle_and_accepts_second_read) 
 
 }
 
+// Jim Kueneman's review of upstream PR #2 (2026-09-23): representative "per task" tests for
+// this file -- primitive fails to start at entry, and primitive fails to start mid-chain.
+// Direct mode's other three operations (write_cv, read_bit, write_bit) follow the identical
+// shape against verify_byte/write_byte/write_bit and were not each duplicated here.
+TEST(DccServiceModeTaskDirect, read_cv_verify_bit_fails_at_entry_returns_false_and_idle) {
+
+    setup();
+    verify_bit_return = false;
+
+    EXPECT_FALSE(DccServiceModeTaskDirect_read_cv(1, mock_on_complete, mock_on_progress));
+    EXPECT_EQ(on_complete_count, (uint32_t)0);  /* never started -- no callback */
+
+    /* A following call must be accepted, not rejected by a stuck state. */
+    verify_bit_return = true;
+    EXPECT_TRUE(DccServiceModeTaskDirect_read_cv(1, mock_on_complete, mock_on_progress));
+
+}
+
+TEST(DccServiceModeTaskDirect, read_cv_verify_bit_fails_mid_chain_completes_busy) {
+
+    setup();
+    DccServiceModeTaskDirect_read_cv(1, mock_on_complete, mock_on_progress);
+
+    /* Bit 0 completes; _advance_read_cv() tries to start bit 1 and fails. */
+    verify_bit_return = false;
+    DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_NO_ACK);
+
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+
+    /* A following call must be accepted, not rejected by a stuck state. */
+    verify_bit_return = true;
+    EXPECT_TRUE(DccServiceModeTaskDirect_read_cv(1, mock_on_complete, mock_on_progress));
+
+}
+
 // ============================================================================
 // write_cv — input validation
 // ============================================================================

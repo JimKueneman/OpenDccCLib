@@ -102,7 +102,22 @@ static void _on_page_select_complete(dcc_service_mode_result_t result) {
      * select's own ACK result is not required to proceed. */
     _active_context->paged_state = PAGED_STATE_DATA_ACCESS;
     _build_register_packet(&packet, _active_context->data_register, _active_context->data_value, _active_context->is_write);
-    _active_context->interface->begin_operation(&packet, &_on_data_access_complete, _active_context->is_write, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT);
+
+    /* begin_operation() refuses to start when the shared context is not idle.
+     * Fail cleanly rather than leave paged_state stuck in DATA_ACCESS with no
+     * completion callback ever arriving (which would also reject every later
+     * paged call, since the state never returns to IDLE). */
+    if (!_active_context->interface->begin_operation(&packet, &_on_data_access_complete, _active_context->is_write, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT)) {
+
+        _active_context->paged_state = PAGED_STATE_IDLE;
+
+        if (_active_context->interface->on_complete) {
+
+            _active_context->interface->on_complete(DCC_SERVICE_MODE_BUSY);
+
+        }
+
+    }
 
 }
 
@@ -162,7 +177,14 @@ bool DccServiceModePaged_write(dcc_service_mode_paged_context_t *context, uint16
     _active_context = context;
     _build_register_packet(&packet, DCC_SERVICE_MODE_PAGE_REGISTER, page, true);
 
-    return context->interface->begin_operation(&packet, &_on_page_select_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT);
+    if (!context->interface->begin_operation(&packet, &_on_page_select_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT)) {
+
+        context->paged_state = PAGED_STATE_IDLE;
+        return false;
+
+    }
+
+    return true;
 
 }
 
@@ -199,7 +221,14 @@ bool DccServiceModePaged_verify(dcc_service_mode_paged_context_t *context, uint1
     _active_context = context;
     _build_register_packet(&packet, DCC_SERVICE_MODE_PAGE_REGISTER, page, true);
 
-    return context->interface->begin_operation(&packet, &_on_page_select_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT);
+    if (!context->interface->begin_operation(&packet, &_on_page_select_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT)) {
+
+        context->paged_state = PAGED_STATE_IDLE;
+        return false;
+
+    }
+
+    return true;
 
 }
 
