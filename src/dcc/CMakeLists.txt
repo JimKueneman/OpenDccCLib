@@ -9,7 +9,6 @@ set(SOURCES
     dcc_application_decoder_cv.c
     dcc_application_decoder_railcom.c
     dcc_application_accessory_decoder_railcom.c
-    dcc_packet_encoder.c
     dcc_bit_encoder.c
     dcc_scheduler.c
     dcc_service_mode_common.c
@@ -58,7 +57,6 @@ set(TESTS ${TESTS}
     ${ROOT_DIR}/src/dcc/dcc_application_accessory_decoder_railcom_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_application_main_track_api_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_application_service_track_api_Test.cxx
-    ${ROOT_DIR}/src/dcc/dcc_packet_encoder_raw_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_service_mode_task_direct_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_service_mode_task_paged_Test.cxx
     ${ROOT_DIR}/src/dcc/dcc_service_mode_task_register_Test.cxx

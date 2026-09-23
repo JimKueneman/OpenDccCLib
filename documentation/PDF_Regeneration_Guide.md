@@ -125,8 +125,8 @@ publishing:
    `dcc_defines.h` actually defines **and** flag it as the in-progress retiming, or
    omit precise numbers until that lands. Don't reprint "T_CS = 88µs" as correct.
 2. **Module names.** Old file trees referenced `dcc_packet_encoder.h/c`. The
-   role-first module is `dcc_application_command_station_packet`. (Both currently
-   exist — see `ComplianceOverview.md` on the pending old-module retirement.) Use the names in
+   role-first module is `dcc_application_command_station_packet`; the old one was
+   removed (2026-09-23), so never reprint it. Use the names in
    `ARCHITECTURE.md` §6.
 3. **API table accuracy.** The old CS dev-guide "Main Track Operations" table mixed
    packet builders (`_load_*`, on `DccApplicationCommandStationPacket`) with

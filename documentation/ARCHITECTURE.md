@@ -100,10 +100,13 @@ programming from POM.
 | `dcc_application_decoder_railcom` | DECODER | `DccApplicationDecoderRailcom_send_*` — address feedback, POM response, dynamic data, ack/nack, track search, cv auto transfer, raw |
 | `dcc_application_accessory_decoder_railcom` | ACCESSORY | `DccApplicationAccessoryDecoderRailcom_` — SRQ, status (1/4/extended), time/error report, cutout/stop hooks |
 
-> **Migration note:** the pre-refactor modules `dcc_application_main_track`,
-> `dcc_application_service_track`, and `dcc_packet_encoder` still exist and are
-> still compiled/tested alongside the role-first modules above. Retiring them is
-> tracked in [ComplianceOverview.md](compliance/ComplianceOverview.md).
+> **Migration note:** the pre-refactor modules `dcc_application_main_track` and
+> `dcc_application_service_track` still exist and are still compiled/tested
+> alongside the role-first modules above. Retiring them is tracked in
+> [ComplianceOverview.md](compliance/ComplianceOverview.md). The third one,
+> `dcc_packet_encoder`, was removed on 2026-09-23: it was an uncalled duplicate of
+> `dcc_application_command_station_packet` and had drifted (it still carried the
+> repeat_count = 0 "never transmitted" defect fixed in the live module).
 
 ## 6. Internal modules
 
