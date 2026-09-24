@@ -96,6 +96,19 @@ typedef struct {
          *  was an idle packet. */
     uint8_t last_addr_byte;
 
+        /** @brief Auto-refresh pacing, set from DCC_REFRESH_PROMPT_SENDS,
+         *  DCC_REFRESH_COLD_CYCLES and DCC_REFRESH_COLD_MAX_CYCLES by
+         *  DccScheduler_initialize(). refresh_cold_cycles = 0: flat round-robin. */
+    uint8_t refresh_prompt_sends;
+    uint16_t refresh_cold_cycles;
+    uint16_t refresh_cold_max_cycles;
+
+        /** @brief Round-robin cursor of the overdue and due passes (the burst
+         *  pass uses refresh_index), and whether the last refresh send was an
+         *  overdue one -- see _select_refresh() in dcc_scheduler.c. */
+    uint8_t refresh_cold_index;
+    bool refresh_last_was_overdue;
+
 } dcc_scheduler_context_t;
 
     /**
