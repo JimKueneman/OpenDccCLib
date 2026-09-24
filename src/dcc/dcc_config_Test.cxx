@@ -1064,3 +1064,274 @@ TEST(DccDefines, user_config_constants_are_set) {
     EXPECT_EQ(USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH, 4);
     EXPECT_EQ(USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS, 29);
 }
+
+// ============================================================================
+// Group 10: RailCom cutout timing setter, cancel / is_active, all-five override
+// ============================================================================
+
+#if defined(DCC_COMPILE_COMMAND_STATION) && defined(DCC_COMPILE_RAILCOM)
+
+/* Bring a RailCom-configured main track to the end bit of one packet so the
+ * cutout state machine has just loaded its DELAY period. */
+static void arm_cutout(dcc_config_t *cfg, dcc_railcom_hw_t *rc) {
+    cfg->main_track.railcom = rc;
+    cfg->railcom_timer_start = mock_railcom_timer_start;
+    cfg->railcom_timer_stop = mock_railcom_timer_stop;
+    DccConfig_initialize(cfg);
+    DccApplicationCommandStationMainTrack_power_on();
+
+    dcc_packet_t pkt = make_idle_packet();
+    DccApplicationCommandStationMainTrack_send_packet(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
+    DccConfig_run();
+
+    last_railcom_timer_period = 0;
+    pump_main_track_until_idle(200);
+}
+
+static void expect_cutout_periods(uint16_t d, uint16_t s, uint16_t c1, uint16_t g, uint16_t c2) {
+    EXPECT_EQ(last_railcom_timer_period, d);
+    DccConfig_railcom_oneshot_timer_isr();
+    EXPECT_EQ(last_railcom_timer_period, s);
+    DccConfig_railcom_oneshot_timer_isr();
+    EXPECT_EQ(last_railcom_timer_period, c1);
+    DccConfig_railcom_oneshot_timer_isr();
+    EXPECT_EQ(last_railcom_timer_period, g);
+    DccConfig_railcom_oneshot_timer_isr();
+    EXPECT_EQ(last_railcom_timer_period, c2);
+    DccConfig_railcom_oneshot_timer_isr();   /* CH2 -> IDLE */
+}
+
+TEST(DccConfig, railcom_cutout_all_five_config_fields_override_defaults) {
+    dcc_config_t cfg = make_test_config();
+    dcc_railcom_hw_t rc = make_railcom_hw();
+    cfg.railcom_cutout_start_delay_us = 11;
+    cfg.railcom_uart_rx_delay_us = 22;
+    cfg.railcom_ch1_window_us = 33;
+    cfg.railcom_ch1_ch2_gap_us = 44;
+    cfg.railcom_ch2_window_us = 55;
+    arm_cutout(&cfg, &rc);
+
+    expect_cutout_periods(11, 22, 33, 44, 55);
+
+    DccApplicationCommandStationMainTrack_power_off();
+}
+
+TEST(DccConfig, set_railcom_cutout_timing_nonzero_applies_to_next_cutout) {
+    dcc_config_t cfg = make_test_config();
+    dcc_railcom_hw_t rc = make_railcom_hw();
+    cfg.main_track.railcom = &rc;
+    cfg.railcom_timer_start = mock_railcom_timer_start;
+    cfg.railcom_timer_stop = mock_railcom_timer_stop;
+    DccConfig_initialize(&cfg);
+
+    DccConfig_set_railcom_cutout_timing(12, 23, 34, 45, 56);
+
+    DccApplicationCommandStationMainTrack_power_on();
+    dcc_packet_t pkt = make_idle_packet();
+    DccApplicationCommandStationMainTrack_send_packet(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
+    DccConfig_run();
+    last_railcom_timer_period = 0;
+    pump_main_track_until_idle(200);
+
+    expect_cutout_periods(12, 23, 34, 45, 56);
+
+    DccApplicationCommandStationMainTrack_power_off();
+}
+
+TEST(DccConfig, set_railcom_cutout_timing_zero_restores_spec_defaults) {
+    dcc_config_t cfg = make_test_config();
+    dcc_railcom_hw_t rc = make_railcom_hw();
+    cfg.railcom_cutout_start_delay_us = 11;
+    cfg.railcom_uart_rx_delay_us = 22;
+    cfg.railcom_ch1_window_us = 33;
+    cfg.railcom_ch1_ch2_gap_us = 44;
+    cfg.railcom_ch2_window_us = 55;
+    cfg.main_track.railcom = &rc;
+    cfg.railcom_timer_start = mock_railcom_timer_start;
+    cfg.railcom_timer_stop = mock_railcom_timer_stop;
+    DccConfig_initialize(&cfg);
+
+    /* 0 in every field selects that field's spec default. */
+    DccConfig_set_railcom_cutout_timing(0, 0, 0, 0, 0);
+
+    DccApplicationCommandStationMainTrack_power_on();
+    dcc_packet_t pkt = make_idle_packet();
+    DccApplicationCommandStationMainTrack_send_packet(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
+    DccConfig_run();
+    last_railcom_timer_period = 0;
+    pump_main_track_until_idle(200);
+
+    expect_cutout_periods(DCC_RAILCOM_CUTOUT_START_DELAY_US, DCC_RAILCOM_UART_RX_DELAY_US,
+                          DCC_RAILCOM_CH1_WINDOW_US, DCC_RAILCOM_CH1_CH2_GAP_US,
+                          DCC_RAILCOM_CH2_WINDOW_US);
+
+    DccApplicationCommandStationMainTrack_power_off();
+}
+
+TEST(DccConfig, railcom_cutout_is_active_tracks_state_and_cancel_clears_it) {
+    dcc_config_t cfg = make_test_config();
+    dcc_railcom_hw_t rc = make_railcom_hw();
+    cfg.main_track.railcom = &rc;
+    cfg.railcom_timer_start = mock_railcom_timer_start;
+    cfg.railcom_timer_stop = mock_railcom_timer_stop;
+    DccConfig_initialize(&cfg);
+
+    EXPECT_FALSE(DccConfig_railcom_cutout_is_active());
+    DccConfig_cancel_railcom_cutout();               /* no-op when idle */
+    EXPECT_FALSE(DccConfig_railcom_cutout_is_active());
+
+    DccApplicationCommandStationMainTrack_power_on();
+    dcc_packet_t pkt = make_idle_packet();
+    DccApplicationCommandStationMainTrack_send_packet(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
+    DccConfig_run();
+    pump_main_track_until_idle(200);                 /* end bit -> DELAY */
+    EXPECT_TRUE(DccConfig_railcom_cutout_is_active());
+
+    DccConfig_railcom_oneshot_timer_isr();           /* DELAY -> SETTLING (H-bridge off) */
+    EXPECT_TRUE(DccConfig_railcom_cutout_is_active());
+
+    DccConfig_cancel_railcom_cutout();
+    EXPECT_FALSE(DccConfig_railcom_cutout_is_active());
+
+    DccApplicationCommandStationMainTrack_power_off();
+}
+
+TEST(DccConfig, railcom_cutout_tags_long_address_packets) {
+    railcom_race_uart_count = 0;
+    railcom_race_uart_index = 0;
+    railcom_race_result_address = 0xFFFF;
+    railcom_race_result_count = 0;
+
+    dcc_config_t cfg = make_test_config();
+    dcc_railcom_hw_t rc = make_railcom_hw();
+    rc.uart_read = mock_uart_read_from_buffer;
+    rc.on_railcom_datagram_result = mock_railcom_datagram_result;
+    cfg.main_track.railcom = &rc;
+    cfg.railcom_timer_start = mock_railcom_timer_start;
+    cfg.railcom_timer_stop = mock_railcom_timer_stop;
+    DccConfig_initialize(&cfg);
+    DccApplicationCommandStationMainTrack_power_on();
+
+    /* 128-step speed to long address 1000 (0xC3 0xE8). */
+    dcc_packet_t pkt;
+    memset(&pkt, 0, sizeof(pkt));
+    pkt.data[0] = 0xC3; pkt.data[1] = 0xE8; pkt.data[2] = 0x3F; pkt.data[3] = 0x90;
+    pkt.data[4] = pkt.data[0] ^ pkt.data[1] ^ pkt.data[2] ^ pkt.data[3];
+    pkt.byte_count = 5;
+    pkt.preamble_bits = DCC_PREAMBLE_BITS_OPS;
+    pkt.repeat_count = 1;
+    DccApplicationCommandStationMainTrack_send_packet(&pkt, 1000, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
+    DccConfig_run();
+    pump_main_track_until_idle(250);
+
+    railcom_race_uart_buffer[0] = 0xAC;
+    railcom_race_uart_buffer[1] = 0xAA;
+    railcom_race_uart_count = 2;
+    railcom_race_uart_index = 0;
+
+    DccConfig_railcom_oneshot_timer_isr();
+    DccConfig_railcom_oneshot_timer_isr();
+    DccConfig_railcom_oneshot_timer_isr();
+    DccConfig_railcom_oneshot_timer_isr();
+    DccConfig_railcom_oneshot_timer_isr();
+    DccConfig_run();
+
+    EXPECT_EQ(railcom_race_result_count, (uint32_t)1);
+    EXPECT_EQ(railcom_race_result_address, (uint16_t)1000);
+
+    DccApplicationCommandStationMainTrack_power_off();
+}
+
+#endif /* DCC_COMPILE_COMMAND_STATION && DCC_COMPILE_RAILCOM */
+
+// ============================================================================
+// Group 11: a service-mode task driven to completion through the wiring
+// ============================================================================
+
+#if defined(DCC_COMPILE_COMMAND_STATION) && defined(DCC_COMPILE_SERVICE_MODE_TASK_DIRECT)
+
+static uint32_t task_complete_count;
+static dcc_service_mode_result_t task_complete_result;
+static void mock_task_on_complete(dcc_service_mode_result_t result, uint8_t value) {
+    (void)value;
+    task_complete_result = result;
+    task_complete_count++;
+}
+static uint16_t mock_current_sense_silent(void) { return 0; }   /* never crosses the ACK threshold */
+
+TEST(DccConfig, direct_write_cv_task_completes_through_primitive_dispatcher) {
+    dcc_config_t cfg = make_test_config();
+    cfg.service_track.pin_toggle = mock_svc_pin_toggle;
+    cfg.service_track.current_sense_read = mock_current_sense_silent;
+    DccConfig_initialize(&cfg);
+
+    task_complete_count = 0;
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    EXPECT_TRUE(DccApplicationCommandStationServiceTrack_direct_write_cv(8, 0x55, mock_task_on_complete, NULL));
+
+    /* Write byte, then verify byte: two full S-9.2.3 sequences, each with an
+     * ACK window that stays silent, so the verify step reports VERIFY_FAIL. */
+    pump_service_mode_cycle(4000);
+
+    EXPECT_EQ(task_complete_count, (uint32_t)1);
+    EXPECT_EQ(task_complete_result, DCC_SERVICE_MODE_VERIFY_FAIL);
+
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
+}
+
+#endif /* DCC_COMPILE_COMMAND_STATION && DCC_COMPILE_SERVICE_MODE_TASK_DIRECT */
+
+// ============================================================================
+// Group 12: decoder edge feed -> packet dispatch through the wiring
+// ============================================================================
+
+#ifdef DCC_COMPILE_DECODER
+
+static uint32_t cfg_speed_count;
+static uint16_t cfg_speed_address;
+static uint8_t  cfg_speed_value;
+static void mock_cfg_on_speed(uint16_t address, uint8_t speed, bool direction, dcc_speed_mode_enum mode) {
+    (void)direction; (void)mode;
+    cfg_speed_address = address;
+    cfg_speed_value = speed;
+    cfg_speed_count++;
+}
+
+static uint32_t edge_ts;
+static void feed_half(uint32_t us) { edge_ts += us; DccConfig_decoder_edge_isr(edge_ts); }
+static void feed_bit(bool one) {
+    uint32_t half = one ? DCC_ONE_BIT_HALF_PERIOD_US : DCC_ZERO_BIT_HALF_PERIOD_US;
+    feed_half(half);
+    feed_half(half);
+}
+static void feed_byte(uint8_t b) { for (int i = 7; i >= 0; i--) feed_bit((b >> i) & 1); }
+static void feed_packet(const uint8_t *data, uint8_t count) {
+    edge_ts = 1000;
+    DccConfig_decoder_edge_isr(edge_ts);          /* first edge: timestamp only */
+    for (int i = 0; i < 16; i++) feed_bit(true);  /* preamble */
+    for (uint8_t i = 0; i < count; i++) {
+        feed_bit(false);                          /* start / separator */
+        feed_byte(data[i]);
+    }
+    feed_bit(true);                               /* end bit */
+}
+
+TEST(DccConfig, decoder_edges_dispatch_a_packet_on_run) {
+    dcc_config_t cfg = make_test_config();
+    cfg.on_speed_command = mock_cfg_on_speed;
+    DccConfig_initialize(&cfg);
+
+    cfg_speed_count = 0;
+    /* Broadcast 128-step speed: accepted whatever address the CV store yields. */
+    uint8_t data[] = {0x00, 0x3F, 0x90, 0x00};
+    data[3] = data[0] ^ data[1] ^ data[2];
+    feed_packet(data, 4);
+
+    EXPECT_EQ(cfg_speed_count, (uint32_t)0);      /* queued at the end bit, not dispatched */
+    DccConfig_run();
+    EXPECT_EQ(cfg_speed_count, (uint32_t)1);
+    EXPECT_EQ(cfg_speed_address, (uint16_t)0);
+    EXPECT_EQ(cfg_speed_value, (uint8_t)0x10);
+}
+
+#endif /* DCC_COMPILE_DECODER */

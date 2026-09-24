@@ -832,4 +832,65 @@ TEST(DccServiceModeTaskDirect, null_on_complete_write_cv_no_crash) {
 
 }
 
+// ============================================================================
+// Primitive refusals: at entry (return false, no callback) and mid-chain
+// (BUSY through on_complete); both leave the task IDLE for the next call.
+// ============================================================================
+
+TEST(DccServiceModeTaskDirect, write_cv_write_byte_fails_at_entry_returns_false_and_idle) {
+    setup();
+    write_byte_return = false;
+    EXPECT_FALSE(DccServiceModeTaskDirect_write_cv(1, 0x55, mock_on_complete, mock_on_progress));
+    EXPECT_EQ(on_complete_count, (uint32_t)0);
+    write_byte_return = true;
+    EXPECT_TRUE(DccServiceModeTaskDirect_write_cv(1, 0x55, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskDirect, write_cv_verify_byte_fails_mid_chain_completes_busy) {
+    setup();
+    DccServiceModeTaskDirect_write_cv(1, 0x55, mock_on_complete, mock_on_progress);
+    verify_byte_return = false;
+    DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);  /* write done -> verify refused */
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+    verify_byte_return = true;
+    EXPECT_TRUE(DccServiceModeTaskDirect_write_cv(1, 0x55, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskDirect, read_bit_verify_bit_fails_at_entry_returns_false_and_idle) {
+    setup();
+    verify_bit_return = false;
+    EXPECT_FALSE(DccServiceModeTaskDirect_read_bit(1, 3, mock_on_complete, mock_on_progress));
+    EXPECT_EQ(on_complete_count, (uint32_t)0);
+    verify_bit_return = true;
+    EXPECT_TRUE(DccServiceModeTaskDirect_read_bit(1, 3, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskDirect, write_bit_write_bit_fails_at_entry_returns_false_and_idle) {
+    setup();
+    write_bit_return = false;
+    EXPECT_FALSE(DccServiceModeTaskDirect_write_bit(1, 3, true, mock_on_complete, mock_on_progress));
+    EXPECT_EQ(on_complete_count, (uint32_t)0);
+    write_bit_return = true;
+    EXPECT_TRUE(DccServiceModeTaskDirect_write_bit(1, 3, true, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskDirect, write_bit_verify_bit_fails_mid_chain_completes_busy) {
+    setup();
+    DccServiceModeTaskDirect_write_bit(1, 3, true, mock_on_complete, mock_on_progress);
+    verify_bit_return = false;
+    DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);  /* write done -> verify refused */
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+    verify_bit_return = true;
+    EXPECT_TRUE(DccServiceModeTaskDirect_write_bit(1, 3, true, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskDirect, primitive_complete_while_idle_is_ignored) {
+    setup();
+    DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);
+    EXPECT_EQ(on_complete_count, (uint32_t)0);
+    EXPECT_EQ(verify_bit_count, (uint32_t)0);
+}
+
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_DIRECT */

@@ -596,3 +596,86 @@ TEST(DccCvStorage, unlock_then_write_succeeds) {
     EXPECT_EQ(mock_cv_values[0], (uint8_t)0x99);
 
 }
+
+// ============================================================================
+// Indexed window: missing read hook / unresolvable page; CV29 without a filter
+// ============================================================================
+
+static bool mock_cv_read_fail_cv31(uint16_t cv_number, uint8_t *value) {
+
+    if (cv_number == DCC_CV_INDEX_HIGH)
+        return false;
+
+    return mock_cv_read(cv_number, value);
+
+}
+
+static bool mock_cv_read_fail_cv32(uint16_t cv_number, uint8_t *value) {
+
+    if (cv_number == DCC_CV_INDEX_LOW)
+        return false;
+
+    return mock_cv_read(cv_number, value);
+
+}
+
+// @compliance DCC-S9.2.2-DEC-005
+TEST(DccCvStorage, indexed_read_without_hook_returns_false) {
+
+    reset_mocks();
+    interface_dcc_cv_storage_t interface = make_interface();
+    interface.cv_read_indexed = NULL;
+    DccCvStorage_initialize(&interface);
+
+    uint8_t v = 0xAA;
+    EXPECT_FALSE(DccCvStorage_read(300, &v));
+    EXPECT_EQ(idx_read_count, (uint32_t)0);
+
+}
+
+// @compliance DCC-S9.2.2-DEC-005
+TEST(DccCvStorage, indexed_access_fails_when_page_high_unreadable) {
+
+    reset_mocks();
+    interface_dcc_cv_storage_t interface = make_interface();
+    interface.cv_read = mock_cv_read_fail_cv31;
+    DccCvStorage_initialize(&interface);
+
+    uint8_t v = 0;
+    EXPECT_FALSE(DccCvStorage_read(300, &v));
+    EXPECT_FALSE(DccCvStorage_write(300, 5));
+    EXPECT_EQ(idx_read_count, (uint32_t)0);
+    EXPECT_EQ(idx_write_count, (uint32_t)0);
+
+}
+
+// @compliance DCC-S9.2.2-DEC-005
+TEST(DccCvStorage, indexed_access_fails_when_page_low_unreadable) {
+
+    reset_mocks();
+    interface_dcc_cv_storage_t interface = make_interface();
+    interface.cv_read = mock_cv_read_fail_cv32;
+    DccCvStorage_initialize(&interface);
+
+    uint8_t v = 0;
+    EXPECT_FALSE(DccCvStorage_read(300, &v));
+    EXPECT_FALSE(DccCvStorage_write(300, 5));
+    EXPECT_EQ(idx_read_count, (uint32_t)0);
+    EXPECT_EQ(idx_write_count, (uint32_t)0);
+
+}
+
+// @compliance DCC-S9.2.2-DEC-004
+TEST(DccCvStorage, cv29_write_without_filter_stores_value_as_decoded) {
+
+    reset_mocks();
+    interface_dcc_cv_storage_t interface = make_interface();
+    interface.cv29_apply_supported_features = NULL;
+    DccCvStorage_initialize(&interface);
+
+    /* No filter hook: the value is stored as written, minus reserved bit 6. */
+    EXPECT_TRUE(DccCvStorage_write(DCC_CV_CONFIG, 0x69));
+    EXPECT_EQ(cv29_filter_count, (uint32_t)0);
+    EXPECT_EQ(mock_cv_values[DCC_CV_CONFIG - 1], (uint8_t)0x29);
+
+}

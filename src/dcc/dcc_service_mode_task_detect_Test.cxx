@@ -623,4 +623,193 @@ TEST(DccServiceModeTaskDetect, on_primitive_complete_when_idle_no_crash) {
 
 }
 
+// ============================================================================
+// Mid-flow primitive refusal: every "primitive failed to start" branch reports
+// BUSY through on_detect and resets to IDLE so a later detect_mode() is accepted.
+// ============================================================================
+
+static void expect_busy_and_idle(void) {
+
+    EXPECT_EQ(on_detect_count, (uint32_t)1);
+    EXPECT_EQ(on_detect_result, DCC_SERVICE_MODE_BUSY);
+
+    /* Reset to IDLE: a fresh detect must be accepted. */
+    direct_verify_bit_return = true;
+    paged_verify_return = true;
+    register_verify_return = true;
+    address_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskDetect_detect_mode(mock_on_detect));
+
+}
+
+TEST(DccServiceModeTaskDetect, busy_when_direct_probe_1_cannot_start) {
+
+    setup();
+    DccServiceModeTaskDetect_detect_mode(mock_on_detect);
+
+    direct_verify_bit_return = false;
+    step_no_ack();   /* probe 0 no-ack -> probe 1 refused */
+
+    expect_busy_and_idle();
+
+}
+
+TEST(DccServiceModeTaskDetect, busy_when_direct_read_first_bit_cannot_start) {
+
+    setup();
+    DccServiceModeTaskDetect_detect_mode(mock_on_detect);
+
+    direct_verify_bit_return = false;
+    step_ack();      /* probe 0 acks -> read bit 6 refused */
+
+    expect_busy_and_idle();
+
+}
+
+TEST(DccServiceModeTaskDetect, busy_when_direct_read_next_bit_cannot_start) {
+
+    setup();
+    DccServiceModeTaskDetect_detect_mode(mock_on_detect);
+    step_ack();      /* probe 0 acks -> reading bit 6 */
+
+    direct_verify_bit_return = false;
+    step_no_ack();   /* bit 6 done -> bit 5 refused */
+
+    expect_busy_and_idle();
+
+}
+
+TEST(DccServiceModeTaskDetect, busy_when_paged_known_value_verify_cannot_start) {
+
+    setup();
+    DccServiceModeTaskDetect_detect_mode(mock_on_detect);
+
+    paged_verify_return = false;
+    direct_present(0x00);   /* last bit read -> _begin_paged() verify refused */
+
+    expect_busy_and_idle();
+
+}
+
+TEST(DccServiceModeTaskDetect, busy_when_paged_scan_cannot_start) {
+
+    setup();
+    DccServiceModeTaskDetect_detect_mode(mock_on_detect);
+
+    paged_verify_return = false;
+    direct_absent();        /* probe 1 no-ack -> paged scan of 0 refused */
+
+    expect_busy_and_idle();
+
+}
+
+TEST(DccServiceModeTaskDetect, busy_when_paged_scan_next_value_cannot_start) {
+
+    setup();
+    DccServiceModeTaskDetect_detect_mode(mock_on_detect);
+    direct_absent();
+
+    paged_verify_return = false;
+    step_no_ack();          /* scan 0 no-ack -> scan 1 refused */
+
+    expect_busy_and_idle();
+
+}
+
+TEST(DccServiceModeTaskDetect, busy_when_register_known_value_verify_cannot_start) {
+
+    setup();
+    DccServiceModeTaskDetect_detect_mode(mock_on_detect);
+    direct_present(0x00);
+
+    register_verify_return = false;
+    step_ack();             /* paged verify acks -> register verify refused */
+
+    expect_busy_and_idle();
+
+}
+
+TEST(DccServiceModeTaskDetect, busy_when_register_scan_cannot_start) {
+
+    setup();
+    DccServiceModeTaskDetect_detect_mode(mock_on_detect);
+    direct_absent();
+
+    for (uint16_t v = 0; v < 255; v++) {
+
+        step_no_ack();      /* paged scan 0..254 */
+
+    }
+
+    register_verify_return = false;
+    step_no_ack();          /* paged 255 no-ack -> register scan of 0 refused */
+
+    expect_busy_and_idle();
+
+}
+
+TEST(DccServiceModeTaskDetect, busy_when_register_scan_next_value_cannot_start) {
+
+    setup();
+    DccServiceModeTaskDetect_detect_mode(mock_on_detect);
+    direct_absent();
+    scan_exhaust_256();     /* paged */
+
+    register_verify_return = false;
+    step_no_ack();          /* register scan 0 no-ack -> scan 1 refused */
+
+    expect_busy_and_idle();
+
+}
+
+TEST(DccServiceModeTaskDetect, busy_when_address_scan_cannot_start) {
+
+    setup();
+    DccServiceModeTaskDetect_detect_mode(mock_on_detect);
+    direct_absent();
+    scan_exhaust_256();     /* paged */
+
+    for (uint16_t v = 0; v < 255; v++) {
+
+        step_no_ack();      /* register scan 0..254 */
+
+    }
+
+    address_verify_return = false;
+    step_no_ack();          /* register 255 no-ack -> address scan of 0 refused */
+
+    expect_busy_and_idle();
+
+}
+
+TEST(DccServiceModeTaskDetect, busy_when_address_scan_next_value_cannot_start) {
+
+    setup();
+    DccServiceModeTaskDetect_detect_mode(mock_on_detect);
+    direct_absent();
+    scan_exhaust_256();     /* paged */
+    scan_exhaust_256();     /* register */
+
+    address_verify_return = false;
+    step_no_ack();          /* address scan 0 no-ack -> scan 1 refused */
+
+    expect_busy_and_idle();
+
+}
+
+TEST(DccServiceModeTaskDetect, busy_with_null_on_detect_does_not_crash) {
+
+    setup();
+    DccServiceModeTaskDetect_detect_mode(NULL);
+
+    direct_verify_bit_return = false;
+    step_no_ack();          /* _fail() with no callback wired */
+
+    EXPECT_EQ(on_detect_count, (uint32_t)0);
+
+    direct_verify_bit_return = true;
+    EXPECT_TRUE(DccServiceModeTaskDetect_detect_mode(mock_on_detect));
+
+}
+
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_DETECT */

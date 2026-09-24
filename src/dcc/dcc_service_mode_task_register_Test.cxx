@@ -813,4 +813,111 @@ TEST(DccServiceModeTaskRegister, verify_value_busy_rejected) {
 
 }
 
+// ============================================================================
+// Busy rejection and primitive refusals for the operations the representative
+// tests above left out: at entry (return false, no callback) and mid-chain
+// (BUSY through on_complete); both leave the task IDLE for the next call.
+// ============================================================================
+
+#define REG_MOBILE DCC_DECODER_TYPE_MOBILE
+
+TEST(DccServiceModeTaskRegister, write_cv_busy_rejected) {
+    setup();
+    EXPECT_TRUE(DccServiceModeTaskRegister_write_cv(1, 0x55, REG_MOBILE, mock_on_complete, mock_on_progress));
+    EXPECT_FALSE(DccServiceModeTaskRegister_write_cv(1, 0x55, REG_MOBILE, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskRegister, read_bit_busy_rejected) {
+    setup();
+    EXPECT_TRUE(DccServiceModeTaskRegister_read_bit(1, 3, REG_MOBILE, mock_on_complete, mock_on_progress));
+    EXPECT_FALSE(DccServiceModeTaskRegister_read_bit(1, 3, REG_MOBILE, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskRegister, write_bit_busy_rejected) {
+    setup();
+    EXPECT_TRUE(DccServiceModeTaskRegister_write_bit(1, 3, true, REG_MOBILE, mock_on_complete, mock_on_progress));
+    EXPECT_FALSE(DccServiceModeTaskRegister_write_bit(1, 3, true, REG_MOBILE, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskRegister, write_cv_register_write_fails_at_entry_returns_false_and_idle) {
+    setup();
+    register_write_return = false;
+    EXPECT_FALSE(DccServiceModeTaskRegister_write_cv(1, 0x55, REG_MOBILE, mock_on_complete, mock_on_progress));
+    EXPECT_EQ(on_complete_count, (uint32_t)0);
+    register_write_return = true;
+    EXPECT_TRUE(DccServiceModeTaskRegister_write_cv(1, 0x55, REG_MOBILE, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskRegister, write_cv_register_verify_fails_mid_chain_completes_busy) {
+    setup();
+    DccServiceModeTaskRegister_write_cv(1, 0x55, REG_MOBILE, mock_on_complete, mock_on_progress);
+    register_verify_return = false;
+    DccServiceModeTaskRegister_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);   /* write done -> verify refused */
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+    register_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskRegister_write_cv(1, 0x55, REG_MOBILE, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskRegister, read_bit_register_verify_fails_at_entry_returns_false_and_idle) {
+    setup();
+    register_verify_return = false;
+    EXPECT_FALSE(DccServiceModeTaskRegister_read_bit(1, 3, REG_MOBILE, mock_on_complete, mock_on_progress));
+    EXPECT_EQ(on_complete_count, (uint32_t)0);
+    register_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskRegister_read_bit(1, 3, REG_MOBILE, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskRegister, write_bit_register_verify_fails_at_entry_returns_false_and_idle) {
+    setup();
+    register_verify_return = false;
+    EXPECT_FALSE(DccServiceModeTaskRegister_write_bit(1, 3, true, REG_MOBILE, mock_on_complete, mock_on_progress));
+    EXPECT_EQ(on_complete_count, (uint32_t)0);
+    register_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskRegister_write_bit(1, 3, true, REG_MOBILE, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskRegister, write_bit_register_write_fails_after_scan_completes_busy) {
+    setup();
+    DccServiceModeTaskRegister_write_bit(1, 3, true, REG_MOBILE, mock_on_complete, mock_on_progress);
+    register_write_return = false;
+    DccServiceModeTaskRegister_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);   /* byte found at 0 -> write refused */
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+    register_write_return = true;
+    EXPECT_TRUE(DccServiceModeTaskRegister_write_bit(1, 3, true, REG_MOBILE, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskRegister, write_bit_register_verify_fails_after_write_completes_busy) {
+    setup();
+    DccServiceModeTaskRegister_write_bit(1, 3, true, REG_MOBILE, mock_on_complete, mock_on_progress);
+    DccServiceModeTaskRegister_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);   /* byte found -> write issued */
+    register_verify_return = false;
+    DccServiceModeTaskRegister_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);   /* write done -> verify refused */
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+    register_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskRegister_write_bit(1, 3, true, REG_MOBILE, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskRegister, verify_value_register_verify_fails_at_entry_returns_false_and_idle) {
+    setup();
+    register_verify_return = false;
+    EXPECT_FALSE(DccServiceModeTaskRegister_verify_value(8, 0x42, REG_MOBILE, mock_on_complete, NULL));
+    EXPECT_EQ(on_complete_count, (uint32_t)0);
+    register_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskRegister_verify_value(8, 0x42, REG_MOBILE, mock_on_complete, NULL));
+}
+
+TEST(DccServiceModeTaskRegister, factory_reset_register_write_fails_at_entry_returns_false_and_idle) {
+    setup();
+    register_write_return = false;
+    EXPECT_FALSE(DccServiceModeTaskRegister_factory_reset(mock_on_complete));
+    EXPECT_EQ(on_complete_count, (uint32_t)0);
+    register_write_return = true;
+    EXPECT_TRUE(DccServiceModeTaskRegister_factory_reset(mock_on_complete));
+}
+
+#undef REG_MOBILE
+
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_REGISTER */

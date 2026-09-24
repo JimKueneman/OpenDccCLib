@@ -4083,3 +4083,350 @@ TEST(DccPacketDecoder, acc_extended_cv_bit_write_addr0) {
     EXPECT_EQ(acc_cv_bit_callback_count, (uint32_t)1);
 
 }
+
+// ============================================================================
+// Branch coverage sweep: remaining guard arms and CV-cache refresh triggers
+// ============================================================================
+
+TEST(DccPacketDecoder, enqueue_clamps_oversized_packet_to_max_bytes) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_long_address(&interface, 1000);
+
+    /* A valid 6-byte ops-mode CV8 write to long address 1000 (0xC3 0xE8),
+     * followed by two junk bytes the ISR path must clamp away. */
+    uint8_t data[8] = {0xC3, 0xE8, 0xEC, 0x07, 0x55, 0x00, 0xAA, 0x55};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_enqueue(data, 8);
+    DccPacketDecoder_run();
+
+    EXPECT_EQ(cv_write_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_cv_write_number, (uint16_t)8);
+    EXPECT_EQ(last_cv_write_value, (uint8_t)0x55);
+
+}
+
+TEST(DccPacketDecoder, svc_direct_reserved_cc_ignored) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    DccPacketDecoder_initialize(&interface);
+    send_reset_packets(3);
+
+    /* 0111 CC AA with CC = 00 (reserved) */
+    uint8_t data[] = {0x70, 0x04, 0x2A, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(cv_write_callback_count, (uint32_t)0);
+    EXPECT_EQ(cv_verify_callback_count, (uint32_t)0);
+    EXPECT_EQ(cv_bit_callback_count, (uint32_t)0);
+
+}
+
+TEST(DccPacketDecoder, svc_packet_with_unexpected_length_ignored) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    DccPacketDecoder_initialize(&interface);
+    send_reset_packets(3);
+
+    /* Neither the 4-byte direct nor the 3-byte register form. */
+    uint8_t data[] = {0x7C, 0x04, 0x2A, 0x00, 0x00};
+    data[4] = xor_bytes(data, 4);
+    DccPacketDecoder_process_packet(data, 5);
+
+    EXPECT_EQ(cv_write_callback_count, (uint32_t)0);
+
+}
+
+TEST(DccPacketDecoder, malformed_reset_packets_do_not_arm_service_mode) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    DccPacketDecoder_initialize(&interface);
+
+    /* Address 0 but too short, and address 0 with a non-zero second byte:
+     * neither is a broadcast reset (S-9.2.3), so neither counts. */
+    uint8_t short_reset[] = {0x00, 0x00};
+    uint8_t not_reset[] = {0x00, 0x01, 0x01};
+    for (int i = 0; i < 3; i++) {
+
+        DccPacketDecoder_process_packet(short_reset, 2);
+        DccPacketDecoder_process_packet(not_reset, 3);
+
+    }
+
+    uint8_t data[] = {0x7C, 0x04, 0x2A, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(cv_write_callback_count, (uint32_t)0);
+
+}
+
+TEST(DccPacketDecoder, ops_cv_write_to_each_address_cv_refreshes_cache) {
+
+    /* Every CV in the address-cache trigger list, written through the mobile
+     * ops-mode long form: CV1, CV8, CV17, CV18, CV29, CV513, CV521, CV541. */
+    static const uint16_t cvs[] = {1, 8, 17, 18, 29, 513, 521, 541};
+
+    for (size_t i = 0; i < sizeof(cvs) / sizeof(cvs[0]); i++) {
+
+        reset_mocks();
+        interface_dcc_packet_decoder_t interface = make_interface();
+        set_decoder_short_address(&interface, 3);
+
+        uint16_t wire = cvs[i] - 1;
+        uint8_t data[] = {0x03, (uint8_t)(0xEC | ((wire >> 8) & 0x03)), (uint8_t)(wire & 0xFF), 0x00, 0x00};
+        data[4] = xor_bytes(data, 4);
+        DccPacketDecoder_process_packet(data, 5);
+
+        EXPECT_EQ(cv_write_callback_count, (uint32_t)1) << "CV " << cvs[i];
+        EXPECT_EQ(last_cv_write_number, cvs[i]);
+
+    }
+
+}
+
+TEST(DccPacketDecoder, acc_cv_write_to_each_address_cv_refreshes_cache) {
+
+    /* Same trigger list through the basic-accessory ops-mode CV write. */
+    static const uint16_t cvs[] = {1, 8, 17, 18, 29, 513, 521, 541};
+
+    for (size_t i = 0; i < sizeof(cvs) / sizeof(cvs[0]); i++) {
+
+        reset_mocks();
+        interface_dcc_packet_decoder_t interface = make_interface();
+        set_decoder_accessory_address(&interface, 1, false);
+
+        uint16_t wire = cvs[i] - 1;
+        uint8_t data[] = {0x81, 0xF8, (uint8_t)(0xEC | ((wire >> 8) & 0x03)), (uint8_t)(wire & 0xFF), 0x00, 0x00};
+        data[5] = xor_bytes(data, 5);
+        DccPacketDecoder_process_packet(data, 6);
+
+        EXPECT_EQ(acc_cv_write_callback_count, (uint32_t)1) << "CV " << cvs[i];
+        EXPECT_EQ(last_acc_cv_write_number, cvs[i]);
+
+        /* Address CVs were rewritten to 0 by the write above; the next
+         * iteration re-seeds them through reset_mocks(). */
+
+    }
+
+}
+
+TEST(DccPacketDecoder, output_address_mode_raw_zero_clamps_to_zero) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+
+    /* Output-address method with CV513/CV521 both 0: the 1-based store value
+     * is 0, which must clamp to output address 0 rather than wrap. */
+    mock_cv_values[DCC_CV_ACC_ADDRESS_LSB - 1] = 0;
+    mock_cv_values[DCC_CV_ACC_ADDRESS_MSB - 1] = 0;
+    mock_cv_values[DCC_CV_ACC_CONFIG - 1] = DCC_CV541_ACCESSORY_DECODER_BIT | DCC_CV541_ADDRESS_METHOD_BIT;
+    DccPacketDecoder_initialize(&interface);
+
+    uint8_t data[] = {0x80, 0xF8, 0x00};
+    data[2] = xor_bytes(data, 2);
+    DccPacketDecoder_process_packet(data, 3);
+
+    EXPECT_EQ(acc_basic_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_acc_board_address, (uint16_t)0);
+
+}
+
+TEST(DccPacketDecoder, output_address_mode_null_basic_callback_no_crash) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.on_accessory_basic_command = NULL;
+    set_decoder_accessory_output_address(&interface, 4, false);
+
+    uint8_t data[] = {0x81, 0xF8, 0x00};
+    data[2] = xor_bytes(data, 2);
+    DccPacketDecoder_process_packet(data, 3);
+
+    EXPECT_EQ(acc_basic_callback_count, (uint32_t)0);
+
+}
+
+TEST(DccPacketDecoder, acc_cv_reserved_command_ignored) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, false);
+
+    /* 1110 00 AA: reserved CV command form */
+    uint8_t data[] = {0x81, 0xF8, 0xE0, 0x00, 0x42, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    EXPECT_EQ(acc_cv_write_callback_count, (uint32_t)0);
+    EXPECT_EQ(acc_cv_verify_callback_count, (uint32_t)0);
+    EXPECT_EQ(acc_cv_bit_callback_count, (uint32_t)0);
+
+}
+
+TEST(DccPacketDecoder, six_byte_basic_accessory_without_cv_form_is_not_cv_access) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, false);
+
+    /* 6 bytes but byte 2 is not 1110xxxx: not the ops-mode CV long form. */
+    uint8_t data[] = {0x81, 0xF8, 0x00, 0x00, 0x00, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    EXPECT_EQ(acc_cv_write_callback_count, (uint32_t)0);
+    EXPECT_EQ(acc_cv_verify_callback_count, (uint32_t)0);
+    EXPECT_EQ(acc_cv_bit_callback_count, (uint32_t)0);
+
+}
+
+TEST(DccPacketDecoder, six_byte_extended_accessory_without_cv_form_is_not_cv_access) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, true);
+
+    uint8_t data[] = {0x81, 0x71, 0x00, 0x00, 0x00, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    EXPECT_EQ(acc_cv_write_callback_count, (uint32_t)0);
+    EXPECT_EQ(acc_cv_verify_callback_count, (uint32_t)0);
+    EXPECT_EQ(acc_cv_bit_callback_count, (uint32_t)0);
+
+}
+
+TEST(DccPacketDecoder, binary_state_long_too_few_bytes_ignored) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    /* 0xC0 needs two data bytes; only one present */
+    uint8_t data[] = {0x03, 0xC0, 0x01, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(bsl_callback_count, (uint32_t)0);
+
+}
+
+TEST(DccPacketDecoder, svc_verify_byte_null_cv_read_no_ack) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.cv_read = NULL;
+    DccPacketDecoder_initialize(&interface);
+    send_reset_packets(3);
+
+    /* Direct verify byte CV5 == 0x2A with no CV store to compare against */
+    uint8_t data[] = {0x74, 0x04, 0x2A, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(cv_verify_callback_count, (uint32_t)1);
+    EXPECT_TRUE(last_cv_verify_service_mode);
+
+}
+
+TEST(DccPacketDecoder, svc_verify_byte_null_on_cv_verify_callback) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.on_cv_verify_command = NULL;
+    DccPacketDecoder_initialize(&interface);
+    send_reset_packets(3);
+
+    uint8_t data[] = {0x74, 0x04, 0x2A, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(cv_verify_callback_count, (uint32_t)0);
+
+}
+
+TEST(DccPacketDecoder, svc_verify_bit_without_cv_store_still_notifies) {
+
+    /* Direct bit verify CV5 bit 0 == 1: 111 K=0 D=1 BBB=000 -> 0xE8.
+     * With no CV store, or a failing read, no ACK can be judged but the
+     * application is still told about the command. */
+    uint8_t data[] = {0x78, 0x04, 0xE8, 0x00};
+    data[3] = xor_bytes(data, 3);
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.cv_read = NULL;
+    DccPacketDecoder_initialize(&interface);
+    send_reset_packets(3);
+    DccPacketDecoder_process_packet(data, 4);
+    EXPECT_EQ(cv_bit_callback_count, (uint32_t)1);
+    EXPECT_TRUE(last_cv_bit_service_mode);
+
+    reset_mocks();
+    interface = make_interface();
+    DccPacketDecoder_initialize(&interface);
+    send_reset_packets(3);
+    mock_cv_read_should_fail = true;
+    DccPacketDecoder_process_packet(data, 4);
+    EXPECT_EQ(cv_bit_callback_count, (uint32_t)1);
+
+}
+
+TEST(DccPacketDecoder, null_addressed_packet_hook_still_dispatches) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.on_addressed_packet = NULL;
+    set_decoder_short_address(&interface, 3);
+
+    uint8_t data[] = {0x03, 0x3F, 0x90, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(speed_callback_count, (uint32_t)1);
+    EXPECT_EQ(addressed_packet_callback_count, (uint32_t)0);
+
+}
+
+TEST(DccPacketDecoder, extended_address_cv17_read_fail_keeps_prior_address) {
+
+    reset_mocks();
+    mock_cv_values[DCC_CV_CONFIG - 1] = DCC_CV29_SPEED_STEPS_BIT | DCC_CV29_EXTENDED_ADDRESS_BIT;
+    mock_cv_values[DCC_CV_EXTENDED_ADDRESS_HIGH - 1] = 0xC0 | 0x01;
+    mock_cv_values[DCC_CV_EXTENDED_ADDRESS_LOW - 1] = 0x50;
+
+    interface_dcc_packet_decoder_t interface = make_interface();
+    partial_fail_cv_early = DCC_CV_EXTENDED_ADDRESS_HIGH;
+    interface.cv_read = mock_cv_read_partial_fail_early;
+    DccPacketDecoder_initialize(&interface);
+    partial_fail_cv_early = 0;
+
+    /* The long address was never cached: a packet to 0x150 is not for us. */
+    uint8_t data[] = {0xC1, 0x50, 0x3F, 0x90, 0x00};
+    data[4] = xor_bytes(data, 4);
+    DccPacketDecoder_process_packet(data, 5);
+
+    EXPECT_EQ(speed_callback_count, (uint32_t)0);
+
+}
+
+#if defined(DCC_COMPILE_RAILCOM)
+
+TEST(DccPacketDecoder, null_on_address_changed_at_init_no_crash) {
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    interface.on_address_changed = NULL;
+    DccPacketDecoder_initialize(&interface);
+
+    EXPECT_EQ(address_changed_count, (uint32_t)0);
+
+}
+
+#endif /* DCC_COMPILE_RAILCOM */
