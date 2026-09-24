@@ -283,7 +283,7 @@ With `railcom_tx_pin_set` and `railcom_delay_us` wired, the library transmits du
 
 ## 13. Fail-Safe
 
-S-9.2.4 requires a decoder to stop everything when no packet addressed to it arrives within its time-out. The library implements this in `dcc_failsafe`: CV 11 times `DCC_FAILSAFE_CV11_UNIT_US` = 100 000 µs, polled from `DccConfig_run()`, re-armed by every addressed packet. CV 11 = 0 disables it. `on_failsafe_entered()` is where you stop the motor and drop the outputs; `on_failsafe_exited()` fires when an addressed packet returns. A command station built on this library paces its refresh so an idle locomotive may go up to 120 packet cycles without an addressed packet (about 0.8 s, 1.8 s with worst-case packets), so on such a layout CV 11 should be 0 or at least 20 (2.0 s).
+S-9.2.4 requires a decoder to stop everything when no packet addressed to it arrives within its time-out. The library implements this in `dcc_failsafe`: CV 11 times `DCC_FAILSAFE_CV11_UNIT_US` = 100 000 µs, polled from `DccConfig_run()`, re-armed by every addressed packet. CV 11 = 0 disables it. `on_failsafe_entered()` is where you stop the motor and drop the outputs; `on_failsafe_exited()` fires when an addressed packet returns. A command station built on this library paces its refresh so an idle locomotive may go up to 120 packet cycles without an addressed packet (about 0.8 s, 1.8 s with worst-case packets), so on such a layout CV 11 should be 0 or at least the station's `DCC_REFRESH_CV11_FLOOR`, 20 (2.0 s) by default.
 
 ## 14. Porting to a New MCU
 

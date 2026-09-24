@@ -129,6 +129,7 @@ Each `DCC_COMPILE_SERVICE_MODE_*` flag requires `DCC_COMPILE_COMMAND_STATION`; `
 | `DCC_REFRESH_PROMPT_SENDS` | 3 (library default) | Full-rate sends of a refresh slot after each insert, before it goes cold |
 | `DCC_REFRESH_COLD_CYCLES` | 60 (library default) | Keep-alive interval of a cold refresh slot, in packet cycles (about 0.4 s); 0 disables the tier and restores the flat ring |
 | `DCC_REFRESH_COLD_MAX_CYCLES` | 120 (library default) | Longest any refresh slot may go unsent, in packet cycles (about 0.8 s); see 9.5 |
+| `DCC_REFRESH_CV11_FLOOR` | 20 (library default) | Smallest decoder CV 11 (0.1 s units, so 2.0 s) the ceiling is guaranteed to stay under; lower it with the ceiling |
 | `USER_DEFINED_DCC_MAX_LOCOS` | 10 | Locomotives tracked by the demo application's loco table |
 | `USER_DEFINED_DCC_PREAMBLE_BITS_OPS` | 18 | Operations-mode preamble; ≥ 14, ≥ 16 with RailCom |
 | `USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH` | 4 | Ring of decoded RailCom datagrams |
@@ -321,7 +322,7 @@ Speed and function commands should be repeated so a decoder keeps hearing them. 
 
 Each packet cycle the scheduler ages every refresh slot, then picks, round-robin within each group: an overdue slot; else a slot still in its burst; else a merely-due cold slot. Right after an overdue send a waiting burst goes first, so under overload changes and overdue keep-alives alternate. A changed command therefore reaches the wire within one packet cycle when nothing else is in its burst, and shares the burst pass fairly with other simultaneous changes. A cycle with nothing due sends an idle packet.
 
-The ceiling exists because of the decoder packet time-out (S-9.2.4 section 4, CV 11): a decoder stops when no packet addressed to it arrives in time, and idle packets do not count. With the worst-case packet (6 bytes, all zero bits, a RailCom cutout, about 15 ms) 120 cycles is 1.8 s, so the documented floor for CV 11 on a layout driven by this library is 20 (2.0 s in the decoder's 0.1 s units) or 0 (off); a compile-time check pins the ceiling under that floor. Keeping the keep-alive under a second also keeps idle locomotives visible to RailCom occupancy detectors, which learn addresses from replies to addressed packets.
+The ceiling exists because of the decoder packet time-out (S-9.2.4 section 4, CV 11): a decoder stops when no packet addressed to it arrives in time, and idle packets do not count. With the worst-case packet (6 bytes, all zero bits, a RailCom cutout, about 15 ms) 120 cycles is 1.8 s, so the documented floor for CV 11 on a layout driven by this library is `DCC_REFRESH_CV11_FLOOR` = 20 (2.0 s in the decoder's 0.1 s units) or 0 (off); a compile-time check pins the ceiling under that floor. Keeping the keep-alive under a second also keeps idle locomotives visible to RailCom occupancy detectors, which learn addresses from replies to addressed packets.
 
 Two rules from S-9.2 are enforced in the scheduler regardless of pacing: a same-address packet for short addresses 112–127 is never sent within 5 ms of the previous one (an idle spacer is inserted), and an idle packet goes out whenever nothing else is due.
 
