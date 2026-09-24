@@ -273,6 +273,8 @@ typedef struct {
     dcc_tag_enum tag;           /**< Sub-key for duplicate combining */
     bool auto_refresh;          /**< true = keep in refresh cycle indefinitely */
     bool active;                /**< true = slot is in use */
+    uint8_t prompt_sends_left;  /**< Refresh: full-rate sends still owed since the last insert (0 = cold) */
+    uint16_t cold_age;          /**< Refresh: packet cycles since a cold slot was last sent */
 
 } dcc_scheduler_slot_t;
 

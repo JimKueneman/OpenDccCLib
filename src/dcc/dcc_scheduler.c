@@ -126,11 +126,51 @@ static int16_t _select_one_shot(dcc_scheduler_context_t *context) {
 
 }
 
+    /** @brief Which refresh slots a pass of _select_refresh() takes. */
+typedef enum {
+
+    REFRESH_PASS_ANY,       /**< flat ring (cold tier disabled) */
+    REFRESH_PASS_OVERDUE,   /**< cold, unsent for refresh_cold_max_cycles or more */
+    REFRESH_PASS_PROMPT,    /**< still inside its burst after an insert */
+    REFRESH_PASS_DUE        /**< cold, unsent for refresh_cold_cycles or more */
+
+} refresh_pass_enum;
+
+static bool _refresh_slot_in_pass(const dcc_scheduler_context_t *context, const dcc_scheduler_slot_t *slot, refresh_pass_enum pass) {
+
+    if (!slot->active || !slot->auto_refresh) {
+
+        return false;
+
+    }
+
+    switch (pass) {
+
+        case REFRESH_PASS_OVERDUE:
+
+            return slot->prompt_sends_left == 0 && slot->cold_age >= context->refresh_cold_max_cycles;
+
+        case REFRESH_PASS_PROMPT:
+
+            return slot->prompt_sends_left > 0;
+
+        case REFRESH_PASS_DUE:
+
+            return slot->prompt_sends_left == 0 && slot->cold_age >= context->refresh_cold_cycles;
+
+        default:
+
+            return true;
+
+    }
+
+}
+
     /**
-     * @brief Select the next auto-refresh slot via round-robin.
-     * @return Slot index, or -1 if no refresh slots exist.
+     * @brief First slot in @p pass, scanning round-robin from refresh_index.
+     * @return Slot index, or -1 if no slot is in that pass.
      */
-static int16_t _select_refresh(dcc_scheduler_context_t *context) {
+static int16_t _select_refresh_pass(dcc_scheduler_context_t *context, refresh_pass_enum pass) {
 
     uint8_t start_index = context->refresh_index;
     uint8_t scan_count;
@@ -139,7 +179,7 @@ static int16_t _select_refresh(dcc_scheduler_context_t *context) {
 
         uint8_t slot_index = (start_index + scan_count) % USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT;
 
-        if (context->slots[slot_index].active && context->slots[slot_index].auto_refresh) {
+        if (_refresh_slot_in_pass(context, &context->slots[slot_index], pass)) {
 
             context->refresh_index = (slot_index + 1) % USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT;
             return (int16_t)slot_index;
@@ -149,6 +189,79 @@ static int16_t _select_refresh(dcc_scheduler_context_t *context) {
     }
 
     return -1;
+
+}
+
+    /**
+     * @brief Select the next auto-refresh slot.
+     * @return Slot index, or -1 if no refresh slot is due this cycle.
+     *
+     * @details With the cold tier enabled (refresh_cold_cycles > 0) three passes,
+     * in this order, each round-robin from the shared refresh_index:
+     *   1. overdue cold slots -- the starvation bound: nothing stays unsent past
+     *      refresh_cold_max_cycles because other slots keep changing;
+     *   2. slots inside their prompt burst -- a changed command;
+     *   3. cold slots that are merely due for a keep-alive.
+     * A merely-due slot therefore never delays a changed one, and a changed one
+     * only waits while some slot is overdue (sustained overload, or a batch of
+     * slots falling overdue together).
+     */
+static int16_t _select_refresh(dcc_scheduler_context_t *context) {
+
+    int16_t slot_index;
+
+    if (context->refresh_cold_cycles == 0) {
+
+        return _select_refresh_pass(context, REFRESH_PASS_ANY);
+
+    }
+
+    slot_index = _select_refresh_pass(context, REFRESH_PASS_OVERDUE);
+
+    if (slot_index < 0) {
+
+        slot_index = _select_refresh_pass(context, REFRESH_PASS_PROMPT);
+
+    }
+
+    if (slot_index < 0) {
+
+        slot_index = _select_refresh_pass(context, REFRESH_PASS_DUE);
+
+    }
+
+    return slot_index;
+
+}
+
+    /**
+     * @brief Age every cold refresh slot by one packet cycle.
+     *
+     * @details Called once per packet cycle, before a slot is chosen, so a slot's
+     * cadence depends only on its own last send -- not on its ring position or on
+     * how many other slots exist. Saturates rather than wrapping.
+     */
+static void _age_cold_slots(dcc_scheduler_context_t *context) {
+
+    uint8_t slot_index;
+
+    if (context->refresh_cold_cycles == 0) {
+
+        return;
+
+    }
+
+    for (slot_index = 0; slot_index < USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT; slot_index++) {
+
+        dcc_scheduler_slot_t *slot = &context->slots[slot_index];
+
+        if (slot->active && slot->auto_refresh && slot->prompt_sends_left == 0 && slot->cold_age < UINT16_MAX) {
+
+            slot->cold_age++;
+
+        }
+
+    }
 
 }
 
@@ -165,10 +278,15 @@ void DccScheduler_initialize(dcc_scheduler_context_t *context, const interface_d
     context->packet_complete_flag = false;
     context->first_packet_sent = false;
     context->last_addr_byte = 0x00;
+    context->refresh_prompt_sends = DCC_REFRESH_PROMPT_SENDS;
+    context->refresh_cold_cycles = DCC_REFRESH_COLD_CYCLES;
+    context->refresh_cold_max_cycles = DCC_REFRESH_COLD_MAX_CYCLES;
 
     for (slot_index = 0; slot_index < USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT; slot_index++) {
 
         context->slots[slot_index].active = false;
+        context->slots[slot_index].prompt_sends_left = 0;
+        context->slots[slot_index].cold_age = 0;
 
     }
 
@@ -216,6 +334,11 @@ bool DccScheduler_insert(dcc_scheduler_context_t *context, const dcc_packet_t *p
     context->slots[slot_index].priority = priority;
     context->slots[slot_index].auto_refresh = auto_refresh;
     context->slots[slot_index].active = true;
+
+    /* Every insert is a command to get out promptly: a burst at full rate, then
+     * the keep-alive. Unused by one-shot slots. */
+    context->slots[slot_index].prompt_sends_left = context->refresh_prompt_sends;
+    context->slots[slot_index].cold_age = 0;
 
     return true;
 
@@ -317,6 +440,9 @@ void DccScheduler_run(dcc_scheduler_context_t *context) {
 
     }
 
+    /* One packet cycle has passed: age the cold refresh slots before choosing. */
+    _age_cold_slots(context);
+
     /* 1. Try one-shot packets first (highest priority wins) */
     slot_index = _select_one_shot(context);
 
@@ -381,6 +507,15 @@ void DccScheduler_run(dcc_scheduler_context_t *context) {
             context->interface->on_packet_sent(&context->slots[slot_index].packet);
 
         }
+
+        /* Spend one send of the burst; the keep-alive clock restarts on every send. */
+        if (context->slots[slot_index].prompt_sends_left > 0) {
+
+            context->slots[slot_index].prompt_sends_left--;
+
+        }
+
+        context->slots[slot_index].cold_age = 0;
 
         return;
 

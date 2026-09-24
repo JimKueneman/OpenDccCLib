@@ -387,6 +387,7 @@ TEST(DccScheduler, auto_refresh_keeps_sending) {
     dcc_scheduler_context_t context;
     interface_dcc_scheduler_t interface = make_interface();
     DccScheduler_initialize(&context, &interface);
+    context.refresh_cold_cycles = 0;   /* flat ring: the classic-mode regression */
 
     dcc_packet_t pkt;
     DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
@@ -413,6 +414,7 @@ TEST(DccScheduler, auto_refresh_round_robin) {
     dcc_scheduler_context_t context;
     interface_dcc_scheduler_t interface = make_interface();
     DccScheduler_initialize(&context, &interface);
+    context.refresh_cold_cycles = 0;   /* flat ring: the classic-mode regression */
 
     /* Insert two refresh slots for different addresses */
     dcc_packet_t pkt1;
@@ -838,4 +840,306 @@ TEST(DccScheduler, application_override_of_repeat_count_wins) {
     DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt.repeat_count = 0;
     EXPECT_EQ(sends_of_untouched(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED), (uint32_t)0);
+}
+
+// ============================================================================
+// Refresh pacing (issue #5, phase 2): a burst at full rate after each insert,
+// then a keep-alive every refresh_cold_cycles, never later than
+// refresh_cold_max_cycles. Selection order: overdue cold slot, then a slot in
+// its burst, then a merely-due cold slot.
+// ============================================================================
+
+static void pacing_init(dcc_scheduler_context_t *context, interface_dcc_scheduler_t *interface) {
+    reset_mocks();
+    *interface = make_interface();
+    DccScheduler_initialize(context, interface);
+}
+
+/* A speed refresh slot for a short address (keep clear of 112-127: no spacer). */
+static void insert_refresh(dcc_scheduler_context_t *context, dcc_address_t address, uint8_t speed) {
+    dcc_packet_t pkt;
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, address, DCC_ADDRESS_SHORT, speed, true);
+    DccScheduler_insert(context, &pkt, address, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
+}
+
+/* One packet cycle. Returns the first byte loaded: the short address, or DCC_IDLE_ADDR_BYTE. */
+static uint8_t pacing_cycle(dcc_scheduler_context_t *context) {
+    DccScheduler_run(context);
+    DccScheduler_on_packet_complete(context);
+    return last_loaded_packet.data[0];
+}
+
+/* Runs cycles until every slot has spent its burst (none left prompt). */
+static void spend_bursts(dcc_scheduler_context_t *context, int slot_count) {
+    for (int cycle = 0; cycle < slot_count * context->refresh_prompt_sends; cycle++) {
+        pacing_cycle(context);
+    }
+}
+
+// Invariant 1 (plus the settle): a fresh slot is sent PROMPT_SENDS times back to
+// back, then once per COLD_CYCLES.
+TEST(DccScheduler, prompt_burst_then_settle) {
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface;
+    pacing_init(&context, &interface);
+    const int prompt = context.refresh_prompt_sends;
+    const int cold = context.refresh_cold_cycles;
+    ASSERT_GE(prompt, 1);
+    ASSERT_GE(cold, 2);
+
+    insert_refresh(&context, 3, 50);
+
+    int sends[16];
+    int count = 0;
+    for (int cycle = 0; cycle <= prompt + 3 * cold && count < 16; cycle++) {
+        if (pacing_cycle(&context) == 3) {
+            sends[count++] = cycle;
+        }
+    }
+
+    ASSERT_EQ(count, prompt + 3);
+    for (int i = 0; i < prompt; i++) {
+        EXPECT_EQ(sends[i], i) << "burst send " << i;
+    }
+    for (int i = prompt; i < count; i++) {
+        EXPECT_EQ(sends[i] - sends[i - 1], cold) << "keep-alive " << (i - prompt + 1);
+    }
+}
+
+// A slot updated every cycle never drops into the cold tier.
+TEST(DccScheduler, continuous_changes_stay_at_full_rate) {
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface;
+    pacing_init(&context, &interface);
+
+    for (int cycle = 0; cycle < 3 * context.refresh_cold_cycles; cycle++) {
+        uint8_t speed = (uint8_t)(10 + cycle % 100);
+        insert_refresh(&context, 3, speed);
+        ASSERT_EQ(pacing_cycle(&context), (uint8_t)3) << "cycle " << cycle;
+        EXPECT_EQ(last_loaded_packet.data[2], (uint8_t)(0x80 | speed)) << "cycle " << cycle;
+    }
+}
+
+// 15 idle slots + 1 changing every cycle: the changing slot gets every cycle except
+// those owed to a cold slot that has reached COLD_MAX_CYCLES; merely-due cold slots
+// never take a cycle from it.
+TEST(DccScheduler, active_slot_full_rate_among_idle_pool) {
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface;
+    pacing_init(&context, &interface);
+
+    for (dcc_address_t address = 1; address <= 16; address++) {
+        insert_refresh(&context, address, 20);
+    }
+    spend_bursts(&context, 16);
+
+    const int window = 4 * context.refresh_cold_max_cycles;
+    int changer_sends = 0;
+    int idle_sends = 0;
+
+    for (int cycle = 0; cycle < window; cycle++) {
+        bool overdue[15];
+        for (int slot = 0; slot < 15; slot++) {
+            /* the scheduler ages a cold slot by one before it chooses */
+            overdue[slot] = context.slots[slot].prompt_sends_left == 0 &&
+                            context.slots[slot].cold_age + 1 >= context.refresh_cold_max_cycles;
+        }
+
+        insert_refresh(&context, 16, (uint8_t)(10 + cycle % 100));
+        uint8_t sent = pacing_cycle(&context);
+
+        if (sent == 16) {
+            changer_sends++;
+        } else {
+            ASSERT_GE(sent, (uint8_t)1) << "cycle " << cycle;
+            ASSERT_LE(sent, (uint8_t)15) << "cycle " << cycle;
+            EXPECT_TRUE(overdue[sent - 1]) << "cycle " << cycle << ": address " << (int)sent
+                                           << " was sent without being overdue";
+            idle_sends++;
+        }
+    }
+
+    const int owed = 15 * (window / context.refresh_cold_max_cycles + 1);
+    EXPECT_EQ(changer_sends + idle_sends, window);
+    EXPECT_LE(idle_sends, owed);
+    EXPECT_GE(changer_sends, window - owed);
+}
+
+// Invariant 2: 15 cold slots due on the same cycle, then a real update -- the update
+// goes first (its whole burst), whatever the ring position, then the batch in ring order.
+TEST(DccScheduler, prompt_never_waits_behind_due_cold_batch) {
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface;
+    pacing_init(&context, &interface);
+
+    for (dcc_address_t address = 1; address <= 16; address++) {
+        insert_refresh(&context, address, 20);
+    }
+    spend_bursts(&context, 16);
+
+    /* slots 0..14 all due on the next cycle, none overdue; slot 15 just sent */
+    for (int slot = 0; slot < 15; slot++) {
+        context.slots[slot].cold_age = context.refresh_cold_cycles;
+    }
+    context.slots[15].cold_age = 0;
+    ASSERT_LT(context.refresh_cold_cycles + context.refresh_prompt_sends + 15, context.refresh_cold_max_cycles);
+
+    insert_refresh(&context, 16, 99);
+    context.refresh_index = 0;   /* the due batch sits ahead of the update in the ring */
+
+    for (int i = 0; i < context.refresh_prompt_sends; i++) {
+        EXPECT_EQ(pacing_cycle(&context), (uint8_t)16) << "burst send " << i;
+    }
+    for (dcc_address_t address = 1; address <= 15; address++) {
+        EXPECT_EQ(pacing_cycle(&context), (uint8_t)address);
+    }
+}
+
+// Each cold slot keeps its own cadence: exactly one send per COLD_CYCLES, no clumping.
+TEST(DccScheduler, cold_slots_keep_independent_cadence) {
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface;
+    pacing_init(&context, &interface);
+
+    for (dcc_address_t address = 1; address <= 8; address++) {
+        insert_refresh(&context, address, 20);
+    }
+    spend_bursts(&context, 8);
+
+    const int cold = context.refresh_cold_cycles;
+    int last_send[9];
+    int sends[9];
+    for (int a = 0; a <= 8; a++) {
+        last_send[a] = -1;
+        sends[a] = 0;
+    }
+
+    for (int cycle = 0; cycle < 5 * cold; cycle++) {
+        uint8_t sent = pacing_cycle(&context);
+        if (sent == DCC_IDLE_ADDR_BYTE) {
+            continue;
+        }
+        ASSERT_GE(sent, (uint8_t)1);
+        ASSERT_LE(sent, (uint8_t)8);
+        if (last_send[sent] >= 0) {
+            EXPECT_EQ(cycle - last_send[sent], cold) << "address " << (int)sent;
+        }
+        last_send[sent] = cycle;
+        sends[sent]++;
+    }
+
+    for (int a = 1; a <= 8; a++) {
+        EXPECT_GE(sends[a], 4) << "address " << a;
+        EXPECT_LE(sends[a], 5) << "address " << a;
+    }
+}
+
+// Invariant 3: 15 slots kept permanently in their burst cannot hold a cold slot
+// past COLD_MAX_CYCLES.
+TEST(DccScheduler, cold_slot_never_starves_past_max) {
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface;
+    pacing_init(&context, &interface);
+    const int cold_max = context.refresh_cold_max_cycles;
+
+    insert_refresh(&context, 1, 20);
+    int last_send = -1;
+    for (int cycle = 0; cycle < context.refresh_prompt_sends; cycle++) {
+        if (pacing_cycle(&context) == 1) {
+            last_send = cycle;
+        }
+    }
+    ASSERT_EQ(last_send, context.refresh_prompt_sends - 1);
+
+    int starved_sends = 0;
+    for (int cycle = context.refresh_prompt_sends; cycle < 3 * cold_max; cycle++) {
+        for (dcc_address_t address = 2; address <= 16; address++) {
+            insert_refresh(&context, address, (uint8_t)(10 + cycle % 100));
+        }
+        if (pacing_cycle(&context) == 1) {
+            EXPECT_LE(cycle - last_send, cold_max) << "cycle " << cycle;
+            last_send = cycle;
+            starved_sends++;
+        }
+        ASSERT_LE(cycle - last_send, cold_max) << "address 1 unsent for more than COLD_MAX_CYCLES";
+    }
+    EXPECT_GE(starved_sends, 2);
+}
+
+// Invariant 4: COLD_CYCLES = 0 is today's flat round-robin, exactly.
+TEST(DccScheduler, cold_interval_zero_is_classic_round_robin) {
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface;
+    pacing_init(&context, &interface);
+    context.refresh_cold_cycles = 0;
+
+    for (dcc_address_t address = 1; address <= 5; address++) {
+        insert_refresh(&context, address, 20);
+    }
+
+    for (int cycle = 0; cycle < 100; cycle++) {
+        EXPECT_EQ(pacing_cycle(&context), (uint8_t)(cycle % 5 + 1)) << "cycle " << cycle;
+    }
+}
+
+// Invariant 5: a one-shot inserted mid-burst goes out first; the burst resumes after.
+TEST(DccScheduler, one_shot_still_beats_prompt_refresh) {
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface;
+    pacing_init(&context, &interface);
+    ASSERT_EQ(context.refresh_prompt_sends, 3);
+
+    insert_refresh(&context, 3, 50);
+    EXPECT_EQ(pacing_cycle(&context), (uint8_t)3);
+
+    dcc_packet_t cv_pkt;
+    DccApplicationCommandStationPacket_load_cv_write_pom(&cv_pkt, 5, DCC_ADDRESS_SHORT, 1, 8);
+    ASSERT_EQ(cv_pkt.repeat_count, DCC_REPEAT_CV_WRITE);
+    DccScheduler_insert(&context, &cv_pkt, 5, DCC_TAG_CV, DCC_PRIORITY_CV, false);
+
+    for (int i = 0; i < DCC_REPEAT_CV_WRITE; i++) {
+        EXPECT_EQ(pacing_cycle(&context), (uint8_t)5) << "one-shot send " << i;
+    }
+    EXPECT_EQ(pacing_cycle(&context), (uint8_t)3);   /* burst send 2 of 3 */
+    EXPECT_EQ(pacing_cycle(&context), (uint8_t)3);   /* burst send 3 of 3 */
+    EXPECT_EQ(pacing_cycle(&context), (uint8_t)DCC_IDLE_ADDR_BYTE);
+}
+
+// Invariant 5: the S-9.2 5 ms same-address spacer still applies inside a burst, and a
+// spacer does not use up a burst send.
+TEST(DccScheduler, same_address_spacing_survives_prompt_burst) {
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface;
+    pacing_init(&context, &interface);
+    ASSERT_EQ(context.refresh_prompt_sends, 3);
+
+    insert_refresh(&context, 115, 50);   /* first byte 0x73 aliases a service-mode command */
+
+    const uint8_t expected[6] = { 115, DCC_IDLE_ADDR_BYTE, 115, DCC_IDLE_ADDR_BYTE, 115, DCC_IDLE_ADDR_BYTE };
+    for (int cycle = 0; cycle < 6; cycle++) {
+        EXPECT_EQ(pacing_cycle(&context), expected[cycle]) << "cycle " << cycle;
+    }
+    EXPECT_EQ(on_packet_sent_count, (uint32_t)3);
+}
+
+// The keep-alive ceiling against the packet time-out (CV11, S-9.2.4 sec 4), at
+// compile time. The smallest CV11 this library's fail-safe honours is 1 = 0.1 s,
+// less than one pass over a 16-slot ring, so no refresh scheme can bound that; this
+// checks the ceiling against a documented floor instead (REFRESH_CV11_FLOOR, in CV11
+// units), with every cycle taken at its worst: longest packet, all zero bits as this
+// library's encoder sends them (two 58 us ticks per half), plus a RailCom cutout.
+#define REFRESH_CV11_FLOOR              20   /* 2.0 s with DCC_FAILSAFE_CV11_UNIT_US = 0.1 s */
+#define REFRESH_WORST_ZERO_BIT_US       (4u * DCC_ONE_BIT_HALF_PERIOD_US)
+#define REFRESH_WORST_CUTOUT_US         500u /* T_CE max 488 us, S-9.3.2 Table 1 */
+#define REFRESH_WORST_CYCLE_US                                                      \
+    ((uint32_t)USER_DEFINED_DCC_PREAMBLE_BITS_OPS * 2u * DCC_ONE_BIT_HALF_PERIOD_US \
+     + (uint32_t)DCC_PACKET_MAX_BYTES * 9u * REFRESH_WORST_ZERO_BIT_US              \
+     + 2u * DCC_ONE_BIT_HALF_PERIOD_US + REFRESH_WORST_CUTOUT_US)
+
+TEST(DccScheduler, cold_max_cycles_is_below_cv11_minimum) {
+    static_assert((uint64_t)DCC_REFRESH_COLD_MAX_CYCLES * REFRESH_WORST_CYCLE_US <
+                      (uint64_t)REFRESH_CV11_FLOOR * DCC_FAILSAFE_CV11_UNIT_US,
+                  "DCC_REFRESH_COLD_MAX_CYCLES of worst-case packets exceeds the documented CV11 floor");
+    EXPECT_LT((uint64_t)DCC_REFRESH_COLD_MAX_CYCLES * REFRESH_WORST_CYCLE_US,
+              (uint64_t)REFRESH_CV11_FLOOR * DCC_FAILSAFE_CV11_UNIT_US);
 }

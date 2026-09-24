@@ -112,6 +112,52 @@ extern "C" {
      *  so this is a maintainer policy: 2 = one repeat to survive a single lost packet. */
 #define DCC_REPEAT_ONE_SHOT_DEFAULT         2
 
+// =============================================================================
+// Auto-refresh pacing (command station scheduler, issue #5)
+//
+// A refresh slot is sent at full rate for DCC_REFRESH_PROMPT_SENDS turns after
+// each insert, then drops to a keep-alive: once every DCC_REFRESH_COLD_CYCLES
+// packet cycles, and never less often than every DCC_REFRESH_COLD_MAX_CYCLES.
+// Counts are packet cycles (one packet on the track each, about 6-7 ms for a
+// speed packet; longer packets make a cycle longer). Each can be overridden in
+// dcc_user_config.h.
+//
+// The ceiling is what a decoder's packet time-out (CV11, S-9.2.4 sec 4) has to
+// cover for an idle locomotive: at ~6.7 ms per cycle the default is ~0.8 s,
+// plus one packet per other slot that falls overdue on the same cycle. Keep
+// CV11 on such decoders at 0 (off) or comfortably above it.
+// =============================================================================
+
+    /** @brief Full-rate sends after each insert, before the slot goes cold. Like
+     *  DCC_REPEAT_ONE_SHOT_DEFAULT, more than one so a single lost packet does not
+     *  lose the change. */
+#ifndef DCC_REFRESH_PROMPT_SENDS
+#define DCC_REFRESH_PROMPT_SENDS            3
+#endif
+
+    /** @brief Keep-alive interval of a cold slot, in packet cycles (~0.4 s).
+     *  0 disables the cold tier: every refresh slot is sent in turn, as a flat ring. */
+#ifndef DCC_REFRESH_COLD_CYCLES
+#define DCC_REFRESH_COLD_CYCLES             60
+#endif
+
+    /** @brief Longest a cold slot may go unsent, in packet cycles (~0.8 s). An
+     *  overdue slot is sent ahead of changed ones, so a stream of throttle
+     *  changes cannot hold an idle locomotive off the track. */
+#ifndef DCC_REFRESH_COLD_MAX_CYCLES
+#define DCC_REFRESH_COLD_MAX_CYCLES         120
+#endif
+
+#if DCC_REFRESH_COLD_CYCLES > 0 && DCC_REFRESH_COLD_MAX_CYCLES < DCC_REFRESH_COLD_CYCLES
+#error "DCC_REFRESH_COLD_MAX_CYCLES must be >= DCC_REFRESH_COLD_CYCLES"
+#endif
+#if DCC_REFRESH_COLD_CYCLES > 0 && DCC_REFRESH_PROMPT_SENDS < 1
+#error "DCC_REFRESH_PROMPT_SENDS must be >= 1 while the cold tier is on, or a change waits a whole keep-alive interval"
+#endif
+#if DCC_REFRESH_COLD_MAX_CYCLES > 65535 || DCC_REFRESH_PROMPT_SENDS > 255
+#error "DCC_REFRESH_COLD_MAX_CYCLES must fit 16 bits and DCC_REFRESH_PROMPT_SENDS 8 bits"
+#endif
+
     /** @brief Minimum preamble bits for service mode */
 #define DCC_PREAMBLE_BITS_SERVICE           20
 
