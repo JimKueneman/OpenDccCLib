@@ -859,4 +859,70 @@ TEST(DccServiceModeTaskPaged, on_primitive_complete_when_idle_no_crash) {
 
 }
 
+// ============================================================================
+// Primitive refusals: at entry (return false, no callback) and mid-chain
+// (BUSY through on_complete); both leave the task IDLE for the next call.
+// ============================================================================
+
+TEST(DccServiceModeTaskPaged, write_cv_paged_write_fails_at_entry_returns_false_and_idle) {
+    setup();
+    paged_write_return = false;
+    EXPECT_FALSE(DccServiceModeTaskPaged_write_cv(1, 0x55, mock_on_complete, mock_on_progress));
+    EXPECT_EQ(on_complete_count, (uint32_t)0);
+    paged_write_return = true;
+    EXPECT_TRUE(DccServiceModeTaskPaged_write_cv(1, 0x55, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskPaged, write_cv_paged_verify_fails_mid_chain_completes_busy) {
+    setup();
+    DccServiceModeTaskPaged_write_cv(1, 0x55, mock_on_complete, mock_on_progress);
+    paged_verify_return = false;
+    DccServiceModeTaskPaged_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);   /* write done -> verify refused */
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+    paged_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskPaged_write_cv(1, 0x55, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskPaged, read_bit_paged_verify_fails_at_entry_returns_false_and_idle) {
+    setup();
+    paged_verify_return = false;
+    EXPECT_FALSE(DccServiceModeTaskPaged_read_bit(1, 3, mock_on_complete, mock_on_progress));
+    EXPECT_EQ(on_complete_count, (uint32_t)0);
+    paged_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskPaged_read_bit(1, 3, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskPaged, write_bit_paged_verify_fails_at_entry_returns_false_and_idle) {
+    setup();
+    paged_verify_return = false;
+    EXPECT_FALSE(DccServiceModeTaskPaged_write_bit(1, 3, true, mock_on_complete, mock_on_progress));
+    EXPECT_EQ(on_complete_count, (uint32_t)0);
+    paged_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskPaged_write_bit(1, 3, true, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskPaged, write_bit_paged_write_fails_after_scan_completes_busy) {
+    setup();
+    DccServiceModeTaskPaged_write_bit(1, 3, true, mock_on_complete, mock_on_progress);
+    paged_write_return = false;
+    DccServiceModeTaskPaged_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);   /* byte found at 0 -> write refused */
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+    paged_write_return = true;
+    EXPECT_TRUE(DccServiceModeTaskPaged_write_bit(1, 3, true, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskPaged, write_bit_paged_verify_fails_after_write_completes_busy) {
+    setup();
+    DccServiceModeTaskPaged_write_bit(1, 3, true, mock_on_complete, mock_on_progress);
+    DccServiceModeTaskPaged_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);   /* byte found -> write issued */
+    paged_verify_return = false;
+    DccServiceModeTaskPaged_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);   /* write done -> verify refused */
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+    paged_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskPaged_write_bit(1, 3, true, mock_on_complete, mock_on_progress));
+}
+
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_PAGED */

@@ -152,10 +152,12 @@ static interface_dcc_application_command_station_service_track_t make_interface(
     i.register_read_bit = mock_reg_read_bit;
     i.register_write_bit = mock_reg_write_bit;
     i.register_factory_reset = mock_reg_factory_reset;
+    i.register_verify_value = mock_reg_write_cv;
 #endif
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
     i.address_read = mock_addr_read;
     i.address_write = mock_addr_write;
+    i.address_verify = mock_addr_write;
     i.address_read_bit = mock_addr_read_bit;
     i.address_write_bit = mock_addr_write_bit;
 #endif
@@ -423,5 +425,102 @@ TEST(DccApplicationCommandStationServiceTrack, detect_mode_null_member_returns_f
 }
 
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_DETECT */
+
+// ============================================================================
+// Remaining delegations (verify ops)
+// ============================================================================
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+
+TEST(DccApplicationCommandStationServiceTrack, register_verify_value_delegates) {
+    setup();
+    EXPECT_TRUE(DccApplicationCommandStationServiceTrack_register_verify_value(29, 0x5A, DCC_DECODER_TYPE_ACCESSORY, dummy_on_complete, dummy_on_progress));
+    EXPECT_EQ(op_count, (uint32_t)1);
+    EXPECT_EQ(last_cv, (uint16_t)29);
+    EXPECT_EQ(last_value, (uint8_t)0x5A);
+    EXPECT_EQ(last_decoder_type, DCC_DECODER_TYPE_ACCESSORY);
+    EXPECT_EQ(last_on_complete, dummy_on_complete);
+    EXPECT_EQ(last_on_progress, dummy_on_progress);
+}
+
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_REGISTER */
+
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
+
+TEST(DccApplicationCommandStationServiceTrack, address_verify_delegates) {
+    setup();
+    EXPECT_TRUE(DccApplicationCommandStationServiceTrack_address_verify(99, dummy_on_complete, dummy_on_progress));
+    EXPECT_EQ(op_count, (uint32_t)1);
+    EXPECT_EQ(last_address, (uint8_t)99);
+    EXPECT_EQ(last_on_complete, dummy_on_complete);
+    EXPECT_EQ(last_on_progress, dummy_on_progress);
+}
+
+#endif /* DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS */
+
+// ============================================================================
+// Null guards: every op is a no-op / returns false with no interface wired,
+// and again with the interface present but the member left unset.
+// ============================================================================
+
+static void expect_all_task_ops_refused(void) {
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_direct_read_cv(1, dummy_on_complete, dummy_on_progress));
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_direct_write_cv(1, 2, dummy_on_complete, dummy_on_progress));
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_direct_read_bit(1, 2, dummy_on_complete, dummy_on_progress));
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_direct_write_bit(1, 2, true, dummy_on_complete, dummy_on_progress));
+#endif
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_paged_read_cv(1, dummy_on_complete, dummy_on_progress));
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_paged_write_cv(1, 2, dummy_on_complete, dummy_on_progress));
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_paged_read_bit(1, 2, dummy_on_complete, dummy_on_progress));
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_paged_write_bit(1, 2, true, dummy_on_complete, dummy_on_progress));
+#endif
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_register_read_cv(1, DCC_DECODER_TYPE_MOBILE, dummy_on_complete, dummy_on_progress));
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_register_write_cv(1, 2, DCC_DECODER_TYPE_MOBILE, dummy_on_complete, dummy_on_progress));
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_register_read_bit(1, 2, DCC_DECODER_TYPE_MOBILE, dummy_on_complete, dummy_on_progress));
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_register_write_bit(1, 2, true, DCC_DECODER_TYPE_MOBILE, dummy_on_complete, dummy_on_progress));
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_register_factory_reset(dummy_on_complete));
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_register_verify_value(1, 2, DCC_DECODER_TYPE_MOBILE, dummy_on_complete, dummy_on_progress));
+#endif
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_address_read(dummy_on_complete, dummy_on_progress));
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_address_write(3, dummy_on_complete, dummy_on_progress));
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_address_verify(3, dummy_on_complete, dummy_on_progress));
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_address_read_bit(2, dummy_on_complete, dummy_on_progress));
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_address_write_bit(2, true, dummy_on_complete, dummy_on_progress));
+#endif
+#ifdef DCC_COMPILE_SERVICE_MODE_TASK_DETECT
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_detect_mode(dummy_on_detect));
+#endif
+    EXPECT_EQ(op_count, (uint32_t)0);
+}
+
+TEST(DccApplicationCommandStationServiceTrack, session_ops_null_interface_are_noops) {
+    reset_state();
+    DccApplicationCommandStationServiceTrack_initialize(NULL);
+
+    DccApplicationCommandStationServiceTrack_power_on();
+    DccApplicationCommandStationServiceTrack_power_off();
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_enter_service_mode());
+    EXPECT_FALSE(DccApplicationCommandStationServiceTrack_is_service_mode_active());
+
+    EXPECT_EQ(call_log_len, 0);
+}
+
+TEST(DccApplicationCommandStationServiceTrack, task_ops_null_interface_return_false) {
+    reset_state();
+    DccApplicationCommandStationServiceTrack_initialize(NULL);
+    expect_all_task_ops_refused();
+}
+
+TEST(DccApplicationCommandStationServiceTrack, task_ops_null_member_return_false) {
+    reset_state();
+    memset(&_iface, 0, sizeof(_iface));
+    DccApplicationCommandStationServiceTrack_initialize(&_iface);
+    expect_all_task_ops_refused();
+}
 
 #endif /* DCC_COMPILE_COMMAND_STATION */

@@ -456,3 +456,220 @@ TEST(DccRailcomDecoder, transmit_ch2_ack_token) {
     EXPECT_EQ(frames[2], (uint8_t)DCC_RAILCOM_CODE_WORD_ACK);
 
 }
+
+TEST(DccRailcomDecoder, transmit_ch2_nack_token) {
+
+    reset_mocks();
+    interface_dcc_railcom_decoder_t interface = make_interface();
+    interface.on_railcom_request = mock_on_railcom_request;
+    DccRailcomDecoder_initialize(&interface);
+    DccRailcomDecoder_set_address(3, DCC_ADDRESS_SHORT);
+
+    mock_request_status = DCC_RAILCOM_REPLY_NACK;
+
+    uint8_t data[] = { 0x03, 0x60, 0x63 };
+    DccRailcomDecoder_on_byte_received(data, 1);
+    DccRailcomDecoder_on_byte_received(data, 2);
+    DccRailcomDecoder_transmit(data, 3);
+
+    uint8_t frames[16];
+    EXPECT_EQ(decode_tx_frames(frames, 16), (uint8_t)3);
+    EXPECT_EQ(frames[2], (uint8_t)DCC_RAILCOM_CODE_WORD_NACK);
+
+}
+
+TEST(DccRailcomDecoder, transmit_ch2_busy_token) {
+
+    reset_mocks();
+    interface_dcc_railcom_decoder_t interface = make_interface();
+    interface.on_railcom_request = mock_on_railcom_request;
+    DccRailcomDecoder_initialize(&interface);
+    DccRailcomDecoder_set_address(3, DCC_ADDRESS_SHORT);
+
+    mock_request_status = DCC_RAILCOM_REPLY_BUSY;
+
+    uint8_t data[] = { 0x03, 0x60, 0x63 };
+    DccRailcomDecoder_on_byte_received(data, 1);
+    DccRailcomDecoder_on_byte_received(data, 2);
+    DccRailcomDecoder_transmit(data, 3);
+
+    uint8_t frames[16];
+    EXPECT_EQ(decode_tx_frames(frames, 16), (uint8_t)3);
+    EXPECT_EQ(frames[2], (uint8_t)DCC_RAILCOM_CODE_WORD_BUSY);
+
+}
+
+// ============================================================================
+// Recognizer: the rest of the S-9.2.1 instruction length table
+// ============================================================================
+
+/* Short address 0x03 followed by the opcode under test; the expected total is
+ * 1 (address) + instruction bytes + 1 (XOR), or 0 when the opcode is not sized. */
+static uint8_t length_for_opcode(uint8_t opcode) {
+
+    uint8_t data[] = { 0x03, opcode, 0x00, 0x00, 0x00 };
+    return DccRailcomDecoder_packet_length(data, 2);
+
+}
+
+TEST(DccRailcomDecoder, packet_length_advanced_ops_forms) {
+
+    EXPECT_EQ(length_for_opcode(DCC_ADV_OPS_128_SPEED), (uint8_t)4);        /* 0x3F + speed */
+    EXPECT_EQ(length_for_opcode(DCC_ADV_OPS_ANALOG_FUNCTION), (uint8_t)5);  /* 0x3D + output + data */
+    EXPECT_EQ(length_for_opcode(0x3E), (uint8_t)0);                         /* other advanced ops: not sized */
+
+}
+
+TEST(DccRailcomDecoder, packet_length_function_group2) {
+
+    EXPECT_EQ(length_for_opcode(0xA0), (uint8_t)3);
+    EXPECT_EQ(length_for_opcode(0xBF), (uint8_t)3);
+
+}
+
+TEST(DccRailcomDecoder, packet_length_feature_expansion_forms) {
+
+    EXPECT_EQ(length_for_opcode(DCC_FEAT_BINARY_STATE_LONG), (uint8_t)5);   /* 0xC0 + 2 data */
+    EXPECT_EQ(length_for_opcode(DCC_FEAT_BINARY_STATE_SHORT), (uint8_t)4);  /* 0xDD + 1 data */
+
+    /* Every feature-expansion function group: opcode + 1 data byte. */
+    EXPECT_EQ(length_for_opcode(DCC_FEAT_F13_F20), (uint8_t)4);
+    EXPECT_EQ(length_for_opcode(DCC_FEAT_F21_F28), (uint8_t)4);
+    EXPECT_EQ(length_for_opcode(DCC_FEAT_F29_F36), (uint8_t)4);
+    EXPECT_EQ(length_for_opcode(DCC_FEAT_F37_F44), (uint8_t)4);
+    EXPECT_EQ(length_for_opcode(DCC_FEAT_F45_F52), (uint8_t)4);
+    EXPECT_EQ(length_for_opcode(DCC_FEAT_F53_F60), (uint8_t)4);
+    EXPECT_EQ(length_for_opcode(DCC_FEAT_F61_F68), (uint8_t)4);
+
+    /* Time/date, system time and the other 0xC0 forms are not sized here. */
+    EXPECT_EQ(length_for_opcode(DCC_FEAT_TIME_DATE), (uint8_t)0);
+    EXPECT_EQ(length_for_opcode(DCC_FEAT_SYSTEM_TIME), (uint8_t)0);
+    EXPECT_EQ(length_for_opcode(0xC3), (uint8_t)0);
+
+}
+
+TEST(DccRailcomDecoder, packet_length_pom_long_forms) {
+
+    EXPECT_EQ(length_for_opcode(DCC_CV_LONG_VERIFY), (uint8_t)5);
+    EXPECT_EQ(length_for_opcode(DCC_CV_LONG_BIT), (uint8_t)5);
+    EXPECT_EQ(length_for_opcode(DCC_CV_LONG_WRITE), (uint8_t)5);
+
+}
+
+TEST(DccRailcomDecoder, packet_length_decoder_control_not_sized) {
+
+    EXPECT_EQ(length_for_opcode(0x00), (uint8_t)0);
+    EXPECT_EQ(length_for_opcode(0x0F), (uint8_t)0);
+
+}
+
+TEST(DccRailcomDecoder, packet_length_and_address_with_zero_count) {
+
+    uint8_t data[] = { 0x03, 0x60, 0x63 };
+    dcc_address_t address = 0xFFFF;
+    dcc_address_type_enum type = DCC_ADDRESS_SHORT;
+
+    EXPECT_EQ(DccRailcomDecoder_packet_length(data, 0), (uint8_t)0);
+    EXPECT_FALSE(DccRailcomDecoder_packet_address(data, 0, &address, &type));
+
+}
+
+// ============================================================================
+// Tx engine guards: missing hooks, address-type mismatch, short XOR buffer
+// ============================================================================
+
+TEST(DccRailcomDecoder, transmit_no_response_on_address_type_mismatch) {
+
+    reset_mocks();
+    interface_dcc_railcom_decoder_t interface = make_interface();
+    DccRailcomDecoder_initialize(&interface);
+    DccRailcomDecoder_set_address(3, DCC_ADDRESS_LONG);   /* long 3, packet is short 3 */
+
+    uint8_t data[] = { 0x03, 0x60, 0x63 };
+    DccRailcomDecoder_on_byte_received(data, 1);
+    DccRailcomDecoder_on_byte_received(data, 2);
+    DccRailcomDecoder_transmit(data, 3);
+
+    EXPECT_EQ(tx_level_count, (uint16_t)0);
+
+}
+
+TEST(DccRailcomDecoder, transmit_no_response_when_packet_shorter_than_xor) {
+
+    reset_mocks();
+    interface_dcc_railcom_decoder_t interface = make_interface();
+    DccRailcomDecoder_initialize(&interface);
+    DccRailcomDecoder_set_address(3, DCC_ADDRESS_SHORT);
+
+    uint8_t data[] = { 0x03, 0x60, 0x63 };
+    DccRailcomDecoder_on_byte_received(data, 1);
+    DccRailcomDecoder_on_byte_received(data, 2);   /* armed */
+    DccRailcomDecoder_transmit(data, 1);           /* nothing to XOR-check: refuse */
+
+    EXPECT_EQ(tx_level_count, (uint16_t)0);
+
+}
+
+static void arm_and_transmit_with(interface_dcc_railcom_decoder_t *interface) {
+
+    reset_mocks();
+    DccRailcomDecoder_initialize(interface);
+    DccRailcomDecoder_set_address(3, DCC_ADDRESS_SHORT);
+
+    uint8_t data[] = { 0x03, 0x60, 0x63 };
+    DccRailcomDecoder_on_byte_received(data, 1);
+    DccRailcomDecoder_on_byte_received(data, 2);
+    DccRailcomDecoder_transmit(data, 3);
+
+}
+
+TEST(DccRailcomDecoder, transmit_without_tx_pin_hook_is_silent) {
+
+    interface_dcc_railcom_decoder_t interface = make_interface();
+    interface.tx_pin_set = NULL;
+    arm_and_transmit_with(&interface);
+
+    EXPECT_EQ(tx_level_count, (uint16_t)0);
+    EXPECT_EQ(lock_count, (uint32_t)0);
+
+}
+
+TEST(DccRailcomDecoder, transmit_without_delay_hook_is_silent) {
+
+    interface_dcc_railcom_decoder_t interface = make_interface();
+    interface.delay_us = NULL;
+    arm_and_transmit_with(&interface);
+
+    EXPECT_EQ(tx_level_count, (uint16_t)0);
+    EXPECT_EQ(lock_count, (uint32_t)0);
+
+}
+
+TEST(DccRailcomDecoder, transmit_without_lock_hooks_still_bit_bangs) {
+
+    interface_dcc_railcom_decoder_t interface = make_interface();
+    interface.lock_shared_resources = NULL;
+    interface.unlock_shared_resources = NULL;
+    arm_and_transmit_with(&interface);
+
+    uint8_t frames[16];
+    EXPECT_EQ(decode_tx_frames(frames, 16), (uint8_t)2);
+    EXPECT_EQ(lock_count, (uint32_t)0);
+    EXPECT_EQ(unlock_count, (uint32_t)0);
+
+}
+
+TEST(DccRailcomDecoder, transmit_with_null_interface_is_silent) {
+
+    reset_mocks();
+    DccRailcomDecoder_initialize(NULL);
+    DccRailcomDecoder_set_address(3, DCC_ADDRESS_SHORT);
+
+    uint8_t data[] = { 0x03, 0x60, 0x63 };
+    DccRailcomDecoder_on_byte_received(data, 1);
+    DccRailcomDecoder_on_byte_received(data, 2);
+    DccRailcomDecoder_transmit(data, 3);
+
+    EXPECT_EQ(tx_level_count, (uint16_t)0);
+
+}

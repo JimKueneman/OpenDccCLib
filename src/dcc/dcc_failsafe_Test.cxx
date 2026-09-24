@@ -319,3 +319,52 @@ TEST(DccFailsafe, cv_read_failure_does_not_trip) {
     EXPECT_EQ(fake_enter_count, 0u);
 
 }
+
+// ============================================================================
+// Missing interface / missing hooks: every entry point is a safe no-op
+// ============================================================================
+
+TEST(DccFailsafe, null_interface_is_inert) {
+
+    reset_fakes();
+    DccFailsafe_initialize(NULL);
+
+    DccFailsafe_note_valid_packet();
+    DccFailsafe_run();
+
+    EXPECT_FALSE(DccFailsafe_is_active());
+    EXPECT_EQ(fake_enter_count, 0u);
+
+}
+
+TEST(DccFailsafe, no_clock_hook_never_trips) {
+
+    reset_fakes();
+    fake_cv11 = CV11_20_SECONDS;
+    interface_dcc_failsafe_t interface = make_interface();
+    interface.get_timestamp_usec = NULL;
+    DccFailsafe_initialize(&interface);
+
+    DccFailsafe_note_valid_packet();      /* nothing to stamp with */
+    fake_now_usec += TWENTY_SECONDS_US;
+    DccFailsafe_run();                    /* cannot measure elapsed time */
+
+    EXPECT_FALSE(DccFailsafe_is_active());
+    EXPECT_EQ(fake_enter_count, 0u);
+
+}
+
+TEST(DccFailsafe, no_cv_read_hook_never_trips) {
+
+    reset_fakes();
+    interface_dcc_failsafe_t interface = make_interface();
+    interface.cv_read = NULL;
+    DccFailsafe_initialize(&interface);
+
+    fake_now_usec += TWENTY_SECONDS_US;
+    DccFailsafe_run();                    /* CV11 unreadable: no timeout */
+
+    EXPECT_FALSE(DccFailsafe_is_active());
+    EXPECT_EQ(fake_enter_count, 0u);
+
+}
