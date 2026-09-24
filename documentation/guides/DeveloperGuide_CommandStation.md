@@ -126,6 +126,9 @@ Each `DCC_COMPILE_SERVICE_MODE_*` flag requires `DCC_COMPILE_COMMAND_STATION`; `
 | Define | Example value | Meaning |
 |---|---|---|
 | `USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT` | 24 | Scheduler slots. One (address, tag) pair per slot, so a loco with speed plus two function groups uses three |
+| `DCC_REFRESH_PROMPT_SENDS` | 3 (library default) | Full-rate sends of a refresh slot after each insert, before it goes cold |
+| `DCC_REFRESH_COLD_CYCLES` | 60 (library default) | Keep-alive interval of a cold refresh slot, in packet cycles (about 0.4 s); 0 disables the tier and restores the flat ring |
+| `DCC_REFRESH_COLD_MAX_CYCLES` | 120 (library default) | Longest any refresh slot may go unsent, in packet cycles (about 0.8 s); see 9.5 |
 | `USER_DEFINED_DCC_MAX_LOCOS` | 10 | Locomotives tracked by the demo application's loco table |
 | `USER_DEFINED_DCC_PREAMBLE_BITS_OPS` | 18 | Operations-mode preamble; ≥ 14, ≥ 16 with RailCom |
 | `USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH` | 4 | Ring of decoded RailCom datagrams |
@@ -135,7 +138,7 @@ Each `DCC_COMPILE_SERVICE_MODE_*` flag requires `DCC_COMPILE_COMMAND_STATION`; `
 | `USER_DEFINED_DCC_ACK_MAX_DURATION_US` | 7000 | Longest pulse accepted; longer is treated as over-current, not an ACK |
 | `USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US` | 116 | Gap inside a pulse the ACK counter tolerates |
 
-The example values are those of the shipped command-station project; `templates/typical/dcc_user_config.h` holds a smaller default set.
+The example values are those of the shipped command-station project; `templates/typical/dcc_user_config.h` holds a smaller default set. The three `DCC_REFRESH_*` values are library defaults from `dcc_defines.h`; define any of them in `dcc_user_config.h` to override.
 
 ## 5. Initialization — command_station.c
 
@@ -274,7 +277,7 @@ The encoder walks the packet in order: preamble ones, then for each byte a start
 
 ### 9.1 Slots
 
-The scheduler owns a static array of `USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT` slots. Each holds one packet (up to 6 bytes), its address, tag, priority, repeat count and auto-refresh flag. `DccApplicationCommandStationMainTrack_send_packet()` inserts a one-shot; `_add_to_auto_refresh()` inserts a refreshed slot. Both reuse an existing slot with the same (address, tag).
+The scheduler owns a static array of `USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT` slots. Each holds one packet (up to 6 bytes), its address, tag, priority, repeat count, auto-refresh flag and two pacing counters: full-rate sends still owed and packet cycles since the slot was last sent. `DccApplicationCommandStationMainTrack_send_packet()` inserts a one-shot; `_add_to_auto_refresh()` inserts a refreshed slot. Both reuse an existing slot with the same (address, tag).
 
 ### 9.2 Priority
 
@@ -308,7 +311,19 @@ A one-shot slot is sent `repeat_count` times; the scheduler decrements after eac
 
 ### 9.5 Auto-Refresh
 
-Speed and function commands should be repeated so a decoder keeps hearing them. A slot marked for auto-refresh is round-robined between one-shots and is never dropped until removed. The round trip is the number of active refresh slots times one packet time, about 7 ms; keep pools sized to what is actually driven. Two rules from S-9.2 are enforced in the scheduler: a same-address packet for short addresses 112–127 is never sent within 5 ms of the previous one (an idle spacer is inserted), and an idle packet goes out whenever nothing else is due.
+Speed and function commands should be repeated so a decoder keeps hearing them. A slot marked for auto-refresh is never dropped until removed, and it is paced in two tiers so a large pool does not slow down the few locomotives being driven:
+
+| Value (`dcc_defines.h`, overridable) | Default | Effect |
+|---|---|---|
+| `DCC_REFRESH_PROMPT_SENDS` | 3 | Every insert (a new or changed command) is sent this many times at full rate, one per packet cycle, so a single lost packet does not lose the change |
+| `DCC_REFRESH_COLD_CYCLES` | 60 (about 0.4 s) | After the burst the slot is "cold" and is re-sent once per this many packet cycles as a keep-alive. 0 disables the tier: every refresh slot is sent in turn, as a flat ring |
+| `DCC_REFRESH_COLD_MAX_CYCLES` | 120 (about 0.8 s) | Ceiling: a slot unsent for this long is "overdue" and goes ahead of everything, so a stream of throttle changes cannot hold a locomotive off the track |
+
+Each packet cycle the scheduler ages every refresh slot, then picks, round-robin within each group: an overdue slot; else a slot still in its burst; else a merely-due cold slot. Right after an overdue send a waiting burst goes first, so under overload changes and overdue keep-alives alternate. A changed command therefore reaches the wire within one packet cycle when nothing else is in its burst, and shares the burst pass fairly with other simultaneous changes. A cycle with nothing due sends an idle packet.
+
+The ceiling exists because of the decoder packet time-out (S-9.2.4 section 4, CV 11): a decoder stops when no packet addressed to it arrives in time, and idle packets do not count. With the worst-case packet (6 bytes, all zero bits, a RailCom cutout, about 15 ms) 120 cycles is 1.8 s, so the documented floor for CV 11 on a layout driven by this library is 20 (2.0 s in the decoder's 0.1 s units) or 0 (off); a compile-time check pins the ceiling under that floor. Keeping the keep-alive under a second also keeps idle locomotives visible to RailCom occupancy detectors, which learn addresses from replies to addressed packets.
+
+Two rules from S-9.2 are enforced in the scheduler regardless of pacing: a same-address packet for short addresses 112–127 is never sent within 5 ms of the previous one (an idle spacer is inserted), and an idle packet goes out whenever nothing else is due.
 
 ## 10. Service Mode Programming
 
@@ -420,12 +435,12 @@ cd test
 make            # configures CMake, builds, runs every binary serially, writes test/coverage.html
 ```
 
-At generation time: 29 test binaries, 1130 tests, 0 failures, 0 warnings; line coverage 95.3 %, function coverage 97.7 %, branch coverage 87.6 % (gcovr). The build also compiles six single-role configurations so a missing `DCC_COMPILE_*` guard fails as a compile or link error.
+At generation time: 29 test binaries, 1144 tests, 0 failures, 0 warnings; line coverage 95.4 %, function coverage 97.7 %, branch coverage 87.8 % (gcovr). The build also compiles six single-role configurations so a missing `DCC_COMPILE_*` guard fails as a compile or link error.
 
 | Test file | What it tests |
 |---|---|
 | `dcc_bit_encoder_Test` | Bit timing, preamble, framing, cutout armed at the end bit's last edge |
-| `dcc_scheduler_Test` | Priority, duplicate combining, round-robin, 5 ms spacing, repeat counts untouched and overridden |
+| `dcc_scheduler_Test` | Priority, duplicate combining, refresh pacing (burst, keep-alive, ceiling, fairness, flat-ring mode, CV 11 floor), 5 ms spacing, repeat counts untouched and overridden |
 | `dcc_application_command_station_packet_Test` | Byte-exact vectors for every builder plus its repeat default |
 | `dcc_application_command_station_main_track_Test`, `..._service_track_Test` | Application API |
 | `dcc_service_mode_{direct,paged,register,address,common}_Test` | Per-mode primitives, ACK detection, failed-start handling |

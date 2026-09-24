@@ -123,10 +123,10 @@ Type `HELP` for the full list. Every command answers `OK: ...` or `ERR: ...`.
 | Command | Description |
 |---|---|
 | `POWER ON|OFF` | Track power |
-| `SPEED <addr> <speed> <FWD|REV> [14|28|128]` | Speed and direction; auto-refreshed |
+| `SPEED <addr> <speed> <FWD|REV> [14|28|128]` | Speed and direction; auto-refreshed (sent 3 times at once, then kept alive about every 0.4 s) |
 | `ESTOP [addr]` | Emergency stop, one loco or broadcast |
 | `STOP` | Broadcast controlled stop |
-| `FUNC <addr> <0-68> <ON|OFF>` | Function on or off; auto-refreshed |
+| `FUNC <addr> <0-68> <ON|OFF>` | Function on or off; auto-refreshed the same way |
 | `ACC <board> <pair> <ON|OFF>` / `ACCE <addr> <aspect>` / `NOP <addr> [E]` | Basic accessory, extended accessory, accessory NOP |
 | `ACC CV ...` / `ACCE CV ...` | Accessory operations-mode CV write, verify, bit |
 | `CV WRITE|VERIFY <addr> <cv> <value>` / `CV BIT <addr> <cv> <bit> <0|1>` | Loco operations-mode CV access |
