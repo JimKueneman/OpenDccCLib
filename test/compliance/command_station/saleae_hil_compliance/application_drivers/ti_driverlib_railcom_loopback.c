@@ -29,7 +29,13 @@ static volatile uint8_t  _rx_tail = 0;          /* uart_read (main loop) writes;
 static volatile bool     _gate_open = false;    /* true only while a Ch1/Ch2 window is open */
 
 /* --- mock transmit side ------------------------------------------------- */
-static volatile bool               _armed = false;
+/* An arm from the UART command (main loop) can land at any point of the packet
+ * cycle, including inside a cutout whose Channel 1 window has already opened.
+ * So the arm only sets _armed; the cutout-begin hook latches it into _play for
+ * that whole cutout, and the window / cutout-end hooks act on _play. A reply
+ * therefore always plays complete on the NEXT cutout, never half of this one. */
+static volatile bool               _armed = false;   /* set by arm(), consumed at cutout begin */
+static volatile bool               _play  = false;   /* this cutout carries the reply */
 static volatile rc_loopback_mode_t _mode = RC_LOOPBACK_MODE_WINDOW;
 static uint8_t                     _ch1[RC_CH1_MAX];
 static uint8_t                     _ch2[RC_CH2_MAX];
@@ -97,6 +103,10 @@ void TI_RailcomLoopback_on_cutout_begin(void) {
     _window_index = 0;
     _gate_open = false;
 
+    /* Latch the arm for this whole cutout (see _play). */
+    _play = _armed;
+    _armed = false;
+
     /* Flush: nothing from an earlier cutout may be read as this one's reply. */
     while (!DL_UART_Main_isRXFIFOEmpty(RAILCOM_RX_INST)) {
         (void)DL_UART_Main_receiveData(RAILCOM_RX_INST);
@@ -109,7 +119,7 @@ void TI_RailcomLoopback_on_window_open(void) {
     _gate_open = true;
     _window_index++;
 
-    if (_armed && _mode == RC_LOOPBACK_MODE_WINDOW) {
+    if (_play && _mode == RC_LOOPBACK_MODE_WINDOW) {
 
         if (_window_index == 1u) {
             _tx_start(_ch1, _n1);            /* T_TS1: Channel 1 */
@@ -128,7 +138,7 @@ void TI_RailcomLoopback_on_cutout_end(void) {
 
     _gate_open = false;
 
-    if (_armed && _mode == RC_LOOPBACK_MODE_LATE) {
+    if (_play && _mode == RC_LOOPBACK_MODE_LATE) {
 
         /* Everything after the gate closed: Ch1 then Ch2 back to back. */
         uint8_t all[RC_TX_MAX];
@@ -138,7 +148,7 @@ void TI_RailcomLoopback_on_cutout_end(void) {
         _tx_start(all, n);
     }
 
-    _armed = false;                          /* one reply per arm, either mode */
+    _play = false;                           /* one reply per arm, either mode */
 }
 
 bool TI_RailcomLoopback_arm(const uint8_t *ch1, uint8_t n1,
@@ -150,6 +160,7 @@ bool TI_RailcomLoopback_arm(const uint8_t *ch1, uint8_t n1,
     }
 
     _armed = false;                          /* the ISR must not see a half-written arm */
+    _play = false;
     memcpy(_ch1, ch1, n1);
     memcpy(_ch2, ch2, n2);
     _n1 = n1;
@@ -162,11 +173,12 @@ bool TI_RailcomLoopback_arm(const uint8_t *ch1, uint8_t n1,
 void TI_RailcomLoopback_disarm(void) {
 
     _armed = false;
+    _play = false;
 }
 
 void TI_RailcomLoopback_get_stats(rc_loopback_stats_t *out) {
 
-    out->armed = _armed;
+    out->armed = _armed || _play;
     out->cutouts = _cutouts;
     out->rx_accepted = _rx_accepted;
     out->rx_dropped = _rx_dropped;
