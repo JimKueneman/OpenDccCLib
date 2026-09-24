@@ -1279,6 +1279,26 @@ TEST(DccConfig, direct_write_cv_task_completes_through_primitive_dispatcher) {
     DccApplicationCommandStationServiceTrack_exit_service_mode();
 }
 
+TEST(DccConfig, direct_read_cv_task_reports_no_ack_through_primitive_dispatcher) {
+    dcc_config_t cfg = make_test_config();
+    cfg.service_track.pin_toggle = mock_svc_pin_toggle;
+    cfg.service_track.current_sense_read = mock_current_sense_silent;
+    DccConfig_initialize(&cfg);
+
+    task_complete_count = 0;
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    EXPECT_TRUE(DccApplicationCommandStationServiceTrack_direct_read_cv(8, mock_task_on_complete, NULL));
+
+    /* Eight bit-verifies then the confirming byte-verify, nine full S-9.2.3
+     * sequences with a silent ACK window each: no decoder on the track. */
+    pump_service_mode_cycle(12000);
+
+    EXPECT_EQ(task_complete_count, (uint32_t)1);
+    EXPECT_EQ(task_complete_result, DCC_SERVICE_MODE_NO_ACK);
+
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
+}
+
 #endif /* DCC_COMPILE_COMMAND_STATION && DCC_COMPILE_SERVICE_MODE_TASK_DIRECT */
 
 // ============================================================================
