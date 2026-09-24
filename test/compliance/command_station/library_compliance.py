@@ -187,6 +187,140 @@ def test_priority(rep, port):
 
 
 # ----------------------------------------------------------------------------
+# DCC-Library-CS-005 -- auto-refresh pacing (issue #5): burst, keep-alive, ceiling
+# ----------------------------------------------------------------------------
+# Library policy values (the DCC_REFRESH_* table in dcc_defines.h). Everything
+# below is counted in PACKET CYCLES: each scheduler cycle puts exactly one packet
+# on the wire (a refresh, a one-shot or an idle), so "cycles between two copies
+# of a slot" is the number of packets between them, whatever their length.
+REFRESH_PROMPT_SENDS    = 3
+REFRESH_COLD_CYCLES     = 60
+REFRESH_COLD_MAX_CYCLES = 120
+POOL = list(range(1, 9))          # eight short addresses below the 112-127 alias band
+
+
+def _positions(dec, addr, speed_byte=None):
+    """Capture-order indices of every packet addressed to addr (and, if given,
+    carrying speed_byte as its third byte: a 128-step speed packet)."""
+    return [i for i, (_, d) in enumerate(dec["packets"])
+            if d and d[0] == addr
+            and (speed_byte is None or (len(d) >= 3 and d[2] == speed_byte))]
+
+
+def _gaps(idx):
+    return [b - a for a, b in zip(idx, idx[1:])]
+
+
+def _fill_pool(port):
+    """Eight refresh slots, then long enough for every burst to be spent and
+    every slot to be cold (3 + 60 cycles is well under 1 s)."""
+    lib.send_command(port, "CLEAR")
+    lib.send_command(port, "REFRESH ON")
+    for a in POOL:
+        lib.send_command(port, f"SPEED {a} 20 FWD")
+    time.sleep(1.0)
+
+
+# @compliance DCC-Library-CS-005
+def test_burst_then_keep_alive(rep, port):
+    """One fresh refresh slot on an otherwise idle stream: the packet is sent
+    REFRESH_PROMPT_SENDS times back to back, then once every REFRESH_COLD_CYCLES
+    packets. Hardware-triggered on the first copy; the window holds three
+    keep-alives."""
+    clause = "Library / scheduler (refresh pacing)"
+
+    def stimulus():
+        lib.send_command(port, "CLEAR")          # idle-only stream first
+        lib.send_command(port, "REFRESH ON")
+        lib.send_command(port, "TRIG")           # first copy pulses PB3
+        lib.send_command(port, f"SPEED {LOCO_A} 50 FWD")
+
+    dec, _ = lib.capture_triggered(stimulus, pre_seconds=0.02, after_seconds=1.35)
+    pos = _positions(dec, LOCO_A)
+    gaps = _gaps(pos)
+    burst = gaps[:REFRESH_PROMPT_SENDS - 1]
+    keep = gaps[REFRESH_PROMPT_SENDS - 1:]
+    times = dec["packet_times"]
+
+    ok_burst = len(pos) >= REFRESH_PROMPT_SENDS and all(g == 1 for g in burst)
+    rep.check(clause, f"fresh slot: {REFRESH_PROMPT_SENDS} copies back to back", ok_burst,
+              f"copy positions {pos[:REFRESH_PROMPT_SENDS + 1]}, gaps between copies "
+              f"(packets) {gaps[:REFRESH_PROMPT_SENDS + 1]}")
+
+    ok_keep = len(keep) >= 2 and all(g == REFRESH_COLD_CYCLES for g in keep)
+    secs = [f"{times[b] - times[a]:.3f} s" for a, b in zip(pos, pos[1:])][REFRESH_PROMPT_SENDS - 1:]
+    rep.check(clause, f"then one keep-alive every {REFRESH_COLD_CYCLES} cycles", ok_keep,
+              f"keep-alive gaps in packets {keep} = {secs}")
+
+    only_idle = all(list(d) == IDLE for _, d in dec["packets"] if d and d[0] != LOCO_A)
+    rep.check(clause, "nothing but idle packets between the copies", only_idle,
+              f"other non-idle packets: {[_hx(d) for _, d in dec['packets'] if d and d[0] != LOCO_A and list(d) != IDLE][:4]}")
+
+
+# @compliance DCC-Library-CS-005
+def test_keep_alive_cadence(rep, port):
+    """Eight idle refresh slots over a 2 s capture: every slot keeps being
+    refreshed, never inside REFRESH_COLD_CYCLES of its last copy and never
+    later than REFRESH_COLD_MAX_CYCLES after it (the CV11 argument)."""
+    clause = "Library / scheduler (refresh pacing)"
+    _fill_pool(port)
+    dec = _capture(2.0)
+
+    per = {a: _gaps(_positions(dec, a)) for a in POOL}
+    counts = {a: len(_positions(dec, a)) for a in POOL}
+    all_gaps = [g for gs in per.values() for g in gs]
+
+    rep.check(clause, "every idle slot keeps being refreshed (>= 2 copies each in 2 s)",
+              all(c >= 2 for c in counts.values()), f"copies per address: {counts}")
+
+    rep.check(clause, f"no idle slot is refreshed inside {REFRESH_COLD_CYCLES} cycles of its last copy",
+              bool(all_gaps) and min(all_gaps) >= REFRESH_COLD_CYCLES,
+              f"smallest gap {min(all_gaps) if all_gaps else None} packets; per address {per}")
+
+    rep.check(clause, f"no idle slot goes unrefreshed past {REFRESH_COLD_MAX_CYCLES} cycles",
+              bool(all_gaps) and max(all_gaps) <= REFRESH_COLD_MAX_CYCLES,
+              f"largest gap {max(all_gaps) if all_gaps else None} packets")
+
+
+# @compliance DCC-Library-CS-005
+def test_change_latency_to_wire(rep, port):
+    """Eight cold refresh slots; change one loco's speed. "TRIG INSERT" raises
+    PB3 the moment the command is queued, so t = 0 is the insert: the changed
+    packet must be the very next packet to start (latency under one packet
+    time, the packet in flight) and its burst must follow back to back."""
+    clause = "Library / scheduler (refresh pacing)"
+    _fill_pool(port)
+    new_speed = 90
+    speed_byte = 0x80 | new_speed
+
+    def stimulus():
+        lib.send_command(port, "TRIG INSERT")
+        lib.send_command(port, f"SPEED {LOCO_A} {new_speed} FWD")
+
+    dec, _ = lib.capture_triggered(stimulus, pre_seconds=0.03, after_seconds=0.12)
+    times = dec["packet_times"]
+    hits = _positions(dec, LOCO_A, speed_byte)
+    after = [i for i, t in enumerate(times) if t >= 0.0]       # packets starting after the insert
+    spacing = [b - a for a, b in zip(times, times[1:])]
+    packet_time = sum(spacing) / len(spacing) if spacing else float("nan")
+
+    first_after = after[0] if after else None
+    ok_next = bool(hits) and first_after is not None and hits[0] == first_after
+    rep.check(clause, "changed packet is the next packet to start after the insert", ok_next,
+              f"first packet after t=0 is index {first_after} "
+              f"{_hx(dec['packets'][first_after][1]) if first_after is not None else ''}; "
+              f"changed-packet indices {hits[:4]}")
+
+    latency = times[hits[0]] if hits else float("nan")
+    rep.check(clause, "command-to-wire latency under one packet time", bool(hits) and latency < packet_time,
+              f"latency {latency * 1e3:.2f} ms; mean packet time {packet_time * 1e3:.2f} ms")
+
+    ok_burst = len(hits) >= REFRESH_PROMPT_SENDS and _gaps(hits[:REFRESH_PROMPT_SENDS]) == [1] * (REFRESH_PROMPT_SENDS - 1)
+    rep.check(clause, f"the change's {REFRESH_PROMPT_SENDS} copies follow back to back", ok_burst,
+              f"changed-packet indices {hits[:REFRESH_PROMPT_SENDS + 1]}")
+
+
+# ----------------------------------------------------------------------------
 # Suite
 # ----------------------------------------------------------------------------
 def run():
@@ -202,6 +336,9 @@ def run():
         test_round_robin(rep, port)
         test_duplicate_combining(rep, port)
         test_priority(rep, port)
+        test_burst_then_keep_alive(rep, port)
+        test_keep_alive_cadence(rep, port)
+        test_change_latency_to_wire(rep, port)
     finally:
         lib.send_command(port, "CLEAR")
         lib.send_command(port, "POWER OFF")

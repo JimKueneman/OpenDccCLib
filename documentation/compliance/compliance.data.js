@@ -7744,6 +7744,53 @@ window.COMPLIANCE =
             ],
             "hilChecks": []
           }
+        },
+        {
+          "tid": "DCC-Library-CS-005",
+          "feature": "Auto-refresh pacing: burst, keep-alive, ceiling",
+          "role": "cs",
+          "ref": {
+            "spec": "Library",
+            "cite": "Library design (issue #5); S-9.2.4 sec 4 CV11 for the ceiling",
+            "origin": "released",
+            "draftDelta": null
+          },
+          "supported": {
+            "state": "ok",
+            "note": ""
+          },
+          "gtest": {
+            "state": "ok",
+            "note": ""
+          },
+          "hil": {
+            "state": "planned",
+            "note": ""
+          },
+          "detail": {
+            "impl": "DccScheduler_insert reloads prompt_sends_left; DccScheduler_run ages unsent_cycles once per cycle and selects overdue (>= DCC_REFRESH_COLD_MAX_CYCLES), then a slot in its burst, then a merely-due one (>= DCC_REFRESH_COLD_CYCLES). After an overdue send a waiting burst goes first. DCC_REFRESH_COLD_CYCLES = 0 restores the flat ring, where an insert moves the ring cursor to the changed slot. Documented CV11 floor: 20 (2.0 s) against 120 worst-case cycles.",
+            "gtest": "Burst then settle; a changed slot never waits behind a merely-due batch; the starvation bound holds under 15 permanently changing slots; the flat ring is byte-identical with the tier off; the ceiling stays under the CV11 floor at compile time; two simultaneous changes share the burst pass (copies 2 cycles apart).",
+            "hil": "Counted in packets on the wire: a fresh slot's 3 copies back to back then one every 60 packets; 8 idle slots each refreshed every 60-120 packets; with TRIG INSERT marking the moment a command is queued, the changed packet is the next to start (latency under one packet time)."
+          },
+          "refs": {
+            "symbols": [
+              "DccScheduler_insert",
+              "DccScheduler_run"
+            ],
+            "tests": [
+              { "name": "DccScheduler.prompt_burst_then_settle", "file": "dcc_scheduler_Test.cxx", "desc": "3 copies back to back, then one per DCC_REFRESH_COLD_CYCLES" },
+              { "name": "DccScheduler.prompt_never_waits_behind_due_cold_batch", "file": "dcc_scheduler_Test.cxx", "desc": "15 slots due on the same cycle never delay a changed one" },
+              { "name": "DccScheduler.cold_slot_never_starves_past_max", "file": "dcc_scheduler_Test.cxx", "desc": "15 permanently changing slots cannot hold a slot past DCC_REFRESH_COLD_MAX_CYCLES" },
+              { "name": "DccScheduler.cold_interval_zero_is_classic_round_robin", "file": "dcc_scheduler_Test.cxx", "desc": "DCC_REFRESH_COLD_CYCLES = 0 reproduces the flat ring exactly" },
+              { "name": "DccScheduler.cold_max_cycles_is_below_cv11_minimum", "file": "dcc_scheduler_Test.cxx", "desc": "120 worst-case cycles stay under the documented CV11 floor (compile time)" },
+              { "name": "DccScheduler.change_shares_burst_pass_with_a_slot_changing_every_cycle", "file": "dcc_scheduler_Test.cxx", "desc": "a change beside a slot changed every cycle gets its copies at cycles 0, 2, 4" }
+            ],
+            "hilChecks": [
+              { "label": "Burst then keep-alive", "file": "command_station/library_compliance.py", "desc": "A fresh refresh slot is sent 3 times back to back, then once every 60 packets, with only idle packets between." },
+              { "label": "8-slot keep-alive cadence", "file": "command_station/library_compliance.py", "desc": "Eight idle slots over 2 s: every gap between copies of a slot is 60 to 120 packets." },
+              { "label": "Change latency to wire", "file": "command_station/library_compliance.py", "desc": "TRIG INSERT marks the insert; the changed packet is the next packet to start, under one packet time, followed by its two copies." }
+            ]
+          }
         }
       ]
     }

@@ -879,6 +879,7 @@ static void spend_bursts(dcc_scheduler_context_t *context, int slot_count) {
 
 // Invariant 1 (plus the settle): a fresh slot is sent PROMPT_SENDS times back to
 // back, then once per COLD_CYCLES.
+// @compliance DCC-Library-CS-005
 TEST(DccScheduler, prompt_burst_then_settle) {
     dcc_scheduler_context_t context;
     interface_dcc_scheduler_t interface;
@@ -967,6 +968,7 @@ TEST(DccScheduler, active_slot_full_rate_among_idle_pool) {
 
 // Invariant 2: 15 cold slots due on the same cycle, then a real update -- the update
 // goes first (its whole burst), whatever the ring position, then the batch in ring order.
+// @compliance DCC-Library-CS-005
 TEST(DccScheduler, prompt_never_waits_behind_due_cold_batch) {
     dcc_scheduler_context_t context;
     interface_dcc_scheduler_t interface;
@@ -1037,6 +1039,7 @@ TEST(DccScheduler, cold_slots_keep_independent_cadence) {
 
 // Invariant 3: 15 slots kept permanently in their burst cannot hold a cold slot
 // past COLD_MAX_CYCLES.
+// @compliance DCC-Library-CS-005
 TEST(DccScheduler, cold_slot_never_starves_past_max) {
     dcc_scheduler_context_t context;
     interface_dcc_scheduler_t interface;
@@ -1068,6 +1071,7 @@ TEST(DccScheduler, cold_slot_never_starves_past_max) {
 }
 
 // Invariant 4: COLD_CYCLES = 0 is today's flat round-robin, exactly.
+// @compliance DCC-Library-CS-005
 TEST(DccScheduler, cold_interval_zero_is_classic_round_robin) {
     dcc_scheduler_context_t context;
     interface_dcc_scheduler_t interface;
@@ -1214,6 +1218,7 @@ TEST(DccScheduler, burst_slot_is_not_starved_by_a_slot_changing_every_cycle) {
      + (uint32_t)DCC_PACKET_MAX_BYTES * 9u * REFRESH_WORST_ZERO_BIT_US              \
      + 2u * DCC_ONE_BIT_HALF_PERIOD_US + REFRESH_WORST_CUTOUT_US)
 
+// @compliance DCC-Library-CS-005
 TEST(DccScheduler, cold_max_cycles_is_below_cv11_minimum) {
     static_assert((uint64_t)DCC_REFRESH_COLD_MAX_CYCLES * REFRESH_WORST_CYCLE_US <
                       (uint64_t)DCC_REFRESH_CV11_FLOOR * DCC_FAILSAFE_CV11_UNIT_US,
@@ -1226,6 +1231,7 @@ TEST(DccScheduler, cold_max_cycles_is_below_cv11_minimum) {
 // cycle shares the burst pass round-robin: the three copies go out at cycles 0, 2 and
 // 4, never queued behind the churning slot (issue #5: simultaneous commands share
 // bandwidth). Pins the fix that keeps the phase 1 cursor move out of tiered mode.
+// @compliance DCC-Library-CS-005
 TEST(DccScheduler, change_shares_burst_pass_with_a_slot_changing_every_cycle) {
     dcc_scheduler_context_t context;
     interface_dcc_scheduler_t interface;
