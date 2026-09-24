@@ -5029,7 +5029,8 @@ window.COMPLIANCE =
               { "name": "DccCvStorage.cv29_write_decodes_named_flags", "file": "dcc_cv_storage_Test.cxx", "desc": "a CV29 write decodes into the named dcc_cv29_flags_t fields" },
               { "name": "DccCvStorage.cv29_write_forces_reserved_bit6_to_zero", "file": "dcc_cv_storage_Test.cxx", "desc": "a bogus byte with bit 6 set is sanitized to 0 before store" },
               { "name": "DccCvStorage.cv29_filter_result_is_stored", "file": "dcc_cv_storage_Test.cxx", "desc": "a feature the app's filter clears is dropped from the stored CV29 byte" },
-              { "name": "DccCvStorage.cv29_write_blocked_when_locked", "file": "dcc_cv_storage_Test.cxx", "desc": "a locked decoder neither stores nor filters on a CV29 write" }
+              { "name": "DccCvStorage.cv29_write_blocked_when_locked", "file": "dcc_cv_storage_Test.cxx", "desc": "a locked decoder neither stores nor filters on a CV29 write" },
+              { "name": "DccCvStorage.cv29_write_without_filter_stores_value_as_decoded", "file": "dcc_cv_storage_Test.cxx", "desc": "with no cv29_apply_supported_features hook the value is stored as written, minus reserved bit 6" }
             ],
             "hilChecks": [
               { "label": "CV29 write decodes to named flags", "file": "mobile_decoder/s9_2_2_compliance.py", "desc": "POM-writes CV29=0x2A; decoder reports RECV CV29 with steps/railcom/extaddr set and dir clear." }
@@ -5075,7 +5076,10 @@ window.COMPLIANCE =
               { "name": "DccCvStorage.indexed_read_routes_page_and_offset", "file": "dcc_cv_storage_Test.cxx", "desc": "A read of CV257-512 routes to cv_read_indexed with the right page/offset." },
               { "name": "DccCvStorage.indexed_window_boundaries", "file": "dcc_cv_storage_Test.cxx", "desc": "CV257 and CV512 are in the window (offset 0 and 255); CV256 is not." },
               { "name": "DccCvStorage.indexed_write_without_hook_nacks", "file": "dcc_cv_storage_Test.cxx", "desc": "Indexed write with no cv_write_indexed hook returns false (NACK)." },
-              { "name": "DccCvStorage.indexed_write_blocked_when_locked", "file": "dcc_cv_storage_Test.cxx", "desc": "Indexed write is blocked while the decoder lock is engaged." }
+              { "name": "DccCvStorage.indexed_write_blocked_when_locked", "file": "dcc_cv_storage_Test.cxx", "desc": "Indexed write is blocked while the decoder lock is engaged." },
+              { "name": "DccCvStorage.indexed_read_without_hook_returns_false", "file": "dcc_cv_storage_Test.cxx", "desc": "Indexed read with no cv_read_indexed hook returns false." },
+              { "name": "DccCvStorage.indexed_access_fails_when_page_high_unreadable", "file": "dcc_cv_storage_Test.cxx", "desc": "Indexed read and write both fail when CV31 (page high) cannot be read." },
+              { "name": "DccCvStorage.indexed_access_fails_when_page_low_unreadable", "file": "dcc_cv_storage_Test.cxx", "desc": "Indexed read and write both fail when CV32 (page low) cannot be read." }
             ],
             "hilChecks": [
               { "label": "Indexed CV write routes via CV31/32", "file": "mobile_decoder/s9_2_2_compliance.py", "desc": "POM-selects page 2 via CV31/32, writes CV262=99; decoder reports RECV CVIDX page=2 off=5 val=99." }
