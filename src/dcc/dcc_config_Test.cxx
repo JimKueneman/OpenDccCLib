@@ -1411,6 +1411,37 @@ TEST(DccConfig, ack_pulse_is_stopped_by_run_after_6ms) {
     EXPECT_EQ(ack_stop_count, (uint32_t)1);       /* one stop per pulse */
 }
 
+TEST(DccConfig, ack_pulse_restart_while_active_is_ignored) {
+    dcc_config_t cfg = make_test_config();
+    cfg.get_timestamp_usec = mock_clock;
+    cfg.start_ack_pulse = mock_start_ack_pulse;
+    cfg.stop_ack_pulse = mock_stop_ack_pulse;
+    DccConfig_initialize(&cfg);
+
+    mock_clock_usec = 1000;
+    ack_start_count = 0;
+    ack_stop_count = 0;
+
+    feed_matching_service_mode_verify();            /* pulse starts at t = 1000 */
+    EXPECT_EQ(ack_start_count, (uint32_t)1);
+
+    /* A second matching verify 4 ms later, while the pulse is still high: the
+     * app hook is not called again and the clock is NOT restarted. */
+    mock_clock_usec += 4000;
+    feed_matching_service_mode_verify();
+    EXPECT_EQ(ack_start_count, (uint32_t)1);
+    EXPECT_EQ(ack_stop_count, (uint32_t)0);
+
+    /* 6 ms after the FIRST start (2 ms after the second) the pulse ends. */
+    mock_clock_usec += 2000;
+    DccConfig_run();
+    EXPECT_EQ(ack_stop_count, (uint32_t)1);
+
+    /* Once ended, the next matching verify starts a fresh pulse. */
+    feed_matching_service_mode_verify();
+    EXPECT_EQ(ack_start_count, (uint32_t)2);
+}
+
 TEST(DccConfig, ack_pulse_expiry_with_null_stop_hook_does_not_crash) {
     dcc_config_t cfg = make_test_config();
     cfg.get_timestamp_usec = mock_clock;

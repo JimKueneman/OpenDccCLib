@@ -286,8 +286,20 @@ static uint32_t _ack_pulse_start_usec = 0;
      *  to turn it off again (S-9.2.3 sec 3, 6 ms +/- 1 ms). Installed only when the
      *  app supplies start_ack_pulse, so a NULL hook still short-circuits in the
      *  decoder and the timer never arms.
+     *
+     *  A start while a pulse is already active is ignored, not restarted: the
+     *  command station repeats a matching verify, and a packet that completes in
+     *  under 6 ms would otherwise stretch the pulse across every repeat into one
+     *  long pulse that the command station rejects as over-current. The ACK is a
+     *  fixed 6 ms pulse from the first acknowledged packet.
      */
 static void _start_ack_pulse_wrapper(void) {
+
+    if (_ack_pulse_active) {
+
+        return;
+
+    }
 
     _ack_pulse_start_usec = _configuration_pointer->get_timestamp_usec();
     _ack_pulse_active = true;
