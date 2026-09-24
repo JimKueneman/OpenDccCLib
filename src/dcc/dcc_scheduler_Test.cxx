@@ -439,6 +439,37 @@ TEST(DccScheduler, auto_refresh_round_robin) {
     EXPECT_NE(first_addr, second_addr);
 }
 
+// A changed command for a refresh slot goes out on the very next cycle, not when the
+// ring comes round to it (issue #5, phase 1).
+TEST(DccScheduler, changed_refresh_slot_is_sent_next_cycle) {
+    reset_mocks();
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface = make_interface();
+    DccScheduler_initialize(&context, &interface);
+
+    /* Addresses 1..8 fill slots 0..7 */
+    dcc_packet_t pkt;
+    for (dcc_address_t address = 1; address <= 8; address++) {
+        DccApplicationCommandStationPacket_load_speed_128(&pkt, address, DCC_ADDRESS_SHORT, 10, true);
+        DccScheduler_insert(&context, &pkt, address, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
+    }
+
+    /* Serve slots 0..4, so the ring's next turn is slot 5, far from slot 2 */
+    for (int cycle = 0; cycle < 5; cycle++) {
+        DccScheduler_run(&context);
+        DccScheduler_on_packet_complete(&context);
+    }
+    ASSERT_EQ(last_loaded_packet.data[0], (uint8_t)5);
+
+    /* Change address 3's speed (slot 2): it is the very next packet */
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 90, true);
+    DccScheduler_insert(&context, &pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, true);
+
+    DccScheduler_run(&context);
+    EXPECT_EQ(last_loaded_packet.data[0], (uint8_t)3);
+    EXPECT_EQ(last_loaded_packet.data[2], (uint8_t)(0x80 | 90));
+}
+
 // @compliance DCC-Library-CS-001
 TEST(DccScheduler, one_shot_takes_priority_over_refresh) {
     reset_mocks();

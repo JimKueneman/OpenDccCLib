@@ -192,6 +192,12 @@ bool DccScheduler_insert(dcc_scheduler_context_t *context, const dcc_packet_t *p
 
         }
 
+    } else if (auto_refresh && context->slots[slot_index].auto_refresh) {
+
+        /* A changed command for a refresh slot takes the next refresh turn instead of
+         * waiting for the ring to come round to it (up to one full ring of packets). */
+        context->refresh_index = (uint8_t)slot_index;
+
     }
 
     /* Copy packet data */
