@@ -748,28 +748,58 @@ TEST(DccServiceModeTaskDirect, read_bit_calls_verify_bit_with_value_1) {
 // read_bit — result
 // ============================================================================
 
-TEST(DccServiceModeTaskDirect, read_bit_ack_returns_value_1) {
-
+TEST(DccServiceModeTaskDirect, read_bit_ack_returns_value_1_without_second_verify) {
     setup();
     DccServiceModeTaskDirect_read_bit(1, 3, mock_on_complete, mock_on_progress);
     DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);
-
     EXPECT_EQ(on_complete_count, (uint32_t)1);
     EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_SUCCESS);
     EXPECT_EQ(on_complete_value, (uint8_t)1);
-
+    EXPECT_EQ(verify_bit_count, (uint32_t)1);   /* the common case costs one verify */
 }
 
-TEST(DccServiceModeTaskDirect, read_bit_no_ack_returns_value_0) {
+TEST(DccServiceModeTaskDirect, read_bit_no_ack_confirms_with_verify_of_value_0) {
+    setup();
+    DccServiceModeTaskDirect_read_bit(29, 5, mock_on_complete, mock_on_progress);
+    DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_NO_ACK);
+    EXPECT_EQ(on_complete_count, (uint32_t)0);  /* not decided yet */
+    EXPECT_EQ(verify_bit_count, (uint32_t)2);
+    EXPECT_EQ(last_verify_bit_cv, (uint16_t)29);
+    EXPECT_EQ(last_verify_bit_position, (uint8_t)5);
+    EXPECT_FALSE(last_verify_bit_value);
+}
 
+TEST(DccServiceModeTaskDirect, read_bit_confirmed_zero_returns_value_0) {
     setup();
     DccServiceModeTaskDirect_read_bit(1, 3, mock_on_complete, mock_on_progress);
-    DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_NO_ACK);
-
+    DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_NO_ACK);   /* bit != 1 */
+    DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);  /* bit == 0 */
     EXPECT_EQ(on_complete_count, (uint32_t)1);
     EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_SUCCESS);
     EXPECT_EQ(on_complete_value, (uint8_t)0);
+}
 
+TEST(DccServiceModeTaskDirect, read_bit_no_decoder_completes_no_ack) {
+    setup();
+    DccServiceModeTaskDirect_read_bit(1, 3, mock_on_complete, mock_on_progress);
+    DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_NO_ACK);   /* silent for 1 */
+    DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_NO_ACK);   /* silent for 0 */
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_NO_ACK);
+    EXPECT_EQ(on_complete_value, (uint8_t)0);
+    /* Back to IDLE: a following read must be accepted. */
+    EXPECT_TRUE(DccServiceModeTaskDirect_read_bit(1, 3, mock_on_complete, mock_on_progress));
+}
+
+TEST(DccServiceModeTaskDirect, read_bit_confirm_verify_fails_to_start_completes_busy) {
+    setup();
+    DccServiceModeTaskDirect_read_bit(1, 3, mock_on_complete, mock_on_progress);
+    verify_bit_return = false;
+    DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_NO_ACK);
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+    verify_bit_return = true;
+    EXPECT_TRUE(DccServiceModeTaskDirect_read_bit(1, 3, mock_on_complete, mock_on_progress));
 }
 
 // ============================================================================

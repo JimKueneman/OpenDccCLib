@@ -45,6 +45,7 @@ typedef enum {
     DCC_TASK_DIRECT_STATE_WRITE_CV,
     DCC_TASK_DIRECT_STATE_WRITE_CV_VERIFY,
     DCC_TASK_DIRECT_STATE_READ_BIT,
+    DCC_TASK_DIRECT_STATE_READ_BIT_CONFIRM,
     DCC_TASK_DIRECT_STATE_WRITE_BIT,
     DCC_TASK_DIRECT_STATE_WRITE_BIT_VERIFY,
 
@@ -173,8 +174,37 @@ static void _advance_write_cv_verify(void) {
 
 static void _advance_read_bit(void) {
 
-    uint8_t bit_result = _context.ack_result ? 1u : 0u;
-    _complete(DCC_SERVICE_MODE_SUCCESS, bit_result);
+    if (_context.ack_result) {
+
+        _complete(DCC_SERVICE_MODE_SUCCESS, 1u);
+        return;
+
+    }
+
+    /* No ACK for value 1 is also what an absent decoder looks like. Confirm the
+     * bit really is 0 with a verify of the opposite value before reporting it. */
+    _context.state = DCC_TASK_DIRECT_STATE_READ_BIT_CONFIRM;
+
+    if (!_context.interface->verify_bit(_context.cv, _context.bit, false)) {
+
+        _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+    }
+
+}
+
+static void _advance_read_bit_confirm(void) {
+
+    if (_context.ack_result) {
+
+        _complete(DCC_SERVICE_MODE_SUCCESS, 0u);
+
+    } else {
+
+        /* Neither value answered: no decoder, or one that doesn't ACK. */
+        _complete(DCC_SERVICE_MODE_NO_ACK, 0);
+
+    }
 
 }
 
@@ -381,6 +411,11 @@ void DccServiceModeTaskDirect_on_primitive_complete(dcc_service_mode_result_t re
         case DCC_TASK_DIRECT_STATE_READ_BIT:
 
             _advance_read_bit();
+            break;
+
+        case DCC_TASK_DIRECT_STATE_READ_BIT_CONFIRM:
+
+            _advance_read_bit_confirm();
             break;
 
         case DCC_TASK_DIRECT_STATE_WRITE_BIT:
