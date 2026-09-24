@@ -578,6 +578,7 @@ def _rc_results(s, quiet=0.25, total=1.5):
             last = time.time()
         elif time.time() - last > quiet and "RC RESULT" in buf:
             break
+    _rc_results.last_raw = buf              # kept for diagnostics (see _rc_case "raw")
     res = []
     for line in buf.splitlines():
         if "RC RESULT:" not in line:
@@ -596,15 +597,21 @@ def _rc_results(s, quiet=0.25, total=1.5):
     return res
 
 
-def _rc_case(s, ch1, ch2, late=False, seconds=0.3, arm_delay=0.03):
+def _rc_case(s, ch1, ch2, late=False, seconds=0.3, arm_delay=0.03, pre=None):
     """Arm one mock reply inside a live capture of ch0/ch2/ch5/ch6, then gather the
-    DUT's RC RESULT lines and counters. Returns a dict with everything a check needs."""
+    DUT's RC RESULT lines and counters. Returns a dict with everything a check needs.
+    `pre` (optional, list of UART commands) is written at the start of the stimulus,
+    before the arm delay: used to re-issue SPEED commands so the reply rides those
+    locomotives' refresh bursts (a cold refresh slot is only kept alive every
+    DCC_REFRESH_COLD_CYCLES packets; between keep-alives the stream is idle)."""
     _rc_cmd(s, "RC MOCK OFF", settle=0.1)
     cmd = f"RC MOCK {_hex(ch1)} {_hex(ch2)}" + (" LATE" if late else "")
     chans = [lib.DIGITAL_CHANNEL, CUTOUT_CHANNEL, WINDOW_CHANNEL, LOOPBACK_CHANNEL]
     s.reset_input_buffer()
 
     def stimulus():
+        for p in (pre or []):
+            s.write((p + "\r").encode())     # bursts start a few ms from now
         time.sleep(arm_delay)                 # a few cutouts first, then arm
         s.write((cmd + "\r").encode())
 
@@ -616,7 +623,8 @@ def _rc_case(s, ch1, ch2, late=False, seconds=0.3, arm_delay=0.03):
 
     frames = lib.decode_uart(rows[LOOPBACK_CHANNEL], baud=RC_BAUD)
     return {"cmd": cmd, "ch1": ch1, "ch2": ch2, "late": late, "rows": rows,
-            "frames": frames, "results": results, "status": status}
+            "frames": frames, "results": results, "status": status,
+            "raw": getattr(_rc_results, "last_raw", "")}
 
 
 def _tagged_address(case):
@@ -716,9 +724,12 @@ def railcom_loopback_tests(rep, port):
         _rc_cmd(s, "SPEED 3 50 FWD 128", 0.15)        # every packet addressed to 3
         pom_val = 0x2A
 
+        ride3 = ["SPEED 3 50 FWD 128"]       # the reply rides an address-3 burst
+        ride3_arm = 0.012                     # arm inside that 3-copy burst (~5-26 ms)
+
         # --- CS-013: Channel 1 two-byte datagram (ADR1 for a short address) -----
         clause = "S-9.3.2 §3.4 (Channel 1 datagram)"
-        c = _rc_case(s, rc_encode12(RC_ID_ADR1, 0x00), [])
+        c = _rc_case(s, rc_encode12(RC_ID_ADR1, 0x00), [], pre=ride3, arm_delay=ride3_arm)
         # @compliance DCC-S9.3.2-CS-013
         _expect(rep, clause, "Ch1 ADR1 datagram decoded (id=1, data=00)", c, 1, RC_ID_ADR1, [0x00])
         _expect(rep, clause, "no Channel 2 datagram when none was sent", c, 2, 0, [], present=False)
@@ -727,7 +738,8 @@ def railcom_loopback_tests(rep, port):
 
         # --- CS-014 + CS-010: Channel 2 POM read-back after a Ch1 ADR2 -------------
         clause = "S-9.3.2 §3.4 (Channel 2 datagram)"
-        c = _rc_case(s, rc_encode12(RC_ID_ADR2, 3), rc_encode12(RC_ID_POM, pom_val))
+        c = _rc_case(s, rc_encode12(RC_ID_ADR2, 3), rc_encode12(RC_ID_POM, pom_val),
+                     pre=ride3, arm_delay=ride3_arm)
         # @compliance DCC-S9.3.2-CS-014
         _expect(rep, clause, f"Ch2 POM read-back decoded (id=0, data={pom_val:02X})", c, 2, RC_ID_POM, [pom_val])
         # @compliance DCC-S9.3.2-CS-010
@@ -779,12 +791,15 @@ def railcom_loopback_tests(rep, port):
 
         # --- address tagging under a two-loco stream (PR #1 two-stage capture) --------
         clause = "S-9.3.2 §3.4 (reply address tagging)"
-        _rc_cmd(s, "SPEED 200 50 FWD 128", 0.15)      # now packets alternate 3 / 200
+        _rc_cmd(s, "SPEED 200 50 FWD 128", 0.15)
         tags_ok, seen = [], []
         for k in range(8):
-            # vary the arm phase against the ~7 ms packet cadence so the reply lands
-            # on packets of BOTH addresses across the trials, not always the same one
-            c = _rc_case(s, rc_encode12(RC_ID_ADR1, 0x00), [], arm_delay=0.03 + k * 0.00175)
+            # Re-issue both SPEEDs at the start of the stimulus: their bursts then
+            # alternate 3 / 200 on the wire (~6 packets, ~45 ms) while the mock is
+            # armed. Vary the arm phase against the ~7 ms cadence so the reply lands
+            # on packets of BOTH addresses across the trials, not always the same one.
+            c = _rc_case(s, rc_encode12(RC_ID_ADR1, 0x00), [], arm_delay=0.03 + k * 0.00175,
+                         pre=["SPEED 3 50 FWD 128", "SPEED 200 50 FWD 128"])
             tagged, _ = _tagged_address(c)
             got = {r["addr"] for r in c["results"]}
             seen.append((tagged, sorted(got)))

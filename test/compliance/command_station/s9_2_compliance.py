@@ -122,10 +122,12 @@ def driven_checks(rep):
 def same_address_spacing_check(rep):
     """CS-008 (S-9.2 Section C fn.11): two packets for the SAME short address
     112-127 must not be < 5 ms apart -- their first byte (0x70-0x7F) aliases a
-    service-mode register/paged command. With a single such loco in the refresh
-    cycle the scheduler inserts an idle spacer, so the wire shows
-    <addr>, idle, <addr>, idle ... Addresses below 112 (and long addresses) are
-    sent back-to-back."""
+    service-mode register/paged command. A fresh refresh slot is sent 3 times
+    at full rate (DCC_REFRESH_PROMPT_SENDS), so for such a loco the scheduler
+    inserts an idle spacer and the wire shows <addr>, idle, <addr>, idle, <addr>;
+    addresses below 112 (and long addresses) go back-to-back. The capture is
+    hardware-triggered on the first copy so the window holds that burst (after
+    it, a cold slot is only kept alive every DCC_REFRESH_COLD_CYCLES packets)."""
     spc = SPEC_DOC + " Section C fn.11"
     port = lib.find_dut_port()
     if not port:
@@ -134,10 +136,10 @@ def same_address_spacing_check(rep):
         return
 
     def _addr_stream(addr):
-        lib.send_command(port, "CLEAR")
-        lib.send_command(port, "SPEED %d 50 FWD" % addr)
-        time.sleep(0.3)
-        decoded, _ = lib.capture_and_decode()
+        # CLEAR + TRIG + SPEED under the trigger: t=0 is the first copy; 80 ms
+        # holds the 3-copy burst with its spacers (~5 packets) and the idles after.
+        decoded, _ = lib.trigger_command("SPEED %d 50 FWD" % addr,
+                                         pre_seconds=0.02, after_seconds=0.08)
         pkts = [d for _, d in decoded["packets"]]
         times = decoded["packet_times"]
         idx = [i for i, p in enumerate(pkts) if p and p[0] == addr]
@@ -164,13 +166,17 @@ def same_address_spacing_check(rep):
 
     # --- control: short address 100 (<112) -> back-to-back, no spacer ---
     times, idx = _addr_stream(100)
-    if len(idx) >= 2:
+    if len(idx) < 2:
+        # @compliance DCC-S9.2-CS-008
+        rep.check(spc, "control: addr 100 present on the wire (>=2 packets)", False,
+                  "captured only %d packet(s) addressed to 100" % len(idx))
+    else:
         adjacent = any(idx[k + 1] == idx[k] + 1 for k in range(len(idx) - 1))
         # @compliance DCC-S9.2-CS-008
         rep.check(spc, "control: addr 100 (<112) sent back-to-back (no spacer)",
                   adjacent,
                   "addr 100 was unexpectedly spaced" if not adjacent
-                  else "addr 100 repeats are adjacent, as expected")
+                  else "%d packets to 100, repeats adjacent, as expected" % len(idx))
 
     lib.send_command(port, "CLEAR")   # restore the idle-only stream
 
