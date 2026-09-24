@@ -941,8 +941,7 @@ TEST(DccScheduler, active_slot_full_rate_among_idle_pool) {
         bool overdue[15];
         for (int slot = 0; slot < 15; slot++) {
             /* the scheduler ages a cold slot by one before it chooses */
-            overdue[slot] = context.slots[slot].prompt_sends_left == 0 &&
-                            context.slots[slot].cold_age + 1 >= context.refresh_cold_max_cycles;
+            overdue[slot] = context.slots[slot].unsent_cycles + 1 >= context.refresh_cold_max_cycles;
         }
 
         insert_refresh(&context, 16, (uint8_t)(10 + cycle % 100));
@@ -979,13 +978,14 @@ TEST(DccScheduler, prompt_never_waits_behind_due_cold_batch) {
 
     /* slots 0..14 all due on the next cycle, none overdue; slot 15 just sent */
     for (int slot = 0; slot < 15; slot++) {
-        context.slots[slot].cold_age = context.refresh_cold_cycles;
+        context.slots[slot].unsent_cycles = context.refresh_cold_cycles;
     }
-    context.slots[15].cold_age = 0;
+    context.slots[15].unsent_cycles = 0;
     ASSERT_LT(context.refresh_cold_cycles + context.refresh_prompt_sends + 15, context.refresh_cold_max_cycles);
 
     insert_refresh(&context, 16, 99);
-    context.refresh_index = 0;   /* the due batch sits ahead of the update in the ring */
+    context.refresh_index = 0;        /* the due batch sits ahead of the update in the ring, */
+    context.refresh_cold_index = 0;   /* for both cursors */
 
     for (int i = 0; i < context.refresh_prompt_sends; i++) {
         EXPECT_EQ(pacing_cycle(&context), (uint8_t)16) << "burst send " << i;
@@ -1120,6 +1120,78 @@ TEST(DccScheduler, same_address_spacing_survives_prompt_burst) {
         EXPECT_EQ(pacing_cycle(&context), expected[cycle]) << "cycle " << cycle;
     }
     EXPECT_EQ(on_packet_sent_count, (uint32_t)3);
+}
+
+// More refresh slots than the ceiling can serve (some always overdue): changes still
+// get every other cycle, and the overdue slots share the rest evenly.
+TEST(DccScheduler, changes_keep_flowing_when_idle_slots_overload) {
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface;
+    pacing_init(&context, &interface);
+
+    for (dcc_address_t address = 1; address <= 16; address++) {
+        insert_refresh(&context, address, 20);
+    }
+    spend_bursts(&context, 16);
+
+    /* 15 idle slots against an 8-cycle ceiling: they cannot all be served in time */
+    context.refresh_cold_cycles = 4;
+    context.refresh_cold_max_cycles = 8;
+
+    const int window = 300;
+    int changer_sends = 0;
+    int last_send[16];
+    int idle_sends[16];
+    for (int a = 0; a < 16; a++) {
+        last_send[a] = -1;
+        idle_sends[a] = 0;
+    }
+
+    for (int cycle = 0; cycle < window; cycle++) {
+        insert_refresh(&context, 16, (uint8_t)(10 + cycle % 100));
+        uint8_t sent = pacing_cycle(&context);
+        if (sent == 16) {
+            changer_sends++;
+            continue;
+        }
+        ASSERT_GE(sent, (uint8_t)1) << "cycle " << cycle;
+        ASSERT_LE(sent, (uint8_t)15) << "cycle " << cycle;
+        if (last_send[sent] >= 0) {
+            EXPECT_LE(cycle - last_send[sent], 2 * 15) << "address " << (int)sent;
+        }
+        last_send[sent] = cycle;
+        idle_sends[sent]++;
+    }
+
+    EXPECT_GE(changer_sends, window / 2 - 1);
+    for (int a = 1; a <= 15; a++) {
+        EXPECT_GE(idle_sends[a], window / (2 * 15) - 1) << "address " << a;
+    }
+}
+
+// A burst that keeps losing the burst pass to a slot changed every cycle still falls
+// overdue, so it is sent no less often than COLD_MAX_CYCLES and its burst completes.
+TEST(DccScheduler, burst_slot_is_not_starved_by_a_slot_changing_every_cycle) {
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface;
+    pacing_init(&context, &interface);
+    const int cold_max = context.refresh_cold_max_cycles;
+
+    insert_refresh(&context, 1, 20);
+
+    int sends = 0;
+    int last_send = -1;
+    for (int cycle = 0; cycle < 3 * cold_max + 1 && sends < context.refresh_prompt_sends; cycle++) {
+        insert_refresh(&context, 2, (uint8_t)(10 + cycle % 100));
+        if (pacing_cycle(&context) == 1) {
+            if (last_send >= 0) {
+                EXPECT_LE(cycle - last_send, cold_max) << "cycle " << cycle;
+            }
+            last_send = cycle;
+            sends++;
+        }
+    }
+    EXPECT_EQ(sends, (int)context.refresh_prompt_sends);
 }
 
 // The keep-alive ceiling against the packet time-out (CV11, S-9.2.4 sec 4), at

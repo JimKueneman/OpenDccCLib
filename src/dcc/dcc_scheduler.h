@@ -103,6 +103,12 @@ typedef struct {
     uint16_t refresh_cold_cycles;
     uint16_t refresh_cold_max_cycles;
 
+        /** @brief Round-robin cursor of the overdue and due passes (the burst
+         *  pass uses refresh_index), and whether the last refresh send was an
+         *  overdue one -- see _select_refresh() in dcc_scheduler.c. */
+    uint8_t refresh_cold_index;
+    bool refresh_last_was_overdue;
+
 } dcc_scheduler_context_t;
 
     /**

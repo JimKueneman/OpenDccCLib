@@ -141,9 +141,12 @@ extern "C" {
 #define DCC_REFRESH_COLD_CYCLES             60
 #endif
 
-    /** @brief Longest a cold slot may go unsent, in packet cycles (~0.8 s). An
-     *  overdue slot is sent ahead of changed ones, so a stream of throttle
-     *  changes cannot hold an idle locomotive off the track. */
+    /** @brief Longest any refresh slot may go unsent, in packet cycles (~0.8 s).
+     *  An overdue slot is sent ahead of changed ones, so a stream of throttle
+     *  changes cannot hold a locomotive off the track. Holds while there are no
+     *  more active refresh slots than this: beyond that some are always overdue,
+     *  overdue and changed slots then take turns, and the overdue ones share
+     *  their half of the cycles. */
 #ifndef DCC_REFRESH_COLD_MAX_CYCLES
 #define DCC_REFRESH_COLD_MAX_CYCLES         120
 #endif

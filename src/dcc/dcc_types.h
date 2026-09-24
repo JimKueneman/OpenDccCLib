@@ -274,7 +274,7 @@ typedef struct {
     bool auto_refresh;          /**< true = keep in refresh cycle indefinitely */
     bool active;                /**< true = slot is in use */
     uint8_t prompt_sends_left;  /**< Refresh: full-rate sends still owed since the last insert (0 = cold) */
-    uint16_t cold_age;          /**< Refresh: packet cycles since a cold slot was last sent */
+    uint16_t unsent_cycles;     /**< Refresh: packet cycles since this slot was last sent */
 
 } dcc_scheduler_slot_t;
 

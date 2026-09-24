@@ -130,9 +130,9 @@ static int16_t _select_one_shot(dcc_scheduler_context_t *context) {
 typedef enum {
 
     REFRESH_PASS_ANY,       /**< flat ring (cold tier disabled) */
-    REFRESH_PASS_OVERDUE,   /**< cold, unsent for refresh_cold_max_cycles or more */
+    REFRESH_PASS_OVERDUE,   /**< any refresh slot unsent for refresh_cold_max_cycles or more */
     REFRESH_PASS_PROMPT,    /**< still inside its burst after an insert */
-    REFRESH_PASS_DUE        /**< cold, unsent for refresh_cold_cycles or more */
+    REFRESH_PASS_DUE        /**< out of its burst, unsent for refresh_cold_cycles or more */
 
 } refresh_pass_enum;
 
@@ -148,7 +148,7 @@ static bool _refresh_slot_in_pass(const dcc_scheduler_context_t *context, const 
 
         case REFRESH_PASS_OVERDUE:
 
-            return slot->prompt_sends_left == 0 && slot->cold_age >= context->refresh_cold_max_cycles;
+            return slot->unsent_cycles >= context->refresh_cold_max_cycles;
 
         case REFRESH_PASS_PROMPT:
 
@@ -156,7 +156,7 @@ static bool _refresh_slot_in_pass(const dcc_scheduler_context_t *context, const 
 
         case REFRESH_PASS_DUE:
 
-            return slot->prompt_sends_left == 0 && slot->cold_age >= context->refresh_cold_cycles;
+            return slot->prompt_sends_left == 0 && slot->unsent_cycles >= context->refresh_cold_cycles;
 
         default:
 
@@ -167,12 +167,20 @@ static bool _refresh_slot_in_pass(const dcc_scheduler_context_t *context, const 
 }
 
     /**
-     * @brief First slot in @p pass, scanning round-robin from refresh_index.
+     * @brief First slot in @p pass, scanning round-robin from that pass's cursor.
      * @return Slot index, or -1 if no slot is in that pass.
+     *
+     * @details The burst pass (and the flat ring) use refresh_index, which an
+     * insert also moves to the changed slot. The overdue and due passes use their
+     * own cursor, refresh_cold_index, so a stream of changes cannot keep them
+     * restarting from the same few slots.
      */
 static int16_t _select_refresh_pass(dcc_scheduler_context_t *context, refresh_pass_enum pass) {
 
-    uint8_t start_index = context->refresh_index;
+    uint8_t *cursor = (pass == REFRESH_PASS_OVERDUE || pass == REFRESH_PASS_DUE)
+                      ? &context->refresh_cold_index
+                      : &context->refresh_index;
+    uint8_t start_index = *cursor;
     uint8_t scan_count;
 
     for (scan_count = 0; scan_count < USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT; scan_count++) {
@@ -181,7 +189,7 @@ static int16_t _select_refresh_pass(dcc_scheduler_context_t *context, refresh_pa
 
         if (_refresh_slot_in_pass(context, &context->slots[slot_index], pass)) {
 
-            context->refresh_index = (slot_index + 1) % USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT;
+            *cursor = (slot_index + 1) % USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT;
             return (int16_t)slot_index;
 
         }
@@ -196,15 +204,15 @@ static int16_t _select_refresh_pass(dcc_scheduler_context_t *context, refresh_pa
      * @brief Select the next auto-refresh slot.
      * @return Slot index, or -1 if no refresh slot is due this cycle.
      *
-     * @details With the cold tier enabled (refresh_cold_cycles > 0) three passes,
-     * in this order, each round-robin from the shared refresh_index:
-     *   1. overdue cold slots -- the starvation bound: nothing stays unsent past
-     *      refresh_cold_max_cycles because other slots keep changing;
-     *   2. slots inside their prompt burst -- a changed command;
-     *   3. cold slots that are merely due for a keep-alive.
-     * A merely-due slot therefore never delays a changed one, and a changed one
-     * only waits while some slot is overdue (sustained overload, or a batch of
-     * slots falling overdue together).
+     * @details With the cold tier enabled (refresh_cold_cycles > 0), in order:
+     *   1. an overdue slot -- the starvation bound: no refresh slot, in its burst
+     *      or not, stays unsent past refresh_cold_max_cycles because others keep
+     *      changing;
+     *   2. a slot inside its burst -- a changed command;
+     *   3. a slot out of its burst that is merely due for a keep-alive.
+     * A merely-due slot never delays a changed one. Right after an overdue send a
+     * waiting burst goes first, so when more slots are active than the ceiling can
+     * serve (some always overdue) changed commands still get every other cycle.
      */
 static int16_t _select_refresh(dcc_scheduler_context_t *context) {
 
@@ -216,7 +224,21 @@ static int16_t _select_refresh(dcc_scheduler_context_t *context) {
 
     }
 
+    if (context->refresh_last_was_overdue) {
+
+        slot_index = _select_refresh_pass(context, REFRESH_PASS_PROMPT);
+
+        if (slot_index >= 0) {
+
+            context->refresh_last_was_overdue = false;
+            return slot_index;
+
+        }
+
+    }
+
     slot_index = _select_refresh_pass(context, REFRESH_PASS_OVERDUE);
+    context->refresh_last_was_overdue = (slot_index >= 0);
 
     if (slot_index < 0) {
 
@@ -235,13 +257,15 @@ static int16_t _select_refresh(dcc_scheduler_context_t *context) {
 }
 
     /**
-     * @brief Age every cold refresh slot by one packet cycle.
+     * @brief Age every refresh slot by one packet cycle.
      *
      * @details Called once per packet cycle, before a slot is chosen, so a slot's
      * cadence depends only on its own last send -- not on its ring position or on
-     * how many other slots exist. Saturates rather than wrapping.
+     * how many other slots exist. Slots in their burst age too, so a burst that
+     * keeps losing to other changes still falls overdue. Saturates rather than
+     * wrapping.
      */
-static void _age_cold_slots(dcc_scheduler_context_t *context) {
+static void _age_refresh_slots(dcc_scheduler_context_t *context) {
 
     uint8_t slot_index;
 
@@ -255,9 +279,9 @@ static void _age_cold_slots(dcc_scheduler_context_t *context) {
 
         dcc_scheduler_slot_t *slot = &context->slots[slot_index];
 
-        if (slot->active && slot->auto_refresh && slot->prompt_sends_left == 0 && slot->cold_age < UINT16_MAX) {
+        if (slot->active && slot->auto_refresh && slot->unsent_cycles < UINT16_MAX) {
 
-            slot->cold_age++;
+            slot->unsent_cycles++;
 
         }
 
@@ -281,12 +305,14 @@ void DccScheduler_initialize(dcc_scheduler_context_t *context, const interface_d
     context->refresh_prompt_sends = DCC_REFRESH_PROMPT_SENDS;
     context->refresh_cold_cycles = DCC_REFRESH_COLD_CYCLES;
     context->refresh_cold_max_cycles = DCC_REFRESH_COLD_MAX_CYCLES;
+    context->refresh_cold_index = 0;
+    context->refresh_last_was_overdue = false;
 
     for (slot_index = 0; slot_index < USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT; slot_index++) {
 
         context->slots[slot_index].active = false;
         context->slots[slot_index].prompt_sends_left = 0;
-        context->slots[slot_index].cold_age = 0;
+        context->slots[slot_index].unsent_cycles = 0;
 
     }
 
@@ -309,6 +335,8 @@ bool DccScheduler_insert(dcc_scheduler_context_t *context, const dcc_packet_t *p
             return false;  /* No free slots */
 
         }
+
+        context->slots[slot_index].unsent_cycles = 0;
 
     } else if (auto_refresh && context->slots[slot_index].auto_refresh) {
 
@@ -336,9 +364,9 @@ bool DccScheduler_insert(dcc_scheduler_context_t *context, const dcc_packet_t *p
     context->slots[slot_index].active = true;
 
     /* Every insert is a command to get out promptly: a burst at full rate, then
-     * the keep-alive. Unused by one-shot slots. */
+     * the keep-alive. Unused by one-shot slots. unsent_cycles is left alone: an
+     * insert is not a send, and the overdue bound counts from the last send. */
     context->slots[slot_index].prompt_sends_left = context->refresh_prompt_sends;
-    context->slots[slot_index].cold_age = 0;
 
     return true;
 
@@ -371,6 +399,8 @@ void DccScheduler_clear(dcc_scheduler_context_t *context) {
     }
 
     context->refresh_index = 0;
+    context->refresh_cold_index = 0;
+    context->refresh_last_was_overdue = false;
 
 }
 
@@ -440,8 +470,8 @@ void DccScheduler_run(dcc_scheduler_context_t *context) {
 
     }
 
-    /* One packet cycle has passed: age the cold refresh slots before choosing. */
-    _age_cold_slots(context);
+    /* One packet cycle has passed: age the refresh slots before choosing. */
+    _age_refresh_slots(context);
 
     /* 1. Try one-shot packets first (highest priority wins) */
     slot_index = _select_one_shot(context);
@@ -515,7 +545,7 @@ void DccScheduler_run(dcc_scheduler_context_t *context) {
 
         }
 
-        context->slots[slot_index].cold_age = 0;
+        context->slots[slot_index].unsent_cycles = 0;
 
         return;
 
