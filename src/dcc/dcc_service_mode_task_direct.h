@@ -28,7 +28,7 @@
  * @brief Task orchestrator for Direct mode CV programming (S-9.2.3 §E).
  *
  * @details Sequences direct mode primitive operations to implement read_cv
- * (8x verify_bit bits 0-7), write_cv (write + verify), read_bit (1x verify_bit),
+ * (8x verify_bit bits 0-7, then verify_byte), write_cv (write + verify), read_bit (1x verify_bit),
  * and write_bit (write_bit + verify_bit). Drives the state machine forward on
  * each on_ack() notification from the application hardware layer.
  * Singleton — only one service track per command station.
@@ -80,10 +80,13 @@ typedef struct {
     extern void DccServiceModeTaskDirect_initialize(const interface_dcc_service_mode_task_direct_t *interface);
 
     /**
-     * @brief Read a CV byte using direct mode. Sequences 8 verify_bit operations (bits 0-7).
+     * @brief Read a CV byte using direct mode. Sequences 8 verify_bit operations (bits 0-7),
+     * then one verify_byte of the assembled value.
      * @param cv CV number (1-1023).
-     * @param on_complete Called when complete; value = CV byte assembled from bit results.
-     * @param on_progress Called after each bit step (nullable).
+     * @param on_complete Called when complete: SUCCESS with the CV byte if verify_byte is ACKed;
+     *        NO_ACK (value 0) if nothing was ACKed at all, i.e. no decoder; VERIFY_FAIL (value =
+     *        the assembled byte) if some bits were ACKed but the byte was not.
+     * @param on_progress Called after each of the 9 steps (nullable).
      * @return true if started, false if busy or cv out of range.
      */
     extern bool DccServiceModeTaskDirect_read_cv(uint16_t cv, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);

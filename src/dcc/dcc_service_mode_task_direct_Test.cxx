@@ -191,9 +191,9 @@ static void setup(void) {
 
 }
 
-// Helper: drive a full read_cv through all 8 bits.
-// ack_mask bit N set = ACK on bit N (bit is 1).
-static uint8_t drive_read_cv(uint16_t cv, uint8_t ack_mask) {
+// Helper: drive a full read_cv through all 8 bits and the closing verify_byte.
+// ack_mask bit N set = ACK on bit N (bit is 1). verify_ack = the decoder ACKs the byte.
+static uint8_t drive_read_cv_verify(uint16_t cv, uint8_t ack_mask, bool verify_ack) {
 
     DccServiceModeTaskDirect_read_cv(cv, mock_on_complete, mock_on_progress);
 
@@ -204,7 +204,16 @@ static uint8_t drive_read_cv(uint16_t cv, uint8_t ack_mask) {
 
     }
 
+    DccServiceModeTaskDirect_on_primitive_complete(verify_ack ? DCC_SERVICE_MODE_SUCCESS : DCC_SERVICE_MODE_NO_ACK);
+
     return on_complete_value;
+
+}
+
+// Helper: a read from a decoder that holds the value -- it ACKs the byte-verify.
+static uint8_t drive_read_cv(uint16_t cv, uint8_t ack_mask) {
+
+    return drive_read_cv_verify(cv, ack_mask, true);
 
 }
 
@@ -290,6 +299,82 @@ TEST(DccServiceModeTaskDirect, read_cv_issues_8_verify_bit_calls) {
 }
 
 // ============================================================================
+// read_cv — closing verify_byte (no decoder vs. a CV that holds 0)
+// ============================================================================
+
+TEST(DccServiceModeTaskDirect, read_cv_no_complete_before_verify_byte) {
+
+    setup();
+    DccServiceModeTaskDirect_read_cv(29, mock_on_complete, mock_on_progress);
+
+    for (uint8_t bit_index = 0; bit_index < 8; bit_index++) {
+
+        DccServiceModeTaskDirect_on_primitive_complete((bit_index == 1 || bit_index == 2) ? DCC_SERVICE_MODE_SUCCESS : DCC_SERVICE_MODE_NO_ACK);
+
+    }
+
+    EXPECT_EQ(on_complete_count, (uint32_t)0);
+    EXPECT_EQ(verify_byte_count, (uint32_t)1);
+    EXPECT_EQ(last_verify_byte_cv, (uint16_t)29);
+    EXPECT_EQ(last_verify_byte_value, (uint8_t)0x06);
+
+}
+
+TEST(DccServiceModeTaskDirect, read_cv_no_decoder_completes_no_ack) {
+
+    setup();
+    uint8_t result = drive_read_cv_verify(1, 0x00, false);
+
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_NO_ACK);
+    EXPECT_EQ(result, (uint8_t)0x00);
+
+}
+
+TEST(DccServiceModeTaskDirect, read_cv_zero_confirmed_completes_success) {
+
+    setup();
+    uint8_t result = drive_read_cv_verify(1, 0x00, true);
+
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_SUCCESS);
+    EXPECT_EQ(result, (uint8_t)0x00);
+
+}
+
+TEST(DccServiceModeTaskDirect, read_cv_byte_not_confirmed_completes_verify_fail) {
+
+    setup();
+    uint8_t result = drive_read_cv_verify(1, 0x06, false);
+
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_VERIFY_FAIL);
+    EXPECT_EQ(result, (uint8_t)0x06);
+
+}
+
+TEST(DccServiceModeTaskDirect, read_cv_verify_byte_fails_to_start_completes_busy) {
+
+    setup();
+    verify_byte_return = false;
+    DccServiceModeTaskDirect_read_cv(1, mock_on_complete, mock_on_progress);
+
+    for (uint8_t bit_index = 0; bit_index < 8; bit_index++) {
+
+        DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_NO_ACK);
+
+    }
+
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+
+    /* A following call must be accepted, not rejected by a stuck state. */
+    verify_byte_return = true;
+    EXPECT_TRUE(DccServiceModeTaskDirect_read_cv(1, mock_on_complete, mock_on_progress));
+
+}
+
+// ============================================================================
 // read_cv — value assembly
 // ============================================================================
 
@@ -349,30 +434,47 @@ TEST(DccServiceModeTaskDirect, read_cv_cv29_value_assembled_correctly) {
 // read_cv — progress callback
 // ============================================================================
 
-TEST(DccServiceModeTaskDirect, read_cv_progress_called_8_times) {
+TEST(DccServiceModeTaskDirect, read_cv_progress_called_9_times) {
 
     setup();
     drive_read_cv(1, 0x00);
 
-    EXPECT_EQ(on_progress_count, (uint32_t)8);
+    EXPECT_EQ(on_progress_count, (uint32_t)9);
 
 }
 
-TEST(DccServiceModeTaskDirect, read_cv_progress_uses_read_phase) {
+TEST(DccServiceModeTaskDirect, read_cv_progress_uses_read_phase_for_bits) {
 
     setup();
-    drive_read_cv(1, 0x00);
+    DccServiceModeTaskDirect_read_cv(1, mock_on_complete, mock_on_progress);
+
+    for (uint8_t bit_index = 0; bit_index < 8; bit_index++) {
+
+        DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_NO_ACK);
+
+    }
 
     EXPECT_EQ(on_progress_phase, DCC_TASK_PHASE_READ);
+    EXPECT_EQ(on_progress_current_step, (uint8_t)8);
 
 }
 
-TEST(DccServiceModeTaskDirect, read_cv_progress_estimated_steps_is_8) {
+TEST(DccServiceModeTaskDirect, read_cv_progress_uses_verify_phase_last) {
 
     setup();
     drive_read_cv(1, 0x00);
 
-    EXPECT_EQ(on_progress_estimated_steps, (uint8_t)8);
+    EXPECT_EQ(on_progress_phase, DCC_TASK_PHASE_VERIFY);
+    EXPECT_EQ(on_progress_current_step, (uint8_t)9);
+
+}
+
+TEST(DccServiceModeTaskDirect, read_cv_progress_estimated_steps_is_9) {
+
+    setup();
+    drive_read_cv(1, 0x00);
+
+    EXPECT_EQ(on_progress_estimated_steps, (uint8_t)9);
 
 }
 
@@ -388,7 +490,7 @@ TEST(DccServiceModeTaskDirect, read_cv_null_progress_no_crash) {
 
     DccServiceModeTaskDirect_read_cv(1, mock_on_complete, NULL);
 
-    for (uint8_t bit_index = 0; bit_index < 8; bit_index++) {
+    for (uint8_t bit_index = 0; bit_index < 9; bit_index++) {
 
         DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_NO_ACK);
 
