@@ -280,6 +280,21 @@ static bool _ack_pulse_active = false;
     /** @brief Timestamp when ACK pulse started (microseconds) */
 static uint32_t _ack_pulse_start_usec = 0;
 
+    /**
+     * @brief start_ack_pulse as the packet decoder sees it: turn the ACK load on
+     *  through the app's hook and start the 6 ms clock that DccConfig_run() polls
+     *  to turn it off again (S-9.2.3 sec 3, 6 ms +/- 1 ms). Installed only when the
+     *  app supplies start_ack_pulse, so a NULL hook still short-circuits in the
+     *  decoder and the timer never arms.
+     */
+static void _start_ack_pulse_wrapper(void) {
+
+    _ack_pulse_start_usec = _configuration_pointer->get_timestamp_usec();
+    _ack_pulse_active = true;
+    _configuration_pointer->start_ack_pulse();
+
+}
+
 #if defined(DCC_COMPILE_RAILCOM)
     /**
      * @brief Bit decoder on_packet_received dispatch for a RailCom decoder. Runs at the
@@ -1032,7 +1047,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _packet_decoder_interface.on_binary_state_short_command = config->on_binary_state_short_command;
     _packet_decoder_interface.on_binary_state_long_command = config->on_binary_state_long_command;
     _packet_decoder_interface.on_analog_function_command = config->on_analog_function_command;
-    _packet_decoder_interface.start_ack_pulse = config->start_ack_pulse;
+    _packet_decoder_interface.start_ack_pulse = config->start_ack_pulse ? &_start_ack_pulse_wrapper : (void *)0;
     _packet_decoder_interface.on_addressed_packet = &DccFailsafe_note_valid_packet;
 #if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_DECODER)
     _packet_decoder_interface.on_address_changed = &DccRailcomDecoder_set_address;

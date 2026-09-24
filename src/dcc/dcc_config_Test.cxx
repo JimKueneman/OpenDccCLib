@@ -1335,3 +1335,98 @@ TEST(DccConfig, decoder_edges_dispatch_a_packet_on_run) {
 }
 
 #endif /* DCC_COMPILE_DECODER */
+
+// ============================================================================
+// Group 13: ACK pulse -- library owns the 6 ms stop (S-9.2.3 sec 3)
+// ============================================================================
+
+#ifdef DCC_COMPILE_DECODER
+
+static uint32_t mock_clock_usec;
+static uint32_t mock_clock(void) { return mock_clock_usec; }
+
+static uint32_t ack_start_count;
+static uint32_t ack_stop_count;
+static void mock_start_ack_pulse(void) { ack_start_count++; }
+static void mock_stop_ack_pulse(void) { ack_stop_count++; }
+
+/* Arm service mode with three broadcast resets, then verify CV5 == 0, which
+ * matches the all-zero mock CV store and so fires the ACK. */
+static void feed_matching_service_mode_verify(void) {
+    uint8_t reset[] = {0x00, 0x00, 0x00};
+    for (int i = 0; i < 3; i++) {
+        feed_packet(reset, 3);
+        DccConfig_run();
+    }
+    uint8_t verify[] = {0x74, 0x04, 0x00, 0x00};
+    verify[3] = verify[0] ^ verify[1] ^ verify[2];
+    feed_packet(verify, 4);
+    DccConfig_run();
+}
+
+TEST(DccConfig, ack_pulse_is_stopped_by_run_after_6ms) {
+    dcc_config_t cfg = make_test_config();
+    cfg.get_timestamp_usec = mock_clock;
+    cfg.start_ack_pulse = mock_start_ack_pulse;
+    cfg.stop_ack_pulse = mock_stop_ack_pulse;
+    DccConfig_initialize(&cfg);
+
+    mock_clock_usec = 1000;
+    ack_start_count = 0;
+    ack_stop_count = 0;
+
+    feed_matching_service_mode_verify();
+    EXPECT_EQ(ack_start_count, (uint32_t)1);
+    EXPECT_EQ(ack_stop_count, (uint32_t)0);
+
+    mock_clock_usec += DCC_ACK_PULSE_DURATION_US - 1;
+    DccConfig_run();
+    EXPECT_EQ(ack_stop_count, (uint32_t)0);       /* 5.999 ms: still on */
+
+    mock_clock_usec += 1;
+    DccConfig_run();
+    EXPECT_EQ(ack_stop_count, (uint32_t)1);       /* 6 ms: off */
+
+    DccConfig_run();
+    EXPECT_EQ(ack_stop_count, (uint32_t)1);       /* one stop per pulse */
+}
+
+TEST(DccConfig, ack_pulse_expiry_with_null_stop_hook_does_not_crash) {
+    dcc_config_t cfg = make_test_config();
+    cfg.get_timestamp_usec = mock_clock;
+    cfg.start_ack_pulse = mock_start_ack_pulse;
+    /* stop_ack_pulse left NULL */
+    DccConfig_initialize(&cfg);
+
+    mock_clock_usec = 1000;
+    ack_start_count = 0;
+
+    feed_matching_service_mode_verify();
+    EXPECT_EQ(ack_start_count, (uint32_t)1);
+
+    mock_clock_usec += DCC_ACK_PULSE_DURATION_US;
+    DccConfig_run();
+
+    /* Timer disarmed: a second matching verify starts a fresh pulse. */
+    feed_matching_service_mode_verify();
+    EXPECT_EQ(ack_start_count, (uint32_t)2);
+}
+
+TEST(DccConfig, no_ack_hardware_never_arms_the_pulse_timer) {
+    dcc_config_t cfg = make_test_config();
+    cfg.get_timestamp_usec = mock_clock;
+    /* start_ack_pulse and stop_ack_pulse both NULL */
+    cfg.stop_ack_pulse = mock_stop_ack_pulse;
+    DccConfig_initialize(&cfg);
+
+    mock_clock_usec = 1000;
+    ack_stop_count = 0;
+
+    feed_matching_service_mode_verify();
+    mock_clock_usec += DCC_ACK_PULSE_DURATION_US;
+    DccConfig_run();
+
+    EXPECT_EQ(ack_stop_count, (uint32_t)0);
+}
+
+#endif /* DCC_COMPILE_DECODER */
