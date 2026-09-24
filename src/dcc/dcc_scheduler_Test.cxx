@@ -448,6 +448,7 @@ TEST(DccScheduler, changed_refresh_slot_is_sent_next_cycle) {
     dcc_scheduler_context_t context;
     interface_dcc_scheduler_t interface = make_interface();
     DccScheduler_initialize(&context, &interface);
+    context.refresh_cold_cycles = 0;   /* the flat ring: with the cold tier on, the burst pass does this */
 
     /* Addresses 1..8 fill slots 0..7 */
     dcc_packet_t pkt;
@@ -1169,38 +1170,43 @@ TEST(DccScheduler, changes_keep_flowing_when_idle_slots_overload) {
     }
 }
 
-// A burst that keeps losing the burst pass to a slot changed every cycle still falls
-// overdue, so it is sent no less often than COLD_MAX_CYCLES and its burst completes.
+// A burst shares the burst pass with a slot that is changed every cycle (or every second
+// cycle): its copies go out every other cycle, not one per COLD_MAX_CYCLES through the
+// overdue bound -- the insert of the busy slot must not pull the burst cursor to itself.
 TEST(DccScheduler, burst_slot_is_not_starved_by_a_slot_changing_every_cycle) {
-    dcc_scheduler_context_t context;
-    interface_dcc_scheduler_t interface;
-    pacing_init(&context, &interface);
-    const int cold_max = context.refresh_cold_max_cycles;
+    for (int every = 1; every <= 2; every++) {
+        dcc_scheduler_context_t context;
+        interface_dcc_scheduler_t interface;
+        pacing_init(&context, &interface);
+        const int prompt = context.refresh_prompt_sends;
 
-    insert_refresh(&context, 1, 20);
+        insert_refresh(&context, 1, 20);
 
-    int sends = 0;
-    int last_send = -1;
-    for (int cycle = 0; cycle < 3 * cold_max + 1 && sends < context.refresh_prompt_sends; cycle++) {
-        insert_refresh(&context, 2, (uint8_t)(10 + cycle % 100));
-        if (pacing_cycle(&context) == 1) {
-            if (last_send >= 0) {
-                EXPECT_LE(cycle - last_send, cold_max) << "cycle " << cycle;
+        int sends = 0;
+        int last_send = -1;
+        for (int cycle = 0; cycle < 2 * prompt && sends < prompt; cycle++) {
+            if (cycle % every == 0) {
+                insert_refresh(&context, 2, (uint8_t)(10 + cycle % 100));
             }
-            last_send = cycle;
-            sends++;
+            if (pacing_cycle(&context) == 1) {
+                if (last_send >= 0) {
+                    EXPECT_LE(cycle - last_send, 2) << "address 2 changed every " << every << " cycle(s), cycle " << cycle;
+                }
+                last_send = cycle;
+                sends++;
+            }
         }
+        EXPECT_EQ(sends, prompt) << "address 2 changed every " << every << " cycle(s)";
     }
-    EXPECT_EQ(sends, (int)context.refresh_prompt_sends);
 }
 
 // The keep-alive ceiling against the packet time-out (CV11, S-9.2.4 sec 4), at
 // compile time. The smallest CV11 this library's fail-safe honours is 1 = 0.1 s,
 // less than one pass over a 16-slot ring, so no refresh scheme can bound that; this
-// checks the ceiling against a documented floor instead (REFRESH_CV11_FLOOR, in CV11
-// units), with every cycle taken at its worst: longest packet, all zero bits as this
-// library's encoder sends them (two 58 us ticks per half), plus a RailCom cutout.
-#define REFRESH_CV11_FLOOR              20   /* 2.0 s with DCC_FAILSAFE_CV11_UNIT_US = 0.1 s */
+// checks the ceiling against the documented floor instead (DCC_REFRESH_CV11_FLOOR in
+// dcc_defines.h, in CV11 units), with every cycle taken at its worst: longest packet,
+// all zero bits as this library's encoder sends them (two 58 us ticks per half), plus a
+// RailCom cutout.
 #define REFRESH_WORST_ZERO_BIT_US       (4u * DCC_ONE_BIT_HALF_PERIOD_US)
 #define REFRESH_WORST_CUTOUT_US         500u /* T_CE max 488 us, S-9.3.2 Table 1 */
 #define REFRESH_WORST_CYCLE_US                                                      \
@@ -1210,8 +1216,8 @@ TEST(DccScheduler, burst_slot_is_not_starved_by_a_slot_changing_every_cycle) {
 
 TEST(DccScheduler, cold_max_cycles_is_below_cv11_minimum) {
     static_assert((uint64_t)DCC_REFRESH_COLD_MAX_CYCLES * REFRESH_WORST_CYCLE_US <
-                      (uint64_t)REFRESH_CV11_FLOOR * DCC_FAILSAFE_CV11_UNIT_US,
+                      (uint64_t)DCC_REFRESH_CV11_FLOOR * DCC_FAILSAFE_CV11_UNIT_US,
                   "DCC_REFRESH_COLD_MAX_CYCLES of worst-case packets exceeds the documented CV11 floor");
     EXPECT_LT((uint64_t)DCC_REFRESH_COLD_MAX_CYCLES * REFRESH_WORST_CYCLE_US,
-              (uint64_t)REFRESH_CV11_FLOOR * DCC_FAILSAFE_CV11_UNIT_US);
+              (uint64_t)DCC_REFRESH_CV11_FLOOR * DCC_FAILSAFE_CV11_UNIT_US);
 }

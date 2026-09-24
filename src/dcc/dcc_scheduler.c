@@ -338,10 +338,14 @@ bool DccScheduler_insert(dcc_scheduler_context_t *context, const dcc_packet_t *p
 
         context->slots[slot_index].unsent_cycles = 0;
 
-    } else if (auto_refresh && context->slots[slot_index].auto_refresh) {
+    } else if (auto_refresh && context->slots[slot_index].auto_refresh
+               && context->refresh_cold_cycles == 0) {
 
-        /* A changed command for a refresh slot takes the next refresh turn instead of
-         * waiting for the ring to come round to it (up to one full ring of packets). */
+        /* Flat ring: a changed command for a refresh slot takes the next refresh turn
+         * instead of waiting for the ring to come round to it (up to one full ring of
+         * packets). With the cold tier on, the burst pass already sends it promptly, and
+         * moving the shared cursor here would let one slot changed every cycle keep every
+         * other burst waiting for the overdue bound. */
         context->refresh_index = (uint8_t)slot_index;
 
     }

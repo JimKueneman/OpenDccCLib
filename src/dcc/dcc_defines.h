@@ -125,7 +125,7 @@ extern "C" {
 // The ceiling is what a decoder's packet time-out (CV11, S-9.2.4 sec 4) has to
 // cover for an idle locomotive: at ~6.7 ms per cycle the default is ~0.8 s,
 // plus one packet per other slot that falls overdue on the same cycle. Keep
-// CV11 on such decoders at 0 (off) or comfortably above it.
+// CV11 on such decoders at 0 (off) or at least DCC_REFRESH_CV11_FLOOR.
 // =============================================================================
 
     /** @brief Full-rate sends after each insert, before the slot goes cold. Like
@@ -149,6 +149,16 @@ extern "C" {
      *  their half of the cycles. */
 #ifndef DCC_REFRESH_COLD_MAX_CYCLES
 #define DCC_REFRESH_COLD_MAX_CYCLES         120
+#endif
+
+    /** @brief The smallest packet time-out (CV11, S-9.2.4 sec 4, in this library's
+     *  DCC_FAILSAFE_CV11_UNIT_US units) a decoder on this command station's track can be
+     *  set to without an idle locomotive stopping: 20 = 2.0 s. Worst case, every one of
+     *  DCC_REFRESH_COLD_MAX_CYCLES cycles carries the longest packet (all zero bits) plus
+     *  a RailCom cutout, about 15 ms each: 120 x 15 ms = 1.83 s. The scheduler test
+     *  cold_max_cycles_is_below_cv11_minimum checks it; lower this with the ceiling. */
+#ifndef DCC_REFRESH_CV11_FLOOR
+#define DCC_REFRESH_CV11_FLOOR              20
 #endif
 
 #if DCC_REFRESH_COLD_CYCLES > 0 && DCC_REFRESH_COLD_MAX_CYCLES < DCC_REFRESH_COLD_CYCLES
