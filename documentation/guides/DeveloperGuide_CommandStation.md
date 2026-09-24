@@ -332,7 +332,7 @@ Service mode runs on the dedicated programming track. The command station sends 
 
 | Mode | API prefix `DccApplicationCommandStationServiceTrack_` | Notes |
 |---|---|---|
-| Direct | `direct_read_cv`, `direct_write_cv`, `direct_read_bit`, `direct_write_bit` | Read is eight bit-verifies; write is write then verify |
+| Direct | `direct_read_cv`, `direct_write_cv`, `direct_read_bit`, `direct_write_bit` | Read is eight bit-verifies, then a byte-verify of the result (no ACK at all = `NO_ACK`); write is write then verify |
 | Paged | `paged_read_cv`, `paged_write_cv`, `paged_read_bit`, `paged_write_bit` | Page preset then register access; reads scan |
 | Register | `register_read_cv`, `register_write_cv`, `register_read_bit`, `register_write_bit`, `register_verify_value`, `register_factory_reset` | Takes a `dcc_decoder_type_enum` (mobile or accessory) per call |
 | Address | `address_read`, `address_write`, `address_verify`, `address_read_bit`, `address_write_bit` | CV1 only, short addresses |

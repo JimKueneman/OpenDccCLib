@@ -41,6 +41,7 @@ typedef enum {
 
     DCC_TASK_DIRECT_STATE_IDLE,
     DCC_TASK_DIRECT_STATE_READ_CV,
+    DCC_TASK_DIRECT_STATE_READ_CV_VERIFY,
     DCC_TASK_DIRECT_STATE_WRITE_CV,
     DCC_TASK_DIRECT_STATE_WRITE_CV_VERIFY,
     DCC_TASK_DIRECT_STATE_READ_BIT,
@@ -57,6 +58,7 @@ typedef struct {
     uint8_t bit;
     bool bit_value;
     uint8_t value;
+    bool any_ack;
     uint8_t current_step;
     bool ack_result;
     dcc_service_mode_task_on_complete_callback_t on_complete;
@@ -66,11 +68,11 @@ typedef struct {
 
 static dcc_service_mode_task_direct_context_t _context;
 
-static void _report_progress(dcc_task_phase_enum phase) {
+static void _report_progress(dcc_task_phase_enum phase, uint8_t estimated_steps) {
 
     if (_context.on_progress) {
 
-        _context.on_progress(phase, _context.current_step, 8);
+        _context.on_progress(phase, _context.current_step, estimated_steps);
 
     }
 
@@ -93,16 +95,26 @@ static void _advance_read_cv(void) {
     if (_context.ack_result) {
 
         _context.value |= (uint8_t)(1u << _context.bit);
+        _context.any_ack = true;
 
     }
 
     _context.bit++;
     _context.current_step++;
-    _report_progress(DCC_TASK_PHASE_READ);
+    _report_progress(DCC_TASK_PHASE_READ, 9);
 
     if (_context.bit > 7) {
 
-        _complete(DCC_SERVICE_MODE_SUCCESS, _context.value);
+        /* A missing ACK reads as a 0 bit, so with no decoder on the track the
+         * eight bit-verifies assemble 0x00, the same as a CV that holds 0.
+         * Confirm the assembled byte with one verify_byte before reporting it. */
+        _context.state = DCC_TASK_DIRECT_STATE_READ_CV_VERIFY;
+
+        if (!_context.interface->verify_byte(_context.cv, _context.value)) {
+
+            _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+        }
 
     } else if (!_context.interface->verify_bit(_context.cv, _context.bit, true)) {
 
@@ -112,10 +124,33 @@ static void _advance_read_cv(void) {
 
 }
 
+static void _advance_read_cv_verify(void) {
+
+    _context.current_step++;
+    _report_progress(DCC_TASK_PHASE_VERIFY, 9);
+
+    if (_context.ack_result) {
+
+        _complete(DCC_SERVICE_MODE_SUCCESS, _context.value);
+
+    } else if (_context.any_ack) {
+
+        /* The decoder answered some bits but not the byte they make up: a misread. */
+        _complete(DCC_SERVICE_MODE_VERIFY_FAIL, _context.value);
+
+    } else {
+
+        /* Nothing answered at all: no decoder, or one that doesn't ACK. */
+        _complete(DCC_SERVICE_MODE_NO_ACK, 0);
+
+    }
+
+}
+
 static void _advance_write_cv(void) {
 
     _context.current_step++;
-    _report_progress(DCC_TASK_PHASE_WRITE);
+    _report_progress(DCC_TASK_PHASE_WRITE, 8);
     _context.state = DCC_TASK_DIRECT_STATE_WRITE_CV_VERIFY;
 
     if (!_context.interface->verify_byte(_context.cv, _context.value)) {
@@ -129,7 +164,7 @@ static void _advance_write_cv(void) {
 static void _advance_write_cv_verify(void) {
 
     _context.current_step++;
-    _report_progress(DCC_TASK_PHASE_VERIFY);
+    _report_progress(DCC_TASK_PHASE_VERIFY, 8);
 
     dcc_service_mode_result_t result = _context.ack_result ? DCC_SERVICE_MODE_SUCCESS : DCC_SERVICE_MODE_VERIFY_FAIL;
     _complete(result, _context.value);
@@ -187,6 +222,7 @@ bool DccServiceModeTaskDirect_read_cv(uint16_t cv, dcc_service_mode_task_on_comp
     _context.cv           = cv;
     _context.bit          = 0;
     _context.value        = 0;
+    _context.any_ack      = false;
     _context.current_step = 0;
     _context.ack_result   = false;
     _context.on_complete  = on_complete;
@@ -325,6 +361,11 @@ void DccServiceModeTaskDirect_on_primitive_complete(dcc_service_mode_result_t re
         case DCC_TASK_DIRECT_STATE_READ_CV:
 
             _advance_read_cv();
+            break;
+
+        case DCC_TASK_DIRECT_STATE_READ_CV_VERIFY:
+
+            _advance_read_cv_verify();
             break;
 
         case DCC_TASK_DIRECT_STATE_WRITE_CV:

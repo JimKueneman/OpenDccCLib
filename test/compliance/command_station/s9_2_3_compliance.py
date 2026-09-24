@@ -497,8 +497,11 @@ def test_readback(rep, s):
     _send_ok(s, "SVC MOCKCV OFF")
     r = _svc_result(s, "SVC DIRECT WRITE 8 51")
     rep.check(RB, "write with mock OFF -> VERIFY FAIL", "VERIFY FAIL" in r, f"result: {r}")
+    # With nothing ACKing, the eight bit-verifies assemble 0x00; the closing
+    # verify-byte is not ACKed either, so the read reports NO ACK rather than a
+    # false "CV = 0".
     r = _svc_result(s, "SVC DIRECT READ 8")
-    rep.check(RB, "read with mock OFF -> value 0x00", "(0x00)" in r, f"result: {r}")
+    rep.check(RB, "read with mock OFF -> NO ACK", "NO ACK" in r, f"result: {r}")
 
 
 def ack_width_tests(rep, s):
