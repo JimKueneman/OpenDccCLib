@@ -171,10 +171,18 @@ static bool _schedule_main_track(const dcc_packet_t *packet, dcc_address_t addre
                                  dcc_tag_enum tag, dcc_priority_enum priority,
                                  bool auto_refresh) {
 
+    bool ok;
+
     if (auto_refresh) {
-        return DccApplicationCommandStationMainTrack_add_to_auto_refresh(packet, address, tag, priority);
+        ok = DccApplicationCommandStationMainTrack_add_to_auto_refresh(packet, address, tag, priority);
+    } else {
+        ok = DccApplicationCommandStationMainTrack_send_packet(packet, address, tag, priority);
     }
-    return DccApplicationCommandStationMainTrack_send_packet(packet, address, tag, priority);
+
+    if (ok) {
+        CallbacksDcc_on_main_track_insert();   /* "TRIG INSERT": PB3 rises here */
+    }
+    return ok;
 }
 
 static void _strupper(char *s) {
@@ -1146,7 +1154,15 @@ static void _cmd_status(void) {
 // Arm the test trigger (PB3): the next non-idle packet transmitted drives a
 // clean rising edge so a logic analyzer can hardware-trigger on the packet
 // under test. Used by the HIL compliance harness.
-static void _cmd_trig(void) {
+// "TRIG INSERT" arms it on the next main-track insert instead, so the rising
+// edge marks the moment the command was queued (scheduler latency, issue #5).
+static void _cmd_trig(char *tokens[], int count) {
+
+    if (count >= 2 && strcmp(tokens[1], "INSERT") == 0) {
+        CallbacksDcc_arm_trigger_on_insert();
+        _respond("OK: trigger armed (next main-track insert pulses PB3)");
+        return;
+    }
 
     CallbacksDcc_arm_trigger();
     _respond("OK: trigger armed (next non-idle packet pulses PB3)");
@@ -1598,6 +1614,7 @@ static void _cmd_help(void) {
     _respond("  REFRESH ON|OFF  (auto-refresh speed/func)");
     _respond("  STATUS");
     _respond("  TRIG  (arm PB3 test trigger for next non-idle packet)");
+    _respond("  TRIG INSERT  (arm PB3 for the next main-track insert: scheduler latency)");
     _respond("  CLEAR (remove all auto-refresh; idle-only stream)");
     _respond("  RESET (send one broadcast reset packet 00 00 00)");
     _respond("  STOP  (broadcast controlled stop, baseline S=0)");
@@ -1661,7 +1678,7 @@ void UartCommandParser_process(void) {
     else if (strcmp(tokens[0], "STATUS") == 0)
         _cmd_status();
     else if (strcmp(tokens[0], "TRIG") == 0)
-        _cmd_trig();
+        _cmd_trig(tokens, count);
     else if (strcmp(tokens[0], "CLEAR") == 0)
         _cmd_clear();
     else if (strcmp(tokens[0], "RESET") == 0)

@@ -39,6 +39,16 @@ extern void CallbacksDcc_on_packet_sent(const dcc_packet_t *packet);
 // "TRIG" command just before the harness sends the command under test.
 extern void CallbacksDcc_arm_trigger(void);
 
+// Arm the test trigger on the next MAIN-TRACK INSERT instead of the next packet:
+// PB3 rises the moment a UART command hands its packet to the scheduler, so the
+// bench can measure the scheduler's command-to-wire latency (issue #5). Driven by
+// the UART "TRIG INSERT" command; disarmed by the insert (or by a plain TRIG).
+extern void CallbacksDcc_arm_trigger_on_insert(void);
+
+// Called by the UART command parser right after a successful main-track insert
+// (one-shot or auto-refresh). Fires the insert trigger when armed.
+extern void CallbacksDcc_on_main_track_insert(void);
+
 // Mock decoder (HIL only). Hold one CV value so the bench can exercise read-back
 // and write+verify end-to-end through the real ACK path. set() makes the mock
 // ACK Direct verify commands for `cv` that match `value` (and accept writes to
