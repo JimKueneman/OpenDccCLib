@@ -1221,3 +1221,40 @@ TEST(DccScheduler, cold_max_cycles_is_below_cv11_minimum) {
     EXPECT_LT((uint64_t)DCC_REFRESH_COLD_MAX_CYCLES * REFRESH_WORST_CYCLE_US,
               (uint64_t)DCC_REFRESH_CV11_FLOOR * DCC_FAILSAFE_CV11_UNIT_US);
 }
+
+// With the cold tier on, a change to one locomotive while another is changed every
+// cycle shares the burst pass round-robin: the three copies go out at cycles 0, 2 and
+// 4, never queued behind the churning slot (issue #5: simultaneous commands share
+// bandwidth). Pins the fix that keeps the phase 1 cursor move out of tiered mode.
+TEST(DccScheduler, change_shares_burst_pass_with_a_slot_changing_every_cycle) {
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface;
+    pacing_init(&context, &interface);
+    ASSERT_GT(context.refresh_cold_cycles, 0);
+    ASSERT_EQ(context.refresh_prompt_sends, 3);
+
+    insert_refresh(&context, 1, 20);
+    insert_refresh(&context, 2, 20);
+    spend_bursts(&context, 2);                     /* both cold */
+    for (int cycle = 0; cycle < 10; cycle++) {     /* address 2 starts churning */
+        insert_refresh(&context, 2, (uint8_t)(30 + cycle));
+        pacing_cycle(&context);
+    }
+
+    insert_refresh(&context, 1, 77);               /* the single change, cycle 0 */
+    int copies[3] = { -1, -1, -1 };
+    int sends = 0;
+    for (int cycle = 0; cycle < 12 && sends < 3; cycle++) {
+        if (cycle > 0) {
+            insert_refresh(&context, 2, (uint8_t)(30 + cycle % 90));
+        }
+        if (pacing_cycle(&context) == 1) {
+            EXPECT_EQ(last_loaded_packet.data[2], (uint8_t)(0x80 | 77));
+            copies[sends++] = cycle;
+        }
+    }
+    ASSERT_EQ(sends, 3);
+    EXPECT_EQ(copies[0], 0);
+    EXPECT_EQ(copies[1], 2);
+    EXPECT_EQ(copies[2], 4);
+}
