@@ -155,3 +155,21 @@ def binary_state_long(addr, state_num, on=True):
 def analog_function(addr, output, value):
     """Analog Function Group: 0011 1101 (0x3D) + output number + value."""
     return list(addr) + [0x3D, output & 0xFF, value & 0xFF]
+
+
+# ---------------------------------------------------------------------------
+# Service mode (S-9.2.3) -- long-preamble packets, no address byte
+# ---------------------------------------------------------------------------
+
+def reset_packet():
+    """Digital Decoder Reset packet (S-9.2 / S-9.2.3): 00000000 00000000 (XOR 00).
+    Three or more of these open a service-mode sequence."""
+    return [0x00, 0x00]
+
+
+def svc_direct_verify_byte(cv, value):
+    """Direct-mode VERIFY CV BYTE (S-9.2.3 sec E, line ~120): 0111 CC AA  AAAAAAAA
+    DDDDDDDD with CC=01 -> 0x74|AA, CV-1 low byte, expected value. Sent with the
+    20-bit service-mode preamble; the decoder ACKs only if the CV holds `value`."""
+    hi, lo = _cv_hi_lo(cv)
+    return [0x74 | hi, lo, value & 0xFF]

@@ -60,6 +60,7 @@ answers `ID?` → `OK wfplayer …` (player) or `HELP` → decoder menu (decoder
 ```bash
 cd test/compliance/mobile_decoder
 ../.venv/bin/python decoder_smoke.py        # auto-discovers ports; sets addr; plays; checks RECV
+../.venv/bin/python s9_2_3_compliance.py    # ACK_OUT pulse on D1: 6 ms ± 1 ms per matching verify
 ```
 
 ## First light (verified)

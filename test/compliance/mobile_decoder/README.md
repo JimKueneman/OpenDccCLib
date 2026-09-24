@@ -16,6 +16,7 @@ What's here:
 |---|---|
 | `saleae_hil_compliance/` | the **decoder DUT firmware** — cloned from `applications/.../decoder` (GPIO edge-capture → `DccConfig_decoder_edge_isr` → `RECV` report-back), built `DCC_COMPILE_DECODER`. Open `saleae_hil_compliance.theia-workspace` in CCS. |
 | `decoder_smoke.py` | first suite **(stub)** — drives the player to emit a known packet, reads the decoder's `RECV` line, compares. Proves the loop. |
+| `s9_2_3_compliance.py` | decoder-side **ACK pulse**: player streams 3 resets + Direct-mode VERIFY CV BYTE (20-bit preamble); Saleae D1 measures `ACK_OUT` — one pulse per matching verify, 6 ms ± 1 ms, ends via the library's `stop_ack_pulse`; silence on a mismatch or without resets. |
 | `compliance_lib.py`, `wfplayer.py` | symlinks → the shared Saleae/decode lib and the player's host driver |
 | `HIL_SETUP.md` | the decoder-rig bench wiring (planned) |
 

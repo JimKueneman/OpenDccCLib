@@ -493,6 +493,14 @@ def test_readback(rep, s):
     r = _svc_result(s, "SVC DIRECT READ 8")
     rep.check(RB, "read-back after write -> value 51 (0x33)", "(0x33)" in r, f"result: {r}")
 
+    # --- single-bit reads: 51 = 0b00110011, so bit 0 is 1 and bit 2 is 0. A 1
+    # is answered by the first verify; a 0 is only reported after the second
+    # verify (value 0) is ACKed, which tells it apart from an absent decoder.
+    r = _svc_result(s, "SVC DIRECT BITR 8 0")
+    rep.check(RB, "bit read CV8 bit0 (mock=51) -> value 1", "(0x01)" in r, f"result: {r}")
+    r = _svc_result(s, "SVC DIRECT BITR 8 2")
+    rep.check(RB, "bit read CV8 bit2 (mock=51) -> value 0 confirmed", "SUCCESS" in r and "(0x00)" in r, f"result: {r}")
+
     # --- failure: mock OFF -> no decoder ACKs ---
     _send_ok(s, "SVC MOCKCV OFF")
     r = _svc_result(s, "SVC DIRECT WRITE 8 51")
@@ -502,6 +510,10 @@ def test_readback(rep, s):
     # false "CV = 0".
     r = _svc_result(s, "SVC DIRECT READ 8")
     rep.check(RB, "read with mock OFF -> NO ACK", "NO ACK" in r, f"result: {r}")
+    # Same for a single bit: silent for value 1, then silent for value 0 -> NO ACK,
+    # not a false "bit = 0".
+    r = _svc_result(s, "SVC DIRECT BITR 8 2")
+    rep.check(RB, "bit read with mock OFF -> NO ACK", "NO ACK" in r, f"result: {r}")
 
 
 def ack_width_tests(rep, s):
