@@ -16,8 +16,8 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 
 - **Roles:** Command Station, Decoder, Accessory Decoder — `DCC_COMPILE_COMMAND_STATION` / `_DECODER` / `_ACCESSORY_DECODER`.
 - **Service modes:** Direct, Paged, Register, Address — all implemented.
-- **Tests:** 29 host unit-test binaries, 1130 tests passing (host, mocked drivers); 95.3% line / 97.7% function / 87.6% branch coverage (gcovr, 2026-09-23). Green host tests inject mock drivers — see **Known defects** (decoder RailCom Tx), which they cannot catch.
-- **Hardware-in-loop:** Saleae HIL compliance suites — S-9.1 electrical/timing, S-9.2 baseline, S-9.2.1 packets (incl. per-builder repeat counts on the wire), S-9.2.3 service mode (210 checks incl. the mock-ACK loopback), S-9.3.2 RailCom cutout timing + sub-windows + the **receive path via the mock-decoder loopback**, and the scheduler suite — preceded by `bench_preflight.py`, which proves the seven probes and both jumpers before a run. Plus the two-board MSPM0 loopback suite (manual gate, not CI).
+- **Tests:** 29 host unit-test binaries, 1144 tests passing (host, mocked drivers); 95.4% line / 97.7% function / 87.8% branch coverage (gcovr, 2026-09-24). Green host tests inject mock drivers — see **Known defects** (decoder RailCom Tx), which they cannot catch.
+- **Hardware-in-loop:** Saleae HIL compliance suites — S-9.1 electrical/timing, S-9.2 baseline, S-9.2.1 packets (incl. per-builder repeat counts on the wire), S-9.2.3 service mode (210 checks incl. the mock-ACK loopback), S-9.3.2 RailCom cutout timing + sub-windows + the **receive path via the mock-decoder loopback**, and the scheduler suite (priority, combining, refresh pacing on the wire) — preceded by `bench_preflight.py`, which proves the seven probes and both jumpers before a run. Plus the two-board MSPM0 loopback suite (manual gate, not CI).
 
 ---
 
@@ -157,7 +157,7 @@ Badges — **Supported:** ✅ in library · ⚠️ partial · ❌ no · — out 
 
 | Feature | Released | Draft | Implemented | Tested | Status |
 |---|---|---|---|---|---|
-| Scheduler priority / combining / auto-refresh | (lib design) | — | `dcc_scheduler.c` | `..._scheduler_Test` (22) | ✅ |
+| Scheduler priority / combining / paced auto-refresh (burst, keep-alive, ceiling) | (lib design) | — | `dcc_scheduler.c` | `..._scheduler_Test` (41) | ✅ |
 | Bit-encoder buffering | (lib design) | — | single `active_packet` + `packet_loaded` flag | — | ✅ doc corrected |
 
 ---
@@ -192,6 +192,17 @@ conformance gaps**, not draft features. (Per-feature detail is in the §1–8 ta
   backend. Tracked plan context: [archive/compliance_deviation_fixes.md](../archive/compliance_deviation_fixes.md).
 
 ### Recently resolved
+
+**2026-09-24**
+
+- **Auto-refresh rate diluted by a large pool (issue #5, PRs #9 and #10, contributed).** The refresh
+  ring gave every slot an equal turn, so a changed command waited up to one full ring. The scheduler
+  now sends a changed slot 3 times at full rate, then keeps it alive every 60 packet cycles and never
+  later than 120 (overdue slots go first, so a stream of changes cannot starve one); a flat-ring mode
+  remains (`DCC_REFRESH_COLD_CYCLES = 0`). The documented CV 11 floor for decoders is 20 (2.0 s).
+  Unit tests pin burst, cadence, starvation bound, fairness and the flat ring; the bench counts the
+  same cadences in packets on the wire and measures command-to-wire latency with a trigger raised at
+  the insert (`TRIG INSERT`).
 
 **2026-09-23**
 

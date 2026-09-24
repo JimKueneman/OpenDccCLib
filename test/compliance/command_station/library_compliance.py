@@ -86,8 +86,10 @@ def _hx(bs):
 # @compliance DCC-Library-CS-002
 def test_round_robin(rep, port):
     """Three SPEED slots (addrs 3/4/5) on auto-refresh: every address must appear,
-    repeatedly, in one capture -- i.e. the scheduler cycles round-robin through
-    all active refresh slots rather than starving any of them."""
+    repeatedly, in one capture -- i.e. the scheduler keeps serving every active
+    refresh slot rather than starving any of them. With refresh pacing a cold
+    slot is re-sent every REFRESH_COLD_CYCLES packets (about 0.4 s on the wire),
+    so the window is a full second: two keep-alives per slot."""
     clause = "Library / scheduler (auto-refresh)"
     lib.send_command(port, "CLEAR")
     lib.send_command(port, "REFRESH ON")
@@ -96,7 +98,7 @@ def test_round_robin(rep, port):
     lib.send_command(port, f"SPEED {LOCO_C} 70 FWD")
     time.sleep(0.3)                       # let all three enter the refresh cycle
 
-    dec = _capture(0.30)                  # wide window: several full cycles
+    dec = _capture(1.0)                   # >= 2 keep-alives per cold slot
     counts = {a: len(_for_addr(dec, a)) for a in (LOCO_A, LOCO_B, LOCO_C)}
 
     present = all(counts[a] >= 1 for a in counts)
@@ -104,7 +106,7 @@ def test_round_robin(rep, port):
               f"packet counts per address: {counts}")
 
     cycling = all(counts[a] >= 2 for a in counts)
-    rep.check(clause, "each slot is retransmitted (round-robin, >=2x each)", cycling,
+    rep.check(clause, "each slot is retransmitted (>=2x each, none starved)", cycling,
               f"per-address repeats: {counts} (each must cycle, not be sent once)")
 
 
@@ -165,8 +167,10 @@ def test_priority(rep, port):
     time.sleep(0.3)
 
     # Fire the one-shot ESTOP broadcast repeatedly into a live capture so it
-    # reliably lands; the refresh SPEED keeps streaming throughout.
-    dec, _ = lib.capture_with_command("ESTOP", capture_seconds=0.30,
+    # reliably lands; the refresh SPEED keeps streaming throughout. The slot is
+    # cold by now (keep-alive every REFRESH_COLD_CYCLES packets, about 0.4 s),
+    # so the window is a full second: two keep-alives alongside the one-shots.
+    dec, _ = lib.capture_with_command("ESTOP", capture_seconds=1.0,
                                       fires=8, spacing=0.020, port=port)
 
     refresh_present = len(_for_addr(dec, LOCO_A)) >= 1
@@ -187,6 +191,164 @@ def test_priority(rep, port):
 
 
 # ----------------------------------------------------------------------------
+# DCC-Library-CS-005 -- auto-refresh pacing (issue #5): burst, keep-alive, ceiling
+# ----------------------------------------------------------------------------
+# Library policy values (the DCC_REFRESH_* table in dcc_defines.h). Everything
+# below is counted in PACKET CYCLES: each scheduler cycle puts exactly one packet
+# on the wire (a refresh, a one-shot or an idle), so "cycles between two copies
+# of a slot" is the number of packets between them, whatever their length.
+REFRESH_PROMPT_SENDS    = 3
+REFRESH_COLD_CYCLES     = 60
+REFRESH_COLD_MAX_CYCLES = 120
+POOL = list(range(1, 9))          # eight short addresses below the 112-127 alias band
+
+
+def _positions(dec, addr, speed_byte=None):
+    """Capture-order indices of every packet addressed to addr (and, if given,
+    carrying speed_byte as its third byte: a 128-step speed packet)."""
+    return [i for i, (_, d) in enumerate(dec["packets"])
+            if d and d[0] == addr
+            and (speed_byte is None or (len(d) >= 3 and d[2] == speed_byte))]
+
+
+def _gaps(idx):
+    return [b - a for a, b in zip(idx, idx[1:])]
+
+
+def _fill_pool(port):
+    """Eight refresh slots, then long enough for every burst to be spent and
+    every slot to be cold (3 + 60 cycles is well under 1 s)."""
+    lib.send_command(port, "CLEAR")
+    lib.send_command(port, "REFRESH ON")
+    for a in POOL:
+        lib.send_command(port, f"SPEED {a} 20 FWD")
+    time.sleep(1.0)
+
+
+# @compliance DCC-Library-CS-005
+def test_burst_then_keep_alive(rep, port):
+    """One fresh refresh slot on an otherwise idle stream: the packet is sent
+    REFRESH_PROMPT_SENDS times back to back, then once every REFRESH_COLD_CYCLES
+    packets. Hardware-triggered on the first copy; the window holds three
+    keep-alives."""
+    clause = "Library / scheduler (refresh pacing)"
+
+    def stimulus():
+        lib.send_command(port, "CLEAR")          # idle-only stream first
+        lib.send_command(port, "REFRESH ON")
+        lib.send_command(port, "TRIG")           # first copy pulses PB3
+        lib.send_command(port, f"SPEED {LOCO_A} 50 FWD")
+
+    dec, _ = lib.capture_triggered(stimulus, pre_seconds=0.02, after_seconds=1.35)
+    pos = _positions(dec, LOCO_A)
+    gaps = _gaps(pos)
+    burst = gaps[:REFRESH_PROMPT_SENDS - 1]
+    keep = gaps[REFRESH_PROMPT_SENDS - 1:]
+    times = dec["packet_times"]
+
+    ok_burst = len(pos) >= REFRESH_PROMPT_SENDS and all(g == 1 for g in burst)
+    rep.check(clause, f"fresh slot: {REFRESH_PROMPT_SENDS} copies back to back", ok_burst,
+              f"copy positions {pos[:REFRESH_PROMPT_SENDS + 1]}, gaps between copies "
+              f"(packets) {gaps[:REFRESH_PROMPT_SENDS + 1]}")
+
+    ok_keep = len(keep) >= 2 and all(g == REFRESH_COLD_CYCLES for g in keep)
+    secs = [f"{times[b] - times[a]:.3f} s" for a, b in zip(pos, pos[1:])][REFRESH_PROMPT_SENDS - 1:]
+    rep.check(clause, f"then one keep-alive every {REFRESH_COLD_CYCLES} cycles", ok_keep,
+              f"keep-alive gaps in packets {keep} = {secs}")
+
+    only_idle = all(list(d) == IDLE for _, d in dec["packets"] if d and d[0] != LOCO_A)
+    rep.check(clause, "nothing but idle packets between the copies", only_idle,
+              f"other non-idle packets: {[_hx(d) for _, d in dec['packets'] if d and d[0] != LOCO_A and list(d) != IDLE][:4]}")
+
+
+# @compliance DCC-Library-CS-005
+def test_keep_alive_cadence(rep, port):
+    """Eight idle refresh slots over a 2 s capture: every slot keeps being
+    refreshed, never inside REFRESH_COLD_CYCLES of its last copy and never
+    later than REFRESH_COLD_MAX_CYCLES after it (the CV11 argument)."""
+    clause = "Library / scheduler (refresh pacing)"
+    _fill_pool(port)
+    dec = _capture(2.0)
+
+    per = {a: _gaps(_positions(dec, a)) for a in POOL}
+    counts = {a: len(_positions(dec, a)) for a in POOL}
+    all_gaps = [g for gs in per.values() for g in gs]
+
+    rep.check(clause, "every idle slot keeps being refreshed (>= 2 copies each in 2 s)",
+              all(c >= 2 for c in counts.values()), f"copies per address: {counts}")
+
+    rep.check(clause, f"no idle slot is refreshed inside {REFRESH_COLD_CYCLES} cycles of its last copy",
+              bool(all_gaps) and min(all_gaps) >= REFRESH_COLD_CYCLES,
+              f"smallest gap {min(all_gaps) if all_gaps else None} packets; per address {per}")
+
+    rep.check(clause, f"no idle slot goes unrefreshed past {REFRESH_COLD_MAX_CYCLES} cycles",
+              bool(all_gaps) and max(all_gaps) <= REFRESH_COLD_MAX_CYCLES,
+              f"largest gap {max(all_gaps) if all_gaps else None} packets")
+
+
+# @compliance DCC-Library-CS-005
+def test_change_latency_to_wire(rep, port):
+    """Eight cold refresh slots; change one loco's speed. "TRIG INSERT" raises
+    PB3 the moment the command is queued, so t = 0 is the insert. The changed
+    packet must be the first packet the scheduler LOADS after that, and its burst
+    must follow back to back.
+
+    A packet's load moment is not on the wire, but it can be reconstructed: the
+    encoder sends filler one-bits while the main loop has not yet handed it the
+    next packet, and the decoder folds those onto the front of the next preamble.
+    So load = decoded preamble start + (extra ones beyond the capture's normal
+    preamble count) x one bit period. The filler on this bench is the DUT
+    firmware's blocking UART reply after the insert (about 2.4 ms measured), not
+    the library; it is reported and allowed for, never hidden."""
+    clause = "Library / scheduler (refresh pacing)"
+    _fill_pool(port)
+    new_speed = 90
+    speed_byte = 0x80 | new_speed
+
+    def stimulus():
+        lib.send_command(port, "TRIG INSERT")
+        lib.send_command(port, f"SPEED {LOCO_A} {new_speed} FWD")
+
+    dec, _ = lib.capture_triggered(stimulus, pre_seconds=0.03, after_seconds=0.12)
+    times, ends = dec["packet_times"], dec["packet_end_times"]
+    preambles = [pre for pre, _ in dec["packets"]]
+    hits = _positions(dec, LOCO_A, speed_byte)
+
+    # Normal preamble count on this capture (the DUT's fixed preamble, plus the
+    # previous end bit as the decoder counts it); anything above it is filler.
+    normal_pre = max(set(preambles), key=preambles.count)
+    one_bit = 2 * 58e-6                    # a one bit as this encoder sends it: two 58 us halves
+    loads = [t + max(0, pre - normal_pre) * one_bit for t, pre in zip(times, preambles)]
+    # In-flight bound: the longest normally framed packet (a packet carrying
+    # filler ones would inflate it).
+    durations = [e - t for t, e, pre in zip(times, ends, preambles) if pre == normal_pre]
+    packet_time = max(durations) if durations else float("nan")
+    FIRMWARE_REPLY_ALLOWANCE_S = 0.003     # DUT's blocking UART reply after the insert
+
+    change = hits[0] if hits else None
+    load = loads[change] if change is not None else float("nan")
+    filler_bits = (preambles[change] - normal_pre) if change is not None else None
+    between = [i for i, l in enumerate(loads)
+               if change is not None and i != change and 0.0 <= l < load]
+    ok_next = change is not None and load >= -one_bit and not between
+    rep.check(clause, "changed packet is the first packet loaded after the insert", ok_next,
+              f"change at index {change}, load {load * 1e3:.2f} ms after the insert "
+              f"({filler_bits} filler one-bits before its preamble); packets loaded in between: "
+              f"{[(i, _hx(dec['packets'][i][1]), f'{loads[i] * 1e3:.2f} ms') for i in between]}")
+
+    ok_lat = change is not None and load < packet_time + FIRMWARE_REPLY_ALLOWANCE_S
+    first_zero = (times[change] + preambles[change] * one_bit) if change is not None else float("nan")
+    rep.check(clause, "loaded within one packet time (plus the DUT's UART reply)", ok_lat,
+              f"load {load * 1e3:.2f} ms; longest packet in capture {packet_time * 1e3:.2f} ms; "
+              f"allowance {FIRMWARE_REPLY_ALLOWANCE_S * 1e3:.0f} ms for the firmware reply; "
+              f"a decoder sees the address from {first_zero * 1e3:.2f} ms (after the preamble)")
+
+    ok_burst = len(hits) >= REFRESH_PROMPT_SENDS and _gaps(hits[:REFRESH_PROMPT_SENDS]) == [1] * (REFRESH_PROMPT_SENDS - 1)
+    rep.check(clause, f"the change's {REFRESH_PROMPT_SENDS} copies follow back to back", ok_burst,
+              f"changed-packet indices {hits[:REFRESH_PROMPT_SENDS + 1]}")
+
+
+# ----------------------------------------------------------------------------
 # Suite
 # ----------------------------------------------------------------------------
 def run():
@@ -202,6 +364,9 @@ def run():
         test_round_robin(rep, port)
         test_duplicate_combining(rep, port)
         test_priority(rep, port)
+        test_burst_then_keep_alive(rep, port)
+        test_keep_alive_cadence(rep, port)
+        test_change_latency_to_wire(rep, port)
     finally:
         lib.send_command(port, "CLEAR")
         lib.send_command(port, "POWER OFF")

@@ -16,6 +16,11 @@
 // logic analyzer can hardware-trigger on the exact packet under test.
 static volatile bool _test_trigger_armed = false;
 
+// Insert-trigger state. When armed, the next main-track insert raises PB3 at
+// once (from the command parser, not from a packet), so the bench measures the
+// scheduler's command-to-wire latency from the moment the command was queued.
+static volatile bool _test_trigger_on_insert = false;
+
 // When true, the width-test mock fires on the FIRST command packet (before the
 // ACK blanking window) instead of in-window -- used to prove the library masks an
 // early pulse (S-9.2.3 line 55 boundary test).
@@ -32,7 +37,24 @@ void CallbacksDcc_arm_trigger(void) {
 
     // Drop PB3 low first so the armed packet produces one clean rising edge.
     DL_GPIO_clearPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_PACKET_LOAD_PIN);
+    _test_trigger_on_insert = false;
     _test_trigger_armed = true;
+}
+
+void CallbacksDcc_arm_trigger_on_insert(void) {
+
+    DL_GPIO_clearPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_PACKET_LOAD_PIN);
+    _test_trigger_armed = false;
+    _test_trigger_on_insert = true;
+}
+
+void CallbacksDcc_on_main_track_insert(void) {
+
+    if (_test_trigger_on_insert) {
+
+        DL_GPIO_setPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_PACKET_LOAD_PIN);
+        _test_trigger_on_insert = false;
+    }
 }
 
 // ---------------------------------------------------------------------------
