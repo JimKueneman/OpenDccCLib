@@ -28,8 +28,10 @@
  * @brief Hardware driver interface for the DCC library on MSPM0G3507.
  *
  * @details PORTING GUIDE: If you are bringing up a new MCU, this is the file to
- * rewrite. Each function below is wired into the dcc_config_t struct in
- * command_station.c. You must provide an implementation that fulfills the
+ * rewrite. The functions below are wired into the dcc_config_t struct in
+ * saleae_hil_compliance.c (the per-channel timer_start / timer_set_period /
+ * timer_stop trio is kept for reference but is not wired: the bench config uses
+ * the shared 58 us timer). You must provide an implementation that fulfills the
  * contract described in each comment.
  *
  * All functions in this file are called by the DCC library through function
@@ -49,108 +51,181 @@
 extern "C" {
 #endif
 
-// One-time hardware setup. Call before DccConfig_initialize().
+    /** @brief One-time driver setup (zeroes the timestamp counter). Call before DccConfig_initialize(). */
 extern void TI_DccDriver_initialize(void);
 
-// Disable all interrupts (or acquire a mutex). The library calls this to
-// protect shared data structures accessed from both ISR and main-loop context.
-// Must be nestable or paired with unlock. Keep the critical section short.
+    /**
+     * @brief Disable all interrupts to protect shared library state.
+     *
+     * @details The library calls this around data structures accessed from both ISR
+     * and main-loop context. Must be paired with TI_DccDriver_unlock_shared_resources().
+     * Keep the critical section short.
+     */
 extern void TI_DccDriver_lock_shared_resources(void);
 
-// Re-enable interrupts (or release the mutex). Must match a prior lock call.
+    /** @brief Re-enable interrupts. Must match a prior lock call. */
 extern void TI_DccDriver_unlock_shared_resources(void);
 
-// Return a free-running microsecond timestamp. The library uses this for
-// timeout calculations. Does not need to be absolute -- only monotonic.
-// Wrapping at 2^32 (~71 minutes) is fine; the library handles wrap-around.
+    /**
+     * @brief Free-running microsecond timestamp for library timeouts.
+     *
+     * @details Derived from the shared 58 us timer tick, so resolution is 58 us. Only
+     * monotonic behaviour matters; wrapping at 2^32 is fine because the library
+     * handles wrap-around.
+     *
+     * @return Approximate microseconds since TI_DccDriver_initialize().
+     */
 extern uint32_t TI_DccDriver_get_timestamp_usec(void);
 
-// Start the DCC bit timer with the given half-bit period in microseconds.
-// Typical values: 58 us for a '1' bit, 100 us for a '0' bit.
-// The timer ISR must call DccConfig_timer_half_bit_isr() on each compare match.
-// This function is called from main-loop context (not ISR-safe requirement).
+    /**
+     * @brief Start the per-channel DCC bit timer with the given half-bit period (reference only, not wired on this bench).
+     *
+     * @details Typical values: 58 us for a one bit, 100 us for a zero bit. The timer
+     * ISR would call the half-bit ISR on each compare match. The bench config uses
+     * TI_DccDriver_shared_timer_start() instead.
+     *
+     * @param half_bit_period_usec  Half-bit period in microseconds.
+     */
 extern void TI_DccDriver_timer_start(uint16_t half_bit_period_usec);
 
-// Change the timer period for the next half-bit. Called FROM ISR context by
-// the library's bit encoder, so this must be fast -- ideally a single
-// register write. Do not disable/re-enable interrupts here.
+    /**
+     * @brief Change the bit-timer period for the next half-bit (reference only, not wired on this bench).
+     *
+     * @details Intended for ISR context, so it is a single register write.
+     *
+     * @param half_bit_period_usec  Next half-bit period in microseconds.
+     */
 extern void TI_DccDriver_timer_set_period(uint16_t half_bit_period_usec);
 
-// Stop the DCC bit timer and disable its interrupt. Called from main-loop
-// context when track power is turned off.
+    /** @brief Stop the per-channel DCC bit timer and disable its interrupt (reference only, not wired on this bench). */
 extern void TI_DccDriver_timer_stop(void);
 
-// Enable or disable the track power output (H-bridge enable).
-// enabled=true means power on, enabled=false means power off.
+    /**
+     * @brief Main-track power: idle level of the main DCC pin (PB1).
+     *
+     * @details The bench has no H-bridge, so "power" is just the pin level the
+     * encoder toggles from: high when enabled, low when off.
+     *
+     * @param enabled  true = pin high (power on), false = pin low (power off).
+     */
 extern void TI_DccDriver_track_power_set(bool enabled);
 
-// Read the MOCK_ACK GPIO pin (PB9) as a digital current-sense substitute.
-// Returns 100 when the pin is HIGH (mock ACK asserted), 0 when LOW.
-// The library compares this against USER_DEFINED_DCC_ACK_THRESHOLD_MA (60),
-// so 100 > 60 triggers ACK detection.
+    /**
+     * @brief Read the MOCK_ACK GPIO pin (PB9) as a digital current-sense substitute.
+     *
+     * @details The library compares the value against USER_DEFINED_DCC_ACK_THRESHOLD_MA
+     * (60), so 100 > 60 registers as an ACK sample.
+     *
+     * @return 100 when the pin is HIGH (mock ACK asserted), 0 when LOW.
+     */
 extern uint16_t TI_DccDriver_current_sense_read(void);
 
-// Mock ACK loopback (HIL only): drive MOCK_ACK_DRIVE (PB24), jumpered to
-// MOCK_ACK (PB9), to inject a controlled-width ACK pulse the library reads back.
-//   arm(width_us)  : arm a one-shot pulse of the given width (rounded to 58us ticks)
-//   on_command()   : start the armed pulse (call when a service command packet sends)
-//   tick()         : advance the pulse one ISR tick (call every 58us, before ack sample)
+    /**
+     * @brief Arm a one-shot mock-ACK pulse of the given width (HIL only).
+     *
+     * @details Mock ACK loopback: MOCK_ACK_DRIVE (PB24) is jumpered to MOCK_ACK (PB9)
+     * so the library reads back a controlled-width pulse. The width is rounded to
+     * 58 us ticks; the pulse starts at the next TI_DccDriver_mock_ack_on_command().
+     *
+     * @param width_us  Pulse width in microseconds.
+     */
 extern void TI_DccDriver_mock_ack_arm(uint16_t width_us);
+    /** @brief Start the armed mock-ACK pulse; call when a service command packet is sent. Fires once, then disarms. */
 extern void TI_DccDriver_mock_ack_on_command(void);
+    /** @brief Advance the mock-ACK pulse one ISR tick; call every 58 us before the library samples the ACK. */
 extern void TI_DccDriver_mock_ack_tick(void);
 
-// Mock ACK GLITCH (HIL only): arm an INTERRUPTED pulse -- high pre_us, low gap_us,
-// high post_us -- fired by on_command() like arm(). Proves the library's ACK width
-// counter resets on the low gap (S-9.2.3 CS-005): two sub-pulses each below the
-// 6ms window, so a NO-ACK verdict means the counter did not accumulate across it.
+    /**
+     * @brief Arm an INTERRUPTED mock-ACK pulse: high pre_us, low gap_us, high post_us (HIL only).
+     *
+     * @details Fired by TI_DccDriver_mock_ack_on_command() like the plain pulse. Proves
+     * the library ACK width counter resets on the low gap (S-9.2.3 CS-005): two
+     * sub-pulses each below the 6 ms window, so a NO-ACK verdict means the counter
+     * did not accumulate across it.
+     *
+     * @param pre_us   First high phase in microseconds.
+     * @param gap_us   Low gap in microseconds.
+     * @param post_us  Second high phase in microseconds.
+     */
 extern void TI_DccDriver_mock_ack_arm_glitch(uint16_t pre_us, uint16_t gap_us, uint16_t post_us);
 
-// Mock decoder (HIL only): immediately start a mock-ACK pulse of the given width.
-// Used to ACK a verify command the moment a held-value match is detected.
+    /**
+     * @brief Immediately start a mock-ACK pulse of the given width (mock decoder, HIL only).
+     *
+     * @details Used to ACK a verify command the moment a held-value match is detected.
+     *
+     * @param width_us  Pulse width in microseconds.
+     */
 extern void TI_DccDriver_mock_ack_fire(uint16_t width_us);
 
-// Start the shared fixed-period DCC timer (58us). Both main track and service
-// track are clocked from this single timer. The ISR must call
-// DccConfig_58us_timer_isr().
+    /**
+     * @brief Start the shared fixed-period DCC timer (58 us).
+     *
+     * @details Both main track and service track are clocked from this single timer.
+     * The ISR must call DccConfig_58us_timer_isr().
+     *
+     * @param period_usec  Timer period in microseconds (58).
+     */
 extern void TI_DccDriver_shared_timer_start(uint16_t period_usec);
 
-// Stop the shared fixed-period DCC timer.
+    /** @brief Stop the shared fixed-period DCC timer and disable its interrupt. */
 extern void TI_DccDriver_shared_timer_stop(void);
 
-// Start the RailCom cutout one-shot timer with the given period in
-// microseconds. The ISR must call DccConfig_railcom_oneshot_timer_isr().
+    /**
+     * @brief Start the RailCom cutout one-shot timer.
+     *
+     * @details The ISR must call DccConfig_railcom_oneshot_timer_isr().
+     *
+     * @param period_usec  One-shot period in microseconds.
+     */
 extern void TI_DccDriver_railcom_timer_start(uint16_t period_usec);
 
-// Stop the RailCom cutout one-shot timer.
+    /** @brief Stop the RailCom cutout one-shot timer and disable its interrupt. */
 extern void TI_DccDriver_railcom_timer_stop(void);
 
-// Toggle the main track DCC signal GPIO pin. Called from ISR context by the bit
-// encoder's tick_isr. Always toggles -- the DCC line runs continuously and looks
-// identical with or without RailCom.
+    /**
+     * @brief Toggle the main-track DCC signal pin (PB1).
+     *
+     * @details Called from ISR context by the bit encoder tick. Always toggles: the
+     * DCC line runs continuously and looks identical with or without RailCom.
+     */
 extern void TI_DccDriver_main_pin_toggle(void);
 
-// RailCom cutout-active signal: raise (T_CS) / drop (T_CE) the PB2 (DCC_MIRROR)
-// pin. This is the signal that real H-bridge hardware muxes on to tristate the
-// track during the cutout; here it is the Saleae cutout-window marker. Wired to
-// the .railcom begin/end hooks, called by the cutout timer.
+    /**
+     * @brief RailCom cutout-active signal (T_CS): raise the PB2 cutout strobe.
+     *
+     * @details This is the signal real H-bridge hardware muxes on to tristate the
+     * track during the cutout; here it is the Saleae cutout-window marker. Wired to
+     * the .railcom begin hook, called by the cutout timer ISR.
+     */
 extern void TI_DccDriver_main_cutout_begin(void);
+    /** @brief RailCom cutout-active signal (T_CE): drop the PB2 cutout strobe. Wired to the .railcom end hook. */
 extern void TI_DccDriver_main_cutout_end(void);
 
-// RailCom channel-window marker (RAILCOM_RX_WINDOW pin): high while a Ch1/Ch2 window
-// is open, low when closed. Wired to the cutout .uart_rx_enable / .uart_rx_disable
-// hooks so the Saleae can time the interior sub-windows (S-9.3.2 CS-005/006).
+    /**
+     * @brief RailCom channel-window marker: raise RAILCOM_RX_WINDOW (PB18) while a Ch1/Ch2 window is open.
+     *
+     * @details Wired to the cutout .uart_rx_enable hook so the Saleae can time the
+     * interior sub-windows (S-9.3.2 CS-005/006); also opens the loopback receiver gate.
+     */
 extern void TI_DccDriver_railcom_window_open(void);
+    /** @brief RailCom channel-window marker: drop RAILCOM_RX_WINDOW (PB18). Wired to .uart_rx_disable; also closes the loopback receiver gate. */
 extern void TI_DccDriver_railcom_window_close(void);
 
-// Toggle the service track DCC signal GPIO pin. Called from ISR context by the
-// bit encoder's tick_isr.
+    /** @brief Toggle the service-track DCC signal pin (PB4). Called from ISR context by the bit encoder tick. */
 extern void TI_DccDriver_svc_pin_toggle(void);
 
-    /** @brief Service-track power: idle level of the service-track DCC pin (no H-bridge on the bench). */
+    /**
+     * @brief Service-track power: idle level of the service-track DCC pin (PB4).
+     *
+     * @details Same convention as the main track: no H-bridge on the bench, so
+     * "power" is the pin level the encoder toggles from.
+     *
+     * @param enabled  true = pin high (power on), false = pin low (power off).
+     */
 extern void TI_DccDriver_svc_track_power_set(bool enabled);
 
-// Increment the software timestamp counter. Call from the shared DCC timer ISR
-// (every 58us) to provide a free-running microsecond timestamp.
+    /** @brief Increment the software timestamp counter. Call from the shared DCC timer ISR every 58 us. */
 extern void TI_DccDriver_timestamp_tick(void);
 
 #ifdef __cplusplus

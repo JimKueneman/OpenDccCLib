@@ -76,10 +76,11 @@ typedef struct {
 
         /**
          * @brief Initialize the fail-safe module.
-         * @param interface Pointer to populated interface struct.
          *
          * @details Clears the tripped state and stamps "last packet seen = now" so a
          * freshly initialized decoder does not immediately time out.
+         *
+         * @param interface Pointer to a populated @ref interface_dcc_failsafe_t; must remain valid for the lifetime of the application.
          */
     extern void DccFailsafe_initialize(const interface_dcc_failsafe_t *interface);
 
@@ -88,8 +89,10 @@ typedef struct {
          *
          * @details Re-arms the time-out by re-stamping the last-packet clock. If the
          * decoder is currently in fail-safe, this also clears the state and fires
-         * on_failsafe_exited exactly once. Call from the packet-decode path whenever
-         * a packet matches our address (or broadcast) in Operations Mode.
+         * on_failsafe_exited exactly once. dcc_config.c wires this to the packet
+         * decoder's on_addressed_packet hook, which fires only for a multifunction
+         * packet addressed to this decoder (or broadcast) in Operations Mode; no
+         * other traffic re-arms the timer.
          */
     extern void DccFailsafe_note_valid_packet(void);
 
@@ -99,7 +102,9 @@ typedef struct {
          * @details Reads CV11; when CV11 = 0 the time-out is disabled. Otherwise, if
          * the elapsed time since the last addressed packet has reached
          * CV11 * DCC_FAILSAFE_CV11_UNIT_US and the decoder is not already tripped,
-         * fires on_failsafe_entered exactly once.
+         * fires on_failsafe_entered exactly once. Once tripped the module stays in
+         * fail-safe (and stops polling CV11) until DccFailsafe_note_valid_packet
+         * clears it.
          */
     extern void DccFailsafe_run(void);
 

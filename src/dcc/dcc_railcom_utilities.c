@@ -66,6 +66,15 @@ static const uint8_t _encode_table[64] = {
 
 };
 
+    /**
+     * @brief Encode a 6-bit value to its 8-bit DC-balanced RailCom codeword.
+     *
+     * @verbatim
+     * @param value 6-bit data value (0x00-0x3F).
+     * @endverbatim
+     *
+     * @return 8-bit codeword from _encode_table, or 0x00 if the value is above 0x3F.
+     */
 uint8_t DccRailcomUtilities_encode_byte(uint8_t value) {
 
     if (value > 0x3F) {
@@ -78,6 +87,18 @@ uint8_t DccRailcomUtilities_encode_byte(uint8_t value) {
 
 }
 
+    /**
+     * @brief Encode a Channel 1 datagram (4-bit ID + 8-bit data) into two codewords.
+     *
+     * @details Forms the 12-bit value (ID << 8) | data and encodes its upper
+     * and lower 6 bits as out[0] and out[1].
+     *
+     * @verbatim
+     * @param datagram_id 4-bit datagram ID (0-15); higher bits are masked off.
+     * @param data 8-bit data byte.
+     * @param out Output buffer receiving the 2 encoded bytes.
+     * @endverbatim
+     */
 void DccRailcomUtilities_encode_ch1(uint8_t datagram_id, uint8_t data, uint8_t *out) {
 
     uint16_t combined = ((uint16_t)(datagram_id & 0x0F) << 8) | data;
@@ -87,6 +108,22 @@ void DccRailcomUtilities_encode_ch1(uint8_t datagram_id, uint8_t data, uint8_t *
 
 }
 
+    /**
+     * @brief Encode a Channel 2 datagram (ID + up to 6 data bytes) into codewords.
+     *
+     * @details Algorithm:
+     * -# Return 0 if the response holds no data bytes
+     * -# Encode (datagram_id << 8) | data[0] as two 6-bit codewords, as for Channel 1
+     * -# Encode each further data byte's low 6 bits as one codeword
+     * -# Return the number of codewords written (count + 1)
+     *
+     * @verbatim
+     * @param response Pointer to the dcc_railcom_response_t datagram to encode.
+     * @param out Output buffer receiving the encoded bytes (size DCC_RAILCOM_DATAGRAM_MAX_BYTES + 1).
+     * @endverbatim
+     *
+     * @return Number of encoded bytes written, or 0 if the datagram is empty.
+     */
 uint8_t DccRailcomUtilities_encode_ch2(const dcc_railcom_response_t *response, uint8_t *out) {
 
     uint16_t combined;
@@ -185,12 +222,37 @@ static const uint8_t _decode_table[256] = {
 
 };
 
+    /**
+     * @brief Decode an 8-bit RailCom codeword to its 6-bit value or special token.
+     *
+     * @verbatim
+     * @param encoded Received 8-bit codeword.
+     * @endverbatim
+     *
+     * @return 6-bit data value (0x00-0x3F), or DCC_RAILCOM_DECODE_INVALID / _ACK / _NACK from _decode_table.
+     */
 uint8_t DccRailcomUtilities_decode_byte(uint8_t encoded) {
 
     return _decode_table[encoded];
 
 }
 
+    /**
+     * @brief Decode RailCom Channel 1 (2 codewords) into a 12-bit datagram.
+     *
+     * @details Clears the output first. Both codewords must decode to data
+     * values (below 0x40); ACK, NACK and invalid words fail the decode. The
+     * 12-bit result is split into datagram_id (upper 4 bits) and data[0], with
+     * count 1 and valid set.
+     *
+     * @verbatim
+     * @param byte0 First received codeword.
+     * @param byte1 Second received codeword.
+     * @param out Out: decoded dcc_railcom_datagram_t (valid only when true).
+     * @endverbatim
+     *
+     * @return true if both codewords decoded; false on an invalid codeword.
+     */
 bool DccRailcomUtilities_decode_ch1(uint8_t byte0, uint8_t byte1, dcc_railcom_datagram_t *out) {
 
     uint8_t decoded_0 = DccRailcomUtilities_decode_byte(byte0);
@@ -216,6 +278,27 @@ bool DccRailcomUtilities_decode_ch1(uint8_t byte0, uint8_t byte1, dcc_railcom_da
 
 }
 
+    /**
+     * @brief Decode RailCom Channel 2 (up to 6 codewords) into a datagram.
+     *
+     * @details Algorithm:
+     * -# Clear the output
+     * -# Decode codewords in order, at most DCC_RAILCOM_CH2_MAX_BYTES, stopping at
+     *    the first ACK / NACK / invalid word (S-9.3.2 allows ACK filler after a
+     *    short datagram, so what came before is kept)
+     * -# Fail if fewer than two data words were decoded
+     * -# Split the first two 6-bit values into datagram_id and data[0]
+     * -# Append each further value as one data byte, up to DCC_RAILCOM_DATAGRAM_MAX_BYTES
+     * -# Set valid and return true
+     *
+     * @verbatim
+     * @param raw_bytes Received Channel 2 codewords (after the 2 Channel 1 bytes).
+     * @param raw_count Number of Channel 2 codewords available.
+     * @param out Out: decoded dcc_railcom_datagram_t (valid only when true).
+     * @endverbatim
+     *
+     * @return true if at least two codewords decoded validly; false otherwise.
+     */
 bool DccRailcomUtilities_decode_ch2(const uint8_t *raw_bytes, uint8_t raw_count, dcc_railcom_datagram_t *out) {
 
     uint8_t decoded_bytes[DCC_RAILCOM_CH2_MAX_BYTES];

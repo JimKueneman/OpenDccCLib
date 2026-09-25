@@ -118,27 +118,26 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span> </div>
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="keyword">typedef</span> <span class="keyword">struct </span>{</div>
 <div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    <span class="keyword">const</span> interface_dcc_service_mode_direct_t *interface;</div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    <span class="keyword">const</span> interface_dcc_service_mode_direct_t *interface;   </div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>} dcc_service_mode_direct_context_t;</div>
 <div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span> </div>
 <div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> DccServiceModeDirect_initialize(dcc_service_mode_direct_context_t *context, <span class="keyword">const</span> interface_dcc_service_mode_direct_t *interface);</div>
 <div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccServiceModeDirect_write_byte(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t value);</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccServiceModeDirect_verify_byte(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t value);</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccServiceModeDirect_write_bit(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t bit_position, <span class="keywordtype">bool</span> bit_value);</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccServiceModeDirect_verify_bit(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t bit_position, <span class="keywordtype">bool</span> bit_value);</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span> </div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span><span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>}</div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span><span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccServiceModeDirect_write_byte(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t value);</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span> </div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccServiceModeDirect_verify_byte(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t value);</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span> </div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccServiceModeDirect_write_bit(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t bit_position, <span class="keywordtype">bool</span> bit_value);</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span> </div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccServiceModeDirect_verify_bit(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t bit_position, <span class="keywordtype">bool</span> bit_value);</div>
 <div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span> </div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span><span class="preprocessor">#endif </span><span class="comment">/* DCC_COMPILE_SERVICE_MODE_DIRECT */</span><span class="preprocessor"></span></div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
-<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span><span class="preprocessor">#endif </span><span class="comment">/* __DCC_SERVICE_MODE_DIRECT__ */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span><span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>}</div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span><span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span> </div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span><span class="preprocessor">#endif </span><span class="comment">/* DCC_COMPILE_SERVICE_MODE_DIRECT */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span><span class="preprocessor">#endif </span><span class="comment">/* __DCC_SERVICE_MODE_DIRECT__ */</span><span class="preprocessor"></span></div>
 <div class="ttc" id="adcc__defines_8h_html"><div class="ttname"><a href="dcc__defines_8h.html">dcc_defines.h</a></div><div class="ttdoc">Protocol constants for NMRA DCC (S-9.1, S-9.2, S-9.2.1, S-9.3.2).</div></div>
 <div class="ttc" id="adcc__types_8h_html"><div class="ttname"><a href="dcc__types_8h.html">dcc_types.h</a></div><div class="ttdoc">Core type definitions, structures, and configuration constants for the OpenDccCLib library.</div></div>
 <div class="ttc" id="adcc__types_8h_html_a10087a262ba226b611af83e1f0d63a46"><div class="ttname"><a href="dcc__types_8h.html#a10087a262ba226b611af83e1f0d63a46">dcc_service_mode_step_callback_t</a></div><div class="ttdeci">void(* dcc_service_mode_step_callback_t)(dcc_service_mode_result_enum result)</div><div class="ttdoc">Callback for primitive service mode operation step completion.</div><div class="ttdef"><b>Definition</b> dcc_types.h:305</div></div>

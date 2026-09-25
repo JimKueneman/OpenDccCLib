@@ -53,27 +53,35 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/* dcc_config is defined in decoder.c — needed for re-init after CV changes. */
+    /** @brief The @ref dcc_config_t defined in decoder.c; needed to re-initialize the library after CV changes. */
 extern const dcc_config_t dcc_config;
 
 
-/* Maximum command line length */
+    /** @brief Maximum command line length including the terminator. */
 #define CMD_LINE_MAX   128
 
-/* Maximum tokens per command */
+    /** @brief Maximum tokens parsed from one command line. */
 #define CMD_MAX_TOKENS 4
 
+    /** @brief Current command line, tokenized in place. */
 static char _line_buf[CMD_LINE_MAX];
+    /** @brief Formatted reply line. */
 static char _resp_buf[128];
 
-/* Current decoder address state (for STATUS reporting) */
+    /** @brief Address last set by ADDR, for STATUS reporting. */
 static dcc_address_t _current_addr = 3;
+    /** @brief Address type last set by ADDR, for STATUS reporting. */
 static dcc_address_type_enum _current_type = DCC_ADDRESS_SHORT;
 
 /* ========================================================================== */
 /* Helpers                                                                    */
 /* ========================================================================== */
 
+    /**
+     * @brief Write one reply line (msg + CR LF) on the command UART.
+     *
+     * @param msg  Null-terminated reply text.
+     */
 static void _respond(const char *msg) {
 
     TI_UartDriver_write_string(msg);
@@ -81,12 +89,18 @@ static void _respond(const char *msg) {
 
 }
 
+    /** @brief Write the "> " prompt. */
 static void _prompt(void) {
 
     TI_UartDriver_write_string("> ");
 
 }
 
+    /**
+     * @brief Uppercase an ASCII string in place.
+     *
+     * @param s  Null-terminated string; modified.
+     */
 static void _strupper(char *s) {
 
     while (*s) {
@@ -102,6 +116,15 @@ static void _strupper(char *s) {
 
 }
 
+    /**
+     * @brief Split a line on spaces and tabs in place, null-terminating each token.
+     *
+     * @param line        Line to split; modified.
+     * @param tokens      Receives pointers to the tokens.
+     * @param max_tokens  Capacity of tokens.
+     *
+     * @return Number of tokens found.
+     */
 static int _tokenize(char *line, char *tokens[], int max_tokens) {
 
     int count = 0;
@@ -143,6 +166,13 @@ static int _tokenize(char *line, char *tokens[], int max_tokens) {
 
 }
 
+    /**
+     * @brief Name of an address type for STATUS/ADDR replies.
+     *
+     * @param type  Address type.
+     *
+     * @return "SHORT", "LONG", "ACC", "ACCE" or "UNKNOWN".
+     */
 static const char *_type_to_string(dcc_address_type_enum type) {
 
     switch (type) {
@@ -161,6 +191,16 @@ static const char *_type_to_string(dcc_address_type_enum type) {
 /* Command handlers                                                           */
 /* ========================================================================== */
 
+    /**
+     * @brief ADDR <n> <SHORT|LONG|ACC|ACCE>: set the decoder address through the CVs.
+     *
+     * @details Writes CV1 or CV17/CV18 (mobile) or the accessory address LSB/MSB CVs, sets or
+     * clears the CV29 extended-address bit and the CV541 accessory bits to match,
+     * then re-initializes the library so it re-reads its address cache.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_addr(char *tokens[], int count) {
 
     if (count < 3) {
@@ -239,6 +279,7 @@ static void _cmd_addr(char *tokens[], int count) {
 
 }
 
+    /** @brief CLEAR: flush the RECV ring. */
 static void _cmd_clear(void) {
 
     CallbacksDcc_clear();
@@ -246,6 +287,7 @@ static void _cmd_clear(void) {
 
 }
 
+    /** @brief STATUS: report the address last set by ADDR. */
 static void _cmd_status(void) {
 
     snprintf(_resp_buf, sizeof(_resp_buf), "STATUS: addr=%u type=%s",
@@ -254,6 +296,17 @@ static void _cmd_status(void) {
 
 }
 
+    /**
+     * @brief ACK [ON|OFF|<width_us>|TEST [count]]: ACK pulse control.
+     *
+     * @details No argument reports state and width. ON/OFF enable or disable
+     * generation. A number sets the fire() width (1000-20000 us). TEST fires 1..100
+     * self-timed pulses for the logic analyzer, temporarily forcing generation on
+     * and busy-waiting between pulses.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_ack(char *tokens[], int count) {
 
     if (count < 2) {
@@ -342,6 +395,7 @@ static void _cmd_ack(char *tokens[], int count) {
 
 }
 
+    /** @brief HELP: print the command list. */
 static void _cmd_help(void) {
 
     _respond("Commands:");
@@ -360,6 +414,7 @@ static void _cmd_help(void) {
 /* Public API                                                                 */
 /* ========================================================================== */
 
+    /** @brief Reset the reported address to 3/SHORT. */
 void DecoderCommandParser_initialize(void) {
 
     _current_addr = 3;
@@ -367,6 +422,12 @@ void DecoderCommandParser_initialize(void) {
 
 }
 
+    /**
+     * @brief Fetch one complete UART line, uppercase and tokenize it, dispatch on the verb, then prompt.
+     *
+     * @details Non-blocking: returns at once when no line is ready. Unknown verbs get
+     * an ERR reply.
+     */
 void DecoderCommandParser_process(void) {
 
     if (!TI_UartDriver_read_line(_line_buf, CMD_LINE_MAX)) {

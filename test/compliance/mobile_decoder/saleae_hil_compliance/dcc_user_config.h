@@ -47,7 +47,9 @@
 // =============================================================================
 
 // #define DCC_COMPILE_COMMAND_STATION   /* not used in this demo */
+    /** @brief Build the decoder role: bit decoder, packet parser, CV handling. */
 #define DCC_COMPILE_DECODER
+    /** @brief Build the RailCom transmit path (comment out to strip). */
 #define DCC_COMPILE_RAILCOM           // RailCom Tx (comment out to strip)
 
 // =============================================================================
@@ -56,13 +58,19 @@
 
 #ifdef DCC_COMPILE_DECODER
 
-/* How many function outputs the decoder tracks (F0 through F28 = 29).
- * Increase this if your hardware has more outputs; the library allocates
- * a bool array of this size. */
+    /**
+     * @brief How many function outputs the decoder tracks (F0 through F28 = 29).
+     *
+     * @details Increase this if your hardware has more outputs; the library
+     * allocates a bool array of this size.
+     */
 #define USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS  29
 
-    /* Decoder received-packet FIFO depth (>= 2; one slot reserved). The
-     * end-bit ISR enqueues; DccConfig_run drains and dispatches. */
+    /**
+     * @brief Decoder received-packet FIFO depth (>= 2; one slot reserved).
+     *
+     * @details The end-bit path enqueues; DccConfig_run() drains and dispatches.
+     */
 #define USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH      8
 
 #endif /* DCC_COMPILE_DECODER */

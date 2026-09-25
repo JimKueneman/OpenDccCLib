@@ -28,11 +28,12 @@
  * @brief DCC decoder callback implementations.
  *
  * @details HOW THIS WORKS:
- * The DCC library calls your callbacks from ISR context.  Because you
- * cannot safely call printf or UART transmit inside an ISR, this demo
- * uses a ring buffer pattern:
+ * On this bench the library dispatches your callbacks from DccConfig_run() in
+ * the main loop (the edge ISR only captures timestamps). A port that runs the
+ * decoder from its ISR could not call printf or UART transmit inside a
+ * callback, so this demo keeps a ring buffer pattern either way:
  *
- *   ISR -> callback -> _recv_enqueue("RECV ...") -> ring buffer
+ *   callback -> _recv_enqueue("RECV ...") -> ring buffer
  *   main loop -> CallbacksDcc_drain() -> UART output
  *
  * TO ADAPT FOR A REAL DECODER:
@@ -59,21 +60,30 @@
 /* RECV ring buffer                                                           */
 /*                                                                            */
 /* A lock-free single-producer / single-consumer ring buffer.                 */
-/*   Producer: ISR context  (writes to _recv_head)                            */
-/*   Consumer: main loop    (reads from _recv_tail)                           */
+/*   Producer: the callbacks (writes to _recv_head)                           */
+/*   Consumer: CallbacksDcc_drain() (reads from _recv_tail)                   */
 /* No mutex is needed because there is exactly one writer and one reader,     */
 /* and the head/tail indices are volatile.                                    */
 /* ========================================================================== */
 
+    /** @brief Number of RECV lines the ring can hold (one slot is kept free). */
 #define RECV_RING_SLOTS   64
+    /** @brief Maximum RECV line length including the terminator. */
 #define RECV_SLOT_SIZE    80
 
+    /** @brief RECV line ring buffer. */
 static char _recv_ring[RECV_RING_SLOTS][RECV_SLOT_SIZE];
+    /** @brief Ring write index; the callbacks write it. */
 static volatile uint8_t _recv_head = 0;   /* ISR writes here */
+    /** @brief Ring read index; CallbacksDcc_drain() writes it. */
 static volatile uint8_t _recv_tail = 0;   /* main loop reads here */
 
-/* Enqueue a formatted RECV line.  Called from ISR context only.
- * If the ring is full the message is silently dropped. */
+    /**
+     * @brief Enqueue a formatted RECV line; silently dropped if the ring is full.
+     *
+     * @param fmt  printf-style format string.
+     * @param ...  Format arguments.
+     */
 static void _recv_enqueue(const char *fmt, ...) {
 
     uint8_t next = (_recv_head + 1) % RECV_RING_SLOTS;
@@ -100,14 +110,17 @@ static void _recv_enqueue(const char *fmt, ...) {
 /* The array is indexed by (cv_number - 1) because DCC CVs are 1-based.      */
 /* ========================================================================== */
 
+    /** @brief Number of CVs held in RAM (CV1..CV1024). */
 #define CV_STORAGE_SIZE  1024
 
+    /** @brief RAM CV storage indexed by cv_number - 1 (lost on power cycle). */
 static uint8_t _cv_storage[CV_STORAGE_SIZE];
 
 /* ========================================================================== */
 /* Public API                                                                 */
 /* ========================================================================== */
 
+    /** @brief Clear the RECV ring and restore the CV storage to NMRA defaults. */
 void CallbacksDcc_initialize(void) {
 
     /* Clear ring buffer */
@@ -119,6 +132,12 @@ void CallbacksDcc_initialize(void) {
 
 }
 
+    /**
+     * @brief Restore the CV storage to NMRA defaults.
+     *
+     * @details CV1 = 3 (primary short address), CV15/CV16 = 0 (decoder unlocked),
+     * CV29 = 0x06 (28/128 speed steps, short address); everything else 0.
+     */
 void CallbacksDcc_factory_reset(void) {
 
     /* Restore CV storage to NMRA defaults.
@@ -133,6 +152,7 @@ void CallbacksDcc_factory_reset(void) {
 
 }
 
+    /** @brief Write at most one pending RECV line to the UART per call. */
 void CallbacksDcc_drain(void) {
 
     if (_recv_tail != _recv_head) {
@@ -145,6 +165,7 @@ void CallbacksDcc_drain(void) {
 
 }
 
+    /** @brief Discard all pending RECV lines. */
 void CallbacksDcc_clear(void) {
 
     _recv_head = 0;
@@ -159,6 +180,16 @@ void CallbacksDcc_clear(void) {
 /* Return true on success, false if cv_number is out of range.                */
 /* ========================================================================== */
 
+    /**
+     * @brief Read a CV from RAM storage.
+     *
+     * @verbatim
+     * @param cv_number  1-based CV number.
+     * @param value      Receives the CV value.
+     * @endverbatim
+     *
+     * @return true on success, false if cv_number is outside 1..CV_STORAGE_SIZE.
+     */
 bool CallbacksDcc_cv_read(uint16_t cv_number, uint8_t *value) {
 
     if (cv_number < 1 || cv_number > CV_STORAGE_SIZE) {
@@ -172,6 +203,16 @@ bool CallbacksDcc_cv_read(uint16_t cv_number, uint8_t *value) {
 
 }
 
+    /**
+     * @brief Write a CV to RAM storage.
+     *
+     * @verbatim
+     * @param cv_number  1-based CV number.
+     * @param value      Value to store.
+     * @endverbatim
+     *
+     * @return true on success, false if cv_number is outside 1..CV_STORAGE_SIZE.
+     */
 bool CallbacksDcc_cv_write(uint16_t cv_number, uint8_t value) {
 
     if (cv_number < 1 || cv_number > CV_STORAGE_SIZE) {
@@ -191,8 +232,21 @@ bool CallbacksDcc_cv_write(uint16_t cv_number, uint8_t value) {
 /* with (page, offset).  Unsupported pages return false (NACK).                */
 /* ========================================================================== */
 
+    /** @brief Indexed CV storage: 4 demo pages (CV31 = 0, CV32 = 0..3) of 256 bytes. */
 static uint8_t _idx_store[4][256];
 
+    /**
+     * @brief Read an indexed CV; only pages with page_hi = 0 and page_lo < 4 exist.
+     *
+     * @verbatim
+     * @param page_hi  CV31 value.
+     * @param page_lo  CV32 value.
+     * @param offset   Offset within the page.
+     * @param value    Receives the value.
+     * @endverbatim
+     *
+     * @return true on success, false (NACK) for an unsupported page.
+     */
 bool CallbacksDcc_cv_read_indexed(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t *value) {
 
     if (page_hi != 0 || page_lo >= 4) {
@@ -206,6 +260,18 @@ bool CallbacksDcc_cv_read_indexed(uint8_t page_hi, uint8_t page_lo, uint8_t offs
 
 }
 
+    /**
+     * @brief Write an indexed CV and log a RECV CVIDX line.
+     *
+     * @verbatim
+     * @param page_hi  CV31 value.
+     * @param page_lo  CV32 value.
+     * @param offset   Offset within the page.
+     * @param value    Value to store.
+     * @endverbatim
+     *
+     * @return true on success, false (NACK) for an unsupported page.
+     */
 bool CallbacksDcc_cv_write_indexed(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t value) {
 
     if (page_hi != 0 || page_lo >= 4) {
@@ -222,6 +288,19 @@ bool CallbacksDcc_cv_write_indexed(uint8_t page_hi, uint8_t page_lo, uint8_t off
 
 }
 
+    /**
+     * @brief Clear the CV29 features this demo does not implement, then log the result.
+     *
+     * @details The library decoded the requested CV29 config and forced the reserved
+     * bit; this hook clears any feature the product lacks so it can never be stored
+     * as "on" (S-9.2.2). This demo has no analog operation and no speed table, and
+     * no RailCom Tx unless DCC_COMPILE_RAILCOM is defined. The RECV line reports
+     * exactly what the library will store.
+     *
+     * @verbatim
+     * @param flags  Decoded CV29 bits; modified in place.
+     * @endverbatim
+     */
 void CallbacksDcc_cv29_apply_supported_features(dcc_cv29_flags_t *flags) {
 
     /* The library decoded the requested CV29 config and forced the reserved bit; our job is
@@ -261,6 +340,16 @@ void CallbacksDcc_cv29_apply_supported_features(dcc_cv29_flags_t *flags) {
 /*   }                                                                        */
 /* ========================================================================== */
 
+    /**
+     * @brief Log RECV SPEED.
+     *
+     * @verbatim
+     * @param address    Decoder address.
+     * @param speed      Speed step.
+     * @param direction  true = forward.
+     * @param mode       Speed-step mode.
+     * @endverbatim
+     */
 void CallbacksDcc_on_speed_command(uint16_t address, uint8_t speed,
                                     bool direction,
                                     dcc_speed_mode_enum mode) {
@@ -272,12 +361,28 @@ void CallbacksDcc_on_speed_command(uint16_t address, uint8_t speed,
 
 }
 
+    /**
+     * @brief Log RECV ESTOP.
+     *
+     * @verbatim
+     * @param address  Decoder address.
+     * @endverbatim
+     */
 void CallbacksDcc_on_emergency_stop(uint16_t address) {
 
     _recv_enqueue("RECV ESTOP addr=%u", address);
 
 }
 
+    /**
+     * @brief Log RECV FUNC.
+     *
+     * @verbatim
+     * @param address          Decoder address.
+     * @param function_number  Function number.
+     * @param state            true = on.
+     * @endverbatim
+     */
 void CallbacksDcc_on_function_command(uint16_t address,
                                        uint8_t function_number,
                                        bool state) {
@@ -287,6 +392,15 @@ void CallbacksDcc_on_function_command(uint16_t address,
 
 }
 
+    /**
+     * @brief Log RECV ACC.
+     *
+     * @verbatim
+     * @param board_address  Accessory board address.
+     * @param output_pair    Output pair.
+     * @param activate       true = activate.
+     * @endverbatim
+     */
 void CallbacksDcc_on_accessory_basic_command(uint16_t board_address,
                                               uint8_t output_pair,
                                               bool activate) {
@@ -296,6 +410,14 @@ void CallbacksDcc_on_accessory_basic_command(uint16_t board_address,
 
 }
 
+    /**
+     * @brief Log RECV ACCE.
+     *
+     * @verbatim
+     * @param address  Extended accessory address.
+     * @param aspect   Aspect value.
+     * @endverbatim
+     */
 void CallbacksDcc_on_accessory_extended_command(uint16_t address,
                                                  uint8_t aspect) {
 
@@ -303,6 +425,15 @@ void CallbacksDcc_on_accessory_extended_command(uint16_t address,
 
 }
 
+    /**
+     * @brief Log RECV CV_WRITE.
+     *
+     * @verbatim
+     * @param cv_number     CV number.
+     * @param value         Value written.
+     * @param service_mode  Unused.
+     * @endverbatim
+     */
 void CallbacksDcc_on_cv_write(uint16_t cv_number, uint8_t value,
                                bool service_mode) {
 
@@ -311,6 +442,15 @@ void CallbacksDcc_on_cv_write(uint16_t cv_number, uint8_t value,
 
 }
 
+    /**
+     * @brief Log RECV CV_VERIFY.
+     *
+     * @verbatim
+     * @param cv_number     CV number.
+     * @param value         Value verified against.
+     * @param service_mode  Unused.
+     * @endverbatim
+     */
 void CallbacksDcc_on_cv_verify(uint16_t cv_number, uint8_t value,
                                 bool service_mode) {
 
@@ -319,6 +459,16 @@ void CallbacksDcc_on_cv_verify(uint16_t cv_number, uint8_t value,
 
 }
 
+    /**
+     * @brief Log RECV CV_BIT.
+     *
+     * @verbatim
+     * @param cv_number     CV number.
+     * @param bit_position  Bit 0..7.
+     * @param bit_value     Bit value.
+     * @param service_mode  Unused.
+     * @endverbatim
+     */
 void CallbacksDcc_on_cv_bit(uint16_t cv_number, uint8_t bit_position,
                              bool bit_value, bool service_mode) {
 
@@ -328,6 +478,15 @@ void CallbacksDcc_on_cv_bit(uint16_t cv_number, uint8_t bit_position,
 
 }
 
+    /**
+     * @brief Log RECV CONSIST.
+     *
+     * @verbatim
+     * @param address           Decoder address.
+     * @param consist_address   Consist address.
+     * @param direction_normal  true = normal direction.
+     * @endverbatim
+     */
 void CallbacksDcc_on_consist_command(uint16_t address,
                                       uint8_t consist_address,
                                       bool direction_normal) {
@@ -338,6 +497,15 @@ void CallbacksDcc_on_consist_command(uint16_t address,
 
 }
 
+    /**
+     * @brief Log RECV BSS.
+     *
+     * @verbatim
+     * @param address       Decoder address.
+     * @param state_number  State number.
+     * @param active        true = on.
+     * @endverbatim
+     */
 void CallbacksDcc_on_binary_state_short(uint16_t address,
                                          uint8_t state_number,
                                          bool active) {
@@ -347,6 +515,15 @@ void CallbacksDcc_on_binary_state_short(uint16_t address,
 
 }
 
+    /**
+     * @brief Log RECV BSL.
+     *
+     * @verbatim
+     * @param address       Decoder address.
+     * @param state_number  State number.
+     * @param active        true = on.
+     * @endverbatim
+     */
 void CallbacksDcc_on_binary_state_long(uint16_t address,
                                         uint16_t state_number,
                                         bool active) {
@@ -356,6 +533,15 @@ void CallbacksDcc_on_binary_state_long(uint16_t address,
 
 }
 
+    /**
+     * @brief Log RECV ANALOG.
+     *
+     * @verbatim
+     * @param address        Decoder address.
+     * @param output_number  Analog output number.
+     * @param value          Output value.
+     * @endverbatim
+     */
 void CallbacksDcc_on_analog_function(uint16_t address,
                                       uint8_t output_number,
                                       uint8_t value) {
@@ -365,12 +551,14 @@ void CallbacksDcc_on_analog_function(uint16_t address,
 
 }
 
+    /** @brief Log RECV FAILSAFE_ENTER. */
 void CallbacksDcc_on_failsafe_entered(void) {
 
     _recv_enqueue("RECV FAILSAFE_ENTER");
 
 }
 
+    /** @brief Log RECV FAILSAFE_EXIT. */
 void CallbacksDcc_on_failsafe_exited(void) {
 
     _recv_enqueue("RECV FAILSAFE_EXIT");

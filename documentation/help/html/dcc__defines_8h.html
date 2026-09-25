@@ -138,9 +138,10 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
 <tr class="memdesc:aa0d8756dc3b56a07c7db2537bce21057"><td class="mdescLeft">&#160;</td><td class="mdescRight">Model time "at most once every (model) minute" (S-9.2.1 sec 2.3.6.2) and system time (sec 2.3.6.3): one send per update.  <br /></td></tr>
 <tr class="separator:aa0d8756dc3b56a07c7db2537bce21057"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2656f9cb26476acd3b0658440a0430ce" id="r_a2656f9cb26476acd3b0658440a0430ce"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2656f9cb26476acd3b0658440a0430ce">DCC_REPEAT_ACCESSORY_NOP</a>&#160;&#160;&#160;1</td></tr>
-<tr class="memdesc:a2656f9cb26476acd3b0658440a0430ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accessory NOP (RailCom poll) and the accessory basic/extended STOP builders: one send. Maintainer policy; the spec gives no count.  <br /></td></tr>
+<tr class="memdesc:a2656f9cb26476acd3b0658440a0430ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accessory NOP (RailCom poll) builder: one send. Maintainer policy; the spec gives no count.  <br /></td></tr>
 <tr class="separator:a2656f9cb26476acd3b0658440a0430ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0f22afebc0a6d1d9219025c0014ccdd5" id="r_a0f22afebc0a6d1d9219025c0014ccdd5"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0f22afebc0a6d1d9219025c0014ccdd5">DCC_REPEAT_ACCESSORY_STOP</a>&#160;&#160;&#160;1</td></tr>
+<tr class="memdesc:a0f22afebc0a6d1d9219025c0014ccdd5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Accessory basic/extended STOP builders: one send. Maintainer policy; the spec gives no count.  <br /></td></tr>
 <tr class="separator:a0f22afebc0a6d1d9219025c0014ccdd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c437d9b0cdb93841cae7e3563270008" id="r_a5c437d9b0cdb93841cae7e3563270008"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5c437d9b0cdb93841cae7e3563270008">DCC_REPEAT_ONE_SHOT_DEFAULT</a>&#160;&#160;&#160;2</td></tr>
 <tr class="memdesc:a5c437d9b0cdb93841cae7e3563270008"><td class="mdescLeft">&#160;</td><td class="mdescRight">Every one-shot the spec leaves uncounted &ndash; speed, function groups, F13-F68, accessory ON/OFF, consist, binary state, analog, reset, idle. S-9.2 sec C only asks that packets be "repeated as frequently as possible", so this is a maintainer policy: 2 = one repeat to survive a single lost packet.  <br /></td></tr>
@@ -414,13 +415,16 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
 <tr class="memdesc:a372d4b5fbfcb41ca190c2aab5613cc06"><td class="mdescLeft">&#160;</td><td class="mdescRight">DYN (dynamic data) datagram.  <br /></td></tr>
 <tr class="separator:a372d4b5fbfcb41ca190c2aab5613cc06"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a88c62675d0c6e7c758e888f7973a982b" id="r_a88c62675d0c6e7c758e888f7973a982b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a88c62675d0c6e7c758e888f7973a982b">DCC_RAILCOM_ID_XPOM_8</a>&#160;&#160;&#160;8</td></tr>
-<tr class="memdesc:a88c62675d0c6e7c758e888f7973a982b"><td class="mdescLeft">&#160;</td><td class="mdescRight">XPOM datagrams (IDs 8..11)  <br /></td></tr>
+<tr class="memdesc:a88c62675d0c6e7c758e888f7973a982b"><td class="mdescLeft">&#160;</td><td class="mdescRight">XPOM (extended programming-on-main) response; IDs 8..11 echo the command's 2-bit SS sequence number (this one: SS = 00)  <br /></td></tr>
 <tr class="separator:a88c62675d0c6e7c758e888f7973a982b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8f5e729bfc093f00f3e6c429b354196d" id="r_a8f5e729bfc093f00f3e6c429b354196d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8f5e729bfc093f00f3e6c429b354196d">DCC_RAILCOM_ID_XPOM_9</a>&#160;&#160;&#160;9</td></tr>
+<tr class="memdesc:a8f5e729bfc093f00f3e6c429b354196d"><td class="mdescLeft">&#160;</td><td class="mdescRight">XPOM response, SS = 01.  <br /></td></tr>
 <tr class="separator:a8f5e729bfc093f00f3e6c429b354196d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a04618bef4f4c02cd1d0b50a66b3b8a07" id="r_a04618bef4f4c02cd1d0b50a66b3b8a07"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a04618bef4f4c02cd1d0b50a66b3b8a07">DCC_RAILCOM_ID_XPOM_10</a>&#160;&#160;&#160;10</td></tr>
+<tr class="memdesc:a04618bef4f4c02cd1d0b50a66b3b8a07"><td class="mdescLeft">&#160;</td><td class="mdescRight">XPOM response, SS = 10.  <br /></td></tr>
 <tr class="separator:a04618bef4f4c02cd1d0b50a66b3b8a07"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aafa08af27aabd619dfdb23a5a71c5278" id="r_aafa08af27aabd619dfdb23a5a71c5278"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aafa08af27aabd619dfdb23a5a71c5278">DCC_RAILCOM_ID_XPOM_11</a>&#160;&#160;&#160;11</td></tr>
+<tr class="memdesc:aafa08af27aabd619dfdb23a5a71c5278"><td class="mdescLeft">&#160;</td><td class="mdescRight">XPOM response, SS = 11.  <br /></td></tr>
 <tr class="separator:aafa08af27aabd619dfdb23a5a71c5278"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a789618751ba03f12aa14d2d4fd3a724b" id="r_a789618751ba03f12aa14d2d4fd3a724b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a789618751ba03f12aa14d2d4fd3a724b">DCC_RAILCOM_ID_CV_AUTO</a>&#160;&#160;&#160;12</td></tr>
 <tr class="memdesc:a789618751ba03f12aa14d2d4fd3a724b"><td class="mdescLeft">&#160;</td><td class="mdescRight">CV auto-transfer datagram.  <br /></td></tr>
@@ -745,7 +749,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
       </table>
 </div><div class="memdoc">
 
-<p>Accessory NOP (RailCom poll) and the accessory basic/extended STOP builders: one send. Maintainer policy; the spec gives no count. </p>
+<p>Accessory NOP (RailCom poll) builder: one send. Maintainer policy; the spec gives no count. </p>
 
 </div>
 </div>
@@ -760,6 +764,8 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Accessory basic/extended STOP builders: one send. Maintainer policy; the spec gives no count. </p>
 
 </div>
 </div>
@@ -1463,6 +1469,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Primary Address: 7-bit short address (1-127) </p>
 
 </div>
 </div>
@@ -1477,6 +1484,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Vstart: motor voltage at speed step 1 </p>
 
 </div>
 </div>
@@ -1491,6 +1499,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Acceleration Rate: momentum when speeding up </p>
 
 </div>
 </div>
@@ -1505,6 +1514,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Deceleration Rate: momentum when slowing down </p>
 
 </div>
 </div>
@@ -1519,6 +1529,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Vhigh: motor voltage at the top speed step </p>
 
 </div>
 </div>
@@ -1533,6 +1544,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Vmid: motor voltage at the middle speed step </p>
 
 </div>
 </div>
@@ -1547,6 +1559,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Manufacturer Version No.: read-only firmware version </p>
 
 </div>
 </div>
@@ -1561,7 +1574,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Write 8 for factory reset </p>
+<p>Manufacturer ID: read-only; write 8 for factory reset </p>
 
 </div>
 </div>
@@ -1576,6 +1589,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Total PWM Period: motor drive frequency </p>
 
 </div>
 </div>
@@ -1590,6 +1604,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>EMF Feedback Cutout: speed step at which back-EMF control stops </p>
 
 </div>
 </div>
@@ -1604,6 +1619,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Packet Time-Out Value: fail-safe timeout, 0 = disabled (S-9.2.4) </p>
 
 </div>
 </div>
@@ -1618,6 +1634,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Power Source Conversion: alternate power sources the decoder accepts </p>
 
 </div>
 </div>
@@ -1632,6 +1649,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Alternate Mode Function Status F1-F8: functions active in analog mode </p>
 
 </div>
 </div>
@@ -1646,6 +1664,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Alternate Mode Function Status FL, F9-F12: functions active in analog mode </p>
 
 </div>
 </div>
@@ -1660,6 +1679,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Decoder Lock: key written by the command station </p>
 
 </div>
 </div>
@@ -1674,6 +1694,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Decoder Lock: this decoder's lock ID; writes are refused while CV15 != CV16 </p>
 
 </div>
 </div>
@@ -1688,6 +1709,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Extended Address high byte (0xC0-0xE7 on the wire) </p>
 
 </div>
 </div>
@@ -1702,6 +1724,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Extended Address low byte </p>
 
 </div>
 </div>
@@ -1716,6 +1739,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>Consist Address: bits 0-6 address, bit 7 = consist direction reversed; 0 = not in a consist </p>
 
 </div>
 </div>
@@ -1955,6 +1979,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>User Identifier #1: free for the owner's use </p>
 
 </div>
 </div>
@@ -1969,6 +1994,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+<p>User Identifier #2: free for the owner's use </p>
 
 </div>
 </div>
@@ -2431,7 +2457,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
       </table>
 </div><div class="memdoc">
 
-<p>XPOM datagrams (IDs 8..11) </p>
+<p>XPOM (extended programming-on-main) response; IDs 8..11 echo the command's 2-bit SS sequence number (this one: SS = 00) </p>
 
 </div>
 </div>
@@ -2447,6 +2473,8 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
       </table>
 </div><div class="memdoc">
 
+<p>XPOM response, SS = 01. </p>
+
 </div>
 </div>
 <a id="a04618bef4f4c02cd1d0b50a66b3b8a07" name="a04618bef4f4c02cd1d0b50a66b3b8a07"></a>
@@ -2461,6 +2489,8 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
       </table>
 </div><div class="memdoc">
 
+<p>XPOM response, SS = 10. </p>
+
 </div>
 </div>
 <a id="aafa08af27aabd619dfdb23a5a71c5278" name="aafa08af27aabd619dfdb23a5a71c5278"></a>
@@ -2474,6 +2504,8 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>XPOM response, SS = 11. </p>
 
 </div>
 </div>

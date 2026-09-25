@@ -27,13 +27,15 @@
  * @file dcc_application_main_track.h
  * @brief Application-layer API for main track operations.
  *
- * @details Provides the user-facing functions for the main track DCC output:
- * power control, packet scheduling, and slot management. Initialized by
- * dcc_config.c during DccConfig_initialize(). Application code includes this
- * header instead of the internal module headers.
+ * @details Legacy application layer for the main track DCC output: power control,
+ * packet scheduling, and slot management, forwarded through an interface struct
+ * that the application (or test) populates. This module is still compiled and
+ * unit-tested but is NOT wired by dcc_config.c; the current command-station API
+ * is dcc_application_command_station_main_track. Every call is a no-op (or
+ * returns false) until DccApplicationMainTrack_initialize has been called.
  *
  * @author Jim Kueneman
- * @date 08 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_APPLICATION_MAIN_TRACK__
@@ -47,7 +49,7 @@
 extern "C" {
 #endif /* __cplusplus */
 
-    /** @brief Interface struct — wired by dcc_config.c during initialization. */
+    /** @brief Interface struct -- populated by the caller; dcc_config.c does not wire this legacy module. */
 typedef struct {
 
         /** @brief Start the DCC timer for this channel. */
@@ -78,34 +80,60 @@ typedef struct {
 
         /**
          * @brief Initialize the main track application module.
-         * @param interface Pointer to populated interface struct (wired by dcc_config.c).
+         *
+         * @details Stores the interface pointer; nothing is powered or scheduled.
+         *
+         * @param interface Pointer to a populated @ref interface_dcc_application_main_track_t; must remain valid while the module is used.
          */
     extern void DccApplicationMainTrack_initialize(const interface_dcc_application_main_track_t *interface);
 
-        /** @brief Enable main track power output and start DCC signal generation. */
+        /**
+         * @brief Enable main track power output and start DCC signal generation.
+         *
+         * @details Calls track_power_set(true), timer_start with the one-bit half period
+         * (DCC_ONE_BIT_HALF_PERIOD_US) and encoder_start, in that order. No-op before
+         * initialization.
+         */
     extern void DccApplicationMainTrack_power_on(void);
 
-        /** @brief Disable main track power output and stop DCC signal generation. */
+        /**
+         * @brief Disable main track power output and stop DCC signal generation.
+         *
+         * @details Calls encoder_stop, timer_stop and track_power_set(false), in that
+         * order (the reverse of power-on). No-op before initialization.
+         */
     extern void DccApplicationMainTrack_power_off(void);
 
         /**
          * @brief Insert a packet into the main track scheduler.
-         * @param packet The DCC packet to schedule.
-         * @param address DCC address for duplicate combining key.
-         * @param tag Sub-key for duplicate combining (e.g., function group).
-         * @param priority Packet priority level.
+         *
+         * @details Forwards to the scheduler_insert hook. The address and tag together
+         * form the scheduler's duplicate-combining key.
+         *
+         * @param packet The @ref dcc_packet_t to schedule.
+         * @param address @ref dcc_address_t used as the duplicate-combining key.
+         * @param tag @ref dcc_tag_enum sub-key for duplicate combining (e.g., function group).
+         * @param priority @ref dcc_priority_enum packet priority level.
          * @param auto_refresh true = keep in refresh cycle indefinitely.
-         * @return true if packet was scheduled, false if no free slots.
+         *
+         * @return true if the packet was scheduled; false if no free slot or the module is not initialized.
          */
     extern bool DccApplicationMainTrack_insert(const dcc_packet_t *packet, dcc_address_t address, dcc_tag_enum tag, dcc_priority_enum priority, bool auto_refresh);
 
         /**
          * @brief Remove all scheduler slots for a given address.
-         * @param address The address to purge.
+         *
+         * @details Forwards to the scheduler_remove_address hook. No-op before initialization.
+         *
+         * @param address The @ref dcc_address_t to purge.
          */
     extern void DccApplicationMainTrack_remove_address(dcc_address_t address);
 
-        /** @brief Clear all active scheduler slots. */
+        /**
+         * @brief Clear all active scheduler slots.
+         *
+         * @details Forwards to the scheduler_clear hook. No-op before initialization.
+         */
     extern void DccApplicationMainTrack_clear(void);
 
 #ifdef __cplusplus

@@ -56,8 +56,15 @@ extern "C" {
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
-// Called after every DCC packet is fully transmitted on the track.
-// This demo implementation toggles a debug GPIO for oscilloscope triggering.
+    /**
+     * @brief Fires when the scheduler dispatches a packet to the bit encoder (transmit start).
+     *
+     * @details This is the dispatch event, not the end of transmission. The demo toggles the
+     * debug GPIO here so a scope or logic analyzer can sync on packet boundaries. Runs in
+     * main-loop context from DccConfig_run().
+     *
+     * @param packet Pointer to the @ref dcc_packet_t just handed to the encoder.
+     */
 extern void CallbacksDcc_on_packet_sent(const dcc_packet_t *packet);
 
 #endif /* DCC_COMPILE_COMMAND_STATION */

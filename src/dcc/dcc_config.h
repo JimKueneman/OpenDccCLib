@@ -277,7 +277,9 @@ typedef struct {
     // Command Station: OPTIONAL application callbacks (NULL = no notification)
     // =========================================================================
 
-        /** @brief Packet dispatched to the encoder (transmit start). */
+        /** @brief Packet dispatched to the encoder (transmit start), from either track.
+         *  Fires when the packet is handed to the bit encoder, not after it is on the
+         *  wire. Fired from DccConfig_run(), NOT ISR. */
     void (*on_packet_sent)(const dcc_packet_t *packet);
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
@@ -308,9 +310,12 @@ typedef struct {
          *  Invoked when a write command targets CV8 (read-only Manufacturer ID, S-9.2.2). */
     void (*factory_reset)(void);
 
-        /** @brief Indexed CV access (CV257-512 window into the page selected by CV31/CV32).
+        /** @brief Indexed CV read (CV257-512 window into the page selected by CV31/CV32).
          *  OPTIONAL (NULL = no indexed support). page = CV31:CV32, offset = cv# - 257. */
     bool (*cv_read_indexed)(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t *value);
+
+        /** @brief Indexed CV write, same page/offset convention as cv_read_indexed.
+         *  OPTIONAL (NULL or a false return = page not supported -> NACK). */
     bool (*cv_write_indexed)(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t value);
 
     // =========================================================================
@@ -410,7 +415,14 @@ typedef struct {
 
         /**
          * @brief Initialize the DCC library with user configuration.
-         * @param config Pointer to user-populated configuration struct.
+         *
+         * @details Wires every compiled module to the hardware drivers and callbacks
+         * in the struct and initializes them. Call once at startup, before
+         * DccConfig_run() or any ISR entry point. DccConfig_run() returns
+         * immediately until a non-NULL configuration has been installed.
+         *
+         * @param config Pointer to the user-populated @ref dcc_config_t. The library
+         *        keeps the pointer, so it must remain valid for the lifetime of the application.
          */
     extern void DccConfig_initialize(const dcc_config_t *config);
 
@@ -452,6 +464,12 @@ typedef struct {
          *  matching DccConfig_initialize. State and interface are left untouched, so an
          *  in-flight cutout completes on its old timing and the new values take effect
          *  from the next cutout. Periods are in microseconds.
+         *
+         * @param start_delay_us DELAY state length (0 = DCC_RAILCOM_CUTOUT_START_DELAY_US).
+         * @param uart_rx_delay_us SETTLING state length (0 = DCC_RAILCOM_UART_RX_DELAY_US).
+         * @param ch1_window_us Channel 1 window length (0 = DCC_RAILCOM_CH1_WINDOW_US).
+         * @param ch1_ch2_gap_us Gap between the channel windows (0 = DCC_RAILCOM_CH1_CH2_GAP_US).
+         * @param ch2_window_us Channel 2 window length (0 = DCC_RAILCOM_CH2_WINDOW_US).
          */
     extern void DccConfig_set_railcom_cutout_timing(uint16_t start_delay_us, uint16_t uart_rx_delay_us,
                                                     uint16_t ch1_window_us, uint16_t ch1_ch2_gap_us,
@@ -466,7 +484,9 @@ typedef struct {
     extern void DccConfig_cancel_railcom_cutout(void);
 
         /**
-         * @brief True while a RailCom cutout is in progress (state != IDLE).
+         * @brief Report whether a RailCom cutout is in progress.
+         *
+         * @return true while the cutout state machine is in any state other than IDLE.
          */
     extern bool DccConfig_railcom_cutout_is_active(void);
 
@@ -498,8 +518,8 @@ typedef struct {
          *
          * @details Writes made through DccApplicationDecoderCv_write() or by a
          * DCC packet refresh the cache on their own. Call this after the
-         * application changes CV1, 17, 18, 19, 29, 513, 521 or 541 by any other
-         * route (writing its storage directly, restoring a backup).
+         * application changes CV1, 17, 18, 19, 21, 22, 29, 513, 521 or 541 by any
+         * other route (writing its storage directly, restoring a backup).
          */
     extern void DccConfig_reload_address_cvs(void);
 

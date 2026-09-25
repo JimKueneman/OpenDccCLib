@@ -113,9 +113,9 @@ typedef struct {
     void (*start_ack_pulse)(void);
 
         /** @brief A command packet addressed to this decoder was accepted.
-         *  NULL = no notification. Fired for multifunction packets whose
-         *  address matches ours (or broadcast) in Operations Mode -- used to
-         *  re-arm the S-9.2.4 packet-timeout fail-safe. */
+         *  NULL = no notification. Fired for multifunction packets only, when the
+         *  address matches ours, the broadcast address or the CV19 consist address
+         *  in Operations Mode -- used to re-arm the S-9.2.4 packet-timeout fail-safe. */
     void (*on_addressed_packet)(void);
 
 #if defined(DCC_COMPILE_RAILCOM)
@@ -129,7 +129,13 @@ typedef struct {
 
         /**
          * @brief Initialize the packet decoder module.
-         * @param interface Pointer to populated interface struct.
+         *
+         * @details Clears the address cache, consist state, service mode tracking and the
+         * packet FIFO, then reads the address CVs through the interface's cv_read, so CV
+         * storage must be usable before this is called.
+         *
+         * @param interface Pointer to populated @ref interface_dcc_packet_decoder_t (wired by
+         *        dcc_config.c). Must remain valid for the lifetime of the application.
          */
     extern void DccPacketDecoder_initialize(const interface_dcc_packet_decoder_t *interface);
 
@@ -149,11 +155,18 @@ typedef struct {
 
         /**
          * @brief Process a complete raw packet from the bit decoder.
+         *
+         * @details Validates the XOR byte, tracks reset packets for service mode entry,
+         * then routes the packet: service mode packets to the direct/register handlers,
+         * accessory packets to the basic/extended handlers (matched against the board or
+         * output address per CV541 bit 6), and multifunction packets to the instruction
+         * dispatcher when the address is ours, broadcast, or the CV19 consist address
+         * (speed/direction/e-stop and function groups 1-2, the latter gated by CV21/CV22).
+         * An accessory decoder ignores multifunction packets. Normally reached through
+         * @ref DccPacketDecoder_run rather than called directly.
+         *
          * @param data Raw packet bytes (including XOR byte).
          * @param byte_count Number of bytes in the packet.
-         *
-         * @details Validates XOR, extracts address, checks address match, parses
-         * the instruction, and dispatches to the appropriate callback.
          */
     extern void DccPacketDecoder_process_packet(const uint8_t *data, uint8_t byte_count);
 

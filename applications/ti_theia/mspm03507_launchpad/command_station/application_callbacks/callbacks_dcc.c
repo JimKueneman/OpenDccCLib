@@ -36,6 +36,15 @@
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
+    /**
+     * @brief Toggles the debug GPIO each time a packet is dispatched to the encoder.
+     *
+     * @details The packet contents are ignored; the pin edge is the scope sync trigger.
+     *
+     * @verbatim
+     * @param packet Pointer to the dcc_packet_t just handed to the encoder (unused).
+     * @endverbatim
+     */
 void CallbacksDcc_on_packet_sent(const dcc_packet_t *packet) {
 
     (void)packet;

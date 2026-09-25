@@ -42,6 +42,10 @@
 
     /**
      * @brief Fill a POM reply (ID 0).
+     *
+     * @details Sets the datagram id, data[0] = CV address low byte, data[1] = value,
+     * count = 2.
+     *
      * @verbatim
      * @param response Response to fill.
      * @param cv_address CV address; the low 8 bits are sent.
@@ -68,6 +72,9 @@ bool DccApplicationDecoderRailcom_pom_response(dcc_railcom_response_t *response,
 
     /**
      * @brief Fill a dynamic-data reply (ID 7).
+     *
+     * @details Sets the datagram id, data[0] = sub-index, data[1] = value, count = 2.
+     *
      * @verbatim
      * @param response Response to fill.
      * @param subid Dynamic variable sub-index.
@@ -95,6 +102,10 @@ bool DccApplicationDecoderRailcom_dynamic_data(dcc_railcom_response_t *response,
     /**
      * @brief Fill a CV automatic-transfer reply (ID 12): 24-bit indexed CV address, low
      *  byte first, then the value.
+     *
+     * @details Sets the datagram id, data[0..2] = address bytes (low, mid, high),
+     * data[3] = value, count = 4.
+     *
      * @verbatim
      * @param response Response to fill.
      * @param indexed_cv_address Indexed CV address (page index and offset).
@@ -123,6 +134,10 @@ bool DccApplicationDecoderRailcom_cv_auto_transfer(dcc_railcom_response_t *respo
 
     /**
      * @brief Fill an arbitrary reply from a datagram id and raw bytes.
+     *
+     * @details Validates the arguments first so a rejected call leaves the response
+     * untouched, then stores the id masked to 4 bits, the count, and copies the bytes.
+     *
      * @verbatim
      * @param response Response to fill.
      * @param datagram_id 4-bit datagram id.

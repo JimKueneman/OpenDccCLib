@@ -45,15 +45,23 @@
 
 #if defined(DCC_COMPILE_COMMAND_STATION) && defined(DCC_COMPILE_RAILCOM)
 
+    /** @brief Receive ring depth in bytes (one entry is kept free). */
 #define RC_RX_RING_SIZE 32u
+    /** @brief Maximum raw Channel 1 bytes in a mock reply. */
 #define RC_CH1_MAX      2u
+    /** @brief Maximum raw Channel 2 bytes in a mock reply. */
 #define RC_CH2_MAX      6u
+    /** @brief Mock transmit buffer size: both channels back to back. */
 #define RC_TX_MAX       (RC_CH1_MAX + RC_CH2_MAX)
 
 /* --- receive side ------------------------------------------------------- */
+    /** @brief Receive ring: bytes accepted while a window was open. */
 static volatile uint8_t  _rx_ring[RC_RX_RING_SIZE];
+    /** @brief Ring write index; RX ISR writes. */
 static volatile uint8_t  _rx_head = 0;          /* RX ISR writes */
+    /** @brief Ring read index; uart_read (main loop) writes, the cutout-begin flush resets. */
 static volatile uint8_t  _rx_tail = 0;          /* uart_read (main loop) writes; cutout-begin flush resets */
+    /** @brief Receiver gate: true only while a Ch1/Ch2 window is open. */
 static volatile bool     _gate_open = false;    /* true only while a Ch1/Ch2 window is open */
 
 /* --- mock transmit side ------------------------------------------------- */
@@ -62,27 +70,49 @@ static volatile bool     _gate_open = false;    /* true only while a Ch1/Ch2 win
  * So the arm only sets _armed; the cutout-begin hook latches it into _play for
  * that whole cutout, and the window / cutout-end hooks act on _play. A reply
  * therefore always plays complete on the NEXT cutout, never half of this one. */
+    /** @brief A reply is armed; set by arm(), consumed at cutout begin. */
 static volatile bool               _armed = false;   /* set by arm(), consumed at cutout begin */
+    /** @brief The current cutout carries the reply (latched from _armed at cutout begin). */
 static volatile bool               _play  = false;   /* this cutout carries the reply */
+    /** @brief Transmit timing of the armed reply. */
 static volatile rc_loopback_mode_t _mode = RC_LOOPBACK_MODE_WINDOW;
+    /** @brief Armed Channel 1 bytes. */
 static uint8_t                     _ch1[RC_CH1_MAX];
+    /** @brief Armed Channel 2 bytes. */
 static uint8_t                     _ch2[RC_CH2_MAX];
+    /** @brief Number of armed Channel 1 bytes. */
 static volatile uint8_t            _n1 = 0;
+    /** @brief Number of armed Channel 2 bytes. */
 static volatile uint8_t            _n2 = 0;
+    /** @brief Windows opened in this cutout: 1 = Ch1, 2 = Ch2. */
 static volatile uint8_t            _window_index = 0;   /* windows opened in this cutout: 1 = Ch1, 2 = Ch2 */
 
+    /** @brief Bytes queued on the mock transmitter. */
 static uint8_t          _tx_buf[RC_TX_MAX];
+    /** @brief Number of bytes queued in _tx_buf. */
 static volatile uint8_t _tx_len = 0;
+    /** @brief Number of queued bytes already pushed into the TX FIFO. */
 static volatile uint8_t _tx_pos = 0;
 
 /* --- counters ----------------------------------------------------------- */
+    /** @brief Cutouts begun since the last reset. */
 static volatile uint32_t _cutouts = 0;
+    /** @brief Bytes received while a window was open. */
 static volatile uint32_t _rx_accepted = 0;
+    /** @brief Bytes received with the gate closed. */
 static volatile uint32_t _rx_dropped = 0;
+    /** @brief Bytes the mock transmitter queued. */
 static volatile uint32_t _tx_bytes = 0;
 
-/* Queue n bytes on the mock transmitter: fill the TX FIFO now, let the TX
- * interrupt top it up. Fast enough to call from the cutout timer ISR. */
+    /**
+     * @brief Queue n bytes on the mock transmitter.
+     *
+     * @details Copies the bytes, fills the TX FIFO now and lets the TX interrupt top
+     * it up if they did not all fit. Fast enough to call from the cutout timer ISR.
+     *
+     * @param bytes  Bytes to transmit.
+     * @param n      Number of bytes, 0 is a no-op.
+     */
 static void _tx_start(const uint8_t *bytes, uint8_t n) {
 
     if (n == 0) {
@@ -99,6 +129,12 @@ static void _tx_start(const uint8_t *bytes, uint8_t n) {
     }
 }
 
+    /**
+     * @brief One-time setup: park the TX interrupt, drain the RX FIFO, enable both IRQs.
+     *
+     * @details SysConfig enables the TX interrupt at init; with an empty FIFO and the
+     * EMPTY threshold that would fire forever, so it is disabled until _tx_start().
+     */
 void TI_RailcomLoopback_initialize(void) {
 
     /* SysConfig enables the TX interrupt at init; with an empty FIFO and the
@@ -114,6 +150,15 @@ void TI_RailcomLoopback_initialize(void) {
     NVIC_EnableIRQ(RAILCOM_RX_INST_INT_IRQN);
 }
 
+    /**
+     * @brief The library .uart_read hook: pop one byte from the receive ring.
+     *
+     * @verbatim
+     * @param byte  Receives the next byte when one is available.
+     * @endverbatim
+     *
+     * @return true when a byte was returned, false when the ring is empty.
+     */
 bool TI_RailcomLoopback_uart_read(uint8_t *byte) {
 
     if (_rx_tail == _rx_head) {
@@ -125,6 +170,12 @@ bool TI_RailcomLoopback_uart_read(uint8_t *byte) {
     return true;
 }
 
+    /**
+     * @brief T_CS hook: count the cutout, latch the arm into _play, flush the receiver.
+     *
+     * @details The flush (hardware FIFO and ring) guarantees nothing from an earlier
+     * cutout can be read as this one's reply.
+     */
 void TI_RailcomLoopback_on_cutout_begin(void) {
 
     _cutouts++;
@@ -142,6 +193,9 @@ void TI_RailcomLoopback_on_cutout_begin(void) {
     _rx_tail = _rx_head;
 }
 
+    /**
+     * @brief T_TS1 / T_TS2 hook: open the gate and, in WINDOW mode, transmit Ch1 (first open) or Ch2 (second open).
+     */
 void TI_RailcomLoopback_on_window_open(void) {
 
     _gate_open = true;
@@ -157,11 +211,15 @@ void TI_RailcomLoopback_on_window_open(void) {
     }
 }
 
+    /** @brief T_TC1 / T_CE hook: close the receiver gate. */
 void TI_RailcomLoopback_on_window_close(void) {
 
     _gate_open = false;
 }
 
+    /**
+     * @brief T_CE hook: close the gate; in LATE mode transmit Ch1 then Ch2 back to back; consume the arm.
+     */
 void TI_RailcomLoopback_on_cutout_end(void) {
 
     _gate_open = false;
@@ -179,6 +237,22 @@ void TI_RailcomLoopback_on_cutout_end(void) {
     _play = false;                           /* one reply per arm, either mode */
 }
 
+    /**
+     * @brief Arm one mock reply for the next cutout.
+     *
+     * @details Clears _armed first so the ISR can never see a half-written arm, copies
+     * both channels and the mode, then sets _armed.
+     *
+     * @verbatim
+     * @param ch1   Channel 1 bytes.
+     * @param n1    Number of Channel 1 bytes, 0..2.
+     * @param ch2   Channel 2 bytes.
+     * @param n2    Number of Channel 2 bytes, 0..6.
+     * @param mode  When to transmit (WINDOW or LATE).
+     * @endverbatim
+     *
+     * @return false if a length is out of range or both are zero, true when armed.
+     */
 bool TI_RailcomLoopback_arm(const uint8_t *ch1, uint8_t n1,
                             const uint8_t *ch2, uint8_t n2,
                             rc_loopback_mode_t mode) {
@@ -198,12 +272,20 @@ bool TI_RailcomLoopback_arm(const uint8_t *ch1, uint8_t n1,
     return true;
 }
 
+    /** @brief Drop any armed or in-progress mock reply. */
 void TI_RailcomLoopback_disarm(void) {
 
     _armed = false;
     _play = false;
 }
 
+    /**
+     * @brief Snapshot the loopback counters; armed reports armed-or-playing.
+     *
+     * @verbatim
+     * @param out  Receives the counters.
+     * @endverbatim
+     */
 void TI_RailcomLoopback_get_stats(rc_loopback_stats_t *out) {
 
     out->armed = _armed || _play;
@@ -213,6 +295,7 @@ void TI_RailcomLoopback_get_stats(rc_loopback_stats_t *out) {
     out->tx_bytes = _tx_bytes;
 }
 
+    /** @brief Zero the loopback counters. */
 void TI_RailcomLoopback_reset_stats(void) {
 
     _cutouts = 0;
@@ -221,7 +304,13 @@ void TI_RailcomLoopback_reset_stats(void) {
     _tx_bytes = 0;
 }
 
-/* RailCom receiver: one interrupt per byte (RX FIFO threshold = one entry). */
+    /**
+     * @brief RailCom receiver ISR: one interrupt per byte (RX FIFO threshold = one entry).
+     *
+     * @details Drains the FIFO. A byte that arrives with the gate closed is dropped
+     * and counted (it can never become a datagram); otherwise it is pushed on the
+     * ring unless the ring is full.
+     */
 void RAILCOM_RX_INST_IRQHandler(void) {
 
     switch (DL_UART_Main_getPendingInterrupt(RAILCOM_RX_INST)) {
@@ -250,7 +339,9 @@ void RAILCOM_RX_INST_IRQHandler(void) {
     }
 }
 
-/* Mock transmitter: top up the TX FIFO until the queued reply is out. */
+    /**
+     * @brief Mock transmitter ISR: top up the TX FIFO until the queued reply is out, then park the interrupt.
+     */
 void MOCK_RC_TX_INST_IRQHandler(void) {
 
     switch (DL_UART_Main_getPendingInterrupt(MOCK_RC_TX_INST)) {
@@ -272,18 +363,52 @@ void MOCK_RC_TX_INST_IRQHandler(void) {
 
 #else  /* loopback compiled out: keep the linker happy for the hook call sites */
 
+    /** @brief Stub: loopback compiled out. */
 void TI_RailcomLoopback_initialize(void) {}
+    /**
+     * @brief Stub: loopback compiled out.
+     *
+     * @param byte  Unused.
+     *
+     * @return Always false.
+     */
 bool TI_RailcomLoopback_uart_read(uint8_t *byte) { (void)byte; return false; }
+    /** @brief Stub: loopback compiled out. */
 void TI_RailcomLoopback_on_cutout_begin(void) {}
+    /** @brief Stub: loopback compiled out. */
 void TI_RailcomLoopback_on_cutout_end(void) {}
+    /** @brief Stub: loopback compiled out. */
 void TI_RailcomLoopback_on_window_open(void) {}
+    /** @brief Stub: loopback compiled out. */
 void TI_RailcomLoopback_on_window_close(void) {}
+    /**
+     * @brief Stub: loopback compiled out.
+     *
+     * @verbatim
+     * @param ch1   Unused.
+     * @param n1    Unused.
+     * @param ch2   Unused.
+     * @param n2    Unused.
+     * @param mode  Unused.
+     * @endverbatim
+     *
+     * @return Always false.
+     */
 bool TI_RailcomLoopback_arm(const uint8_t *ch1, uint8_t n1, const uint8_t *ch2, uint8_t n2,
                             rc_loopback_mode_t mode) {
     (void)ch1; (void)n1; (void)ch2; (void)n2; (void)mode; return false;
 }
+    /** @brief Stub: loopback compiled out. */
 void TI_RailcomLoopback_disarm(void) {}
+    /**
+     * @brief Stub: loopback compiled out; zeroes the counters.
+     *
+     * @verbatim
+     * @param out  Receives all-zero counters.
+     * @endverbatim
+     */
 void TI_RailcomLoopback_get_stats(rc_loopback_stats_t *out) { memset(out, 0, sizeof(*out)); }
+    /** @brief Stub: loopback compiled out. */
 void TI_RailcomLoopback_reset_stats(void) {}
 
 #endif /* DCC_COMPILE_COMMAND_STATION && DCC_COMPILE_RAILCOM */

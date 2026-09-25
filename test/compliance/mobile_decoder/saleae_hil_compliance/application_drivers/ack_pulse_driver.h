@@ -27,10 +27,12 @@
  * @file ack_pulse_driver.h
  * @brief GPIO-based ACK pulse generator for service mode testing.
  *
- * @details Generates a timed HIGH pulse on the ACK output pin (PB12) when fire() is
- * called.  The pulse width is configurable via set_width_us() and defaults
- * to 6000 us (6 ms) per NMRA S-9.2.3.  A one-shot hardware timer (TIMG12)
- * clears the pin automatically so the caller (ISR context) is never blocked.
+ * @details Drives the ACK output pin ACK_OUT (PB3, Saleae D1). The library owns
+ * the 6 ms timing through start()/stop() (wired to start_ack_pulse /
+ * stop_ack_pulse). fire() is the bench self-test path: it sets the pin HIGH and
+ * a one-shot hardware timer (ACK_PULSE_TIMER, TIMA1 at 1 MHz) clears it after
+ * the width set by set_width_us(), default 6000 us (6 ms) per NMRA S-9.2.3, so
+ * the caller is never blocked.
  *
  * The CS reads this pin as a digital current-sense substitute to detect ACK.
  *
@@ -72,6 +74,8 @@ extern void AckPulseDriver_set_width_us(uint32_t width_us);
 
     /**
      * @brief Get the current ACK pulse width in microseconds.
+     *
+     * @return Pulse width in microseconds (1000-20000).
      */
 extern uint32_t AckPulseDriver_get_width_us(void);
 
@@ -83,26 +87,28 @@ extern void AckPulseDriver_set_enabled(bool enabled);
 
     /**
      * @brief Check whether ACK generation is enabled.
+     *
+     * @return true when start() and fire() produce a pulse.
      */
 extern bool AckPulseDriver_is_enabled(void);
 
     /**
-     * @brief Start ACK pulse — sets the ACK pin HIGH.
+     * @brief Start the ACK pulse: sets the ACK pin HIGH (wired to dcc_config_t.start_ack_pulse).
      *
-     * @details The DCC library handles 6ms timing and calls stop() automatically.
-     * No-op if ACK generation is disabled.
+     * @details The DCC library handles the 6 ms timing and calls stop() automatically
+     * from DccConfig_run(). No-op if ACK generation is disabled.
      */
 extern void AckPulseDriver_start(void);
 
     /**
-     * @brief Stop ACK pulse — clears the ACK pin LOW.
+     * @brief Stop the ACK pulse: clears the ACK pin LOW (wired to dcc_config_t.stop_ack_pulse).
      *
-     * @details Called by the DCC library after 6ms has elapsed.
+     * @details Called by the DCC library after 6 ms has elapsed.
      */
 extern void AckPulseDriver_stop(void);
 
     /**
-     * @brief Fire an ACK pulse using hardware timer (legacy).
+     * @brief Fire a self-timed ACK pulse using the one-shot hardware timer (ACK TEST command).
      *
      * @details Sets the ACK pin HIGH and starts the one-shot timer.  The timer
      * ISR clears the pin when it expires.

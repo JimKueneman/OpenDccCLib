@@ -28,13 +28,25 @@
  * @brief ISR-level bit encoder for DCC packet transmission.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_bit_encoder.h"
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
+    /**
+     * @brief Initialize the bit encoder module.
+     *
+     * @details Stores the interface and puts the encoder in IDLE, not running,
+     * with no packet loaded and no cutout arm pending. The first bit after
+     * DccBitEncoder_start() is treated as a one-bit.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_bit_encoder_context_t instance.
+     * @param interface Pointer to populated interface_dcc_bit_encoder_t struct.
+     * @endverbatim
+     */
 void DccBitEncoder_initialize(dcc_bit_encoder_context_t *context, const interface_dcc_bit_encoder_t *interface) {
 
     context->interface = interface;
@@ -49,6 +61,22 @@ void DccBitEncoder_initialize(dcc_bit_encoder_context_t *context, const interfac
 
 }
 
+    /**
+     * @brief Load a new packet for transmission.
+     *
+     * @details Copies the data bytes (capped at DCC_PACKET_MAX_BYTES),
+     * byte_count, preamble_bits and repeat_count into active_packet, then
+     * sets packet_loaded behind a DCC_COMPILER_BARRIER() so the ISR can never
+     * see the flag before every byte is stored. The IDLE state of the tick ISR
+     * picks the packet up at the next full-bit boundary.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_bit_encoder_context_t instance.
+     * @param packet Pointer to dcc_packet_t to transmit. Contents are copied.
+     * @endverbatim
+     *
+     * @warning Call only while DccBitEncoder_is_idle() is true; there is no back buffer.
+     */
 void DccBitEncoder_load_packet(dcc_bit_encoder_context_t *context, const dcc_packet_t *packet) {
 
     uint8_t byte_index;
@@ -69,12 +97,32 @@ void DccBitEncoder_load_packet(dcc_bit_encoder_context_t *context, const dcc_pac
 
 }
 
+    /**
+     * @brief Check if the bit encoder has finished transmitting its current packet.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_bit_encoder_context_t instance.
+     * @endverbatim
+     *
+     * @return true if the state machine is IDLE, false while any part of a packet is being sent.
+     */
 bool DccBitEncoder_is_idle(const dcc_bit_encoder_context_t *context) {
 
     return (context->state == DCC_BIT_STATE_IDLE);
 
 }
 
+    /**
+     * @brief Start the bit encoder. Begins generating DCC signal.
+     *
+     * @details Sets running, resets to IDLE at the first half of a bit and
+     * requests a toggle on the next tick, so the line clocks idle one-bits
+     * until a packet is loaded. Any pending cutout arm is dropped.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_bit_encoder_context_t instance.
+     * @endverbatim
+     */
 void DccBitEncoder_start(dcc_bit_encoder_context_t *context) {
 
     context->running = true;
@@ -85,6 +133,17 @@ void DccBitEncoder_start(dcc_bit_encoder_context_t *context) {
 
 }
 
+    /**
+     * @brief Stop the bit encoder. Halts DCC signal generation.
+     *
+     * @details Clears running and forces IDLE; the next tick leaves the pin
+     * where it is. A packet in flight is abandoned and packet_loaded is left
+     * as is.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_bit_encoder_context_t instance.
+     * @endverbatim
+     */
 void DccBitEncoder_stop(dcc_bit_encoder_context_t *context) {
 
     context->running = false;
@@ -97,7 +156,8 @@ void DccBitEncoder_stop(dcc_bit_encoder_context_t *context) {
  * Fixed-period tick ISR (shared-timer architecture)
  *
  * Called every 58us. One-bits toggle every tick, zero-bits skip one tick
- * and toggle on the second. Uses pin_toggle() instead of timer_set_period().
+ * and toggle on the second. The caller drives the pin through pin_toggle()
+ * whenever toggle_next is set.
  * ========================================================================= */
 
     /**
@@ -113,6 +173,11 @@ static void _set_bit_type(dcc_bit_encoder_context_t *context, bool is_one_bit) {
 
     /**
      * @brief Handle DATA state for the tick ISR.
+     *
+     * @details Called when a data bit has completed. Moves to the next lower
+     * bit of the current byte, or when the byte is exhausted to the start bit
+     * of the next byte, or to the end bit after the last byte.
+     *
      * @param context Pointer to the instance context.
      */
 static void _tick_handle_data(dcc_bit_encoder_context_t *context) {
@@ -143,6 +208,13 @@ static void _tick_handle_data(dcc_bit_encoder_context_t *context) {
 
     /**
      * @brief Handle END_BIT state for the tick ISR.
+     *
+     * @details Called when the end bit has completed on the encoder's side
+     * (one half-bit ahead of the wire). Defers the RailCom cutout arm to the
+     * next tick, releases the packet to the main loop (packet_loaded = false
+     * behind a DCC_COMPILER_BARRIER()), returns to IDLE and fires
+     * on_packet_complete.
+     *
      * @param context Pointer to the instance context.
      */
 static void _tick_handle_end_bit(dcc_bit_encoder_context_t *context) {
@@ -181,6 +253,30 @@ static void _tick_handle_end_bit(dcc_bit_encoder_context_t *context) {
 
 }
 
+    /**
+     * @brief Fixed-period tick ISR entry point — call every 58us from shared timer.
+     *
+     * @details Algorithm:
+     * -# If no interface or not running, clear toggle_next and return
+     * -# If a cutout arm is pending, clear it and call railcom_cutout_begin(): the
+     *    toggle the caller just performed was the end bit's last edge, so T_CS is
+     *    measured from that edge (S-9.3.2 Table 1)
+     * -# Count the tick; a one-bit half is 1 tick, a zero-bit half is 2. If the
+     *    half-bit is not over yet, clear toggle_next and return
+     * -# Half-bit over: reset the tick counter. If this was the first half, set
+     *    toggle_next and return
+     * -# Full bit over: advance the state machine
+     *    - IDLE: if packet_loaded (read after a DCC_COMPILER_BARRIER()), load
+     *      preamble_count and go to PREAMBLE; either way the next bit is a one
+     *    - PREAMBLE: count down; at 0 go to START_BIT (a zero) with byte_index 0
+     *    - START_BIT: go to DATA at bit 7 of the current byte
+     *    - DATA / END_BIT: see _tick_handle_data() / _tick_handle_end_bit()
+     * -# Set toggle_next: every new bit starts with a first-half toggle
+     *
+     * @verbatim
+     * @param context Pointer to dcc_bit_encoder_context_t instance.
+     * @endverbatim
+     */
 void DccBitEncoder_tick_isr(dcc_bit_encoder_context_t *context) {
 
     /* Pin toggle has already been performed by the caller using

@@ -105,7 +105,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:a4e86c59e8b73091bd49e69d4fd66672c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the DCC library with user configuration.  <br /></td></tr>
 <tr class="separator:a4e86c59e8b73091bd49e69d4fd66672c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6973e4dcdbdf005108c57fb42c9bfd5d" id="r_a6973e4dcdbdf005108c57fb42c9bfd5d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6973e4dcdbdf005108c57fb42c9bfd5d">DccConfig_run</a> (void)</td></tr>
-<tr class="memdesc:a6973e4dcdbdf005108c57fb42c9bfd5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main loop processing. Call repeatedly from your main loop.  <br /></td></tr>
+<tr class="memdesc:a6973e4dcdbdf005108c57fb42c9bfd5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main loop processing.  <br /></td></tr>
 <tr class="separator:a6973e4dcdbdf005108c57fb42c9bfd5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -117,7 +117,7 @@ Functions</h2></td></tr>
 <li>Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.</li>
 </ul>
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
-<p>This is the only .c file that includes all module headers. It creates two independent DCC output channels — main track (scheduler) and service track (service mode) — each with its own bit encoder instance. Both channels run concurrently in <a class="el" href="#a6973e4dcdbdf005108c57fb42c9bfd5d" title="Main loop processing. Call repeatedly from your main loop.">DccConfig_run()</a>. Application-layer modules (dcc_application_command_station_main_track, dcc_application_command_station_service_track) are wired here and own the user-facing API.</p>
+<p>This is the only .c file that includes all module headers. It creates two independent DCC output channels — main track (scheduler) and service track (service mode) — each with its own bit encoder instance. Both channels run concurrently in <a class="el" href="#a6973e4dcdbdf005108c57fb42c9bfd5d" title="Main loop processing.">DccConfig_run()</a>. Application-layer modules (dcc_application_command_station_main_track, dcc_application_command_station_service_track) are wired here and own the user-facing API.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
 </div><h2 class="groupheader">Function Documentation</h2>
@@ -137,13 +137,15 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Initialize the DCC library with user configuration. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">config</td><td>Pointer to user-populated configuration struct. </td></tr>
-  </table>
-  </dd>
-</dl>
-
+<p>Algorithm:</p><ol type="1">
+<li>Store the configuration pointer; return if it is NULL</li>
+<li>Command station: wire and initialize the main track bit encoder, scheduler, RailCom receiver and cutout state machine (RailCom builds), and the main track application layer</li>
+<li>Command station: wire and initialize the service track bit encoder, service mode common module and service track application layer, pointing the programming API at the task orchestrators</li>
+<li>Wire and initialize each compiled service mode primitive and task orchestrator</li>
+<li>Decoder: wire and initialize CV storage, the CV application layer, the packet decoder, the packet-timeout fail-safe, the bit decoder and (RailCom builds) the RailCom transmitter; reset the ACK pulse state</li>
+</ol>
+<pre class="fragment">* @param config Pointer to the user-populated dcc_config_t. Must remain valid for the lifetime of the application.
+* </pre> 
 </div>
 </div>
 <a id="a6973e4dcdbdf005108c57fb42c9bfd5d" name="a6973e4dcdbdf005108c57fb42c9bfd5d"></a>
@@ -161,8 +163,17 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Main loop processing. Call repeatedly from your main loop. </p>
-<p>Runs the scheduler, drains RailCom buffers, processes decoded packets, fires application callbacks. All callbacks fire from this context. Also handles 6ms ACK pulse timing when an ACK is in progress. </p>
+<p>Main loop processing. </p>
+<p>Main loop processing. Call repeatedly from your main loop.</p>
+<p>Algorithm:</p><ol type="1">
+<li>Return if <a class="el" href="dcc__config_8h.html#a4e86c59e8b73091bd49e69d4fd66672c" title="Initialize the DCC library with user configuration.">DccConfig_initialize()</a> has not installed a configuration</li>
+<li>Command station: run the main track scheduler</li>
+<li>Command station: run the service track state machine while service mode is active</li>
+<li>Command station, RailCom builds: drain the receiver and fire on_railcom_datagram_result</li>
+<li>Decoder: dispatch packets queued by the end-bit ISR, firing the instruction callbacks</li>
+<li>Decoder: poll the packet-timeout fail-safe</li>
+<li>Decoder: poll the ACK pulse and stop it once 6 ms have elapsed </li>
+</ol>
 
 </div>
 </div>

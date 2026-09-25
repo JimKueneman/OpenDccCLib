@@ -37,16 +37,25 @@
 
 #include <string.h>
 
+    /** @brief Step of the two-step register operation (stored in the context register_state field). */
 typedef enum {
 
-    DCC_REGISTER_STATE_IDLE,
-    DCC_REGISTER_STATE_PAGE_PRESET,
-    DCC_REGISTER_STATE_COMMAND
+    DCC_REGISTER_STATE_IDLE,        /**< No operation in progress */
+    DCC_REGISTER_STATE_PAGE_PRESET, /**< Writing page 1 to the page register */
+    DCC_REGISTER_STATE_COMMAND      /**< Writing or verifying the target register */
 
 } register_state_enum;
 
+    /** @brief Context of the operation in flight; the step-callback signature carries no context, and only one operation runs at a time. */
 static dcc_service_mode_register_context_t *_active_context = (void *)0;
 
+    /**
+     * @brief Append the XOR error-detection byte to a packet.
+     *
+     * @details XORs data[0..byte_count-1] into data[byte_count] and increments byte_count.
+     *
+     * @param packet Pointer to the packet being built; byte_count must be the payload length.
+     */
 static void _append_xor(dcc_packet_t *packet) {
 
     uint8_t xor_byte = 0;
@@ -63,6 +72,17 @@ static void _append_xor(dcc_packet_t *packet) {
 
 }
 
+    /**
+     * @brief Build a register-mode packet (S-9.2.3 register form).
+     *
+     * @details data[0] = prefix | (register_number - 1), data[1] = value, then the XOR byte;
+     * DCC_PREAMBLE_BITS_SERVICE preamble, sent once (repeat_count 0).
+     *
+     * @param packet Pointer to the packet to fill.
+     * @param register_number Register number (1-8), encoded 0-based on the wire.
+     * @param value Byte value to write or verify.
+     * @param write true selects DCC_SERVICE_REGISTER_WRITE_PREFIX, false DCC_SERVICE_REGISTER_VERIFY_PREFIX.
+     */
 static void _build_register_packet(dcc_packet_t *packet, uint8_t register_number, uint8_t value, bool write) {
 
     uint8_t prefix = write ? DCC_SERVICE_REGISTER_WRITE_PREFIX : DCC_SERVICE_REGISTER_VERIFY_PREFIX;
@@ -76,6 +96,13 @@ static void _build_register_packet(dcc_packet_t *packet, uint8_t register_number
 
 }
 
+    /**
+     * @brief Step callback after the register command: finishes the operation.
+     *
+     * @details Returns to IDLE and forwards the result to interface->on_complete when set.
+     *
+     * @param result Outcome of the register write or verify step.
+     */
 static void _on_command_complete(dcc_service_mode_result_enum result) {
 
     _active_context->register_state = DCC_REGISTER_STATE_IDLE;
@@ -88,11 +115,21 @@ static void _on_command_complete(dcc_service_mode_result_enum result) {
 
 }
 
-    /* Page-preset finished. Per S-9.2.3 the register command follows the
-     * page-preset unconditionally -- the preset only guarantees the page
-     * register state, so its own ACK result is not required to proceed.
-     * Register VERIFY uses 7+ command packets; a write to Register 1 uses the
-     * longer 10-packet recovery (both per S-9.2.3). */
+    /**
+     * @brief Step callback after the page-preset: starts the register command.
+     *
+     * @details Algorithm:
+     * -# Ignore the preset result: per S-9.2.3 the register command follows the page-preset
+     *    unconditionally (the preset only guarantees the page register state)
+     * -# Move to COMMAND and build the register packet from the latched register, value and write flag
+     * -# Write: start with DCC_SERVICE_MODE_COMMAND_REPEAT command packets and
+     *    DCC_SERVICE_MODE_RECOVERY_COUNT_LONG (10) recovery packets for register 1, else DCC_SERVICE_MODE_RECOVERY_COUNT
+     * -# Verify: start with DCC_SERVICE_MODE_REGISTER_VERIFY_REPEAT (7) command packets and no recovery
+     * -# If the common module refuses to start, return to IDLE and report DCC_SERVICE_MODE_BUSY through
+     *    on_complete rather than leave the state machine stuck waiting for a callback that never comes
+     *
+     * @param result Outcome of the page-preset step (not used).
+     */
 static void _on_preset_complete(dcc_service_mode_result_enum result) {
 
     dcc_packet_t packet;
@@ -134,8 +171,24 @@ static void _on_preset_complete(dcc_service_mode_result_enum result) {
 
 }
 
-    /* Common entry: validate, latch the pending command, and start the
-     * page-preset (write page register -> page 1) that precedes it. */
+    /**
+     * @brief Common entry for write and verify: validate, latch the command, start the page-preset.
+     *
+     * @details Algorithm:
+     * -# Return false if register_number is outside 1-8, the common module is busy, or register_state is not IDLE
+     * -# Latch the register, value and write flag; enter PAGE_PRESET and record this context for the callbacks
+     * -# Start a write of DCC_SERVICE_MODE_PAGE_PRESET_PAGE to DCC_SERVICE_MODE_PAGE_REGISTER with
+     *    DCC_SERVICE_MODE_COMMAND_REPEAT command packets and DCC_SERVICE_MODE_RECOVERY_COUNT recovery packets;
+     *    _on_preset_complete continues with the register command
+     * -# If the common module refuses to start, return to IDLE and return false
+     *
+     * @param context Pointer to the register service mode context.
+     * @param register_number Register number (1-8).
+     * @param value Byte value to write, or expected value to verify.
+     * @param is_write true for write, false for verify.
+     *
+     * @return true if the page-preset started, false if validation failed or the common module refused.
+     */
 static bool _begin_with_preset(dcc_service_mode_register_context_t *context, uint8_t register_number, uint8_t value, bool is_write) {
 
     dcc_packet_t packet;
@@ -178,6 +231,14 @@ static bool _begin_with_preset(dcc_service_mode_register_context_t *context, uin
 
 }
 
+    /**
+     * @brief Initialize the register service mode module.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_register_context_t instance.
+     * @param interface Pointer to populated interface_dcc_service_mode_register_t struct.
+     * @endverbatim
+     */
 void DccServiceModeRegister_initialize(dcc_service_mode_register_context_t *context, const interface_dcc_service_mode_register_t *interface) {
 
     context->interface = interface;
@@ -185,12 +246,38 @@ void DccServiceModeRegister_initialize(dcc_service_mode_register_context_t *cont
 
 }
 
+    /**
+     * @brief Write a register value using register mode.
+     *
+     * @details Delegates to _begin_with_preset() as a write.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_register_context_t instance.
+     * @param register_number Register number to write (1-8).
+     * @param value Byte value to write.
+     * @endverbatim
+     *
+     * @return true if the operation started, false if register_number is out of range, the common module is busy, or a register operation is already in progress.
+     */
 bool DccServiceModeRegister_write(dcc_service_mode_register_context_t *context, uint8_t register_number, uint8_t value) {
 
     return _begin_with_preset(context, register_number, value, true);
 
 }
 
+    /**
+     * @brief Verify a register value using register mode.
+     *
+     * @details Delegates to _begin_with_preset() as a verify.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_register_context_t instance.
+     * @param register_number Register number to verify (1-8).
+     * @param value Expected byte value.
+     * @endverbatim
+     *
+     * @return true if the operation started, false if register_number is out of range, the common module is busy, or a register operation is already in progress.
+     */
 bool DccServiceModeRegister_verify(dcc_service_mode_register_context_t *context, uint8_t register_number, uint8_t value) {
 
     return _begin_with_preset(context, register_number, value, false);

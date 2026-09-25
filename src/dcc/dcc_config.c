@@ -222,22 +222,27 @@ static interface_dcc_service_mode_address_t _service_address_interface;
  * ========================================================================= */
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
+    /** @brief Direct-mode task orchestrator interface */
 static interface_dcc_service_mode_task_direct_t _task_direct_interface;
 #endif
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
+    /** @brief Paged-mode task orchestrator interface */
 static interface_dcc_service_mode_task_paged_t _task_paged_interface;
 #endif
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+    /** @brief Register-mode task orchestrator interface */
 static interface_dcc_service_mode_task_register_t _task_register_interface;
 #endif
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
+    /** @brief Address-only task orchestrator interface */
 static interface_dcc_service_mode_task_address_t _task_address_interface;
 #endif
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_DETECT
+    /** @brief Mode-detect task orchestrator interface */
 static interface_dcc_service_mode_task_detect_t _task_detect_interface;
 #endif
 
@@ -328,6 +333,9 @@ static void _run_ack_pulse(void) {
      * @brief Bit decoder on_packet_received dispatch for a RailCom decoder. Runs at the
      *  packet end-bit edge: fire the time-critical RailCom Tx first (it bit-bangs the
      *  cutout, blocking), then queue the packet for deferred instruction dispatch.
+     *
+     * @param data Raw packet bytes including the XOR byte.
+     * @param byte_count Number of valid bytes in data.
      */
 static void _on_packet_received_dispatch(const uint8_t *data, uint8_t byte_count) {
 
@@ -340,10 +348,15 @@ static void _on_packet_received_dispatch(const uint8_t *data, uint8_t byte_count
     /**
      * @brief Application CV write: storage rules first, then refresh the packet
      *  decoder's address cache if an address CV changed.
-     * @verbatim
+     *
+     * @details Routes the write through DccCvStorage_write() so the decoder lock,
+     * the CV29 feature filter and the CV8 factory reset all apply, then tells the
+     * packet decoder which CV changed so an address CV refreshes its match cache.
+     *
      * @param cv_number CV number (1-based).
      * @param value Value to store.
-     * @endverbatim
+     *
+     * @return true if the storage write succeeded, false if it was refused (locked or hardware failure).
      */
 static bool _decoder_cv_application_write(uint16_t cv_number, uint8_t value) {
 
@@ -372,17 +385,28 @@ static bool _decoder_cv_application_write(uint16_t cv_number, uint8_t value) {
  * down for why two stages, not one.
  * ========================================================================= */
 
-static dcc_address_t _main_railcom_loaded_address = 0;      /* set when a packet is handed to the encoder */
-static dcc_address_t _main_railcom_completed_address = 0;   /* promoted from _loaded once that packet's transmission finishes */
+    /** @brief Address of the packet most recently handed to the main track encoder */
+static dcc_address_t _main_railcom_loaded_address = 0;
 
-    /* Short (1-127) and long/extended (0xC0-0xE7 + a second byte, S-9.2.1)
+    /** @brief Promoted from _main_railcom_loaded_address once that packet's transmission finishes; tags the cutout that follows */
+static dcc_address_t _main_railcom_completed_address = 0;
+
+    /**
+     * @brief Extract the locomotive address a main track packet is addressed to, for RailCom tagging.
+     *
+     * @details Short (1-127) and long/extended (0xC0-0xE7 + a second byte, S-9.2.1)
      * address forms only -- covers real locomotive traffic, which is what
      * RailCom POM/ADR replies are tagged against. Broadcast, accessory,
      * idle, and reserved leading bytes fall through to 0 (untagged) --
      * the address is only a label for decoded datagrams, not used for
      * routing. Accessory RailCom replies therefore come back untagged;
      * not handled here since nothing in this library decodes accessory
-     * RailCom today. */
+     * RailCom today.
+     *
+     * @param packet Packet about to be handed to the encoder; may be NULL.
+     *
+     * @return Decoded short or long address, or 0 when the packet is NULL, empty, or not addressed to a locomotive.
+     */
 static dcc_address_t _decode_main_packet_address(const dcc_packet_t *packet) {
 
     if (!packet || packet->byte_count == 0) {
@@ -417,6 +441,14 @@ static dcc_address_t _decode_main_packet_address(const dcc_packet_t *packet) {
  * (which use fixed callback signatures) can reach the correct instance.
  * ========================================================================= */
 
+    /**
+     * @brief Main track encoder on_packet_complete hook: promote the RailCom tag address, then notify the scheduler.
+     *
+     * @details Runs from the bit encoder ISR at the end of a packet. With RailCom
+     * compiled in it first freezes the finished packet's address for the cutout that
+     * follows (see the two-stage capture note further down), then hands the completion
+     * to DccScheduler_on_packet_complete() so the next packet can be dispatched.
+     */
 static void _main_on_packet_complete(void) {
 
 #if defined(DCC_COMPILE_RAILCOM)
@@ -433,6 +465,11 @@ static void _main_on_packet_complete(void) {
 
 }
 
+    /**
+     * @brief Main track scheduler load_packet hook: record the RailCom tag address, then hand the packet to the encoder.
+     *
+     * @param packet Packet the scheduler dispatched for transmission.
+     */
 static void _main_load_packet(const dcc_packet_t *packet) {
 
 #if defined(DCC_COMPILE_RAILCOM)
@@ -443,18 +480,25 @@ static void _main_load_packet(const dcc_packet_t *packet) {
 
 }
 
+    /**
+     * @brief Main track scheduler is_encoder_idle hook.
+     *
+     * @return true if the main track bit encoder has no packet in flight.
+     */
 static bool _main_is_encoder_idle(void) {
 
     return DccBitEncoder_is_idle(&_main_encoder_context);
 
 }
 
+    /** @brief Main track application encoder_start hook: start the main track bit encoder. */
 static void _main_encoder_start(void) {
 
     DccBitEncoder_start(&_main_encoder_context);
 
 }
 
+    /** @brief Main track application encoder_stop hook: stop the main track bit encoder. */
 static void _main_encoder_stop(void) {
 
     DccBitEncoder_stop(&_main_encoder_context);
@@ -462,18 +506,35 @@ static void _main_encoder_stop(void) {
 }
 
 
+    /**
+     * @brief Main track application scheduler_insert hook: forward to the main track scheduler instance.
+     *
+     * @param packet Packet to schedule.
+     * @param address DCC address used as the duplicate-combining key.
+     * @param tag Sub-key for duplicate combining.
+     * @param priority Packet priority level.
+     * @param auto_refresh true keeps the packet in the refresh cycle indefinitely.
+     *
+     * @return true if the packet was scheduled, false if no slot was free or a one-shot arrived with repeat_count 0.
+     */
 static bool _main_scheduler_insert(const dcc_packet_t *packet, dcc_address_t address, dcc_tag_enum tag, dcc_priority_enum priority, bool auto_refresh) {
 
     return DccScheduler_insert(&_main_scheduler_context, packet, address, tag, priority, auto_refresh);
 
 }
 
+    /**
+     * @brief Main track application scheduler_remove_address hook: release every slot held for an address.
+     *
+     * @param address DCC address whose slots are released.
+     */
 static void _main_scheduler_remove_address(dcc_address_t address) {
 
     DccScheduler_remove_address(&_main_scheduler_context, address);
 
 }
 
+    /** @brief Main track application scheduler_clear hook: release every scheduler slot. */
 static void _main_scheduler_clear(void) {
 
     DccScheduler_clear(&_main_scheduler_context);
@@ -484,12 +545,22 @@ static void _main_scheduler_clear(void) {
  * Service track wrapper functions
  * ========================================================================= */
 
+    /** @brief Service track encoder on_packet_complete hook: advance the service mode common state machine. */
 static void _service_on_packet_complete(void) {
 
     DccServiceModeCommon_on_packet_complete(&_service_common_context);
 
 }
 
+    /**
+     * @brief Service track load_packet hook: fire the application's on_packet_sent, then hand the packet to the encoder.
+     *
+     * @details The callback fires at dispatch, before the packet is on the wire. The
+     * same callback is wired straight into the main track scheduler, so the
+     * application sees every packet from either track through one hook.
+     *
+     * @param packet Packet the service mode common module is sending next.
+     */
 static void _service_load_packet(const dcc_packet_t *packet) {
 
     if (_configuration_pointer && _configuration_pointer->on_packet_sent) {
@@ -502,48 +573,82 @@ static void _service_load_packet(const dcc_packet_t *packet) {
 
 }
 
+    /**
+     * @brief Service track is_encoder_idle hook.
+     *
+     * @return true if the service track bit encoder has no packet in flight.
+     */
 static bool _service_is_encoder_idle(void) {
 
     return DccBitEncoder_is_idle(&_service_encoder_context);
 
 }
 
+    /** @brief Service track application encoder_start hook: start the service track bit encoder. */
 static void _service_encoder_start(void) {
 
     DccBitEncoder_start(&_service_encoder_context);
 
 }
 
+    /** @brief Service track application encoder_stop hook: stop the service track bit encoder. */
 static void _service_encoder_stop(void) {
 
     DccBitEncoder_stop(&_service_encoder_context);
 
 }
 
+    /**
+     * @brief Service mode primitive begin_operation hook: forward to the service track common instance.
+     *
+     * @param packet Command packet to send during the command phase.
+     * @param callback Fired when the operation completes.
+     * @param is_write_operation true for writes (longer recovery), false for verifies.
+     * @param command_repeat Number of command packets to send.
+     * @param recovery_count Number of recovery packets to send after the command phase.
+     *
+     * @return true if the operation started, false if busy or no current sense.
+     */
 static bool _service_begin_operation(const dcc_packet_t *packet, dcc_service_mode_step_callback_t callback, bool is_write_operation, uint8_t command_repeat, uint8_t recovery_count) {
 
     return DccServiceModeCommon_begin_operation(&_service_common_context, packet, callback, is_write_operation, command_repeat, recovery_count);
 
 }
 
+    /**
+     * @brief Service mode is_common_idle / is_idle hook.
+     *
+     * @return true if the service track common module has no operation in progress.
+     */
 static bool _service_is_common_idle(void) {
 
     return DccServiceModeCommon_is_idle(&_service_common_context);
 
 }
 
+    /**
+     * @brief Service track application enter_service_mode hook.
+     *
+     * @return true; entry cannot fail in this release.
+     */
 static bool _service_enter_service_mode(void) {
 
     return DccServiceModeCommon_enter(&_service_common_context);
 
 }
 
+    /** @brief Service track application exit_service_mode hook. Ignored while an operation is still in progress. */
 static void _service_exit_service_mode(void) {
 
     DccServiceModeCommon_exit(&_service_common_context);
 
 }
 
+    /**
+     * @brief Service track application is_service_mode_active hook.
+     *
+     * @return true while service mode has been entered and not yet exited.
+     */
 static bool _service_is_service_mode_active(void) {
 
     return DccServiceModeCommon_is_active(&_service_common_context);
@@ -558,6 +663,15 @@ static bool _service_is_service_mode_active(void) {
  * the last release.
  * ========================================================================= */
 
+    /**
+     * @brief Reference-counted shared timer start.
+     *
+     * @details Increments the channel count and starts the hardware timer only on
+     * the 0 -> 1 transition; a later acquire from the other channel is counted but
+     * does not restart the timer. No-op before DccConfig_initialize().
+     *
+     * @param period_usec Timer period in microseconds (both application layers pass DCC_ONE_BIT_HALF_PERIOD_US).
+     */
 static void _shared_timer_acquire(uint16_t period_usec) {
 
     if (!_configuration_pointer) {
@@ -580,6 +694,13 @@ static void _shared_timer_acquire(uint16_t period_usec) {
 
 }
 
+    /**
+     * @brief Reference-counted shared timer stop.
+     *
+     * @details Decrements the channel count (never below zero) and stops the
+     * hardware timer only when it reaches zero, so the other channel keeps
+     * running. No-op before DccConfig_initialize().
+     */
 static void _shared_timer_release(void) {
 
     if (!_configuration_pointer) {
@@ -645,12 +766,14 @@ static void _shared_timer_release(void) {
  * -- the 16-bit preamble alone is ~1.9 ms).
  * ========================================================================= */
 
+    /** @brief Bit encoder railcom_cutout_begin hook: arm the cutout one-shot state machine at the packet end bit. */
 static void _railcom_cutout_begin_wrapper(void) {
 
     DccRailcomCutout_begin(&_railcom_cutout_context);
 
 }
 
+    /** @brief Cutout on_cutout_complete hook: tell the command station RailCom module which address the captured bytes belong to. */
 static void _railcom_cutout_complete_wrapper(void) {
 
     DccRailcomCommandStation_begin_cutout(&_main_railcom_context, _main_railcom_completed_address);
@@ -660,24 +783,58 @@ static void _railcom_cutout_complete_wrapper(void) {
 
 #ifdef DCC_COMPILE_SERVICE_MODE_DIRECT
 
+    /**
+     * @brief Task-layer write_byte hook: forward to the direct-mode primitive instance.
+     *
+     * @param cv_number CV number (1-based).
+     * @param value Value to write.
+     *
+     * @return true if the operation started, false if the primitive was busy.
+     */
 static bool _service_direct_write_byte(uint16_t cv_number, uint8_t value) {
 
     return DccServiceModeDirect_write_byte(&_service_direct_context, cv_number, value);
 
 }
 
+    /**
+     * @brief Task-layer verify_byte hook: forward to the direct-mode primitive instance.
+     *
+     * @param cv_number CV number (1-based).
+     * @param value Value to compare against.
+     *
+     * @return true if the operation started, false if the primitive was busy.
+     */
 static bool _service_direct_verify_byte(uint16_t cv_number, uint8_t value) {
 
     return DccServiceModeDirect_verify_byte(&_service_direct_context, cv_number, value);
 
 }
 
+    /**
+     * @brief Task-layer write_bit hook: forward to the direct-mode primitive instance.
+     *
+     * @param cv_number CV number (1-based).
+     * @param bit_position Bit position (0-7).
+     * @param bit_value Bit value to write.
+     *
+     * @return true if the operation started, false if the primitive was busy.
+     */
 static bool _service_direct_write_bit(uint16_t cv_number, uint8_t bit_position, bool bit_value) {
 
     return DccServiceModeDirect_write_bit(&_service_direct_context, cv_number, bit_position, bit_value);
 
 }
 
+    /**
+     * @brief Task-layer verify_bit hook: forward to the direct-mode primitive instance.
+     *
+     * @param cv_number CV number (1-based).
+     * @param bit_position Bit position (0-7).
+     * @param bit_value Bit value to compare against.
+     *
+     * @return true if the operation started, false if the primitive was busy.
+     */
 static bool _service_direct_verify_bit(uint16_t cv_number, uint8_t bit_position, bool bit_value) {
 
     return DccServiceModeDirect_verify_bit(&_service_direct_context, cv_number, bit_position, bit_value);
@@ -688,12 +845,28 @@ static bool _service_direct_verify_bit(uint16_t cv_number, uint8_t bit_position,
 
 #ifdef DCC_COMPILE_SERVICE_MODE_PAGED
 
+    /**
+     * @brief Task-layer paged_write hook: forward to the paged-mode primitive instance.
+     *
+     * @param cv_number CV number (1-based).
+     * @param value Value to write.
+     *
+     * @return true if the operation started, false if the primitive was busy.
+     */
 static bool _service_paged_write(uint16_t cv_number, uint8_t value) {
 
     return DccServiceModePaged_write(&_service_paged_context, cv_number, value);
 
 }
 
+    /**
+     * @brief Task-layer paged_verify hook: forward to the paged-mode primitive instance.
+     *
+     * @param cv_number CV number (1-based).
+     * @param value Value to compare against.
+     *
+     * @return true if the operation started, false if the primitive was busy.
+     */
 static bool _service_paged_verify(uint16_t cv_number, uint8_t value) {
 
     return DccServiceModePaged_verify(&_service_paged_context, cv_number, value);
@@ -704,12 +877,28 @@ static bool _service_paged_verify(uint16_t cv_number, uint8_t value) {
 
 #ifdef DCC_COMPILE_SERVICE_MODE_REGISTER
 
+    /**
+     * @brief Task-layer register_write hook: forward to the register-mode primitive instance.
+     *
+     * @param register_number Register number (1-8).
+     * @param value Value to write.
+     *
+     * @return true if the operation started, false if the primitive was busy.
+     */
 static bool _service_register_write(uint8_t register_number, uint8_t value) {
 
     return DccServiceModeRegister_write(&_service_register_context, register_number, value);
 
 }
 
+    /**
+     * @brief Task-layer register_verify hook: forward to the register-mode primitive instance.
+     *
+     * @param register_number Register number (1-8).
+     * @param value Value to compare against.
+     *
+     * @return true if the operation started, false if the primitive was busy.
+     */
 static bool _service_register_verify(uint8_t register_number, uint8_t value) {
 
     return DccServiceModeRegister_verify(&_service_register_context, register_number, value);
@@ -720,12 +909,26 @@ static bool _service_register_verify(uint8_t register_number, uint8_t value) {
 
 #ifdef DCC_COMPILE_SERVICE_MODE_ADDRESS
 
+    /**
+     * @brief Task-layer address_write hook: forward to the address-only primitive instance.
+     *
+     * @param address Short address to write to CV1.
+     *
+     * @return true if the operation started, false if the primitive was busy.
+     */
 static bool _service_address_write(uint8_t address) {
 
     return DccServiceModeAddress_write(&_service_address_context, address);
 
 }
 
+    /**
+     * @brief Task-layer address_verify hook: forward to the address-only primitive instance.
+     *
+     * @param address Short address to compare against CV1.
+     *
+     * @return true if the operation started, false if the primitive was busy.
+     */
 static bool _service_address_verify(uint8_t address) {
 
     return DccServiceModeAddress_verify(&_service_address_context, address);
@@ -745,6 +948,11 @@ static bool _service_address_verify(uint8_t address) {
  * signal is needed.
  * ========================================================================= */
 
+    /**
+     * @brief Primitive on_complete hook: fan the result out to every compiled task orchestrator.
+     *
+     * @param result Outcome of the primitive operation (SUCCESS = ACK seen).
+     */
 static void _service_task_primitive_complete(dcc_service_mode_result_enum result) {
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
@@ -769,6 +977,26 @@ static void _service_task_primitive_complete(dcc_service_mode_result_enum result
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
+    /**
+     * @brief Initialize the DCC library with user configuration.
+     *
+     * @details Algorithm:
+     * -# Store the configuration pointer; return if it is NULL
+     * -# Command station: wire and initialize the main track bit encoder, scheduler,
+     *    RailCom receiver and cutout state machine (RailCom builds), and the main
+     *    track application layer
+     * -# Command station: wire and initialize the service track bit encoder, service
+     *    mode common module and service track application layer, pointing the
+     *    programming API at the task orchestrators
+     * -# Wire and initialize each compiled service mode primitive and task orchestrator
+     * -# Decoder: wire and initialize CV storage, the CV application layer, the packet
+     *    decoder, the packet-timeout fail-safe, the bit decoder and (RailCom builds)
+     *    the RailCom transmitter; reset the ACK pulse state
+     *
+     * @verbatim
+     * @param config Pointer to the user-populated dcc_config_t. Must remain valid for the lifetime of the application.
+     * @endverbatim
+     */
 void DccConfig_initialize(const dcc_config_t *config) {
 
     _configuration_pointer = config;
@@ -1149,6 +1377,18 @@ void DccConfig_initialize(const dcc_config_t *config) {
 
 }
 
+    /**
+     * @brief Main loop processing.
+     *
+     * @details Algorithm:
+     * -# Return if DccConfig_initialize() has not installed a configuration
+     * -# Command station: run the main track scheduler
+     * -# Command station: run the service track state machine while service mode is active
+     * -# Command station, RailCom builds: drain the receiver and fire on_railcom_datagram_result
+     * -# Decoder: dispatch packets queued by the end-bit ISR, firing the instruction callbacks
+     * -# Decoder: poll the packet-timeout fail-safe
+     * -# Decoder: poll the ACK pulse and stop it once 6 ms have elapsed
+     */
 void DccConfig_run(void) {
 
     if (!_configuration_pointer) {
@@ -1198,6 +1438,17 @@ void DccConfig_run(void) {
  * ISR entry points (remain in dcc_config — called from hardware ISR)
  * ========================================================================= */
 
+    /**
+     * @brief Shared fixed-period timer ISR entry point.
+     *
+     * @details Algorithm:
+     * -# Toggle the main and service track output pins immediately, using the
+     *    look-ahead flags computed on the previous tick, so the edges are not
+     *    jittered by the state machine work that follows
+     * -# Run the main track and service track bit encoder tick state machines,
+     *    which compute the toggle flags for the next tick
+     * -# Sample the service track current sense (when provided) for ACK detection
+     */
 void DccConfig_58us_timer_isr(void) {
 
     /* Deterministic pin toggles — fire both channels immediately on
@@ -1230,12 +1481,29 @@ void DccConfig_58us_timer_isr(void) {
 }
 
 #if defined(DCC_COMPILE_RAILCOM)
+    /** @brief RailCom cutout one-shot timer ISR entry point: advance the cutout state machine. */
 void DccConfig_railcom_oneshot_timer_isr(void) {
 
     DccRailcomCutout_timer_isr(&_railcom_cutout_context);
 
 }
 
+    /**
+     * @brief Reconfigure the RailCom cutout per-state timing at runtime.
+     *
+     * @details Writes the five period fields of the cutout context directly rather
+     * than re-initializing it, so the state machine is not reset: an in-flight
+     * cutout finishes on its old timing and the new periods apply from the next
+     * one. A 0 in any field selects that field's spec default.
+     *
+     * @verbatim
+     * @param start_delay_us DELAY state length in microseconds (0 = DCC_RAILCOM_CUTOUT_START_DELAY_US).
+     * @param uart_rx_delay_us SETTLING state length in microseconds (0 = DCC_RAILCOM_UART_RX_DELAY_US).
+     * @param ch1_window_us Channel 1 window length in microseconds (0 = DCC_RAILCOM_CH1_WINDOW_US).
+     * @param ch1_ch2_gap_us Gap between the channel windows in microseconds (0 = DCC_RAILCOM_CH1_CH2_GAP_US).
+     * @param ch2_window_us Channel 2 window length in microseconds (0 = DCC_RAILCOM_CH2_WINDOW_US).
+     * @endverbatim
+     */
 void DccConfig_set_railcom_cutout_timing(uint16_t start_delay_us, uint16_t uart_rx_delay_us, uint16_t ch1_window_us, uint16_t ch1_ch2_gap_us, uint16_t ch2_window_us) {
 
     /* 0 in any field selects that field's spec default, same as DccConfig_initialize.
@@ -1250,12 +1518,18 @@ void DccConfig_set_railcom_cutout_timing(uint16_t start_delay_us, uint16_t uart_
 
 }
 
+    /** @brief Cancel an in-progress RailCom cutout, restoring the H-bridge. No-op when idle. */
 void DccConfig_cancel_railcom_cutout(void) {
 
     DccRailcomCutout_cancel(&_railcom_cutout_context);
 
 }
 
+    /**
+     * @brief Report whether a RailCom cutout is in progress.
+     *
+     * @return true while the cutout state machine is in any state other than IDLE.
+     */
 bool DccConfig_railcom_cutout_is_active(void) {
 
     return _railcom_cutout_context.state != DCC_RAILCOM_CUTOUT_IDLE;
@@ -1263,6 +1537,7 @@ bool DccConfig_railcom_cutout_is_active(void) {
 }
 #endif /* DCC_COMPILE_RAILCOM */
 
+    /** @brief 100 ms housekeeping hook. Reserved; does nothing in this release. */
 void DccConfig_100ms_timer_tick(void) {
 
     /* Reserved for periodic housekeeping. Nothing to do in this release. */
@@ -1273,12 +1548,20 @@ void DccConfig_100ms_timer_tick(void) {
 
 #ifdef DCC_COMPILE_DECODER
 
+    /**
+     * @brief Decoder bit edge ISR entry point: forward the edge to the bit decoder.
+     *
+     * @verbatim
+     * @param timestamp_usec Microsecond timestamp of the signal edge.
+     * @endverbatim
+     */
 void DccConfig_decoder_edge_isr(uint32_t timestamp_usec) {
 
     DccBitDecoder_edge(timestamp_usec);
 
 }
 
+    /** @brief Re-read the address CVs into the packet decoder's match cache. */
 void DccConfig_reload_address_cvs(void) {
 
     DccPacketDecoder_reload_address_cache();

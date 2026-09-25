@@ -44,6 +44,16 @@
     /** @brief Stored pointer to the interface struct wired by dcc_config.c */
 static const interface_dcc_application_command_station_service_track_t *_interface = (void *)0;
 
+    /**
+     * @brief Initialize the command station service track application module.
+     *
+     * @details Stores the interface pointer. Every other function in this
+     * module is a no-op (or returns false) until this has been called.
+     *
+     * @verbatim
+     * @param interface Pointer to populated interface_dcc_application_command_station_service_track_t struct (wired by dcc_config.c).
+     * @endverbatim
+     */
 void DccApplicationCommandStationServiceTrack_initialize(const interface_dcc_application_command_station_service_track_t *interface) {
 
     _interface = interface;
@@ -54,6 +64,15 @@ void DccApplicationCommandStationServiceTrack_initialize(const interface_dcc_app
  * Power control
  * ========================================================================= */
 
+    /**
+     * @brief Enable service track power output and start DCC signal generation.
+     *
+     * @details Algorithm:
+     * -# Return if the module has not been initialized
+     * -# Apply track power (track_power_set(true)) first
+     * -# Start the timer at DCC_ONE_BIT_HALF_PERIOD_US
+     * -# Start the bit encoder
+     */
 void DccApplicationCommandStationServiceTrack_power_on(void) {
 
     if (!_interface) {
@@ -68,6 +87,15 @@ void DccApplicationCommandStationServiceTrack_power_on(void) {
 
 }
 
+    /**
+     * @brief Disable service track power output and stop DCC signal generation.
+     *
+     * @details Algorithm:
+     * -# Return if the module has not been initialized
+     * -# Stop the bit encoder
+     * -# Stop the timer
+     * -# Remove track power (track_power_set(false)) last
+     */
 void DccApplicationCommandStationServiceTrack_power_off(void) {
 
     if (!_interface) {
@@ -86,6 +114,17 @@ void DccApplicationCommandStationServiceTrack_power_off(void) {
  * Service mode entry/exit
  * ========================================================================= */
 
+    /**
+     * @brief Enter service mode on the service track.
+     *
+     * @details Algorithm:
+     * -# Return false if the module has not been initialized
+     * -# Apply track power (track_power_set(true)) first
+     * -# Start the timer at DCC_ONE_BIT_HALF_PERIOD_US and start the bit encoder
+     * -# Enter the service-mode core and return its verdict
+     *
+     * @return true if service mode was activated; false if the module is uninitialized or the core refused entry.
+     */
 bool DccApplicationCommandStationServiceTrack_enter_service_mode(void) {
 
     if (!_interface) {
@@ -102,6 +141,15 @@ bool DccApplicationCommandStationServiceTrack_enter_service_mode(void) {
 
 }
 
+    /**
+     * @brief Exit service mode, stop the signal and remove track power.
+     *
+     * @details Algorithm:
+     * -# Return if the module has not been initialized
+     * -# Leave the service-mode core
+     * -# Stop the bit encoder, then the timer
+     * -# Remove track power (track_power_set(false)) last
+     */
 void DccApplicationCommandStationServiceTrack_exit_service_mode(void) {
 
     if (!_interface) {
@@ -117,6 +165,13 @@ void DccApplicationCommandStationServiceTrack_exit_service_mode(void) {
 
 }
 
+    /**
+     * @brief Check if service mode is currently active.
+     *
+     * @details Forwards to the service-mode core through the interface.
+     *
+     * @return true if service mode is active; false otherwise, including when the module has not been initialized.
+     */
 bool DccApplicationCommandStationServiceTrack_is_service_mode_active(void) {
 
     if (!_interface) {
@@ -135,6 +190,21 @@ bool DccApplicationCommandStationServiceTrack_is_service_mode_active(void) {
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
 
+    /**
+     * @brief Direct mode: read a CV byte (8 bit-verifies, then a confirming byte verify).
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param cv_number CV number (1-1024).
+     * @param on_complete Completion callback; value = the CV byte read.
+     * @param on_progress Progress callback, called after each of the 9 steps; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or cv_number is out of range.
+     */
 bool DccApplicationCommandStationServiceTrack_direct_read_cv(uint16_t cv_number, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->direct_read_cv) {
@@ -147,6 +217,22 @@ bool DccApplicationCommandStationServiceTrack_direct_read_cv(uint16_t cv_number,
 
 }
 
+    /**
+     * @brief Direct mode: write a CV byte, then verify it.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param cv_number CV number (1-1024).
+     * @param value Byte value to write.
+     * @param on_complete Completion callback; value = the byte verified.
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or cv_number is out of range.
+     */
 bool DccApplicationCommandStationServiceTrack_direct_write_cv(uint16_t cv_number, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->direct_write_cv) {
@@ -159,6 +245,22 @@ bool DccApplicationCommandStationServiceTrack_direct_write_cv(uint16_t cv_number
 
 }
 
+    /**
+     * @brief Direct mode: read a single CV bit.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param cv_number CV number (1-1024).
+     * @param bit_position Bit position within the CV byte (0-7).
+     * @param on_complete Completion callback; value = the bit read (1 or 0).
+     * @param on_progress Progress callback; not used by this task, may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range.
+     */
 bool DccApplicationCommandStationServiceTrack_direct_read_bit(uint16_t cv_number, uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->direct_read_bit) {
@@ -171,6 +273,23 @@ bool DccApplicationCommandStationServiceTrack_direct_read_bit(uint16_t cv_number
 
 }
 
+    /**
+     * @brief Direct mode: write a single CV bit, then verify it.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param cv_number CV number (1-1024).
+     * @param bit_position Bit position within the CV byte (0-7).
+     * @param bit_value Bit value to write (true = 1, false = 0).
+     * @param on_complete Completion callback; value = the bit value verified (0 or 1).
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range.
+     */
 bool DccApplicationCommandStationServiceTrack_direct_write_bit(uint16_t cv_number, uint8_t bit_position, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->direct_write_bit) {
@@ -191,6 +310,21 @@ bool DccApplicationCommandStationServiceTrack_direct_write_bit(uint16_t cv_numbe
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
 
+    /**
+     * @brief Paged mode: read a CV byte by scanning verifies 0-255 until acknowledged.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param cv_number CV number (1-1024).
+     * @param on_complete Completion callback; value = the CV byte found.
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or cv_number is out of range.
+     */
 bool DccApplicationCommandStationServiceTrack_paged_read_cv(uint16_t cv_number, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->paged_read_cv) {
@@ -203,6 +337,22 @@ bool DccApplicationCommandStationServiceTrack_paged_read_cv(uint16_t cv_number, 
 
 }
 
+    /**
+     * @brief Paged mode: write a CV byte, then verify it.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param cv_number CV number (1-1024).
+     * @param value Byte value to write.
+     * @param on_complete Completion callback; value = the byte verified.
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or cv_number is out of range.
+     */
 bool DccApplicationCommandStationServiceTrack_paged_write_cv(uint16_t cv_number, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->paged_write_cv) {
@@ -215,6 +365,22 @@ bool DccApplicationCommandStationServiceTrack_paged_write_cv(uint16_t cv_number,
 
 }
 
+    /**
+     * @brief Paged mode: read a single CV bit.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param cv_number CV number (1-1024).
+     * @param bit_position Bit position within the CV byte (0-7).
+     * @param on_complete Completion callback; value = the bit read (0 or 1).
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range.
+     */
 bool DccApplicationCommandStationServiceTrack_paged_read_bit(uint16_t cv_number, uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->paged_read_bit) {
@@ -227,6 +393,23 @@ bool DccApplicationCommandStationServiceTrack_paged_read_bit(uint16_t cv_number,
 
 }
 
+    /**
+     * @brief Paged mode: write a single CV bit, then verify it.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param cv_number CV number (1-1024).
+     * @param bit_position Bit position within the CV byte (0-7).
+     * @param bit_value Bit value to write (true = 1, false = 0).
+     * @param on_complete Completion callback; value = the bit value verified (0 or 1).
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range.
+     */
 bool DccApplicationCommandStationServiceTrack_paged_write_bit(uint16_t cv_number, uint8_t bit_position, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->paged_write_bit) {
@@ -247,6 +430,22 @@ bool DccApplicationCommandStationServiceTrack_paged_write_bit(uint16_t cv_number
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
 
+    /**
+     * @brief Register mode: read a CV byte by scanning register verifies 0-255 until acknowledged.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param cv_number CV number, mapped to a physical register for decoder_type.
+     * @param decoder_type Mobile or accessory (dcc_decoder_type_enum); selects the CV-to-register map.
+     * @param on_complete Completion callback; value = the CV byte found.
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or the CV is not accessible in register mode.
+     */
 bool DccApplicationCommandStationServiceTrack_register_read_cv(uint16_t cv_number, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->register_read_cv) {
@@ -259,6 +458,23 @@ bool DccApplicationCommandStationServiceTrack_register_read_cv(uint16_t cv_numbe
 
 }
 
+    /**
+     * @brief Register mode: write a CV byte, then verify it.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param cv_number CV number, mapped to a physical register for decoder_type.
+     * @param value Byte value to write.
+     * @param decoder_type Mobile or accessory (dcc_decoder_type_enum); selects the CV-to-register map.
+     * @param on_complete Completion callback; value = the byte verified.
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or the CV is not accessible in register mode.
+     */
 bool DccApplicationCommandStationServiceTrack_register_write_cv(
             uint16_t cv_number,
             uint8_t value,
@@ -276,6 +492,23 @@ bool DccApplicationCommandStationServiceTrack_register_write_cv(
 
 }
 
+    /**
+     * @brief Register mode: read a single CV bit.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param cv_number CV number, mapped to a physical register for decoder_type.
+     * @param bit_position Bit position within the CV byte (0-7).
+     * @param decoder_type Mobile or accessory (dcc_decoder_type_enum); selects the CV-to-register map.
+     * @param on_complete Completion callback; value = the bit read (0 or 1).
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range.
+     */
 bool DccApplicationCommandStationServiceTrack_register_read_bit(
             uint16_t cv_number,
             uint8_t bit_position,
@@ -293,6 +526,24 @@ bool DccApplicationCommandStationServiceTrack_register_read_bit(
 
 }
 
+    /**
+     * @brief Register mode: write a single CV bit, then verify it.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param cv_number CV number, mapped to a physical register for decoder_type.
+     * @param bit_position Bit position within the CV byte (0-7).
+     * @param bit_value Bit value to write (true = 1, false = 0).
+     * @param decoder_type Mobile or accessory (dcc_decoder_type_enum); selects the CV-to-register map.
+     * @param on_complete Completion callback; value = the bit value verified (0 or 1).
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range.
+     */
 bool DccApplicationCommandStationServiceTrack_register_write_bit(
             uint16_t cv_number,
             uint8_t bit_position,
@@ -311,6 +562,19 @@ bool DccApplicationCommandStationServiceTrack_register_write_bit(
 
 }
 
+    /**
+     * @brief Register mode: decoder factory reset (write 8 to register 8).
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param on_complete Completion callback; the acknowledgement is optional, so the result may be NO_ACK.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, or the task layer is busy.
+     */
 bool DccApplicationCommandStationServiceTrack_register_factory_reset(dcc_service_mode_task_on_complete_callback_t on_complete) {
 
     if (!_interface || !_interface->register_factory_reset) {
@@ -323,6 +587,23 @@ bool DccApplicationCommandStationServiceTrack_register_factory_reset(dcc_service
 
 }
 
+    /**
+     * @brief Register mode: verify a single register value (one verify operation).
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param cv_number CV number, mapped to a physical register for decoder_type.
+     * @param value Expected byte value.
+     * @param decoder_type Mobile or accessory (dcc_decoder_type_enum); selects the CV-to-register map.
+     * @param on_complete Completion callback; SUCCESS if acknowledged, VERIFY_FAIL otherwise.
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or the CV is not accessible in register mode.
+     */
 bool DccApplicationCommandStationServiceTrack_register_verify_value(
             uint16_t cv_number,
             uint8_t value,
@@ -348,6 +629,20 @@ bool DccApplicationCommandStationServiceTrack_register_verify_value(
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
 
+    /**
+     * @brief Address-only mode: read CV#1 (short address) by scanning verifies 0-127 until acknowledged.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param on_complete Completion callback; value = the address found (0-127).
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, or the task layer is busy.
+     */
 bool DccApplicationCommandStationServiceTrack_address_read(dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->address_read) {
@@ -360,6 +655,21 @@ bool DccApplicationCommandStationServiceTrack_address_read(dcc_service_mode_task
 
 }
 
+    /**
+     * @brief Address-only mode: write CV#1 (short address), then verify it.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param address Short address to write (1-127).
+     * @param on_complete Completion callback; value = the address verified.
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or address is out of range.
+     */
 bool DccApplicationCommandStationServiceTrack_address_write(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->address_write) {
@@ -372,6 +682,21 @@ bool DccApplicationCommandStationServiceTrack_address_write(uint8_t address, dcc
 
 }
 
+    /**
+     * @brief Address-only mode: verify CV#1 against a value (one verify operation).
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param address Expected short address (1-127).
+     * @param on_complete Completion callback; SUCCESS if acknowledged, VERIFY_FAIL otherwise.
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or address is out of range.
+     */
 bool DccApplicationCommandStationServiceTrack_address_verify(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->address_verify) {
@@ -384,6 +709,21 @@ bool DccApplicationCommandStationServiceTrack_address_verify(uint8_t address, dc
 
 }
 
+    /**
+     * @brief Address-only mode: read a single bit of CV#1.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param bit_position Bit position within CV#1 (0-6; bit 7 of a short address is always 0).
+     * @param on_complete Completion callback; value = the bit read (0 or 1).
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or bit_position is out of range.
+     */
 bool DccApplicationCommandStationServiceTrack_address_read_bit(uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->address_read_bit) {
@@ -396,6 +736,22 @@ bool DccApplicationCommandStationServiceTrack_address_read_bit(uint8_t bit_posit
 
 }
 
+    /**
+     * @brief Address-only mode: write a single bit of CV#1, then verify it.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param bit_position Bit position within CV#1 (0-6; bit 7 of a short address is always 0).
+     * @param bit_value Bit value to write (true = 1, false = 0).
+     * @param on_complete Completion callback; value = the bit value verified (0 or 1).
+     * @param on_progress Progress callback, called after each step; may be NULL.
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or bit_position is out of range.
+     */
 bool DccApplicationCommandStationServiceTrack_address_write_bit(uint8_t bit_position, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->address_write_bit) {
@@ -416,6 +772,19 @@ bool DccApplicationCommandStationServiceTrack_address_write_bit(uint8_t bit_posi
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_DETECT
 
+    /**
+     * @brief Probe the decoder for every supported service mode.
+     *
+     * @details Forwards to the task layer through the interface after null-guarding the
+     * interface pointer and the task hook; the task sequences the primitive operations
+     * and reports through the callbacks.
+     *
+     * @verbatim
+     * @param on_detect Detection callback; supported_modes = bitmask of DCC_SERVICE_MODE_SUPPORTED_* flags (0 = none detected).
+     * @endverbatim
+     *
+     * @return true if the task was started; false if the module is uninitialized, the task hook is not wired, or the task layer is busy.
+     */
 bool DccApplicationCommandStationServiceTrack_detect_mode(dcc_service_mode_task_on_detect_callback_t on_detect) {
 
     if (!_interface || !_interface->detect_mode) {

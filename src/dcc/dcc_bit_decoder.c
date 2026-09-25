@@ -40,19 +40,21 @@
 // Internal types
 // =============================================================================
 
+    /** @brief Classification of one half-period (the time between two edges). */
 typedef enum {
 
-    DCC_HALF_NONE,
-    DCC_HALF_SHORT,
-    DCC_HALF_LONG
+    DCC_HALF_NONE,      /**< No half-period pending: the next edge starts a new pair */
+    DCC_HALF_SHORT,     /**< Under DCC_DECODER_HALF_BIT_THRESHOLD_US: one half of a one-bit */
+    DCC_HALF_LONG       /**< At or above the threshold (and under the maximum): one half of a zero-bit */
 
 } half_type_enum;
 
+    /** @brief Packet assembler state. */
 typedef enum {
 
-    DCC_DECODE_SEEKING_PREAMBLE,
-    DCC_DECODE_ACCUMULATING,
-    DCC_DECODE_SEPARATOR
+    DCC_DECODE_SEEKING_PREAMBLE,    /**< Counting consecutive one-bits until DCC_PREAMBLE_BITS_DECODER_MIN are seen */
+    DCC_DECODE_ACCUMULATING,        /**< Shifting the 8 data bits of a byte in, MSB first */
+    DCC_DECODE_SEPARATOR            /**< Byte stored: a zero is the next start bit, a one is the packet end bit */
 
 } decode_state_enum;
 
@@ -60,17 +62,27 @@ typedef enum {
 // Static state
 // =============================================================================
 
+    /** @brief Injected callbacks; set by DccBitDecoder_initialize. */
 static const interface_dcc_bit_decoder_t *_interface;
 
+    /** @brief Timestamp of the previous edge: the start of the half-period being measured. */
 static uint32_t _last_edge_usec;
+    /** @brief True until an edge has been captured; that edge only sets the baseline and yields no half-period. */
 static bool _first_edge;
+    /** @brief Classification of the first half of the bit being paired, DCC_HALF_NONE when no half is pending. */
 static half_type_enum _first_half_type;
 
+    /** @brief Packet assembler state. */
 static decode_state_enum _state;
+    /** @brief Consecutive one-bits seen while seeking the preamble. */
 static uint8_t _preamble_count;
+    /** @brief Bytes of the packet being assembled, including the XOR byte once received. */
 static uint8_t _packet_buffer[DCC_PACKET_MAX_BYTES];
+    /** @brief Byte being shifted in, MSB first. */
 static uint8_t _current_byte;
+    /** @brief Bits shifted into _current_byte so far (0-8). */
 static uint8_t _bit_count;
+    /** @brief Bytes stored in _packet_buffer so far. */
 static uint8_t _byte_count;
 
 // =============================================================================
@@ -92,6 +104,11 @@ static void _reset_to_preamble(void) {
 
     /**
      * @brief Handle a decoded bit while seeking a preamble.
+     *
+     * @details Counts consecutive one-bits. A zero-bit after at least
+     * DCC_PREAMBLE_BITS_DECODER_MIN ones is the start bit of the first byte and switches
+     * the assembler to accumulating; a zero-bit before that restarts the count.
+     *
      * @param is_one true if the bit is a one-bit, false if zero-bit.
      */
 static void _on_bit_seeking_preamble(bool is_one) {
@@ -123,6 +140,13 @@ static void _on_bit_seeking_preamble(bool is_one) {
     /**
      * @brief Packet end bit: hand the assembled packet to the interface and re-arm the
      *  preamble search.
+     *
+     * @details A packet of fewer than 2 bytes is discarded. With DCC_COMPILE_RAILCOM the
+     * assembler is reset and the next edge is marked as a fresh baseline BEFORE
+     * on_packet_received fires, because that callback masks and unmasks the edge IRQ
+     * for the cutout and a stale edge after the unmask must not land mid-packet; the end
+     * bit is not counted as a preamble bit. Without RailCom the callback fires first and
+     * the end bit counts as the first one-bit of the next preamble.
      */
 static void _on_end_bit(void) {
 
@@ -158,6 +182,11 @@ static void _on_end_bit(void) {
 
     /**
      * @brief Handle a decoded bit while waiting for a separator or end bit.
+     *
+     * @details A one-bit is the packet end bit and completes the packet. A zero-bit is
+     * the start bit of the next byte, unless DCC_PACKET_MAX_BYTES bytes are already
+     * stored, in which case the packet is too long and is discarded.
+     *
      * @param is_one true if the bit is a one-bit, false if zero-bit.
      */
 static void _on_bit_separator(bool is_one) {
@@ -187,7 +216,13 @@ static void _on_bit_separator(bool is_one) {
 
 }
 
-    /** @brief A full byte has been shifted in: store it and move to the separator-bit state. */
+    /**
+     * @brief A full byte has been shifted in: store it and move to the separator-bit state.
+     *
+     * @details With DCC_COMPILE_RAILCOM the optional on_byte_received callback fires the
+     * instant the byte is stored, before the next byte arrives, so the RailCom Tx command
+     * recognizer sees the last data byte before the XOR byte.
+     */
 static void _on_byte_complete(void) {
 
     _packet_buffer[_byte_count] = _current_byte;
@@ -209,6 +244,10 @@ static void _on_byte_complete(void) {
 
     /**
      * @brief Process a complete decoded bit (one or zero).
+     *
+     * @details Routes the bit by assembler state: preamble seeking, shifting into the
+     * current byte (MSB first; the byte completes at 8 bits), or separator/end-bit handling.
+     *
      * @param is_one true if the bit is a one-bit, false if zero-bit.
      */
 static void _on_bit(bool is_one) {
@@ -241,6 +280,16 @@ static void _on_bit(bool is_one) {
 // Public API
 // =============================================================================
 
+    /**
+     * @brief Initialize the bit decoder module.
+     *
+     * @details Stores the interface, marks the next edge as the timing baseline, clears
+     * the half-bit pairing and resets the assembler to a preamble search.
+     *
+     * @verbatim
+     * @param interface Pointer to populated interface_dcc_bit_decoder_t.
+     * @endverbatim
+     */
 void DccBitDecoder_initialize(const interface_dcc_bit_decoder_t *interface) {
 
     _interface = interface;
@@ -251,6 +300,26 @@ void DccBitDecoder_initialize(const interface_dcc_bit_decoder_t *interface) {
 
 }
 
+    /**
+     * @brief Process a signal edge from the input-capture ISR.
+     *
+     * @details Algorithm:
+     * -# First edge after initialize (or after a RailCom end bit): record it as the
+     *    baseline and return; it yields no half-period.
+     * -# Compute the time elapsed since the previous edge (unsigned subtraction, so
+     *    counter wraparound is tolerated) and record this edge as the new baseline.
+     * -# Elapsed at or above DCC_DECODER_HALF_BIT_MAX_US: invalid; drop any pending
+     *    half and restart the preamble search.
+     * -# Classify the half-period: under DCC_DECODER_HALF_BIT_THRESHOLD_US is SHORT
+     *    (one-bit), otherwise LONG (zero-bit).
+     * -# Pair with the pending half: none pending stores this one; a matching pair emits
+     *    a bit through _on_bit and clears the pending half; a mismatch does NOT restart
+     *    the preamble search -- this half simply becomes the first half of a new pair.
+     *
+     * @verbatim
+     * @param timestamp_usec Microsecond timestamp of the edge.
+     * @endverbatim
+     */
 void DccBitDecoder_edge(uint32_t timestamp_usec) {
 
     uint32_t elapsed;

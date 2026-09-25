@@ -41,21 +41,29 @@
 // Internal types
 // =============================================================================
 
+    /** @brief Step of the two-step paged operation (stored in the context paged_state field). */
 typedef enum {
 
-    DCC_PAGED_STATE_IDLE,
-    DCC_PAGED_STATE_PAGE_SELECT,
-    DCC_PAGED_STATE_DATA_ACCESS
+    DCC_PAGED_STATE_IDLE,           /**< No operation in progress */
+    DCC_PAGED_STATE_PAGE_SELECT,    /**< Writing the page number to the page register */
+    DCC_PAGED_STATE_DATA_ACCESS     /**< Writing or verifying the data register within the page */
 
 } paged_state_enum;
 
-/* Module-level pointer to the active context for callbacks */
+    /** @brief Context of the operation in flight; the step-callback signature carries no context, and only one operation runs at a time. */
 static dcc_service_mode_paged_context_t *_active_context = (void *)0;
 
 // =============================================================================
 // Static helpers
 // =============================================================================
 
+    /**
+     * @brief Append the XOR error-detection byte to a packet.
+     *
+     * @details XORs data[0..byte_count-1] into data[byte_count] and increments byte_count.
+     *
+     * @param packet Pointer to the packet being built; byte_count must be the payload length.
+     */
 static void _append_xor(dcc_packet_t *packet) {
 
     uint8_t xor_byte = 0;
@@ -72,6 +80,17 @@ static void _append_xor(dcc_packet_t *packet) {
 
 }
 
+    /**
+     * @brief Build a register-mode packet (S-9.2.3 register form).
+     *
+     * @details data[0] = prefix | (register_number - 1), data[1] = value, then the XOR byte;
+     * DCC_PREAMBLE_BITS_SERVICE preamble, sent once (repeat_count 0).
+     *
+     * @param packet Pointer to the packet to fill.
+     * @param register_number Register number (1-8), encoded 0-based on the wire.
+     * @param value Byte value to write or verify.
+     * @param write true selects DCC_SERVICE_REGISTER_WRITE_PREFIX, false DCC_SERVICE_REGISTER_VERIFY_PREFIX.
+     */
 static void _build_register_packet(dcc_packet_t *packet, uint8_t register_number, uint8_t value, bool write) {
 
     uint8_t prefix = write ? DCC_SERVICE_REGISTER_WRITE_PREFIX : DCC_SERVICE_REGISTER_VERIFY_PREFIX;
@@ -88,6 +107,19 @@ static void _build_register_packet(dcc_packet_t *packet, uint8_t register_number
     /* Forward declarations for callback chain */
 static void _on_data_access_complete(dcc_service_mode_result_enum result);
 
+    /**
+     * @brief Step callback after the page-select write: starts the data step.
+     *
+     * @details Algorithm:
+     * -# Ignore the page-select result: per S-9.2.3 the data step follows unconditionally
+     *    (the page write completes by ACK or by packet count, and ACK is optional)
+     * -# Move to DATA_ACCESS and build the data-register packet from the latched register, value and write flag
+     * -# Start the data step with DCC_SERVICE_MODE_COMMAND_REPEAT command packets (recovery packets apply to writes only)
+     * -# If the common module refuses to start, return to IDLE and report DCC_SERVICE_MODE_BUSY through
+     *    on_complete rather than leave the state machine stuck waiting for a callback that never comes
+     *
+     * @param result Outcome of the page-select step (not used).
+     */
 static void _on_page_select_complete(dcc_service_mode_result_enum result) {
 
     dcc_packet_t packet;
@@ -119,6 +151,13 @@ static void _on_page_select_complete(dcc_service_mode_result_enum result) {
 
 }
 
+    /**
+     * @brief Step callback after the data step: finishes the paged operation.
+     *
+     * @details Returns to IDLE and forwards the result to interface->on_complete when set.
+     *
+     * @param result Outcome of the data step.
+     */
 static void _on_data_access_complete(dcc_service_mode_result_enum result) {
 
     _active_context->paged_state = DCC_PAGED_STATE_IDLE;
@@ -135,6 +174,14 @@ static void _on_data_access_complete(dcc_service_mode_result_enum result) {
 // Public API
 // =============================================================================
 
+    /**
+     * @brief Initialize the paged service mode module.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_paged_context_t instance.
+     * @param interface Pointer to populated interface_dcc_service_mode_paged_t struct.
+     * @endverbatim
+     */
 void DccServiceModePaged_initialize(dcc_service_mode_paged_context_t *context, const interface_dcc_service_mode_paged_t *interface) {
 
     context->interface = interface;
@@ -142,6 +189,25 @@ void DccServiceModePaged_initialize(dcc_service_mode_paged_context_t *context, c
 
 }
 
+    /**
+     * @brief Write a CV value using paged mode.
+     *
+     * @details Algorithm:
+     * -# Return false if cv_number is outside 1-1024, the common module is busy, or paged_state is not IDLE
+     * -# Map the 0-based CV: page = ((cv_number - 1) / 4) + 1, data register = ((cv_number - 1) % 4) + 1
+     * -# Latch the data register, value and write flag; enter PAGE_SELECT and record this context for the callbacks
+     * -# Start a write of the page number to DCC_SERVICE_MODE_PAGE_REGISTER with DCC_SERVICE_MODE_COMMAND_REPEAT
+     *    command packets and DCC_SERVICE_MODE_RECOVERY_COUNT recovery packets; _on_page_select_complete continues
+     * -# If the common module refuses to start, return to IDLE and return false
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_paged_context_t instance.
+     * @param cv_number CV number to write (1-1024).
+     * @param value Byte value to write.
+     * @endverbatim
+     *
+     * @return true if the operation started, false if cv_number is out of range, the common module is busy, or a paged operation is already in progress.
+     */
 bool DccServiceModePaged_write(dcc_service_mode_paged_context_t *context, uint16_t cv_number, uint8_t value) {
 
     dcc_packet_t packet;
@@ -186,6 +252,26 @@ bool DccServiceModePaged_write(dcc_service_mode_paged_context_t *context, uint16
 
 }
 
+    /**
+     * @brief Verify a CV value using paged mode.
+     *
+     * @details Algorithm:
+     * -# Return false if cv_number is outside 1-1024, the common module is busy, or paged_state is not IDLE
+     * -# Map the 0-based CV: page = ((cv_number - 1) / 4) + 1, data register = ((cv_number - 1) % 4) + 1
+     * -# Latch the data register, expected value and verify flag; enter PAGE_SELECT and record this context for the callbacks
+     * -# Start a write of the page number to DCC_SERVICE_MODE_PAGE_REGISTER (the page select is always a write)
+     *    with DCC_SERVICE_MODE_COMMAND_REPEAT command packets and DCC_SERVICE_MODE_RECOVERY_COUNT recovery packets;
+     *    _on_page_select_complete continues with the verify
+     * -# If the common module refuses to start, return to IDLE and return false
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_paged_context_t instance.
+     * @param cv_number CV number to verify (1-1024).
+     * @param value Expected byte value.
+     * @endverbatim
+     *
+     * @return true if the operation started, false if cv_number is out of range, the common module is busy, or a paged operation is already in progress.
+     */
 bool DccServiceModePaged_verify(dcc_service_mode_paged_context_t *context, uint16_t cv_number, uint8_t value) {
 
     dcc_packet_t packet;

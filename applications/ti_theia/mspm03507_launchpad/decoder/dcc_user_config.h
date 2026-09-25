@@ -47,7 +47,9 @@
 // =============================================================================
 
 // #define DCC_COMPILE_COMMAND_STATION   /* not used in this demo */
+    /** @brief Build the decoder role: bit decoder, packet decoder, CV handling and failsafe. */
 #define DCC_COMPILE_DECODER
+    /** @brief Compile-time RailCom Tx support. There is no runtime switch; comment out to strip. */
 #define DCC_COMPILE_RAILCOM           // RailCom Tx (comment out to strip)
 
 // =============================================================================
@@ -57,8 +59,11 @@
 #ifdef DCC_COMPILE_DECODER
 
 
-    /* Decoder received-packet FIFO depth (>= 2; one slot reserved). The
-     * end-bit ISR enqueues; DccConfig_run drains and dispatches. */
+    /**
+     * @brief Decoder received-packet FIFO depth (>= 2; one slot reserved).
+     *
+     * @details The end-bit ISR enqueues; DccConfig_run() drains and dispatches.
+     */
 #define USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH      8
 
 #endif /* DCC_COMPILE_DECODER */

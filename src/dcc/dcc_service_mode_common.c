@@ -42,13 +42,14 @@
 // Internal types
 // =============================================================================
 
+    /** @brief Phase of the service mode operation sequence (stored in the context state field). */
 typedef enum {
 
-    DCC_SERVICE_COMMON_STATE_IDLE,
-    DCC_SERVICE_COMMON_STATE_RESET_PRE,
-    DCC_SERVICE_COMMON_STATE_COMMAND,
-    DCC_SERVICE_COMMON_STATE_RECOVERY,
-    DCC_SERVICE_COMMON_STATE_RESET_POST
+    DCC_SERVICE_COMMON_STATE_IDLE,          /**< No operation in progress */
+    DCC_SERVICE_COMMON_STATE_RESET_PRE,     /**< Sending the DCC_SERVICE_MODE_RESET_PRE_COUNT leading reset packets */
+    DCC_SERVICE_COMMON_STATE_COMMAND,       /**< Sending command packets while scanning for an ACK */
+    DCC_SERVICE_COMMON_STATE_RECOVERY,      /**< Writes only: sending reset packets while still scanning for an ACK */
+    DCC_SERVICE_COMMON_STATE_RESET_POST     /**< Sending the DCC_SERVICE_MODE_RESET_POST_COUNT trailing reset packets, then reporting the result */
 
 } service_common_state_enum;
 
@@ -58,6 +59,10 @@ typedef enum {
 
     /**
      * @brief Build and load a reset packet with service mode preamble.
+     *
+     * @details Three DCC_RESET_BYTE bytes with DCC_PREAMBLE_BITS_SERVICE preamble bits, sent once (repeat_count 0).
+     *
+     * @param context Pointer to the service mode common context.
      */
 static void _load_reset_packet(dcc_service_mode_common_context_t *context) {
 
@@ -76,7 +81,11 @@ static void _load_reset_packet(dcc_service_mode_common_context_t *context) {
 }
 
     /**
-     * @brief Minimum consecutive high samples for a valid ACK.
+     * @brief Minimum length of an elevated-current span, in ack_sample ticks, for a valid ACK.
+     *
+     * @details One less than the tick count of USER_DEFINED_DCC_ACK_MIN_DURATION_US so a span
+     * that is exactly the minimum duration still qualifies. With the typical config this is 85
+     * samples (~4930 us).
      */
 #define DCC_ACK_MIN_SAMPLES \
     ((USER_DEFINED_DCC_ACK_MIN_DURATION_US / DCC_ONE_BIT_HALF_PERIOD_US) - 1)
@@ -96,19 +105,22 @@ static void _load_reset_packet(dcc_service_mode_common_context_t *context) {
     (USER_DEFINED_DCC_ACK_MAX_DURATION_US / DCC_ONE_BIT_HALF_PERIOD_US)
 
     /**
+     * @brief Default ACK dropout tolerance in microseconds (2 samples). Optional user setting; 0 gives strict consecutive-high detection.
+     */
+#ifndef USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US
+#define USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US 116
+#endif
+
+    /**
      * @brief Dropout tolerance: bridge brief sub-threshold dips during an ACK.
      *
      * @details A real Basic ACK is the decoder pulsing a noisy load (motor):
      * commutation/PWM ripple can make the current-sense comparator chatter
      * below threshold for a sample or two mid-pulse. We bridge up to this many
      * CONSECUTIVE low samples into the run rather than ending it, so a noisy
-     * 6 ms ACK is still measured as one ~6 ms span. Set the user value to 0 for
-     * strict consecutive-high detection (the original behavior). Optional --
-     * defaults to ~116 us (2 samples) if the user config does not define it.
+     * 6 ms ACK is still measured as one ~6 ms span. A low run longer than this
+     * is a real falling edge and closes the span.
      */
-#ifndef USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US
-#define USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US 116
-#endif
 #define DCC_ACK_DROPOUT_SAMPLES \
     (USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US / DCC_ONE_BIT_HALF_PERIOD_US)
 
@@ -117,6 +129,17 @@ static void _load_reset_packet(dcc_service_mode_common_context_t *context) {
 // Public API
 // =============================================================================
 
+    /**
+     * @brief Initialize the service mode common module.
+     *
+     * @details Stores the interface and resets the state machine to idle with service mode
+     * inactive. The per-operation fields not cleared here are set by DccServiceModeCommon_begin_operation().
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_common_context_t instance.
+     * @param interface Pointer to populated interface_dcc_service_mode_common_t struct.
+     * @endverbatim
+     */
 void DccServiceModeCommon_initialize(dcc_service_mode_common_context_t *context, const interface_dcc_service_mode_common_t *interface) {
 
     context->interface = interface;
@@ -136,11 +159,16 @@ void DccServiceModeCommon_initialize(dcc_service_mode_common_context_t *context,
 }
 
     /**
-     * @brief ACK sampler, current at or above threshold. Resuming after a brief dropout
-     *  absorbs the bridged low samples into the run (we measure the SPAN of elevated
-     *  current, not strict-high time -- a noisy motor ACK dips below threshold but the
-     *  current is still elevated). Flags over-current if the span grows past the upper
-     *  bound (S-9.2.3 p.3) -- that is a fault, not an ACK.
+     * @brief ACK sampler: current at or above threshold.
+     *
+     * @details Algorithm:
+     * -# If the span is not already flagged over-current, grow it by this sample plus any
+     *    bridged low samples (we measure the SPAN of elevated current, not strict-high time --
+     *    a noisy motor ACK dips below threshold while the current is still elevated)
+     * -# If the span now exceeds DCC_ACK_MAX_SAMPLES, flag over-current (S-9.2.3 p.3: a fault, not an ACK)
+     * -# Clear the low-run counter
+     *
+     * @param context Pointer to the service mode common context.
      */
 static void _ack_sample_elevated(dcc_service_mode_common_context_t *context) {
 
@@ -161,9 +189,16 @@ static void _ack_sample_elevated(dcc_service_mode_common_context_t *context) {
 }
 
     /**
-     * @brief ACK sampler, current below threshold while inside a run: a candidate dropout.
-     *  Bridges up to DCC_ACK_DROPOUT_SAMPLES consecutive low samples; only a longer low
-     *  run is a real falling edge, which closes the span and judges it.
+     * @brief ACK sampler: current below threshold while inside a span (candidate dropout).
+     *
+     * @details Algorithm:
+     * -# Count the low sample
+     * -# Up to DCC_ACK_DROPOUT_SAMPLES consecutive low samples are bridged; nothing else happens
+     * -# A longer low run is a real falling edge: latch ack_detected if the span was not
+     *    over-current and reached DCC_ACK_MIN_SAMPLES, then clear the span, the low run and
+     *    the over-current flag ready for the next span
+     *
+     * @param context Pointer to the service mode common context.
      */
 static void _ack_sample_dropout(dcc_service_mode_common_context_t *context) {
 
@@ -187,6 +222,23 @@ static void _ack_sample_dropout(dcc_service_mode_common_context_t *context) {
 
 }
 
+    /**
+     * @brief Sample the current sense input from the timer ISR.
+     *
+     * @details Algorithm:
+     * -# Return once an ACK has already been latched for this operation
+     * -# Return unless the state is COMMAND or RECOVERY
+     * -# Return while the ACK window is blanked (S-9.2.3 line 55: the first
+     *    DCC_SERVICE_MODE_ACK_BLANK_PACKETS command packets mask the decoder mode-switch transient)
+     * -# Reading >= USER_DEFINED_DCC_ACK_THRESHOLD_MA: extend the span (_ack_sample_elevated)
+     * -# Reading below threshold inside a span: treat as a dropout (_ack_sample_dropout);
+     *    below threshold with no span open: ignore
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_common_context_t instance.
+     * @param sense_value Raw reading from current sense hardware.
+     * @endverbatim
+     */
 void DccServiceModeCommon_ack_sample(dcc_service_mode_common_context_t *context, uint16_t sense_value) {
 
     if (context->ack_detected) {
@@ -221,6 +273,15 @@ void DccServiceModeCommon_ack_sample(dcc_service_mode_common_context_t *context,
 
 }
 
+    /**
+     * @brief Notify that the encoder has finished transmitting a packet.
+     *
+     * @details ISR context. Only sets packet_complete_flag; DccServiceModeCommon_run() consumes it.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_common_context_t instance.
+     * @endverbatim
+     */
 void DccServiceModeCommon_on_packet_complete(dcc_service_mode_common_context_t *context) {
 
     context->packet_complete_flag = true;
@@ -229,6 +290,12 @@ void DccServiceModeCommon_on_packet_complete(dcc_service_mode_common_context_t *
 
     /**
      * @brief Retry the current service mode operation or declare failure.
+     *
+     * @details While retry_count is below USER_DEFINED_DCC_SERVICE_MODE_RETRIES, increments it
+     * and restarts from RESET_PRE. Otherwise sets the result to DCC_SERVICE_MODE_NO_ACK and
+     * moves to RESET_POST so the trailing reset packets are still sent before the callback fires.
+     *
+     * @param context Pointer to the service mode common context.
      */
 static void _retry_or_fail(dcc_service_mode_common_context_t *context) {
 
@@ -250,6 +317,16 @@ static void _retry_or_fail(dcc_service_mode_common_context_t *context) {
 
     /**
      * @brief Run the COMMAND state of the service mode state machine.
+     *
+     * @details Algorithm:
+     * -# ACK latched: set result SUCCESS, skip the remaining command packets and go to RESET_POST
+     * -# Fewer than command_repeat_count packets sent: load the command packet again; once more
+     *    than DCC_SERVICE_MODE_ACK_BLANK_PACKETS have been loaded, open the ACK window
+     *    (it stays open through the rest of COMMAND and all of RECOVERY)
+     * -# Command packets exhausted on a write: go to RECOVERY
+     * -# Command packets exhausted on a verify: retry or fail (no recovery phase)
+     *
+     * @param context Pointer to the service mode common context.
      */
 static void _run_command_state(dcc_service_mode_common_context_t *context) {
 
@@ -295,6 +372,14 @@ static void _run_command_state(dcc_service_mode_common_context_t *context) {
 
     /**
      * @brief Run the RECOVERY state of the service mode state machine.
+     *
+     * @details Algorithm:
+     * -# ACK latched: set result SUCCESS and go to RESET_POST
+     * -# Fewer than recovery_packet_count reset packets sent: load another (S-9.2.3
+     *    Decoder-Recovery-Time, ACK scanning continues)
+     * -# Recovery exhausted with no ACK: retry or fail
+     *
+     * @param context Pointer to the service mode common context.
      */
 static void _run_recovery_state(dcc_service_mode_common_context_t *context) {
 
@@ -321,6 +406,11 @@ static void _run_recovery_state(dcc_service_mode_common_context_t *context) {
 
     /**
      * @brief Run the RESET_POST state of the service mode state machine.
+     *
+     * @details Sends DCC_SERVICE_MODE_RESET_POST_COUNT reset packets, then returns to IDLE and
+     * fires the step callback (if set) with the stored result.
+     *
+     * @param context Pointer to the service mode common context.
      */
 static void _run_reset_post_state(dcc_service_mode_common_context_t *context) {
 
@@ -344,6 +434,21 @@ static void _run_reset_post_state(dcc_service_mode_common_context_t *context) {
 
 }
 
+    /**
+     * @brief Main loop processing for service mode state machine.
+     *
+     * @details Algorithm:
+     * -# Return unless service mode is active
+     * -# If a packet has been loaded, return until the ISR has flagged it complete, then clear both flags
+     * -# Return unless the encoder reports idle (belt-and-suspenders)
+     * -# RESET_PRE: load a reset packet until DCC_SERVICE_MODE_RESET_PRE_COUNT have been sent, then
+     *    clear the ACK detector state and enter COMMAND
+     * -# COMMAND, RECOVERY, RESET_POST: delegate to the per-state helper
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_common_context_t instance.
+     * @endverbatim
+     */
 void DccServiceModeCommon_run(dcc_service_mode_common_context_t *context) {
 
     if (!context->in_service_mode) {
@@ -406,18 +511,47 @@ void DccServiceModeCommon_run(dcc_service_mode_common_context_t *context) {
 
 }
 
+    /**
+     * @brief Check if the common module is idle (no operation in progress).
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_common_context_t instance.
+     * @endverbatim
+     *
+     * @return true if idle and ready for a new operation.
+     */
 bool DccServiceModeCommon_is_idle(const dcc_service_mode_common_context_t *context) {
 
     return (context->state == DCC_SERVICE_COMMON_STATE_IDLE);
 
 }
 
+    /**
+     * @brief Check if currently in service mode.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_common_context_t instance.
+     * @endverbatim
+     *
+     * @return true if service mode is active.
+     */
 bool DccServiceModeCommon_is_active(const dcc_service_mode_common_context_t *context) {
 
     return context->in_service_mode;
 
 }
 
+    /**
+     * @brief Enter service mode.
+     *
+     * @details Sets in_service_mode; sends nothing on the track by itself.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_common_context_t instance.
+     * @endverbatim
+     *
+     * @return Always true.
+     */
 bool DccServiceModeCommon_enter(dcc_service_mode_common_context_t *context) {
 
     context->in_service_mode = true;
@@ -425,6 +559,15 @@ bool DccServiceModeCommon_enter(dcc_service_mode_common_context_t *context) {
 
 }
 
+    /**
+     * @brief Exit service mode.
+     *
+     * @details Ignored while the state is not IDLE, so an operation in progress always runs to completion.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_common_context_t instance.
+     * @endverbatim
+     */
 void DccServiceModeCommon_exit(dcc_service_mode_common_context_t *context) {
 
     if (context->state != DCC_SERVICE_COMMON_STATE_IDLE) {
@@ -437,6 +580,27 @@ void DccServiceModeCommon_exit(dcc_service_mode_common_context_t *context) {
 
 }
 
+    /**
+     * @brief Start a single service mode operation.
+     *
+     * @details Algorithm:
+     * -# Refuse (return false) when service mode is not active
+     * -# Refuse (return false) when the state is not IDLE
+     * -# Copy the command packet into the context and latch the callback, write flag, repeat and recovery counts
+     * -# Reset the counters, the ACK detector (window closed, no span) and the result to NO_ACK
+     * -# Enter RESET_PRE; DccServiceModeCommon_run() sends the packets from here on
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_common_context_t instance.
+     * @param command_packet Pointer to dcc_packet_t to send during the command phase.
+     * @param on_step_complete Callback fired when the operation completes (dcc_service_mode_step_callback_t).
+     * @param is_write_operation true for write operations (adds the recovery phase), false for verify.
+     * @param command_repeat Number of command packets to send.
+     * @param recovery_count Number of recovery packets to send after the command phase (writes only).
+     * @endverbatim
+     *
+     * @return true if the operation started, false if service mode is not active or an operation is already in progress.
+     */
 bool DccServiceModeCommon_begin_operation(
             dcc_service_mode_common_context_t *context,
             const dcc_packet_t *command_packet,

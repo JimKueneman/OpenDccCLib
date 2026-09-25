@@ -49,7 +49,9 @@
 #include "wfplayer_engine.h"
 #include "wfplayer_command_parser.h"
 
-/* SysTick -- 100 ms tick. Heartbeat: toggle LED1 every 5 ticks (~500 ms). */
+    /**
+     * @brief SysTick ISR, every 100 ms: toggle LED1 every 5 ticks (~500 ms) as a heartbeat.
+     */
 void SysTick_Handler(void) {
     static uint8_t hb = 0;
     if (++hb >= 5) {
@@ -58,6 +60,16 @@ void SysTick_Handler(void) {
     }
 }
 
+    /**
+     * @brief Firmware entry: bring up the board, lower SysTick below the playback timer, then serve the host forever.
+     *
+     * @details PLAYBACK_TIMER is NVIC priority 0 from SysConfig and UART is 2; SysTick
+     * is set to 3 so the heartbeat can never delay a playback step. Each loop pass
+     * emits a deferred "OK DONE" when a finite play has completed, then parses one
+     * command line. UART echo is intentionally not called: the host sees only OK/ERR lines.
+     *
+     * @return Never returns.
+     */
 int main(void) {
 
     SYSCFG_DL_init();

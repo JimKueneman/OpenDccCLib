@@ -50,44 +50,55 @@
 
 #include <string.h>
 
-/* CV#8 (Manufacturer ID) is a known-populated CV -- the same one the spec uses
- * for Direct detection. Register 8 maps to CV#8 (Mobile) / CV#520 (Accessory). */
+    /** @brief CV probed by the Direct and Paged stages: CV#8 (Manufacturer ID) is a known-populated CV, the same one the spec uses for Direct detection. */
 #define DCC_DETECT_CV          8u
+    /** @brief CV#8 bit the Direct stage verifies first (spec §E lines 95-99). */
 #define DCC_DETECT_BIT         7u
+    /** @brief Register probed by the Register stage; register 8 maps to CV#8 (Mobile) / CV#520 (Accessory). */
 #define DCC_DETECT_REGISTER    8u
+    /** @brief Last candidate value tried by the Paged and Register 0..255 scans. */
 #define DCC_DETECT_SCAN_MAX    255u
+    /** @brief Last candidate address tried by the Address-Only 0..127 scan. */
 #define DCC_DETECT_ADDRESS_MAX 127u
 
+    /** @brief States of the detection task state machine. */
 typedef enum {
 
-    DCC_TASK_DETECT_STATE_IDLE,
-    DCC_TASK_DETECT_STATE_PROBE_DIRECT_0,
-    DCC_TASK_DETECT_STATE_PROBE_DIRECT_1,
-    DCC_TASK_DETECT_STATE_READ_DIRECT,
-    DCC_TASK_DETECT_STATE_PROBE_PAGED_VERIFY,
-    DCC_TASK_DETECT_STATE_PROBE_PAGED_SCAN,
-    DCC_TASK_DETECT_STATE_PROBE_REGISTER_VERIFY,
-    DCC_TASK_DETECT_STATE_PROBE_REGISTER_SCAN,
-    DCC_TASK_DETECT_STATE_PROBE_ADDRESS_SCAN,
+    DCC_TASK_DETECT_STATE_IDLE,                  /**< No detection in progress */
+    DCC_TASK_DETECT_STATE_PROBE_DIRECT_0,        /**< Direct: verify of CV#8 bit 7 == 0 outstanding */
+    DCC_TASK_DETECT_STATE_PROBE_DIRECT_1,        /**< Direct: verify of CV#8 bit 7 == 1 outstanding */
+    DCC_TASK_DETECT_STATE_READ_DIRECT,           /**< Direct supported: reading CV#8 bits 6..0 to learn the byte */
+    DCC_TASK_DETECT_STATE_PROBE_PAGED_VERIFY,    /**< Paged: single verify of the known CV#8 value outstanding */
+    DCC_TASK_DETECT_STATE_PROBE_PAGED_SCAN,      /**< Paged: 0..255 scan of CV#8 in progress */
+    DCC_TASK_DETECT_STATE_PROBE_REGISTER_VERIFY, /**< Register: single verify of the known register 8 value outstanding */
+    DCC_TASK_DETECT_STATE_PROBE_REGISTER_SCAN,   /**< Register: 0..255 scan of register 8 in progress */
+    DCC_TASK_DETECT_STATE_PROBE_ADDRESS_SCAN,    /**< Address-Only: 0..127 scan of CV#1 in progress */
 
 } dcc_task_detect_state_enum;
 
+    /** @brief Singleton context for the detection task. */
 typedef struct {
 
-    const interface_dcc_service_mode_task_detect_t *interface;
-    dcc_task_detect_state_enum state;
-    uint8_t supported_modes;
-    uint8_t value;
-    bool value_known;
-    uint8_t scan_value;
-    uint8_t read_bit;
-    bool ack_result;
-    dcc_service_mode_task_on_detect_callback_t on_detect;
+    const interface_dcc_service_mode_task_detect_t *interface; /**< Injected primitive dependencies (unwired members are NULL) */
+    dcc_task_detect_state_enum state;                          /**< Current state machine state */
+    uint8_t supported_modes;                                   /**< DCC_SERVICE_MODE_SUPPORTED_* bits accumulated so far */
+    uint8_t value;                                             /**< CV#8 value as learned so far */
+    bool value_known;                                          /**< true once the full CV#8 value has been established */
+    uint8_t scan_value;                                        /**< Candidate value currently being verified in a scan */
+    uint8_t read_bit;                                          /**< Direct read: CV#8 bit currently being verified (6 down to 0) */
+    bool ack_result;                                           /**< Outcome of the most recent primitive: true = ACK measured */
+    dcc_service_mode_task_on_detect_callback_t on_detect;      /**< Detection-complete callback */
 
 } dcc_service_mode_task_detect_context_t;
 
+    /** @brief Singleton task context. */
 static dcc_service_mode_task_detect_context_t _context;
 
+    /**
+     * @brief Ends detection normally: returns to IDLE and reports through on_detect.
+     *
+     * @details The result is SUCCESS when at least one mode was detected, NO_ACK when supported_modes is 0.
+     */
 static void _finish(void) {
 
     dcc_service_mode_result_enum result = _context.supported_modes ? DCC_SERVICE_MODE_SUCCESS : DCC_SERVICE_MODE_NO_ACK;
@@ -102,10 +113,15 @@ static void _finish(void) {
 
 }
 
-/* Same shape as _finish(), but for a primitive call that failed to start --
- * reports the given result (e.g. DCC_SERVICE_MODE_BUSY) instead of deriving
- * SUCCESS/NO_ACK from supported_modes, and always resets to IDLE so a later
- * detect_mode() call isn't permanently locked out. */
+    /**
+     * @brief Ends detection after a primitive call failed to start.
+     *
+     * @details Same shape as _finish(), but reports the given result (e.g. DCC_SERVICE_MODE_BUSY) instead of
+     * deriving SUCCESS/NO_ACK from supported_modes, and always resets to IDLE so a later detect_mode() call
+     * isn't permanently locked out. The modes found so far are still delivered.
+     *
+     * @param result Result to report through on_detect.
+     */
 static void _fail(dcc_service_mode_result_enum result) {
 
     _context.state = DCC_TASK_DETECT_STATE_IDLE;
@@ -118,6 +134,13 @@ static void _fail(dcc_service_mode_result_enum result) {
 
 }
 
+    /**
+     * @brief Starts reading the rest of CV#8 once Direct is known to be supported.
+     *
+     * @details Bit 7 was already determined by the probe; bits 6..0 are verified one at a time from
+     * READ_DIRECT so the byte is known before the Paged and Register stages. Fails with BUSY if the first
+     * verify_bit cannot be started.
+     */
 static void _begin_direct_read(void) {
 
     /* CV#8 bit 7 already determined by detection; read bits 6..0 to complete the byte. */
@@ -134,6 +157,13 @@ static void _begin_direct_read(void) {
 
 static void _begin_register(void); /* forward declaration for the skip-ahead below */
 
+    /**
+     * @brief Starts the Paged stage.
+     *
+     * @details Skips straight to the Register stage when paged_verify is not wired. If the CV#8 value is
+     * already known it is confirmed with a single paged_verify (PROBE_PAGED_VERIFY); otherwise a 0..255 scan
+     * begins (PROBE_PAGED_SCAN). Fails with BUSY if the primitive cannot be started.
+     */
 static void _begin_paged(void) {
 
     if (!_context.interface->paged_verify) {
@@ -170,6 +200,13 @@ static void _begin_paged(void) {
 
 static void _begin_address(void); /* forward declaration for the skip-ahead below */
 
+    /**
+     * @brief Starts the Register stage.
+     *
+     * @details Skips straight to the Address-Only stage when register_verify is not wired. If the CV#8 value
+     * is already known it is confirmed with a single register_verify of register 8 (PROBE_REGISTER_VERIFY);
+     * otherwise a 0..255 scan begins (PROBE_REGISTER_SCAN). Fails with BUSY if the primitive cannot be started.
+     */
 static void _begin_register(void) {
 
     if (!_context.interface->register_verify) {
@@ -204,6 +241,12 @@ static void _begin_register(void) {
 
 }
 
+    /**
+     * @brief Starts the Address-Only stage.
+     *
+     * @details Finishes detection when address_verify is not wired. Otherwise begins a 0..127 scan of CV#1
+     * (PROBE_ADDRESS_SCAN); fails with BUSY if the primitive cannot be started.
+     */
 static void _begin_address(void) {
 
     if (!_context.interface->address_verify) {
@@ -224,6 +267,15 @@ static void _begin_address(void) {
 
 }
 
+    /**
+     * @brief Initialize the detect task module. Call once during DccConfig_initialize().
+     *
+     * @details Clears the singleton context (state IDLE, no callback) and stores the interface pointer.
+     *
+     * @verbatim
+     * @param interface Pointer to populated interface_dcc_service_mode_task_detect_t (wired by dcc_config.c).
+     * @endverbatim
+     */
 void DccServiceModeTaskDetect_initialize(const interface_dcc_service_mode_task_detect_t *interface) {
 
     memset(&_context, 0, sizeof(_context));
@@ -231,26 +283,44 @@ void DccServiceModeTaskDetect_initialize(const interface_dcc_service_mode_task_d
 
 }
 
-/* Return value and on_detect timing are NOT symmetric across the two ways this can fail to
- * really start, by design choice, not oversight -- flagged in Jim Kueneman's review of
- * upstream PR #2 (2026-09-23), documented here rather than unified (see that PR's discussion
- * for why: unifying would mean propagating a start/fail result up through the whole
- * _begin_paged() -> _begin_register() -> _begin_address() cascade, each of which can also
- * legitimately complete synchronously with a genuine "no modes supported" result, not just
- * fail to start).
- *
- *   - Direct wired, direct_verify_bit() fails to start: returns false, on_detect is NOT
- *     called. The false return is the only signal.
- *   - Direct not wired (or every mode unwired, cascading all the way through _begin_paged()/
- *     _begin_register()/_begin_address()): this function calls the next stage and returns
- *     true UNCONDITIONALLY. If that stage's own probe then fails to start -- or there is
- *     nothing left to probe at all -- the resulting _fail()/_finish() call fires on_detect
- *     SYNCHRONOUSLY, before this function has returned to its own caller.
- *
- * A caller that assumes "true means wait for the callback" can therefore see on_detect fire
- * before it has finished handling this call. See dcc_service_mode_task_detect_Test.cxx's
- * "Synchronous-callback asymmetry" tests, which pin down both sides so a future change that
- * unifies this does not silently change behavior. */
+    /**
+     * @brief Probe the decoder for ALL supported service modes (Direct, Paged, Register, Address-Only).
+     *
+     * @details Algorithm:
+     * -# Reject if a detection is already in progress (state not IDLE)
+     * -# Clear the accumulated modes, CV#8 value, scan state and store the callback
+     * -# If direct_verify_bit is not wired, skip straight to _begin_paged() and return true
+     * -# Otherwise enter PROBE_DIRECT_0 and issue a Direct verify of CV#8 bit 7 == 0
+     * -# If that primitive refuses to start, return to IDLE and report failure to the caller
+     * -# The remaining stages run from DccServiceModeTaskDetect_on_primitive_complete()
+     *
+     * Return value and on_detect timing are NOT symmetric across the two ways this can fail to
+     * really start, by design choice, not oversight -- flagged in Jim Kueneman's review of
+     * upstream PR #2 (2026-09-23), documented here rather than unified (see that PR's discussion
+     * for why: unifying would mean propagating a start/fail result up through the whole
+     * _begin_paged() -> _begin_register() -> _begin_address() cascade, each of which can also
+     * legitimately complete synchronously with a genuine "no modes supported" result, not just
+     * fail to start).
+     *
+     *   - Direct wired, direct_verify_bit() fails to start: returns false, on_detect is NOT
+     *     called. The false return is the only signal.
+     *   - Direct not wired (or every mode unwired, cascading all the way through _begin_paged()/
+     *     _begin_register()/_begin_address()): this function calls the next stage and returns
+     *     true UNCONDITIONALLY. If that stage's own probe then fails to start -- or there is
+     *     nothing left to probe at all -- the resulting _fail()/_finish() call fires on_detect
+     *     SYNCHRONOUSLY, before this function has returned to its own caller.
+     *
+     * A caller that assumes "true means wait for the callback" can therefore see on_detect fire
+     * before it has finished handling this call. See dcc_service_mode_task_detect_Test.cxx's
+     * "Synchronous-callback asymmetry" tests, which pin down both sides so a future change that
+     * unifies this does not silently change behavior.
+     *
+     * @verbatim
+     * @param on_detect Called when detection completes; supported_modes = capability bitmask.
+     * @endverbatim
+     *
+     * @return true if started; false if another detection is running, or if the Direct primitive is wired and refuses to start.
+     */
 bool DccServiceModeTaskDetect_detect_mode(dcc_service_mode_task_on_detect_callback_t on_detect) {
 
     if (_context.state != DCC_TASK_DETECT_STATE_IDLE) {
@@ -290,7 +360,11 @@ bool DccServiceModeTaskDetect_detect_mode(dcc_service_mode_task_on_detect_callba
 
 }
 
-    /** @brief Probe one Direct-mode bit of the detect CV; a refused primitive fails the task with BUSY. */
+    /**
+     * @brief Probe one Direct-mode bit of the detect CV (verify value 1); a refused primitive fails the task with BUSY.
+     *
+     * @param bit_position CV#8 bit to verify (0-7).
+     */
 static void _probe_direct_bit(uint8_t bit_position) {
 
     if (!_context.interface->direct_verify_bit(DCC_DETECT_CV, bit_position, true)) {
@@ -340,6 +414,24 @@ static void _scan_address_next(void) {
 
 }
 
+    /**
+     * @brief Notify the task module that the primitive has finished its full operation (including recovery packets).
+     *
+     * @details Algorithm:
+     * -# Record the ACK outcome: SUCCESS from the primitive means a valid ACK was measured, anything else means no ACK
+     * -# PROBE_DIRECT_0 / PROBE_DIRECT_1: an ACK marks Direct supported, fixes CV#8 bit 7 and starts the Direct read
+     *    of bits 6..0; no ACK on bit 7 == 0 tries bit 7 == 1, no ACK on that moves on to Paged with the value unknown
+     * -# READ_DIRECT: record the bit, then verify the next lower bit or, after bit 0, mark the value known and start Paged
+     * -# PROBE_PAGED_VERIFY / PROBE_REGISTER_VERIFY: an ACK marks that mode supported; either way move to the next stage
+     * -# PROBE_PAGED_SCAN / PROBE_REGISTER_SCAN: an ACK marks the mode supported and learns the value; an exhausted
+     *    scan moves on without it; otherwise verify the next candidate
+     * -# PROBE_ADDRESS_SCAN: an ACK marks Address-Only supported; an ACK or an exhausted scan finishes detection
+     * -# Ignore the event when IDLE
+     *
+     * @verbatim
+     * @param result Result of the primitive operation (passed through from primitive callback).
+     * @endverbatim
+     */
 void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_enum result) {
 
     /* The common module measures the ACK pulse width internally and reports the

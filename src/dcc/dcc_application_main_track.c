@@ -27,8 +27,11 @@
  * @file dcc_application_main_track.c
  * @brief Application-layer implementation for main track operations.
  *
+ * @details Legacy module: still compiled and unit-tested, but not wired by
+ * dcc_config.c (see dcc_application_command_station_main_track for the current API).
+ *
  * @author Jim Kueneman
- * @date 08 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_application_main_track.h"
@@ -36,15 +39,33 @@
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
-    /** @brief Stored pointer to the interface struct wired by dcc_config.c */
+    /** @brief Interface pointer supplied to DccApplicationMainTrack_initialize; NULL until then. */
 static const interface_dcc_application_main_track_t *_interface = (void *)0;
 
+    /**
+     * @brief Initialize the main track application module.
+     *
+     * @details Stores the interface pointer; nothing is powered or scheduled.
+     *
+     * @verbatim
+     * @param interface Pointer to a populated interface_dcc_application_main_track_t.
+     * @endverbatim
+     */
 void DccApplicationMainTrack_initialize(const interface_dcc_application_main_track_t *interface) {
 
     _interface = interface;
 
 }
 
+    /**
+     * @brief Enable main track power output and start DCC signal generation.
+     *
+     * @details Algorithm:
+     * -# Return if not initialized.
+     * -# track_power_set(true).
+     * -# timer_start(DCC_ONE_BIT_HALF_PERIOD_US).
+     * -# encoder_start().
+     */
 void DccApplicationMainTrack_power_on(void) {
 
     if (!_interface) {
@@ -59,6 +80,15 @@ void DccApplicationMainTrack_power_on(void) {
 
 }
 
+    /**
+     * @brief Disable main track power output and stop DCC signal generation.
+     *
+     * @details Algorithm:
+     * -# Return if not initialized.
+     * -# encoder_stop().
+     * -# timer_stop().
+     * -# track_power_set(false).
+     */
 void DccApplicationMainTrack_power_off(void) {
 
     if (!_interface) {
@@ -73,6 +103,22 @@ void DccApplicationMainTrack_power_off(void) {
 
 }
 
+    /**
+     * @brief Insert a packet into the main track scheduler.
+     *
+     * @details Returns false when uninitialized, otherwise forwards every argument
+     * to the scheduler_insert hook.
+     *
+     * @verbatim
+     * @param packet       The packet to schedule.
+     * @param address      Address used as the duplicate-combining key.
+     * @param tag          Sub-key for duplicate combining.
+     * @param priority     Packet priority level.
+     * @param auto_refresh true = keep in refresh cycle indefinitely.
+     * @endverbatim
+     *
+     * @return true if the packet was scheduled; false if no free slot or the module is not initialized.
+     */
 bool DccApplicationMainTrack_insert(const dcc_packet_t *packet, dcc_address_t address, dcc_tag_enum tag, dcc_priority_enum priority, bool auto_refresh) {
 
     if (!_interface) {
@@ -85,6 +131,16 @@ bool DccApplicationMainTrack_insert(const dcc_packet_t *packet, dcc_address_t ad
 
 }
 
+    /**
+     * @brief Remove all scheduler slots for a given address.
+     *
+     * @details Returns when uninitialized, otherwise forwards to the
+     * scheduler_remove_address hook.
+     *
+     * @verbatim
+     * @param address The address to purge.
+     * @endverbatim
+     */
 void DccApplicationMainTrack_remove_address(dcc_address_t address) {
 
     if (!_interface) {
@@ -97,6 +153,11 @@ void DccApplicationMainTrack_remove_address(dcc_address_t address) {
 
 }
 
+    /**
+     * @brief Clear all active scheduler slots.
+     *
+     * @details Returns when uninitialized, otherwise forwards to the scheduler_clear hook.
+     */
 void DccApplicationMainTrack_clear(void) {
 
     if (!_interface) {

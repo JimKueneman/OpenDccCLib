@@ -60,53 +60,68 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/* Maximum command line length */
+    /** @brief Maximum command line length including the terminator. */
 #define CMD_LINE_MAX 128
 
-/* Maximum tokens per command */
+    /** @brief Maximum tokens parsed from one command line. */
 #define CMD_MAX_TOKENS 8
 
-/* Per-locomotive state for function bitmask tracking */
+    /** @brief Per-locomotive state so function group commands can be sent with the correct bitmask. */
 typedef struct {
 
-    dcc_address_t address;
-    dcc_address_type_enum address_type;
-    uint8_t speed;
-    bool direction;
-    uint8_t func_fl_f4;
-    uint8_t func_f5_f8;
-    uint8_t func_f9_f12;
-    uint8_t func_f13_f20;
-    uint8_t func_f21_f28;
-    uint8_t func_f29_f36;
-    uint8_t func_f37_f44;
-    uint8_t func_f45_f52;
-    uint8_t func_f53_f60;
-    uint8_t func_f61_f68;
-    bool active;
+    dcc_address_t address;              /**< loco address */
+    dcc_address_type_enum address_type; /**< short, long or broadcast */
+    uint8_t speed;                      /**< last commanded speed step */
+    bool direction;                     /**< true = forward */
+    uint8_t func_fl_f4;                 /**< group 1 bitmask: FL bit 4, F1-F4 bits 0-3 */
+    uint8_t func_f5_f8;                 /**< group 2a bitmask */
+    uint8_t func_f9_f12;                /**< group 2b bitmask */
+    uint8_t func_f13_f20;               /**< F13-F20 bitmask */
+    uint8_t func_f21_f28;               /**< F21-F28 bitmask */
+    uint8_t func_f29_f36;               /**< F29-F36 bitmask */
+    uint8_t func_f37_f44;               /**< F37-F44 bitmask */
+    uint8_t func_f45_f52;               /**< F45-F52 bitmask */
+    uint8_t func_f53_f60;               /**< F53-F60 bitmask */
+    uint8_t func_f61_f68;               /**< F61-F68 bitmask */
+    bool active;                        /**< slot in use */
 
 } loco_state_t;
 
+    /** @brief Loco state table, one slot per auto-refresh loco. */
 static loco_state_t _loco_table[USER_DEFINED_DCC_MAX_LOCOS];
 
+    /** @brief Current command line, tokenized in place. */
 static char _line_buf[CMD_LINE_MAX];
+    /** @brief Formatted reply line. */
 static char _resp_buf[128];
+    /** @brief When true, SPEED/FUNC packets join the scheduler auto-refresh list; when false they are sent once (REFRESH ON|OFF). */
 static bool _auto_refresh = true;
 
 /* ========================================================================== */
 /* Helpers                                                                    */
 /* ========================================================================== */
 
+    /**
+     * @brief Write one reply line (msg + CR LF) on the command UART.
+     *
+     * @param msg  Null-terminated reply text.
+     */
 static void _respond(const char *msg) {
 
     TI_UartDriver_write_string(msg);
     TI_UartDriver_write_string("\r\n");
 }
 
-// Parse an address token like "40", "40S", "40L".
-// token: the token string (already uppercased).
-// addr_out: receives the numeric address.
-// type_out: receives the address type.
+    /**
+     * @brief Parse an address token like "40", "40S" or "40L".
+     *
+     * @details A trailing S forces short (0 stays broadcast), L forces long; with no
+     * suffix 0 is broadcast, 1-127 short and 128+ long.
+     *
+     * @param token     The token string (already uppercased).
+     * @param addr_out  Receives the numeric address.
+     * @param type_out  Receives the address type.
+     */
 static void _parse_address(const char *token, uint16_t *addr_out,
                            dcc_address_type_enum *type_out) {
 
@@ -132,6 +147,16 @@ static void _parse_address(const char *token, uint16_t *addr_out,
     }
 }
 
+    /**
+     * @brief Look up the loco slot for an address, allocating a fresh one if none exists.
+     *
+     * @details A new slot starts with all functions off and direction forward.
+     *
+     * @param addr       Loco address.
+     * @param addr_type  Address type.
+     *
+     * @return Pointer to the slot, or NULL when the table is full.
+     */
 static loco_state_t *_find_or_create_loco(uint16_t addr,
                                            dcc_address_type_enum addr_type) {
     uint16_t i;
@@ -158,6 +183,15 @@ static loco_state_t *_find_or_create_loco(uint16_t addr,
     return NULL;
 }
 
+    /**
+     * @brief Split a line on spaces and tabs in place, null-terminating each token.
+     *
+     * @param line        Line to split; modified.
+     * @param tokens      Receives pointers to the tokens.
+     * @param max_tokens  Capacity of tokens.
+     *
+     * @return Number of tokens found.
+     */
 static int _tokenize(char *line, char *tokens[], int max_tokens) {
 
     int count = 0;
@@ -187,14 +221,25 @@ static int _tokenize(char *line, char *tokens[], int max_tokens) {
     return count;
 }
 
-// Schedule a packet on the main track. When auto_refresh is true the packet
-// is added to the scheduler's auto-refresh list; otherwise it is sent once.
-/* repeat_count policy on this bench: NO handler overrides the count. Every
- * packet goes out with the LIBRARY builder's default (DCC_REPEAT_* table in
- * dcc_defines.h) so the S-9.2.1 suite proves those defaults on the wire. The
- * former blanket "repeat_count = 3" here was a workaround for the builders'
- * old repeat_count = 0 ("never transmitted") defect, and it hid that defect
- * from the bench for as long as it existed. */
+    /**
+     * @brief Schedule a packet on the main track and fire the insert trigger when armed.
+     *
+     * @details When auto_refresh is true the packet is added to the scheduler
+     * auto-refresh list; otherwise it is sent once. Repeat-count policy on this
+     * bench: NO handler overrides the count. Every packet goes out with the LIBRARY
+     * builder default (DCC_REPEAT_* table in dcc_defines.h) so the S-9.2.1 suite
+     * proves those defaults on the wire. The former blanket "repeat_count = 3" here
+     * was a workaround for the builders' old repeat_count = 0 defect and hid it
+     * from the bench for as long as it existed.
+     *
+     * @param packet        Packet to schedule.
+     * @param address       Address the scheduler files it under.
+     * @param tag           Scheduler tag (which packet kind this replaces).
+     * @param priority      Scheduler priority.
+     * @param auto_refresh  true = add to auto-refresh, false = one-shot.
+     *
+     * @return true when the scheduler accepted the packet.
+     */
 static bool _schedule_main_track(const dcc_packet_t *packet, dcc_address_t address,
                                  dcc_tag_enum tag, dcc_priority_enum priority,
                                  bool auto_refresh) {
@@ -213,6 +258,11 @@ static bool _schedule_main_track(const dcc_packet_t *packet, dcc_address_t addre
     return ok;
 }
 
+    /**
+     * @brief Uppercase an ASCII string in place.
+     *
+     * @param s  Null-terminated string; modified.
+     */
 static void _strupper(char *s) {
 
     while (*s) {
@@ -226,6 +276,12 @@ static void _strupper(char *s) {
 /* Command handlers                                                           */
 /* ========================================================================== */
 
+    /**
+     * @brief POWER ON|OFF: main-track power.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_power(char *tokens[], int count) {
 
     if (count < 2) {
@@ -244,6 +300,12 @@ static void _cmd_power(char *tokens[], int count) {
     }
 }
 
+    /**
+     * @brief REFRESH ON|OFF: select auto-refresh or one-shot for SPEED/FUNC.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_refresh(char *tokens[], int count) {
 
     if (count < 2) {
@@ -262,6 +324,15 @@ static void _cmd_refresh(char *tokens[], int count) {
     }
 }
 
+    /**
+     * @brief SPEED <addr> <speed> <FWD|REV> [14|28|128]: speed/direction packet (default 128 steps).
+     *
+     * @details Updates the loco slot, builds the 14/28/128-step packet and schedules it
+     * under DCC_TAG_SPEED, respecting the REFRESH setting.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_speed(char *tokens[], int count) {
 
     if (count < 4) {
@@ -331,6 +402,12 @@ static void _cmd_speed(char *tokens[], int count) {
     _respond(_resp_buf);
 }
 
+    /**
+     * @brief ESTOP [addr]: one-shot emergency stop, addressed (128-step speed 1) or broadcast.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_estop(char *tokens[], int count) {
 
     dcc_packet_t packet;
@@ -370,6 +447,16 @@ static void _cmd_estop(char *tokens[], int count) {
     }
 }
 
+    /**
+     * @brief FUNC <addr> <0-68> <ON|OFF>: update one function bit and send its group packet.
+     *
+     * @details Picks the group by function number (FL/F1-F4, F5-F8, F9-F12, then
+     * eight-bit groups up to F68), updates the loco slot bitmask and schedules the
+     * group packet under its own tag, respecting the REFRESH setting.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_func(char *tokens[], int count) {
 
     if (count < 4) {
@@ -562,6 +649,15 @@ static void _cmd_func(char *tokens[], int count) {
     _respond(_resp_buf);
 }
 
+    /**
+     * @brief ACC <board> <pair> <ON|OFF> or ACC CV WRITE|VERIFY|BIT ...: basic accessory output or its POM CV command.
+     *
+     * @details Board addresses are the 9-bit board address the library builder expects.
+     * CV commands go out with the library default repeat count (see _cmd_cv).
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_acc(char *tokens[], int count) {
 
     /* ACC CV WRITE <board> <pair> <cv> <value> */
@@ -641,6 +737,12 @@ static void _cmd_acc(char *tokens[], int count) {
     _respond(_resp_buf);
 }
 
+    /**
+     * @brief ACCE <addr> <aspect> or ACCE CV WRITE|VERIFY|BIT ...: extended accessory aspect or its POM CV command.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_acce(char *tokens[], int count) {
 
     /* ACCE CV WRITE <addr> <cv> <value> */
@@ -718,8 +820,15 @@ static void _cmd_acce(char *tokens[], int count) {
     _respond(_resp_buf);
 }
 
-// NOP <addr> [E] — accessory No-Operation (S-9.2.1 2.4.6). Lets a bi-directional
-// accessory decoder raise an SRQ without changing output. E = extended decoder.
+    /**
+     * @brief NOP <addr> [E]: accessory No-Operation (S-9.2.1 2.4.6).
+     *
+     * @details Lets a bi-directional accessory decoder raise an SRQ without changing
+     * output. E selects the extended-decoder form.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_nop(char *tokens[], int count) {
 
     if (count < 2) {
@@ -749,6 +858,16 @@ static void _cmd_nop(char *tokens[], int count) {
     _respond(_resp_buf);
 }
 
+    /**
+     * @brief CV WRITE|VERIFY|BIT <addr> <cv> <value> [bit]: ops-mode (POM) CV command to a mobile decoder.
+     *
+     * @details No repeat-count override: the library builders own the S-9.2.1 default
+     * (WRITE / bit WRITE = 2 identical packets, VERIFY = 1) and the S-9.2.1 HIL
+     * suite counts the repeats on the wire to prove it.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_cv(char *tokens[], int count) {
 
     /* CV WRITE <addr> <cv> <value> */
@@ -801,8 +920,15 @@ static void _cmd_cv(char *tokens[], int count) {
     _respond("OK: CV command scheduled");
 }
 
-/* Asynchronous result of a service-mode task. The task starts, returns true,
- * and reports the outcome here once the operation (and recovery) completes. */
+    /**
+     * @brief Asynchronous result of a service-mode task: print one SVC RESULT line.
+     *
+     * @details The task starts, returns true, and reports the outcome here once the
+     * operation (and recovery) completes.
+     *
+     * @param result  Outcome code.
+     * @param value   Value read (meaningful on SUCCESS).
+     */
 static void _svc_on_complete(dcc_service_mode_result_enum result, uint8_t value) {
 
     switch (result) {
@@ -833,6 +959,12 @@ static void _svc_on_complete(dcc_service_mode_result_enum result, uint8_t value)
 }
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_DETECT
+    /**
+     * @brief Result of SVC DETECT: print the supported service modes, or "none".
+     *
+     * @param result  Outcome code.
+     * @param modes   Bitmask of DCC_SERVICE_MODE_SUPPORTED_* flags.
+     */
 static void _svc_on_detect(dcc_service_mode_result_enum result, uint8_t modes) {
 
     if (result != DCC_SERVICE_MODE_SUCCESS || modes == 0) {
@@ -850,6 +982,13 @@ static void _svc_on_detect(dcc_service_mode_result_enum result, uint8_t modes) {
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_DETECT */
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+    /**
+     * @brief Map an optional MOBILE|ACC|ACCESSORY token to a decoder type; mobile by default.
+     *
+     * @param tok  Token, or NULL.
+     *
+     * @return DCC_DECODER_TYPE_ACCESSORY for ACC/ACCESSORY, else DCC_DECODER_TYPE_MOBILE.
+     */
 static dcc_decoder_type_enum _parse_decoder_type(const char *tok) {
 
     if (tok && (strcmp(tok, "ACC") == 0 || strcmp(tok, "ACCESSORY") == 0)) {
@@ -860,6 +999,11 @@ static dcc_decoder_type_enum _parse_decoder_type(const char *tok) {
 }
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_REGISTER */
 
+    /**
+     * @brief Print whether a service-mode operation started.
+     *
+     * @param started  Return value of the library task start call.
+     */
 static void _svc_report_start(bool started) {
 
     _respond(started ? "OK: service mode operation started"
@@ -867,6 +1011,12 @@ static void _svc_report_start(bool started) {
 }
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
+    /**
+     * @brief SVC DIRECT WRITE|READ|BITW|BITR <cv> ...: start a Direct-mode task; the result arrives via _svc_on_complete.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_svc_direct(char *tokens[], int count) {
 
     /* SVC DIRECT WRITE <cv> <value>      */
@@ -902,14 +1052,19 @@ static void _cmd_svc_direct(char *tokens[], int count) {
     _svc_report_start(started);
 }
 
-/* SVC MOCKACK <width_us>
- *
- * Arm the mock-ACK loopback (MOCK_ACK_DRIVE PB24 -> jumper -> MOCK_ACK PB9) to
- * inject one pulse of the given width, then run a single Direct bit-verify. The
- * library reads the looped-back pulse through current_sense_read and applies its
- * 6 ms +/- 1 ms ACK window. read_bit reports value=1 when the width was accepted
- * as an ACK, value=0 when rejected -- a pure electrical test of the ACK width
- * counter with no decoder attached. */
+    /**
+     * @brief Result of SVC MOCKACK: "ACK DETECTED" when the looped-back pulse was accepted, else "NO ACK".
+     *
+     * @details SVC MOCKACK arms the mock-ACK loopback (MOCK_ACK_DRIVE PB24 -> jumper
+     * -> MOCK_ACK PB9) to inject one pulse of a given width, then runs a single
+     * Direct bit-verify. The library reads the pulse through current_sense_read and
+     * applies its 6 ms +/- 1 ms ACK window: read_bit reports value=1 when the width
+     * was accepted as an ACK, value=0 when rejected -- a pure electrical test of the
+     * ACK width counter with no decoder attached.
+     *
+     * @param result  Outcome code.
+     * @param value   Bit read back: 1 = ACK seen.
+     */
 static void _svc_on_mockack(dcc_service_mode_result_enum result, uint8_t value) {
 
     if (result == DCC_SERVICE_MODE_SUCCESS && value != 0) {
@@ -919,6 +1074,18 @@ static void _svc_on_mockack(dcc_service_mode_result_enum result, uint8_t value) 
     }
 }
 
+    /**
+     * @brief SVC MOCKACK <width_us> [EARLY | GLITCH <gap_us>]: inject a mock ACK pulse and test the width window.
+     *
+     * @details GLITCH arms an interrupted pulse (high, low gap, high) whose halves are
+     * each below the 6 ms window, so a correct width counter that resets on the gap
+     * reports NO ACK (S-9.2.3 CS-005). EARLY fires the pulse on the first (blanked)
+     * command packet so the suite can confirm the library masks it. CV 8 / bit 0 is
+     * arbitrary: no decoder responds, so the injected pulse alone decides the verdict.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_svc_mockack(char *tokens[], int count) {
 
     if (count < 3) {
@@ -953,12 +1120,17 @@ static void _cmd_svc_mockack(char *tokens[], int count) {
         DccApplicationCommandStationServiceTrack_direct_read_bit(8, 0, _svc_on_mockack, NULL));
 }
 
-/* SVC MOCKCV <cv> <value> | OFF
- *
- * Configure the HIL mock decoder to hold <cv> = <value> (decimal or 0x-hex), so
- * the bench can run real Direct reads/writes against it: reads converge on the
- * held value, writes update it, and verify commands ACK only when they match.
- * SVC MOCKCV OFF disables it (no ACK -> failure-path testing). */
+    /**
+     * @brief SVC MOCKCV <cv> <value> | OFF: configure the HIL mock decoder.
+     *
+     * @details Holds <cv> = <value> (decimal or 0x-hex) so the bench can run real
+     * Direct reads/writes against it: reads converge on the held value, writes
+     * update it, and verify commands ACK only when they match. OFF disables it
+     * (no ACK -> failure-path testing).
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_svc_mockcv(char *tokens[], int count) {
 
     if (count >= 3 && strcmp(tokens[2], "OFF") == 0) {
@@ -980,6 +1152,14 @@ static void _cmd_svc_mockcv(char *tokens[], int count) {
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_DIRECT */
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
+    /**
+     * @brief SVC PAGED WRITE|READ|BITW|BITR <cv> ...: start a paged-mode task.
+     *
+     * @details Bit operations are read-modify-write on the whole byte (S-9.2.3 non-Direct bit op).
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_svc_paged(char *tokens[], int count) {
 
     /* SVC PAGED WRITE <cv> <value> / SVC PAGED READ <cv>      */
@@ -1017,6 +1197,15 @@ static void _cmd_svc_paged(char *tokens[], int count) {
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_PAGED */
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+    /**
+     * @brief SVC REG WRITE|READ|VERIFY|BITW|BITR|RESET <cv> [value] [MOBILE|ACC]: start a register-mode task.
+     *
+     * @details Bit operations are read-modify-write on the whole byte. RESET issues the
+     * register-mode factory reset.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_svc_register(char *tokens[], int count) {
 
     /* SVC REG WRITE <cv> <value> [MOBILE|ACC]      */
@@ -1070,6 +1259,12 @@ static void _cmd_svc_register(char *tokens[], int count) {
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_REGISTER */
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
+    /**
+     * @brief SVC ADDR WRITE|VERIFY <addr> | READ: start an address-only programming task.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_svc_address(char *tokens[], int count) {
 
     /* SVC ADDR WRITE <addr> / SVC ADDR READ / SVC ADDR VERIFY <addr> */
@@ -1098,6 +1293,12 @@ static void _cmd_svc_address(char *tokens[], int count) {
 }
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS */
 
+    /**
+     * @brief SVC ...: service-mode dispatcher (ENTER, EXIT, DETECT, DIRECT, MOCKACK, MOCKCV, PAGED, REG, ADDR).
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_svc(char *tokens[], int count) {
 
     if (count < 2) {
@@ -1167,6 +1368,7 @@ static void _cmd_svc(char *tokens[], int count) {
     _respond("ERR: unknown SVC subcommand");
 }
 
+    /** @brief STATUS: report service-mode state and the loco table size. */
 static void _cmd_status(void) {
 
     bool svc_active = DccApplicationCommandStationServiceTrack_is_service_mode_active();
@@ -1179,11 +1381,17 @@ static void _cmd_status(void) {
     _respond(_resp_buf);
 }
 
-// Arm the test trigger (PB3): the next non-idle packet transmitted drives a
-// clean rising edge so a logic analyzer can hardware-trigger on the packet
-// under test. Used by the HIL compliance harness.
-// "TRIG INSERT" arms it on the next main-track insert instead, so the rising
-// edge marks the moment the command was queued (scheduler latency, issue #5).
+    /**
+     * @brief TRIG [INSERT]: arm the PB3 test trigger.
+     *
+     * @details Plain TRIG: the next non-idle packet dispatched drives a clean rising
+     * edge so the logic analyzer can hardware-trigger on the packet under test.
+     * TRIG INSERT arms it on the next main-track insert instead, so the edge marks
+     * the moment the command was queued (scheduler latency, issue #5).
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_trig(char *tokens[], int count) {
 
     if (count >= 2 && strcmp(tokens[1], "INSERT") == 0) {
@@ -1197,10 +1405,16 @@ static void _cmd_trig(char *tokens[], int count) {
 }
 
 #ifdef DCC_COMPILE_COMMAND_STATION
-// RailCom cutout runtime control (HIL: S-9.3.2 CS-007 / CS-008).
-//   RAILCOM TIMING <delay> <settling> <ch1> <gap> <ch2>  -- reconfigure per-state
-//       periods (us); a 0 in any field selects that field's spec default.
-//   RAILCOM CANCEL  -- cancel the next in-progress cutout (restores the H-bridge).
+    /**
+     * @brief RAILCOM TIMING <delay> <settling> <ch1> <gap> <ch2> | RAILCOM CANCEL: cutout runtime control (HIL, S-9.3.2 CS-007 / CS-008).
+     *
+     * @details TIMING reconfigures the per-state periods in microseconds; a 0 in any
+     * field selects that field's spec default. CANCEL arms a cancel of the next
+     * cutout, which drops the PB2 cutout strobe early.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_railcom(char *tokens[], int count) {
 
     if (count >= 2 && strcmp(tokens[1], "CANCEL") == 0) {
@@ -1228,12 +1442,16 @@ static void _cmd_railcom(char *tokens[], int count) {
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
 #if defined(DCC_COMPILE_COMMAND_STATION) && defined(DCC_COMPILE_RAILCOM)
-// RailCom loopback (HIL: S-9.3.2 CS-010..015). The host 4/8-encodes a reply and
-// arms it here; the next cutout plays it through MOCK_RC_TX -> jumper -> RAILCOM_RX
-// and the library's real receive path reports what it decoded (RC RESULT lines).
-//   RC MOCK <ch1hex|-> [<ch2hex|->] [LATE]  -- raw bytes as contiguous hex, "-" = none
-//   RC MOCK OFF                              -- disarm and zero the counters
-//   RC STATUS                                -- loopback counters
+    /**
+     * @brief Parse a contiguous hex-byte token ("0A1B") into raw bytes; "-" means none.
+     *
+     * @param tok  Token to parse.
+     * @param out  Receives the bytes.
+     * @param max  Capacity of out in bytes.
+     * @param n    Receives the number of bytes parsed (0 for "-").
+     *
+     * @return false on odd length, a non-hex character, an empty token or more than max bytes.
+     */
 static bool _parse_hex_bytes(const char *tok, uint8_t *out, uint8_t max, uint8_t *n) {
 
     size_t len = strlen(tok);
@@ -1265,6 +1483,17 @@ static bool _parse_hex_bytes(const char *tok, uint8_t *out, uint8_t max, uint8_t
     return true;
 }
 
+    /**
+     * @brief RC MOCK <ch1hex|-> [<ch2hex|->] [LATE] | RC MOCK OFF | RC STATUS: RailCom loopback (HIL, S-9.3.2 CS-010..015).
+     *
+     * @details The host 4/8-encodes a reply and arms it here; the next cutout plays it
+     * through MOCK_RC_TX -> jumper -> RAILCOM_RX and the library real receive path
+     * reports what it decoded as RC RESULT lines. OFF disarms and zeroes the
+     * counters; STATUS prints the loopback counters.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_rc(char *tokens[], int count) {
 
     if (count >= 2 && strcmp(tokens[1], "STATUS") == 0) {
@@ -1325,8 +1554,11 @@ static void _cmd_rc(char *tokens[], int count) {
 }
 #endif /* DCC_COMPILE_COMMAND_STATION && DCC_COMPILE_RAILCOM */
 
-// Send a broadcast reset packet (00 00 00) once on the main track. Exposed so
-// the HIL harness can verify the S-9.2 reset-packet encoding on the wire.
+    /**
+     * @brief RESET: send one broadcast reset packet (00 00 00) on the main track.
+     *
+     * @details Exposed so the HIL harness can verify the S-9.2 reset-packet encoding on the wire.
+     */
 static void _cmd_reset(void) {
 
     dcc_packet_t packet;
@@ -1341,8 +1573,11 @@ static void _cmd_reset(void) {
     _respond("OK: RESET packet scheduled (00 00 00)");
 }
 
-// Broadcast CONTROLLED stop (S-9.2 baseline 01DC000S with S=0): all decoders
-// decelerate to a stop. The emergency form (S=1) is the ESTOP command.
+    /**
+     * @brief STOP: broadcast CONTROLLED stop (S-9.2 baseline 01DC000S with S=0).
+     *
+     * @details All decoders decelerate to a stop. The emergency form (S=1) is the ESTOP command.
+     */
 static void _cmd_stop(void) {
 
     dcc_packet_t packet;
@@ -1357,9 +1592,15 @@ static void _cmd_stop(void) {
     _respond("OK: broadcast controlled stop (S=0)");
 }
 
-// Send a System Time broadcast packet (S-9.2.1 §2.3.6.3): 16-bit milliseconds
-// since startup, broadcast to address 0 (00 C2 <msb> <lsb> EE). Exposed so the
-// HIL harness can verify the system-time encoding on the wire.
+    /**
+     * @brief SYSTIME <ms>: broadcast System Time packet (S-9.2.1 2.3.6.3).
+     *
+     * @details 16-bit milliseconds since startup, broadcast to address 0
+     * (00 C2 <msb> <lsb> EE). Exposed so the HIL harness can verify the encoding.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_systime(char *tokens[], int count) {
 
     if (count < 2) {
@@ -1384,8 +1625,14 @@ static void _cmd_systime(char *tokens[], int count) {
     _respond(_resp_buf);
 }
 
-// MTIME <minutes> <dow> <hours> <update> <accel> -- broadcast model time
-// (S-9.2.1 2.3.6.2, CC=00). dow: 0=Mon .. 6=Sun, 7=not-supported.
+    /**
+     * @brief MTIME <minutes> <dow> <hours> <update> <accel>: broadcast model time (S-9.2.1 2.3.6.2, CC=00).
+     *
+     * @details dow: 0=Mon .. 6=Sun, 7=not-supported.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_mtime(char *tokens[], int count) {
 
     if (count < 6) {
@@ -1417,7 +1664,12 @@ static void _cmd_mtime(char *tokens[], int count) {
     _respond(_resp_buf);
 }
 
-// MDATE <day> <month> <year> -- broadcast model date (S-9.2.1 2.3.6.2, CC=01).
+    /**
+     * @brief MDATE <day> <month> <year>: broadcast model date (S-9.2.1 2.3.6.2, CC=01).
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_mdate(char *tokens[], int count) {
 
     if (count < 4) {
@@ -1447,10 +1699,13 @@ static void _cmd_mdate(char *tokens[], int count) {
     _respond(_resp_buf);
 }
 
-// Clear all auto-refresh entries AND reset the per-loco function/speed state so
-// the track returns to a clean idle-only stream. Used by the HIL harness for
-// test isolation between driven captures (so accumulated function bits don't
-// bleed from one test into the next).
+    /**
+     * @brief CLEAR: remove all auto-refresh entries and reset the per-loco state.
+     *
+     * @details Returns the track to a clean idle-only stream. Used by the HIL harness
+     * for test isolation between driven captures so accumulated function bits do
+     * not bleed from one test into the next.
+     */
 static void _cmd_clear(void) {
 
     DccApplicationCommandStationMainTrack_remove_all_auto_refresh();
@@ -1458,6 +1713,12 @@ static void _cmd_clear(void) {
     _respond("OK: cleared (auto-refresh + loco state, idle-only)");
 }
 
+    /**
+     * @brief CONSIST <addr> SET <consist_addr> [NORMAL|REVERSE] | CLEAR: one-shot consist control packet.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_consist(char *tokens[], int count) {
 
     /* CONSIST <addr> SET <consist_addr> [NORMAL|REVERSE] */
@@ -1505,6 +1766,12 @@ static void _cmd_consist(char *tokens[], int count) {
     _respond(_resp_buf);
 }
 
+    /**
+     * @brief BSS <addr> <1-127> <ON|OFF>: one-shot binary state short-form packet.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_bss(char *tokens[], int count) {
 
     /* BSS <addr> <1-127> <ON|OFF> */
@@ -1539,6 +1806,12 @@ static void _cmd_bss(char *tokens[], int count) {
     _respond(_resp_buf);
 }
 
+    /**
+     * @brief BSL <addr> <1-32767> <ON|OFF>: one-shot binary state long-form packet.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_bsl(char *tokens[], int count) {
 
     /* BSL <addr> <1-32767> <ON|OFF> */
@@ -1573,6 +1846,12 @@ static void _cmd_bsl(char *tokens[], int count) {
     _respond(_resp_buf);
 }
 
+    /**
+     * @brief ANALOG <addr> <output> <value>: one-shot analog function packet.
+     *
+     * @param tokens  Uppercased command tokens; tokens[0] is the verb.
+     * @param count   Number of tokens.
+     */
 static void _cmd_analog(char *tokens[], int count) {
 
     /* ANALOG <addr> <output> <value> */
@@ -1606,6 +1885,7 @@ static void _cmd_analog(char *tokens[], int count) {
     _respond(_resp_buf);
 }
 
+    /** @brief HELP: print the command list. */
 static void _cmd_help(void) {
 
     _respond("DCC Command Station Commands:");
@@ -1656,11 +1936,18 @@ static void _cmd_help(void) {
 /* Public API                                                                 */
 /* ========================================================================== */
 
+    /** @brief Clear the loco table. */
 void UartCommandParser_initialize(void) {
 
     memset(_loco_table, 0, sizeof(_loco_table));
 }
 
+    /**
+     * @brief Fetch one complete UART line, uppercase and tokenize it, and dispatch on the verb.
+     *
+     * @details Non-blocking: returns at once when no line is ready or the line is
+     * empty. Unknown verbs get an ERR reply.
+     */
 void UartCommandParser_process(void) {
 
     if (!TI_UartDriver_read_line(_line_buf, CMD_LINE_MAX))

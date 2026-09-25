@@ -27,7 +27,7 @@
  * @file decoder_command_parser.h
  * @brief Simple UART command parser for the demo.
  *
- * @details Supports: ADDR, CLEAR, STATUS, HELP.
+ * @details Supports: ADDR, CLEAR, ACK, STATUS, HELP.
  * This is demo infrastructure only -- a real decoder would not normally
  * need a UART command interface.
  *
@@ -41,11 +41,16 @@
 extern "C" {
 #endif
 
-/* Set up the parser (resets address to default 3/SHORT). */
+    /**
+     * @brief Resets the parser's address record to the default 3 / SHORT.
+     */
 extern void DecoderCommandParser_initialize(void);
 
-/* Check for a complete UART line and execute the command.
- * Call this from the main loop. */
+    /**
+     * @brief Executes the next complete UART command line, if one has arrived.
+     *
+     * @details Call from the main loop. Non-blocking.
+     */
 extern void DecoderCommandParser_process(void);
 
 #ifdef __cplusplus

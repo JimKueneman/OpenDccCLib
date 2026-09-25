@@ -69,6 +69,7 @@
 /* do not get notified of that event.                                         */
 /* ========================================================================== */
 
+    /** @brief Library configuration: hardware driver and callback wiring handed to DccConfig_initialize(). */
 static const dcc_config_t dcc_config = {
 
     // REQUIRED -- these three are needed for every role (command station or decoder).
@@ -82,7 +83,7 @@ static const dcc_config_t dcc_config = {
     .shared_timer_stop       = &TI_DccDriver_shared_timer_stop,
 
     // RailCom cutout one-shot timer drives the cutout state machine
-    // via DccConfig_railcom_cutout_timer_isr().
+    // via DccConfig_railcom_oneshot_timer_isr().
     .railcom_timer_start     = &TI_DccDriver_railcom_timer_start,
     .railcom_timer_stop      = &TI_DccDriver_railcom_timer_stop,
 
@@ -119,9 +120,14 @@ static const dcc_config_t dcc_config = {
 /* ISR handlers                                                               */
 /* ========================================================================== */
 
-// Shared DCC timer ISR. Fires every 58us (fixed period). Drives the tick ISR
-// for both main track and service track bit encoders. Pin toggling is handled
-// inside the library via the pin_toggle callbacks — not here.
+    /**
+     * @brief Shared DCC timer ISR; fires every 58 us and drives both bit encoders.
+     *
+     * @details Advances the software timestamp, then calls DccConfig_58us_timer_isr(), which
+     * ticks the main and service track encoders. Pin toggling happens inside the library
+     * through the pin_toggle callbacks, not here. The ISR-time pin is raised for the
+     * duration so the logic analyzer can measure ISR load.
+     */
 void DCC_BIT_TIMER_INST_IRQHandler(void) {
 
     DL_GPIO_setPins(GPIO_ISR_TIME_PORT, GPIO_ISR_TIME_ISR_TIME_PIN);
@@ -140,9 +146,12 @@ void DCC_BIT_TIMER_INST_IRQHandler(void) {
     DL_GPIO_clearPins(GPIO_ISR_TIME_PORT, GPIO_ISR_TIME_ISR_TIME_PIN);
 }
 
-// RailCom cutout one-shot timer ISR. Fires at each state expiry of the cutout
-// sequence (DELAY 26us, SETTLING 54us, CH1 97us, GAP 16us, CH2 261us).
-// Drives the cutout state machine.
+    /**
+     * @brief RailCom cutout one-shot timer ISR; advances the cutout state machine.
+     *
+     * @details Fires at each state expiry of the cutout sequence (DELAY 26 us, SETTLING 54 us,
+     * CH1 97 us, GAP 16 us, CH2 261 us) and calls DccConfig_railcom_oneshot_timer_isr().
+     */
 void RAILCOM_TIMER_INST_IRQHandler(void) {
 
     switch (DL_TimerA_getPendingInterrupt(RAILCOM_TIMER_INST)) {
@@ -156,10 +165,13 @@ void RAILCOM_TIMER_INST_IRQHandler(void) {
     }
 }
 
-// SysTick ISR -- fires every 100 ms.
-// Calls DccConfig_100ms_timer_tick() for library housekeeping (timeouts,
-// periodic maintenance). Also blinks LED1 as a heartbeat (toggles every
-// 500 ms = 5 ticks).
+    /**
+     * @brief SysTick ISR; fires every 100 ms.
+     *
+     * @details Calls DccConfig_100ms_timer_tick(), which is currently an empty hook reserved
+     * for future library housekeeping, and blinks LED1 as a heartbeat (toggles every
+     * 500 ms = 5 ticks).
+     */
 void SysTick_Handler(void) {
 
     static uint8_t heartbeat_count = 0;
@@ -177,6 +189,18 @@ void SysTick_Handler(void) {
 /* Main                                                                       */
 /* ========================================================================== */
 
+    /**
+     * @brief Command station entry point.
+     *
+     * @details Algorithm:
+     * -# SYSCFG_DL_init() brings up clocks, GPIO, timers and UART (TI SysConfig generated).
+     * -# Initialize the DCC and UART drivers.
+     * -# Hand dcc_config to DccConfig_initialize(); the library is ready but track power stays off
+     *    until the POWER ON command is typed.
+     * -# Print the banner, then loop forever over DccConfig_run(), the UART echo and the command parser.
+     *
+     * @return Never returns; the int is only the C signature.
+     */
 int main(void) {
 
     // SysConfig-generated device initialization (clocks, GPIO, timers, UART).

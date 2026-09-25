@@ -134,13 +134,16 @@ Macros</h2></td></tr>
 <tr class="memdesc:a4dbba2bbe2fc61781a09adfec1318043"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum bytes in a DCC packet (2 addr + 3 instruction + 1 XOR)  <br /></td></tr>
 <tr class="separator:a4dbba2bbe2fc61781a09adfec1318043"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade8d4830eb96b7a0c8ae5968ccabca19" id="r_ade8d4830eb96b7a0c8ae5968ccabca19"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ade8d4830eb96b7a0c8ae5968ccabca19">DCC_SERVICE_MODE_SUPPORTED_DIRECT</a>&#160;&#160;&#160;(1u &lt;&lt; 0)</td></tr>
-<tr class="memdesc:ade8d4830eb96b7a0c8ae5968ccabca19"><td class="mdescLeft">&#160;</td><td class="mdescRight">Supported-mode flags returned by detect_mode (bitmask in a uint8_t). supported_modes == 0 means no service mode was detected.  <br /></td></tr>
+<tr class="memdesc:ade8d4830eb96b7a0c8ae5968ccabca19"><td class="mdescLeft">&#160;</td><td class="mdescRight">detect_mode supported_modes bit: the decoder answered a direct-mode probe. The flags share one uint8_t bitmask; a value of 0 means no service mode was detected.  <br /></td></tr>
 <tr class="separator:ade8d4830eb96b7a0c8ae5968ccabca19"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc0a6864057dbdabb65af05868673b3c" id="r_afc0a6864057dbdabb65af05868673b3c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afc0a6864057dbdabb65af05868673b3c">DCC_SERVICE_MODE_SUPPORTED_PAGED</a>&#160;&#160;&#160;(1u &lt;&lt; 1)</td></tr>
+<tr class="memdesc:afc0a6864057dbdabb65af05868673b3c"><td class="mdescLeft">&#160;</td><td class="mdescRight">detect_mode supported_modes bit: the decoder answered a paged-mode probe.  <br /></td></tr>
 <tr class="separator:afc0a6864057dbdabb65af05868673b3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a571d837efc3d725468688e957c41dda0" id="r_a571d837efc3d725468688e957c41dda0"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a571d837efc3d725468688e957c41dda0">DCC_SERVICE_MODE_SUPPORTED_REGISTER</a>&#160;&#160;&#160;(1u &lt;&lt; 2)</td></tr>
+<tr class="memdesc:a571d837efc3d725468688e957c41dda0"><td class="mdescLeft">&#160;</td><td class="mdescRight">detect_mode supported_modes bit: the decoder answered a register-mode probe.  <br /></td></tr>
 <tr class="separator:a571d837efc3d725468688e957c41dda0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7cba7564651de9efdd1a05bb8a28c024" id="r_a7cba7564651de9efdd1a05bb8a28c024"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7cba7564651de9efdd1a05bb8a28c024">DCC_SERVICE_MODE_SUPPORTED_ADDRESS</a>&#160;&#160;&#160;(1u &lt;&lt; 3)</td></tr>
+<tr class="memdesc:a7cba7564651de9efdd1a05bb8a28c024"><td class="mdescLeft">&#160;</td><td class="mdescRight">detect_mode supported_modes bit: the decoder answered an address-only probe.  <br /></td></tr>
 <tr class="separator:a7cba7564651de9efdd1a05bb8a28c024"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a25304e51a1e4db05aa97a4688397ad60" id="r_a25304e51a1e4db05aa97a4688397ad60"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a25304e51a1e4db05aa97a4688397ad60">DCC_RAILCOM_DATAGRAM_MAX_BYTES</a>&#160;&#160;&#160;6</td></tr>
 <tr class="memdesc:a25304e51a1e4db05aa97a4688397ad60"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum data bytes in a RailCom datagram.  <br /></td></tr>
@@ -362,7 +365,7 @@ Enumerations</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Supported-mode flags returned by detect_mode (bitmask in a uint8_t). supported_modes == 0 means no service mode was detected. </p>
+<p>detect_mode supported_modes bit: the decoder answered a direct-mode probe. The flags share one uint8_t bitmask; a value of 0 means no service mode was detected. </p>
 
 </div>
 </div>
@@ -378,6 +381,8 @@ Enumerations</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>detect_mode supported_modes bit: the decoder answered a paged-mode probe. </p>
+
 </div>
 </div>
 <a id="a571d837efc3d725468688e957c41dda0" name="a571d837efc3d725468688e957c41dda0"></a>
@@ -392,6 +397,8 @@ Enumerations</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
+<p>detect_mode supported_modes bit: the decoder answered a register-mode probe. </p>
+
 </div>
 </div>
 <a id="a7cba7564651de9efdd1a05bb8a28c024" name="a7cba7564651de9efdd1a05bb8a28c024"></a>
@@ -405,6 +412,8 @@ Enumerations</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>detect_mode supported_modes bit: the decoder answered an address-only probe. </p>
 
 </div>
 </div>
@@ -716,8 +725,10 @@ Enumerations</h2></td></tr>
 
 <p>Decoder type for register mode CV mapping (mobile vs accessory). </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a9f0df025a0cfd50248bf44bed321d570af675322c18ad8815ada1fac9612a57a7" name="a9f0df025a0cfd50248bf44bed321d570af675322c18ad8815ada1fac9612a57a7"></a>DCC_DECODER_TYPE_MOBILE&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="a9f0df025a0cfd50248bf44bed321d570a2bf74d670216ad1983ee09f11a9c5f68" name="a9f0df025a0cfd50248bf44bed321d570a2bf74d670216ad1983ee09f11a9c5f68"></a>DCC_DECODER_TYPE_ACCESSORY&#160;</td><td class="fielddoc"></td></tr>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a9f0df025a0cfd50248bf44bed321d570af675322c18ad8815ada1fac9612a57a7" name="a9f0df025a0cfd50248bf44bed321d570af675322c18ad8815ada1fac9612a57a7"></a>DCC_DECODER_TYPE_MOBILE&#160;</td><td class="fielddoc"><p>Multifunction (locomotive) decoder: registers 1-8 map to CV1-4, CV29, CV7, CV8 (S-9.2.3) </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a9f0df025a0cfd50248bf44bed321d570a2bf74d670216ad1983ee09f11a9c5f68" name="a9f0df025a0cfd50248bf44bed321d570a2bf74d670216ad1983ee09f11a9c5f68"></a>DCC_DECODER_TYPE_ACCESSORY&#160;</td><td class="fielddoc"><p>Accessory decoder: registers map to CV513, CV7, CV520 (S-9.2.3) </p>
+</td></tr>
 </table>
 
 </div>
@@ -736,11 +747,16 @@ Enumerations</h2></td></tr>
 
 <p>Service mode type identifier (result of decoder mode detection). </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="aaec36741dac172fe4fb559ebeb15bbf6ae8649e4347deb71c957dacb3d30afda7" name="aaec36741dac172fe4fb559ebeb15bbf6ae8649e4347deb71c957dacb3d30afda7"></a>DCC_SERVICE_MODE_TYPE_DIRECT&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="aaec36741dac172fe4fb559ebeb15bbf6a4defa53bc02e5c6a76aadf069d93d9cb" name="aaec36741dac172fe4fb559ebeb15bbf6a4defa53bc02e5c6a76aadf069d93d9cb"></a>DCC_SERVICE_MODE_TYPE_PAGED&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="aaec36741dac172fe4fb559ebeb15bbf6a44e30c1ff9a87125507010015d2a0faf" name="aaec36741dac172fe4fb559ebeb15bbf6a44e30c1ff9a87125507010015d2a0faf"></a>DCC_SERVICE_MODE_TYPE_REGISTER&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="aaec36741dac172fe4fb559ebeb15bbf6a2a430688d5d53a4c39a944d92b7f59b1" name="aaec36741dac172fe4fb559ebeb15bbf6a2a430688d5d53a4c39a944d92b7f59b1"></a>DCC_SERVICE_MODE_TYPE_ADDRESS&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="aaec36741dac172fe4fb559ebeb15bbf6a6595afeba4655b8ab71d6b5fefedd552" name="aaec36741dac172fe4fb559ebeb15bbf6a6595afeba4655b8ab71d6b5fefedd552"></a>DCC_SERVICE_MODE_TYPE_UNKNOWN&#160;</td><td class="fielddoc"></td></tr>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="aaec36741dac172fe4fb559ebeb15bbf6ae8649e4347deb71c957dacb3d30afda7" name="aaec36741dac172fe4fb559ebeb15bbf6ae8649e4347deb71c957dacb3d30afda7"></a>DCC_SERVICE_MODE_TYPE_DIRECT&#160;</td><td class="fielddoc"><p>Direct CV addressing (S-9.2.3) </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaec36741dac172fe4fb559ebeb15bbf6a4defa53bc02e5c6a76aadf069d93d9cb" name="aaec36741dac172fe4fb559ebeb15bbf6a4defa53bc02e5c6a76aadf069d93d9cb"></a>DCC_SERVICE_MODE_TYPE_PAGED&#160;</td><td class="fielddoc"><p>Paged CV addressing (S-9.2.3) </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaec36741dac172fe4fb559ebeb15bbf6a44e30c1ff9a87125507010015d2a0faf" name="aaec36741dac172fe4fb559ebeb15bbf6a44e30c1ff9a87125507010015d2a0faf"></a>DCC_SERVICE_MODE_TYPE_REGISTER&#160;</td><td class="fielddoc"><p>Physical register addressing (S-9.2.3) </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaec36741dac172fe4fb559ebeb15bbf6a2a430688d5d53a4c39a944d92b7f59b1" name="aaec36741dac172fe4fb559ebeb15bbf6a2a430688d5d53a4c39a944d92b7f59b1"></a>DCC_SERVICE_MODE_TYPE_ADDRESS&#160;</td><td class="fielddoc"><p>Address-only mode (S-9.2.3) </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aaec36741dac172fe4fb559ebeb15bbf6a6595afeba4655b8ab71d6b5fefedd552" name="aaec36741dac172fe4fb559ebeb15bbf6a6595afeba4655b8ab71d6b5fefedd552"></a>DCC_SERVICE_MODE_TYPE_UNKNOWN&#160;</td><td class="fielddoc"><p>No mode detected or not yet probed </p>
+</td></tr>
 </table>
 
 </div>
@@ -759,9 +775,12 @@ Enumerations</h2></td></tr>
 
 <p>Current phase of a task orchestrator operation. </p>
 <table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a205877f17a3cffba867951f66367c7aba86654f7a2c7fa27fb019a66bbebc9293" name="a205877f17a3cffba867951f66367c7aba86654f7a2c7fa27fb019a66bbebc9293"></a>DCC_TASK_PHASE_READ&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="a205877f17a3cffba867951f66367c7aba6fde46edcfa1f45fbb37b05aeaf1feab" name="a205877f17a3cffba867951f66367c7aba6fde46edcfa1f45fbb37b05aeaf1feab"></a>DCC_TASK_PHASE_WRITE&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="a205877f17a3cffba867951f66367c7aba79695b8e6ed15225de210366076c9661" name="a205877f17a3cffba867951f66367c7aba79695b8e6ed15225de210366076c9661"></a>DCC_TASK_PHASE_VERIFY&#160;</td><td class="fielddoc"></td></tr>
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a205877f17a3cffba867951f66367c7aba86654f7a2c7fa27fb019a66bbebc9293" name="a205877f17a3cffba867951f66367c7aba86654f7a2c7fa27fb019a66bbebc9293"></a>DCC_TASK_PHASE_READ&#160;</td><td class="fielddoc"><p>Reading the CV value (bit or byte probes) </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a205877f17a3cffba867951f66367c7aba6fde46edcfa1f45fbb37b05aeaf1feab" name="a205877f17a3cffba867951f66367c7aba6fde46edcfa1f45fbb37b05aeaf1feab"></a>DCC_TASK_PHASE_WRITE&#160;</td><td class="fielddoc"><p>Writing the CV value </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a205877f17a3cffba867951f66367c7aba79695b8e6ed15225de210366076c9661" name="a205877f17a3cffba867951f66367c7aba79695b8e6ed15225de210366076c9661"></a>DCC_TASK_PHASE_VERIFY&#160;</td><td class="fielddoc"><p>Verifying the value after a write </p>
+</td></tr>
 </table>
 
 </div>

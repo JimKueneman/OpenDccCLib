@@ -47,11 +47,24 @@
 #include <stdlib.h>
 #include <string.h>
 
+    /** @brief Command line buffer size; >= the longest SEG line (host per_line=32 -> 260 chars). */
 #define LINE_MAX  280     /* >= longest SEG line (host per_line=32 -> 260 chars) */
 
+    /**
+     * @brief Write a reply string (caller includes the CR LF).
+     *
+     * @param s  Null-terminated reply.
+     */
 static inline void reply(const char *s) { TI_UartDriver_write_string(s); }
 
-/* Parse exactly 8 hex chars at p into *out; false on any non-hex char. */
+    /**
+     * @brief Parse exactly 8 hex characters at p into *out.
+     *
+     * @param p    Start of the 8 characters.
+     * @param out  Receives the value.
+     *
+     * @return false on any non-hex character, true otherwise.
+     */
 static bool hex8(const char *p, uint32_t *out) {
     uint32_t v = 0;
     for (int i = 0; i < 8; i++) {
@@ -67,6 +80,15 @@ static bool hex8(const char *p, uint32_t *out) {
     return true;
 }
 
+    /**
+     * @brief SEG <hex8...>: append packed segments to the engine buffer.
+     *
+     * @details Strips whitespace in place, requires a non-empty multiple of 8 hex
+     * characters, appends each uint32 segment, and replies "OK n=<count>",
+     * "ERR badseg" or "ERR overflow".
+     *
+     * @param args  Argument text after the verb; modified in place.
+     */
 static void cmd_seg(char *args) {
     /* compact: drop whitespace in place */
     char *w = args, *r = args;
@@ -86,8 +108,16 @@ static void cmd_seg(char *args) {
     reply(out);
 }
 
+    /** @brief Initialize the parser; nothing to set up. */
 void WfCmdParser_initialize(void) { /* nothing to set up */ }
 
+    /**
+     * @brief Read one line, split verb and args, dispatch per PROTOCOL.md, reply once.
+     *
+     * @details Verbs: PING, ID?, CLEAR, SEG, N?, CRC?, TRIG <index>|OFF, PLAY [count],
+     * STOP, STATE?. CLEAR and SEG are refused with "ERR busy" while playing; anything
+     * unrecognised gets "ERR syntax".
+     */
 void WfCmdParser_process(void) {
     static char line[LINE_MAX];
     if (!TI_UartDriver_read_line(line, sizeof line)) return;

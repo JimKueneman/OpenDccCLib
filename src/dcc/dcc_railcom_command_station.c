@@ -42,6 +42,15 @@
 // Static helpers
 // =============================================================================
 
+    /**
+     * @brief Append a decoded datagram to the circular buffer.
+     *
+     * @details When the buffer is full the oldest unread datagram is dropped
+     * (tail advanced) to make room, so the newest reply is never lost.
+     *
+     * @param context Decoder context.
+     * @param datagram Datagram to copy into the buffer.
+     */
 static void _buffer_push(dcc_railcom_command_station_context_t *context, const dcc_railcom_datagram_t *datagram) {
 
     if (context->buffer_count >= USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH) {
@@ -59,6 +68,11 @@ static void _buffer_push(dcc_railcom_command_station_context_t *context, const d
 
     /**
      * @brief Decode RailCom Channel 1 (first 2 bytes → 12 data bits).
+     *
+     * @details Needs at least DCC_RAILCOM_CH1_MAX_BYTES bytes; on a valid
+     * decode the datagram is buffered and on_datagram fires with DCC_RAILCOM_CH1.
+     * An invalid codeword drops the channel silently.
+     *
      * @param context Decoder context.
      * @param raw_bytes Raw UART bytes from cutout.
      * @param raw_count Number of raw bytes received.
@@ -92,8 +106,14 @@ static void _decode_channel_1(dcc_railcom_command_station_context_t *context, co
 
     /**
      * @brief Decode RailCom Channel 2 (remaining bytes, up to 6 → up to 36 data bits).
+     *
+     * @details Skips the first DCC_RAILCOM_CH1_MAX_BYTES bytes; needs at least
+     * one byte beyond them. On a valid decode the datagram is buffered and
+     * on_datagram fires with DCC_RAILCOM_CH2. A failed decode drops the
+     * channel silently.
+     *
      * @param context Decoder context.
-     * @param raw_bytes Raw UART bytes from cutout.
+     * @param raw_bytes Raw UART bytes from cutout (Channel 1 bytes first).
      * @param raw_count Number of raw bytes received.
      */
 static void _decode_channel_2(dcc_railcom_command_station_context_t *context, const uint8_t *raw_bytes, uint8_t raw_count) {
@@ -124,6 +144,16 @@ static void _decode_channel_2(dcc_railcom_command_station_context_t *context, co
 
 }
 
+    /**
+     * @brief Drain the UART for one cutout and decode both channels.
+     *
+     * @details Reads until uart_read() returns false or 8 bytes
+     * (DCC_RAILCOM_CH1_MAX_BYTES + DCC_RAILCOM_CH2_MAX_BYTES) are collected,
+     * then hands the buffer to the Channel 1 and Channel 2 decoders. Nothing
+     * is decoded when no bytes were received.
+     *
+     * @param context Decoder context.
+     */
 static void _process_cutout(dcc_railcom_command_station_context_t *context) {
 
     uint8_t raw_bytes[DCC_RAILCOM_CH1_MAX_BYTES + DCC_RAILCOM_CH2_MAX_BYTES];
@@ -156,6 +186,17 @@ static void _process_cutout(dcc_railcom_command_station_context_t *context) {
 // Public API
 // =============================================================================
 
+    /**
+     * @brief Initialize the RailCom decoder module.
+     *
+     * @details Stores the interface and empties the datagram buffer; no cutout
+     * is pending and the tag address is 0.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_railcom_command_station_context_t instance.
+     * @param interface Pointer to populated interface_dcc_railcom_command_station_t struct.
+     * @endverbatim
+     */
 void DccRailcomCommandStation_initialize(dcc_railcom_command_station_context_t *context, const interface_dcc_railcom_command_station_t *interface) {
 
     context->interface = interface;
@@ -167,6 +208,17 @@ void DccRailcomCommandStation_initialize(dcc_railcom_command_station_context_t *
 
 }
 
+    /**
+     * @brief Main loop processing for the RailCom decoder.
+     *
+     * @details Returns at once if uart_read is NULL (RailCom disabled) or no
+     * cutout is pending. Otherwise clears cutout_pending and processes the
+     * cutout's bytes (see _process_cutout()).
+     *
+     * @verbatim
+     * @param context Pointer to dcc_railcom_command_station_context_t instance.
+     * @endverbatim
+     */
 void DccRailcomCommandStation_run(dcc_railcom_command_station_context_t *context) {
 
     if (!context->interface->uart_read) {
@@ -186,6 +238,17 @@ void DccRailcomCommandStation_run(dcc_railcom_command_station_context_t *context
 
 }
 
+    /**
+     * @brief Begin a RailCom cutout window for a given address.
+     *
+     * @details Stores the tag address and sets cutout_pending; nothing is read
+     * here, DccRailcomCommandStation_run() does the work.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_railcom_command_station_context_t instance.
+     * @param address The DCC address associated with this cutout.
+     * @endverbatim
+     */
 void DccRailcomCommandStation_begin_cutout(dcc_railcom_command_station_context_t *context, dcc_address_t address) {
 
     context->cutout_address = address;
@@ -193,6 +256,13 @@ void DccRailcomCommandStation_begin_cutout(dcc_railcom_command_station_context_t
 
 }
 
+    /**
+     * @brief End the current RailCom cutout window (no-op).
+     *
+     * @verbatim
+     * @param context Pointer to dcc_railcom_command_station_context_t instance (unused).
+     * @endverbatim
+     */
 void DccRailcomCommandStation_end_cutout(dcc_railcom_command_station_context_t *context) {
 
     /* Intentionally empty — processing happens in run() after cutout ends. */
@@ -200,6 +270,18 @@ void DccRailcomCommandStation_end_cutout(dcc_railcom_command_station_context_t *
 
 }
 
+    /**
+     * @brief Read the next decoded RailCom datagram from the buffer.
+     *
+     * @details Copies the oldest unread datagram out and advances the tail.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_railcom_command_station_context_t instance.
+     * @param datagram Pointer to dcc_railcom_datagram_t to fill with decoded data.
+     * @endverbatim
+     *
+     * @return true if a datagram was copied out, false if the buffer was empty.
+     */
 bool DccRailcomCommandStation_read(dcc_railcom_command_station_context_t *context, dcc_railcom_datagram_t *datagram) {
 
     if (context->buffer_count == 0) {
@@ -216,6 +298,15 @@ bool DccRailcomCommandStation_read(dcc_railcom_command_station_context_t *contex
 
 }
 
+    /**
+     * @brief Return the number of decoded datagrams available in the buffer.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_railcom_command_station_context_t instance.
+     * @endverbatim
+     *
+     * @return Number of datagrams waiting to be read.
+     */
 uint8_t DccRailcomCommandStation_available(const dcc_railcom_command_station_context_t *context) {
 
     return context->buffer_count;

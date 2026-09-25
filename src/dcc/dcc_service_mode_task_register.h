@@ -77,10 +77,11 @@ typedef struct {
         /**
          * @brief Read a CV byte using register mode. Iterates register_verify 0-255 until ACK.
          * @param cv_number CV number to read (mapped to register via decoder_type).
-         * @param decoder_type Mobile or Accessory — determines CV-to-register mapping.
-         * @param on_complete Called when complete; value = CV byte found.
-         * @param on_progress Called after each step (nullable).
-         * @return true if started, false if busy or cv not accessible in register mode.
+         * @param decoder_type @ref dcc_decoder_type_enum, Mobile or Accessory — determines CV-to-register mapping.
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when complete: SUCCESS with the CV byte found;
+         *        ERROR (value 0) if no value 0-255 was ACKed; BUSY (value 0) if a later verify could not be started.
+         * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t called after each scan step (nullable); estimated_steps is reported as 0.
+         * @return true if started; false if another operation is running, the CV is not accessible in register mode, or the first verify could not start.
          */
     extern bool DccServiceModeTaskRegister_read_cv(uint16_t cv_number, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
@@ -88,10 +89,11 @@ typedef struct {
          * @brief Write a CV byte then verify using register mode. Always 2 operations.
          * @param cv_number CV number to write (mapped to register via decoder_type).
          * @param value Byte to write.
-         * @param decoder_type Mobile or Accessory — determines CV-to-register mapping.
-         * @param on_complete Called when complete; value = byte verified.
-         * @param on_progress Called after each step (nullable).
-         * @return true if started, false if busy or cv not accessible in register mode.
+         * @param decoder_type @ref dcc_decoder_type_enum, Mobile or Accessory — determines CV-to-register mapping.
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when complete: SUCCESS if the verify was ACKed,
+         *        VERIFY_FAIL if not (value = the byte written either way); BUSY (value 0) if the verify could not be started.
+         * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t called after each step (nullable); estimated_steps is reported as 0.
+         * @return true if started; false if another operation is running, the CV is not accessible in register mode, or the write could not start.
          */
     extern bool DccServiceModeTaskRegister_write_cv(uint16_t cv_number, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
@@ -99,10 +101,11 @@ typedef struct {
          * @brief Read a single CV bit using register mode. Reads full byte, extracts bit.
          * @param cv_number CV number (mapped to register via decoder_type).
          * @param bit_position Bit position (0-7).
-         * @param decoder_type Mobile or Accessory — determines CV-to-register mapping.
-         * @param on_complete Called when complete; value = 0 or 1.
-         * @param on_progress Called after each step (nullable).
-         * @return true if started, false if busy or parameters out of range.
+         * @param decoder_type @ref dcc_decoder_type_enum, Mobile or Accessory — determines CV-to-register mapping.
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when complete: SUCCESS with value 0 or 1;
+         *        ERROR (value 0) if no byte value 0-255 was ACKed; BUSY (value 0) if a later verify could not be started.
+         * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t called after each scan step (nullable); estimated_steps is reported as 0.
+         * @return true if started; false if another operation is running, the bit is above 7, the CV is not register-accessible, or the first verify could not start.
          */
     extern bool DccServiceModeTaskRegister_read_bit(
                 uint16_t cv_number,
@@ -116,10 +119,13 @@ typedef struct {
          * @param cv_number CV number (mapped to register via decoder_type).
          * @param bit_position Bit position (0-7).
          * @param bit_value Value to write.
-         * @param decoder_type Mobile or Accessory — determines CV-to-register mapping.
-         * @param on_complete Called when complete; value = bit value verified (0 or 1).
-         * @param on_progress Called after each step (nullable).
-         * @return true if started, false if busy or parameters out of range.
+         * @param decoder_type @ref dcc_decoder_type_enum, Mobile or Accessory — determines CV-to-register mapping.
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when complete: SUCCESS if the modified byte verified,
+         *        VERIFY_FAIL if not (value = the bit written, 0 or 1); ERROR (value 0) if the read scan found no ACKed value;
+         *        BUSY (value 0) if a later primitive could not be started.
+         * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t called after each scan step of the read phase only (nullable);
+         *        estimated_steps is reported as 0.
+         * @return true if started; false if another operation is running, the bit is above 7, the CV is not register-accessible, or the first verify could not start.
          */
     extern bool DccServiceModeTaskRegister_write_bit(
                 uint16_t cv_number,
@@ -131,8 +137,9 @@ typedef struct {
 
         /**
          * @brief Issue a factory reset (write 8 to register 8). Applies to both Mobile and Accessory.
-         * @param on_complete Called when write completes (ACK is optional per spec — result may be NO_ACK).
-         * @return true if started, false if busy.
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when the write completes: SUCCESS if ACKed,
+         *        NO_ACK otherwise (an ACK is optional per spec); value is always 0.
+         * @return true if started; false if another operation is running or the write could not start.
          */
     extern bool DccServiceModeTaskRegister_factory_reset(dcc_service_mode_task_on_complete_callback_t on_complete);
 
@@ -140,10 +147,10 @@ typedef struct {
          * @brief Verify a single register value (one register-verify op).
          * @param cv_number CV number (mapped to a physical register for decoder_type).
          * @param value Expected byte value.
-         * @param decoder_type Mobile or Accessory (selects the CV->register map).
-         * @param on_complete Called with SUCCESS if the value verified (ACK), VERIFY_FAIL otherwise.
-         * @param on_progress Optional progress callback (may be NULL).
-         * @return true if started, false if busy or CV not register-accessible.
+         * @param decoder_type @ref dcc_decoder_type_enum, Mobile or Accessory (selects the CV->register map).
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called with SUCCESS if the value verified (ACK), VERIFY_FAIL otherwise; value = the expected byte.
+         * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t; not used by this operation (nullable).
+         * @return true if started; false if another operation is running, the CV is not register-accessible, or the verify could not start.
          */
     extern bool DccServiceModeTaskRegister_verify_value(
                 uint16_t cv_number,
@@ -158,7 +165,7 @@ typedef struct {
          *        via dcc_config.c. The task module advances its state machine on this event;
          *        the ACK outcome is taken from @p result (SUCCESS = ACK detected by the common
          *        module's pulse-width measurement, anything else = no ACK).
-         * @param result Result of the primitive operation (passed through from primitive callback).
+         * @param result @ref dcc_service_mode_result_enum of the primitive operation (passed through from primitive callback).
          */
     extern void DccServiceModeTaskRegister_on_primitive_complete(dcc_service_mode_result_enum result);
 

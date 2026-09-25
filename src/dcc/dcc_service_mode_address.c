@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @file dcc_service_mode_address.c
- * @brief Address-only mode CV programming (writes CV 1 only).
+ * @brief Address-only mode programming (CV 1 write and verify).
  *
  * @author Jim Kueneman
  * @date 25 Sep 2026
@@ -37,16 +37,25 @@
 
 #include <string.h>
 
+    /** @brief Step of the two-step address-only operation (stored in the context address_state field). */
 typedef enum {
 
-    DCC_ADDRESS_STATE_IDLE,
-    DCC_ADDRESS_STATE_PAGE_PRESET,
-    DCC_ADDRESS_STATE_COMMAND
+    DCC_ADDRESS_STATE_IDLE,         /**< No operation in progress */
+    DCC_ADDRESS_STATE_PAGE_PRESET,  /**< Writing page 1 to the page register */
+    DCC_ADDRESS_STATE_COMMAND       /**< Writing or verifying CV 1 via register 1 */
 
 } address_state_enum;
 
+    /** @brief Context of the operation in flight; the step-callback signature carries no context, and only one operation runs at a time. */
 static dcc_service_mode_address_context_t *_active_context = (void *)0;
 
+    /**
+     * @brief Append the XOR error-detection byte to a packet.
+     *
+     * @details XORs data[0..byte_count-1] into data[byte_count] and increments byte_count.
+     *
+     * @param packet Pointer to the packet being built; byte_count must be the payload length.
+     */
 static void _append_xor(dcc_packet_t *packet) {
 
     uint8_t xor_byte = 0;
@@ -63,9 +72,18 @@ static void _append_xor(dcc_packet_t *packet) {
 
 }
 
-    /* Build a register-format packet. The page-preset writes the page register
-     * (register 6); the address command targets CV #1 via register-1 form
-     * (0111C000), both per S-9.2.3. */
+    /**
+     * @brief Build a register-mode packet (S-9.2.3 register form).
+     *
+     * @details data[0] = prefix | (register_number - 1), data[1] = value, then the XOR byte;
+     * DCC_PREAMBLE_BITS_SERVICE preamble, sent once (repeat_count 0). The page-preset writes the
+     * page register (register 6); the address command targets CV 1 via the register-1 form (0111C000).
+     *
+     * @param packet Pointer to the packet to fill.
+     * @param register_number Register number (1-8), encoded 0-based on the wire.
+     * @param value Byte value to write or verify.
+     * @param write true selects DCC_SERVICE_REGISTER_WRITE_PREFIX, false DCC_SERVICE_REGISTER_VERIFY_PREFIX.
+     */
 static void _build_register_packet(dcc_packet_t *packet, uint8_t register_number, uint8_t value, bool write) {
 
     uint8_t prefix = write ? DCC_SERVICE_REGISTER_WRITE_PREFIX : DCC_SERVICE_REGISTER_VERIFY_PREFIX;
@@ -79,6 +97,13 @@ static void _build_register_packet(dcc_packet_t *packet, uint8_t register_number
 
 }
 
+    /**
+     * @brief Step callback after the register-1 command: finishes the operation.
+     *
+     * @details Returns to IDLE and forwards the result to interface->on_complete when set.
+     *
+     * @param result Outcome of the CV 1 write or verify step.
+     */
 static void _on_command_complete(dcc_service_mode_result_enum result) {
 
     _active_context->address_state = DCC_ADDRESS_STATE_IDLE;
@@ -91,9 +116,20 @@ static void _on_command_complete(dcc_service_mode_result_enum result) {
 
 }
 
-    /* Page-preset finished. Per S-9.2.3 the address command (CV #1) follows the
-     * page-preset unconditionally. A write to CV #1 uses the longer 10-packet
-     * recovery. */
+    /**
+     * @brief Step callback after the page-preset: starts the register-1 command.
+     *
+     * @details Algorithm:
+     * -# Ignore the preset result: per S-9.2.3 the address command (CV 1) follows the page-preset unconditionally
+     * -# Move to COMMAND and build the register-1 packet from the latched address and write flag
+     * -# Write: start with DCC_SERVICE_MODE_COMMAND_REPEAT command packets and
+     *    DCC_SERVICE_MODE_RECOVERY_COUNT_LONG (10) recovery packets
+     * -# Verify: start with DCC_SERVICE_MODE_COMMAND_REPEAT command packets and no recovery
+     * -# If the common module refuses to start, return to IDLE and report DCC_SERVICE_MODE_BUSY through
+     *    on_complete rather than leave the state machine stuck waiting for a callback that never comes
+     *
+     * @param result Outcome of the page-preset step (not used).
+     */
 static void _on_preset_complete(dcc_service_mode_result_enum result) {
 
     dcc_packet_t packet;
@@ -133,8 +169,23 @@ static void _on_preset_complete(dcc_service_mode_result_enum result) {
 
 }
 
-    /* Common entry: validate, latch the pending address, and start the
-     * page-preset (write page register -> page 1) that precedes it. */
+    /**
+     * @brief Common entry for write and verify: validate, latch the address, start the page-preset.
+     *
+     * @details Algorithm:
+     * -# Return false if address is outside 1-127, the common module is busy, or address_state is not IDLE
+     * -# Latch the address and write flag; enter PAGE_PRESET and record this context for the callbacks
+     * -# Start a write of DCC_SERVICE_MODE_PAGE_PRESET_PAGE to DCC_SERVICE_MODE_PAGE_REGISTER with
+     *    DCC_SERVICE_MODE_COMMAND_REPEAT command packets and DCC_SERVICE_MODE_RECOVERY_COUNT recovery packets;
+     *    _on_preset_complete continues with the register-1 command
+     * -# If the common module refuses to start, return to IDLE and return false
+     *
+     * @param context Pointer to the address-only service mode context.
+     * @param address Short address (1-127) to write or verify.
+     * @param is_write true for write, false for verify.
+     *
+     * @return true if the page-preset started, false if validation failed or the common module refused.
+     */
 static bool _begin_with_preset(dcc_service_mode_address_context_t *context, uint8_t address, bool is_write) {
 
     dcc_packet_t packet;
@@ -176,6 +227,14 @@ static bool _begin_with_preset(dcc_service_mode_address_context_t *context, uint
 
 }
 
+    /**
+     * @brief Initialize the address-only service mode module.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_address_context_t instance.
+     * @param interface Pointer to populated interface_dcc_service_mode_address_t struct.
+     * @endverbatim
+     */
 void DccServiceModeAddress_initialize(dcc_service_mode_address_context_t *context, const interface_dcc_service_mode_address_t *interface) {
 
     context->interface = interface;
@@ -183,12 +242,36 @@ void DccServiceModeAddress_initialize(dcc_service_mode_address_context_t *contex
 
 }
 
+    /**
+     * @brief Write the short address (CV 1) using address-only mode.
+     *
+     * @details Delegates to _begin_with_preset() as a write.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_address_context_t instance.
+     * @param address The short address to write (1-127).
+     * @endverbatim
+     *
+     * @return true if the operation started, false if address is out of range, the common module is busy, or an address operation is already in progress.
+     */
 bool DccServiceModeAddress_write(dcc_service_mode_address_context_t *context, uint8_t address) {
 
     return _begin_with_preset(context, address, true);
 
 }
 
+    /**
+     * @brief Verify the short address (CV 1) using address-only mode.
+     *
+     * @details Delegates to _begin_with_preset() as a verify.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_address_context_t instance.
+     * @param address The short address to verify (1-127).
+     * @endverbatim
+     *
+     * @return true if the operation started, false if address is out of range, the common module is busy, or an address operation is already in progress.
+     */
 bool DccServiceModeAddress_verify(dcc_service_mode_address_context_t *context, uint8_t address) {
 
     return _begin_with_preset(context, address, false);

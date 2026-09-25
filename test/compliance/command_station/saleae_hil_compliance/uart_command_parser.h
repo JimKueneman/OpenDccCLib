@@ -41,12 +41,15 @@
 extern "C" {
 #endif
 
-// Initialize parser state. Call once at startup after TI_UartDriver_initialize().
+    /** @brief Initialize parser state (clears the loco table). Call once at startup after TI_UartDriver_initialize(). */
 extern void UartCommandParser_initialize(void);
 
-// Check for a complete command line and execute it if available.
-// Call from your main loop. Non-blocking -- returns immediately if no
-// complete line is ready.
+    /**
+     * @brief Check for a complete command line and execute it if one is available.
+     *
+     * @details Call from the main loop. Non-blocking: returns immediately if no
+     * complete line is ready. Every executed command writes one OK/ERR reply.
+     */
 extern void UartCommandParser_process(void);
 
 #ifdef __cplusplus

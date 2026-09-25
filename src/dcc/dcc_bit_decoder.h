@@ -53,8 +53,9 @@ extern "C" {
 typedef struct {
 
         /**
-         * @brief Complete packet received. Called when a valid packet frame
-         *  (preamble + bytes + end bit) has been assembled.
+         * @brief Complete packet received. Called at the end bit when a packet frame of
+         *  2 to DCC_PACKET_MAX_BYTES bytes has been assembled (shorter or longer frames are
+         *  discarded). REQUIRED.
          * @param data Raw packet bytes (including XOR byte).
          * @param byte_count Number of bytes in the packet.
          */
@@ -76,16 +77,26 @@ typedef struct {
 
         /**
          * @brief Initialize the bit decoder module.
-         * @param interface Pointer to populated interface struct.
+         *
+         * @details Stores the interface and resets the edge pairing and packet assembler,
+         * so the next edge is taken as the timing baseline and a fresh preamble search begins.
+         *
+         * @param interface Pointer to populated @ref interface_dcc_bit_decoder_t (wired by
+         *        dcc_config.c). Must remain valid for the lifetime of the application.
          */
     extern void DccBitDecoder_initialize(const interface_dcc_bit_decoder_t *interface);
 
         /**
          * @brief Process a signal edge from the input-capture ISR.
-         * @param timestamp_usec Microsecond timestamp of the edge.
          *
          * @details Call this from the input-capture ISR on every edge (rising or
-         * falling). The library classifies one/zero bits from the timing internally.
+         * falling). Each half-period is classified as one or zero against the S-9.1
+         * thresholds and paired with its neighbour to form a bit; a half-period longer
+         * than the maximum restarts the preamble search. Complete packets are delivered
+         * through on_packet_received at the end bit.
+         *
+         * @param timestamp_usec Microsecond timestamp of the edge from a free-running
+         *        counter; wraparound between edges is tolerated.
          */
     extern void DccBitDecoder_edge(uint32_t timestamp_usec);
 

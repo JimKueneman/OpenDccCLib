@@ -69,14 +69,20 @@
 /* Static state                                                               */
 /* ========================================================================== */
 
+    /** @brief Pulse width for fire(), clamped to 1000-20000 us. */
 static uint32_t _width_us = 6000;
+    /** @brief When false, start() and fire() leave the pin alone. */
 static bool _enabled = true;
+    /** @brief true while a fire() pulse is in progress; cleared by the timer ISR. */
 static volatile bool _active = false;
 
 /* ========================================================================== */
 /* Timer ISR — clears the ACK pin when the one-shot timer expires             */
 /* ========================================================================== */
 
+    /**
+     * @brief One-shot timer ISR; ends a fire() pulse by clearing the ACK pin and stopping the counter.
+     */
 void ACK_PULSE_TIMER_INST_IRQHandler(void) {
 
     switch (DL_TimerA_getPendingInterrupt(ACK_PULSE_TIMER_INST)) {
@@ -97,6 +103,9 @@ void ACK_PULSE_TIMER_INST_IRQHandler(void) {
 /* Public API                                                                 */
 /* ========================================================================== */
 
+    /**
+     * @brief Clears the ACK pin and restores the default width (6000 us), enabled and idle state.
+     */
 void AckPulseDriver_initialize(void) {
 
     DL_GPIO_clearPins(GPIO_ACK_PORT, GPIO_ACK_ACK_OUT_PIN);
@@ -106,6 +115,13 @@ void AckPulseDriver_initialize(void) {
 
 }
 
+    /**
+     * @brief Stores the pulse width after clamping it to 1000-20000 us.
+     *
+     * @verbatim
+     * @param width_us Requested pulse duration in microseconds.
+     * @endverbatim
+     */
 void AckPulseDriver_set_width_us(uint32_t width_us) {
 
     if (width_us < 1000)
@@ -118,24 +134,44 @@ void AckPulseDriver_set_width_us(uint32_t width_us) {
 
 }
 
+    /**
+     * @brief Returns the stored pulse width.
+     *
+     * @return Pulse width in microseconds.
+     */
 uint32_t AckPulseDriver_get_width_us(void) {
 
     return _width_us;
 
 }
 
+    /**
+     * @brief Enables or disables ACK generation.
+     *
+     * @verbatim
+     * @param enabled true = start() and fire() drive the pin, false = no-op.
+     * @endverbatim
+     */
 void AckPulseDriver_set_enabled(bool enabled) {
 
     _enabled = enabled;
 
 }
 
+    /**
+     * @brief Reports whether ACK generation is enabled.
+     *
+     * @return Current enabled flag.
+     */
 bool AckPulseDriver_is_enabled(void) {
 
     return _enabled;
 
 }
 
+    /**
+     * @brief Sets the ACK pin HIGH unless ACK generation is disabled; the library times the 6 ms.
+     */
 void AckPulseDriver_start(void) {
 
     if (!_enabled)
@@ -145,12 +181,21 @@ void AckPulseDriver_start(void) {
 
 }
 
+    /**
+     * @brief Clears the ACK pin LOW; called by the library when the 6 ms ACK window ends.
+     */
 void AckPulseDriver_stop(void) {
 
     DL_GPIO_clearPins(GPIO_ACK_PORT, GPIO_ACK_ACK_OUT_PIN);
 
 }
 
+    /**
+     * @brief Starts a self-timed pulse: pin HIGH now, cleared by the one-shot timer after the stored width.
+     *
+     * @details No-op when disabled or while a previous pulse is still active. The timer runs at
+     * 1 MHz, so the load value is width - 1.
+     */
 void AckPulseDriver_fire(void) {
 
     if (!_enabled)

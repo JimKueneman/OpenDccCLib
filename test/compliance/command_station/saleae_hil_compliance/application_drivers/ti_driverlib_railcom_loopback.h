@@ -60,41 +60,92 @@
 extern "C" {
 #endif
 
+    /** @brief When the armed mock reply is transmitted relative to the cutout windows. */
 typedef enum {
-    RC_LOOPBACK_MODE_WINDOW = 0,   /* Ch1 bytes at T_TS1, Ch2 bytes at T_TS2 (normal decoder timing) */
-    RC_LOOPBACK_MODE_LATE   = 1    /* everything at T_CE, after the receive gate has closed           */
+    RC_LOOPBACK_MODE_WINDOW = 0,   /**< Ch1 bytes at T_TS1, Ch2 bytes at T_TS2 (normal decoder timing) */
+    RC_LOOPBACK_MODE_LATE   = 1    /**< everything at T_CE, after the receive gate has closed           */
 } rc_loopback_mode_t;
 
+    /** @brief Loopback counters reported by RC STATUS. */
 typedef struct {
-    bool     armed;
-    uint32_t cutouts;       /* cutouts begun since the last reset */
-    uint32_t rx_accepted;   /* bytes received while a window was open */
-    uint32_t rx_dropped;    /* bytes received with the gate closed (outside any window) */
-    uint32_t tx_bytes;      /* bytes the mock transmitter queued */
+    bool     armed;         /**< a mock reply is armed or is playing in the current cutout */
+    uint32_t cutouts;       /**< cutouts begun since the last reset */
+    uint32_t rx_accepted;   /**< bytes received while a window was open */
+    uint32_t rx_dropped;    /**< bytes received with the gate closed (outside any window) */
+    uint32_t tx_bytes;      /**< bytes the mock transmitter queued */
 } rc_loopback_stats_t;
 
-// One-time setup after SYSCFG_DL_init(): enables the two UART interrupts and
-// parks the transmitter idle.
+    /**
+     * @brief One-time setup after SYSCFG_DL_init().
+     *
+     * @details Parks the mock transmitter idle (its TX interrupt would otherwise fire
+     * forever on an empty FIFO), drains the receiver FIFO, and enables both UART
+     * interrupts.
+     */
 extern void TI_RailcomLoopback_initialize(void);
 
-// The library's .uart_read hook: pop one received byte. Main-loop context.
+    /**
+     * @brief The library .uart_read hook: pop one received byte from the ring. Main-loop context.
+     *
+     * @param byte  Receives the next byte when one is available.
+     *
+     * @return true when a byte was returned, false when the ring is empty.
+     */
 extern bool TI_RailcomLoopback_uart_read(uint8_t *byte);
 
-// Cutout timing hooks, called from the DCC driver's cutout/window functions.
+    /**
+     * @brief Cutout timing hook at T_CS (begin_railcom_cutout), from the cutout timer ISR.
+     *
+     * @details Counts the cutout, latches a pending arm for this whole cutout, and
+     * flushes the receive ring so nothing from an earlier cutout can be read as
+     * this one's reply.
+     */
 extern void TI_RailcomLoopback_on_cutout_begin(void);   /* T_CS  (begin_railcom_cutout) */
+    /**
+     * @brief Cutout timing hook at T_CE (end_railcom_cutout), from the cutout timer ISR.
+     *
+     * @details Closes the receiver gate; in LATE mode transmits the whole reply here.
+     * Consumes the latched arm either way.
+     */
 extern void TI_RailcomLoopback_on_cutout_end(void);     /* T_CE  (end_railcom_cutout)   */
+    /**
+     * @brief Window timing hook at T_TS1 / T_TS2 (uart_rx_enable), from the cutout timer ISR.
+     *
+     * @details Opens the receiver gate; in WINDOW mode transmits the Channel 1 bytes
+     * on the first open and the Channel 2 bytes on the second.
+     */
 extern void TI_RailcomLoopback_on_window_open(void);    /* T_TS1 / T_TS2 (uart_rx_enable)  */
+    /** @brief Window timing hook at T_TC1 / T_CE (uart_rx_disable): closes the receiver gate. */
 extern void TI_RailcomLoopback_on_window_close(void);   /* T_TC1 / T_CE  (uart_rx_disable) */
 
-// Arm one mock reply: up to 2 raw Channel 1 bytes and up to 6 raw Channel 2
-// bytes (already 4/8-encoded by the host). Either may be empty, not both.
-// Returns false if the lengths are out of range.
+    /**
+     * @brief Arm one mock reply for the next cutout.
+     *
+     * @details Up to 2 raw Channel 1 bytes and up to 6 raw Channel 2 bytes, already
+     * 4/8-encoded by the host. Either channel may be empty, not both. Main-loop
+     * context; the arm is consumed by the next cutout begin.
+     *
+     * @param ch1   Channel 1 bytes (may be NULL when n1 is 0).
+     * @param n1    Number of Channel 1 bytes, 0..2.
+     * @param ch2   Channel 2 bytes (may be NULL when n2 is 0).
+     * @param n2    Number of Channel 2 bytes, 0..6.
+     * @param mode  When to transmit, a @ref rc_loopback_mode_t.
+     *
+     * @return false if the lengths are out of range or both are zero, true when armed.
+     */
 extern bool TI_RailcomLoopback_arm(const uint8_t *ch1, uint8_t n1,
                                    const uint8_t *ch2, uint8_t n2,
                                    rc_loopback_mode_t mode);
+    /** @brief Drop any armed or in-progress mock reply. */
 extern void TI_RailcomLoopback_disarm(void);
 
+    /**
+     * @brief Snapshot the loopback counters.
+     *
+     * @param out  Receives the counters, a @ref rc_loopback_stats_t.
+     */
 extern void TI_RailcomLoopback_get_stats(rc_loopback_stats_t *out);
+    /** @brief Zero the loopback counters (the armed state is untouched). */
 extern void TI_RailcomLoopback_reset_stats(void);
 
 #ifdef __cplusplus

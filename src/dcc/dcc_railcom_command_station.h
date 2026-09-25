@@ -29,8 +29,9 @@
  *
  * @details Decodes RailCom bytes received during cutout windows. Manages
  * a circular buffer of decoded datagrams tagged with the DCC address of the
- * packet that preceded the cutout. Disabled at runtime if railcom_uart_read
- * is NULL in the config.
+ * packet that preceded the cutout. Disabled at runtime if the interface's
+ * uart_read is NULL (dcc_config.c leaves it NULL when the config has no
+ * RailCom UART).
  *
  * @author Jim Kueneman
  * @date 25 Sep 2026
@@ -69,12 +70,25 @@ typedef struct {
      */
 typedef struct {
 
+        /** @brief Injected dependencies; NULL until DccRailcomCommandStation_initialize(). */
     const interface_dcc_railcom_command_station_t *interface;
+
+        /** @brief Circular buffer of decoded datagrams; the oldest is overwritten when full. */
     dcc_railcom_datagram_t buffer[USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH];
+
+        /** @brief Index the next decoded datagram is written at. */
     uint8_t buffer_head;
+
+        /** @brief Index of the oldest unread datagram. */
     uint8_t buffer_tail;
+
+        /** @brief Number of unread datagrams in the buffer. */
     uint8_t buffer_count;
+
+        /** @brief DCC address the next decoded reply is tagged with. */
     dcc_address_t cutout_address;
+
+        /** @brief Set from ISR context by DccRailcomCommandStation_begin_cutout(); DccRailcomCommandStation_run() clears it and drains the UART. */
     volatile bool cutout_pending;
 
 } dcc_railcom_command_station_context_t;
@@ -89,6 +103,11 @@ typedef struct {
         /**
          * @brief Main loop processing for the RailCom decoder.
          * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
+         *
+         * @details When a cutout is pending, drains the UART, decodes Channel 1
+         * and Channel 2, pushes each valid datagram into the buffer and fires
+         * on_datagram for it. Does nothing if uart_read is NULL or no cutout is
+         * pending.
          */
     extern void DccRailcomCommandStation_run(dcc_railcom_command_station_context_t *context);
 
@@ -96,12 +115,21 @@ typedef struct {
          * @brief Begin a RailCom cutout window for a given address.
          * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
          * @param address The DCC address associated with this cutout.
+         *
+         * @details Records the address the decoded reply will be tagged with and
+         * marks a cutout pending; the UART is read and decoded by the next
+         * DccRailcomCommandStation_run(). Safe from ISR context. dcc_config.c
+         * calls it from the cutout-complete hook, so the bytes are already in
+         * the UART when run() reads them.
          */
     extern void DccRailcomCommandStation_begin_cutout(dcc_railcom_command_station_context_t *context, dcc_address_t address);
 
         /**
          * @brief End the current RailCom cutout window.
          * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
+         *
+         * @details Currently a no-op kept for API symmetry; all processing happens
+         * in DccRailcomCommandStation_run().
          */
     extern void DccRailcomCommandStation_end_cutout(dcc_railcom_command_station_context_t *context);
 

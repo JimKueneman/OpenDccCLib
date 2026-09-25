@@ -42,6 +42,9 @@
 
     /**
      * @brief Find an active slot matching (address, tag).
+     * @param context Scheduler instance.
+     * @param address DCC address half of the duplicate-combining key.
+     * @param tag Sub-key half of the duplicate-combining key.
      * @return Slot index, or -1 if not found.
      */
 static int16_t _find_slot(dcc_scheduler_context_t *context, dcc_address_t address, dcc_tag_enum tag) {
@@ -64,6 +67,7 @@ static int16_t _find_slot(dcc_scheduler_context_t *context, dcc_address_t addres
 
     /**
      * @brief Find an inactive (free) slot.
+     * @param context Scheduler instance.
      * @return Slot index, or -1 if all slots are in use.
      */
 static int16_t _find_free_slot(dcc_scheduler_context_t *context) {
@@ -87,6 +91,12 @@ static int16_t _find_free_slot(dcc_scheduler_context_t *context) {
     /**
      * @brief Select the highest-priority one-shot slot (non-auto-refresh with
      *        repeat_count > 0).
+     *
+     * @details Lower dcc_priority_enum values rank higher; among equal
+     * priorities the lowest slot index wins. Refresh slots are never
+     * considered here -- priority ranks one-shots only.
+     *
+     * @param context Scheduler instance.
      * @return Slot index, or -1 if no one-shot packets pending.
      */
 static int16_t _select_one_shot(dcc_scheduler_context_t *context) {
@@ -134,6 +144,13 @@ typedef enum {
 
 } refresh_pass_enum;
 
+    /**
+     * @brief True if a slot is an active refresh slot that belongs to @p pass.
+     * @param context Scheduler instance (supplies the cold-tier thresholds).
+     * @param slot Slot to test.
+     * @param pass Refresh pass being scanned.
+     * @return true if the slot qualifies for that pass, false otherwise.
+     */
 static bool _refresh_slot_in_pass(const dcc_scheduler_context_t *context, const dcc_scheduler_slot_t *slot, refresh_pass_enum pass) {
 
     if (!slot->active || !slot->auto_refresh) {
@@ -166,12 +183,16 @@ static bool _refresh_slot_in_pass(const dcc_scheduler_context_t *context, const 
 
     /**
      * @brief First slot in @p pass, scanning round-robin from that pass's cursor.
-     * @return Slot index, or -1 if no slot is in that pass.
      *
      * @details The burst pass (and the flat ring) use refresh_index, which an
      * insert also moves to the changed slot. The overdue and due passes use their
      * own cursor, refresh_cold_index, so a stream of changes cannot keep them
-     * restarting from the same few slots.
+     * restarting from the same few slots. The cursor is advanced past the slot
+     * that is returned.
+     *
+     * @param context Scheduler instance.
+     * @param pass Refresh pass to scan.
+     * @return Slot index, or -1 if no slot is in that pass.
      */
 static int16_t _select_refresh_pass(dcc_scheduler_context_t *context, refresh_pass_enum pass) {
 
@@ -198,7 +219,6 @@ static int16_t _select_refresh_pass(dcc_scheduler_context_t *context, refresh_pa
 
     /**
      * @brief Select the next auto-refresh slot.
-     * @return Slot index, or -1 if no refresh slot is due this cycle.
      *
      * @details With the cold tier enabled (refresh_cold_cycles > 0), in order:
      *   1. an overdue slot -- the starvation bound: no refresh slot, in its burst
@@ -209,6 +229,11 @@ static int16_t _select_refresh_pass(dcc_scheduler_context_t *context, refresh_pa
      * A merely-due slot never delays a changed one. Right after an overdue send a
      * waiting burst goes first, so when more slots are active than the ceiling can
      * serve (some always overdue) changed commands still get every other cycle.
+     * With the cold tier disabled every active refresh slot is taken in a flat
+     * ring.
+     *
+     * @param context Scheduler instance.
+     * @return Slot index, or -1 if no refresh slot is due this cycle.
      */
 static int16_t _select_refresh(dcc_scheduler_context_t *context) {
 
@@ -259,7 +284,9 @@ static int16_t _select_refresh(dcc_scheduler_context_t *context) {
      * cadence depends only on its own last send -- not on its ring position or on
      * how many other slots exist. Slots in their burst age too, so a burst that
      * keeps losing to other changes still falls overdue. Saturates rather than
-     * wrapping.
+     * wrapping. No-op while the cold tier is disabled.
+     *
+     * @param context Scheduler instance.
      */
 static void _age_refresh_slots(dcc_scheduler_context_t *context) {
 
@@ -289,6 +316,19 @@ static void _age_refresh_slots(dcc_scheduler_context_t *context) {
 // Public API
 // =============================================================================
 
+    /**
+     * @brief Initialize the scheduler module.
+     *
+     * @details Stores the interface, marks every slot inactive with zeroed
+     * pacing counters, resets both round-robin cursors and loads the refresh
+     * pacing from DCC_REFRESH_PROMPT_SENDS, DCC_REFRESH_COLD_CYCLES and
+     * DCC_REFRESH_COLD_MAX_CYCLES.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_scheduler_context_t instance.
+     * @param interface Pointer to populated interface_dcc_scheduler_t struct.
+     * @endverbatim
+     */
 void DccScheduler_initialize(dcc_scheduler_context_t *context, const interface_dcc_scheduler_t *interface) {
 
     uint8_t slot_index;
@@ -314,6 +354,32 @@ void DccScheduler_initialize(dcc_scheduler_context_t *context, const interface_d
 
 }
 
+    /**
+     * @brief Insert or update a packet in the scheduler.
+     *
+     * @details Algorithm:
+     * -# Refuse a one-shot whose repeat_count is 0 (it would never be sent and never freed)
+     * -# Look for an active slot with the same (address, tag)
+     * -# If none, take a free slot (fail if there is none) and zero its unsent_cycles
+     * -# If one exists, it is an auto-refresh slot and the cold tier is off, move
+     *    refresh_index to it so the changed command takes the next refresh turn
+     * -# Copy the packet bytes, byte_count, preamble_bits and repeat_count into the slot
+     * -# Store address, tag, priority and auto_refresh, and mark the slot active
+     * -# Re-arm the prompt burst (prompt_sends_left = refresh_prompt_sends); unsent_cycles
+     *    is left alone because an insert is not a send
+     *
+     * @verbatim
+     * @param context Pointer to dcc_scheduler_context_t instance.
+     * @param packet Pointer to dcc_packet_t to schedule (contents are copied).
+     * @param address DCC address for duplicate combining key.
+     * @param tag Sub-key for duplicate combining.
+     * @param priority Packet priority level (ranks one-shots only).
+     * @param auto_refresh true = keep in refresh cycle indefinitely.
+     * @endverbatim
+     *
+     * @return true if the packet was scheduled, false if no free slot or if a
+     *  one-shot was handed over with repeat_count 0.
+     */
 bool DccScheduler_insert(dcc_scheduler_context_t *context, const dcc_packet_t *packet, dcc_address_t address, dcc_tag_enum tag, dcc_priority_enum priority, bool auto_refresh) {
 
     int16_t slot_index;
@@ -378,6 +444,14 @@ bool DccScheduler_insert(dcc_scheduler_context_t *context, const dcc_packet_t *p
 
 }
 
+    /**
+     * @brief Remove all slots for a given address.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_scheduler_context_t instance.
+     * @param address The address to purge.
+     * @endverbatim
+     */
 void DccScheduler_remove_address(dcc_scheduler_context_t *context, dcc_address_t address) {
 
     uint8_t slot_index;
@@ -394,6 +468,13 @@ void DccScheduler_remove_address(dcc_scheduler_context_t *context, dcc_address_t
 
 }
 
+    /**
+     * @brief Remove all active slots and reset both round-robin cursors.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_scheduler_context_t instance.
+     * @endverbatim
+     */
 void DccScheduler_clear(dcc_scheduler_context_t *context) {
 
     uint8_t slot_index;
@@ -410,6 +491,15 @@ void DccScheduler_clear(dcc_scheduler_context_t *context) {
 
 }
 
+    /**
+     * @brief Notify the scheduler that the bit encoder finished a packet (ISR context).
+     *
+     * @details Only sets packet_complete_flag; DccScheduler_run() consumes it.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_scheduler_context_t instance.
+     * @endverbatim
+     */
 void DccScheduler_on_packet_complete(dcc_scheduler_context_t *context) {
 
     context->packet_complete_flag = true;
@@ -425,6 +515,9 @@ void DccScheduler_on_packet_complete(dcc_scheduler_context_t *context) {
      * to the same address within 5 ms can be misread as service-mode programming
      * by older decoders. Long (0xC0-0xFF) and accessory (0x80-0xBF) first bytes
      * never alias, so only short addresses 112-127 are affected.
+     *
+     * @param first_byte First (address) byte of the packet.
+     * @return true if the byte is in 0x70-0x7F, false otherwise.
      */
 static bool _aliases_service_mode(uint8_t first_byte) {
 
@@ -434,6 +527,8 @@ static bool _aliases_service_mode(uint8_t first_byte) {
 
     /**
      * @brief Load an idle packet and clear the same-address guard state.
+     * @param context Scheduler instance.
+     * @param idle_packet Caller-owned packet the idle packet is built into.
      */
 static void _load_idle(dcc_scheduler_context_t *context, dcc_packet_t *idle_packet) {
 
@@ -444,6 +539,27 @@ static void _load_idle(dcc_scheduler_context_t *context, dcc_packet_t *idle_pack
 
 }
 
+    /**
+     * @brief Main loop processing. Selects next packet and feeds to bit encoder.
+     *
+     * @details Algorithm:
+     * -# Return if no interface is wired
+     * -# After the first packet, return until packet_complete_flag is set, then clear it
+     * -# Return if the bit encoder does not report idle (belt and suspenders)
+     * -# Age every refresh slot by one packet cycle
+     * -# Pick the highest-priority one-shot; if found:
+     *    - If its first byte is 0x70-0x7F and equals last_addr_byte, load an idle spacer
+     *      instead (S-9.2 Section C footnote 11 5 ms gap) and retry next cycle
+     *    - Otherwise load it, record last_addr_byte, fire on_packet_sent, decrement
+     *      repeat_count and free the slot when it reaches 0
+     * -# Else pick the next refresh slot; if found, apply the same same-address guard,
+     *    load it, fire on_packet_sent, spend one burst send and zero unsent_cycles
+     * -# Else load an idle packet
+     *
+     * @verbatim
+     * @param context Pointer to dcc_scheduler_context_t instance.
+     * @endverbatim
+     */
 void DccScheduler_run(dcc_scheduler_context_t *context) {
 
     int16_t slot_index;

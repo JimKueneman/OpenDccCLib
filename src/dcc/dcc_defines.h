@@ -103,9 +103,10 @@ extern "C" {
      *  system time (sec 2.3.6.3): one send per update. */
 #define DCC_REPEAT_TIME                     1
 
-    /** @brief Accessory NOP (RailCom poll) and the accessory basic/extended STOP
-     *  builders: one send. Maintainer policy; the spec gives no count. */
+    /** @brief Accessory NOP (RailCom poll) builder: one send. Maintainer policy; the spec gives no count. */
 #define DCC_REPEAT_ACCESSORY_NOP            1
+
+    /** @brief Accessory basic/extended STOP builders: one send. Maintainer policy; the spec gives no count. */
 #define DCC_REPEAT_ACCESSORY_STOP           1
 
     /** @brief Every one-shot the spec leaves uncounted -- speed, function groups,
@@ -324,25 +325,25 @@ extern "C" {
 // Key CV Numbers (1-based, matching NMRA convention)
 // =============================================================================
 
-#define DCC_CV_PRIMARY_ADDRESS              1
-#define DCC_CV_VSTART                       2
-#define DCC_CV_ACCELERATION_RATE            3
-#define DCC_CV_DECELERATION_RATE            4
-#define DCC_CV_VHIGH                        5
-#define DCC_CV_VMID                         6
-#define DCC_CV_MANUFACTURER_VERSION         7
-#define DCC_CV_MANUFACTURER_ID              8   /**< Write 8 for factory reset */
-#define DCC_CV_TOTAL_PWM_PERIOD             9
-#define DCC_CV_EMF_FEEDBACK_CUTOUT          10
-#define DCC_CV_PACKET_TIMEOUT               11
-#define DCC_CV_POWER_SOURCE_CONVERSION      12
-#define DCC_CV_ANALOG_MODE_FUNC_FL_F8       13
-#define DCC_CV_ANALOG_MODE_FUNC_F9_F12      14
-#define DCC_CV_DECODER_LOCK_1               15
-#define DCC_CV_DECODER_LOCK_2               16
-#define DCC_CV_EXTENDED_ADDRESS_HIGH        17
-#define DCC_CV_EXTENDED_ADDRESS_LOW         18
-#define DCC_CV_CONSIST_ADDRESS              19
+#define DCC_CV_PRIMARY_ADDRESS              1   /**< Primary Address: 7-bit short address (1-127) */
+#define DCC_CV_VSTART                       2   /**< Vstart: motor voltage at speed step 1 */
+#define DCC_CV_ACCELERATION_RATE            3   /**< Acceleration Rate: momentum when speeding up */
+#define DCC_CV_DECELERATION_RATE            4   /**< Deceleration Rate: momentum when slowing down */
+#define DCC_CV_VHIGH                        5   /**< Vhigh: motor voltage at the top speed step */
+#define DCC_CV_VMID                         6   /**< Vmid: motor voltage at the middle speed step */
+#define DCC_CV_MANUFACTURER_VERSION         7   /**< Manufacturer Version No.: read-only firmware version */
+#define DCC_CV_MANUFACTURER_ID              8   /**< Manufacturer ID: read-only; write 8 for factory reset */
+#define DCC_CV_TOTAL_PWM_PERIOD             9   /**< Total PWM Period: motor drive frequency */
+#define DCC_CV_EMF_FEEDBACK_CUTOUT          10  /**< EMF Feedback Cutout: speed step at which back-EMF control stops */
+#define DCC_CV_PACKET_TIMEOUT               11  /**< Packet Time-Out Value: fail-safe timeout, 0 = disabled (S-9.2.4) */
+#define DCC_CV_POWER_SOURCE_CONVERSION      12  /**< Power Source Conversion: alternate power sources the decoder accepts */
+#define DCC_CV_ANALOG_MODE_FUNC_FL_F8       13  /**< Alternate Mode Function Status F1-F8: functions active in analog mode */
+#define DCC_CV_ANALOG_MODE_FUNC_F9_F12      14  /**< Alternate Mode Function Status FL, F9-F12: functions active in analog mode */
+#define DCC_CV_DECODER_LOCK_1               15  /**< Decoder Lock: key written by the command station */
+#define DCC_CV_DECODER_LOCK_2               16  /**< Decoder Lock: this decoder's lock ID; writes are refused while CV15 != CV16 */
+#define DCC_CV_EXTENDED_ADDRESS_HIGH        17  /**< Extended Address high byte (0xC0-0xE7 on the wire) */
+#define DCC_CV_EXTENDED_ADDRESS_LOW         18  /**< Extended Address low byte */
+#define DCC_CV_CONSIST_ADDRESS              19  /**< Consist Address: bits 0-6 address, bit 7 = consist direction reversed; 0 = not in a consist */
 #define DCC_CV_CONSIST_FUNCTIONS_F1_F8      21  /**< Consist address active for F1-F8: bit 0 = F1 .. bit 7 = F8 */
 #define DCC_CV_CONSIST_FUNCTIONS_FL_F9_F12  22  /**< Consist address active for FL (bits 0-1) and F9-F12 (bits 2-5) */
 #define DCC_CV22_FL_FORWARD_BIT             0x01  /**< CV22 bit 0: FL answers the consist address when travelling forward */
@@ -358,8 +359,8 @@ extern "C" {
 #define DCC_CV_FUNC_MAP_END                 46  /**< Function mapping end */
 #define DCC_CV_SPEED_TABLE_START            67  /**< Speed table start */
 #define DCC_CV_SPEED_TABLE_END              94  /**< Speed table end (28 entries) */
-#define DCC_CV_USER_ID_1                    105
-#define DCC_CV_USER_ID_2                    106
+#define DCC_CV_USER_ID_1                    105 /**< User Identifier #1: free for the owner's use */
+#define DCC_CV_USER_ID_2                    106 /**< User Identifier #2: free for the owner's use */
 
 // =============================================================================
 // Accessory Decoder CVs (S-9.2.2 Table 3: CV 513-1024)
@@ -447,10 +448,16 @@ extern "C" {
     /** @brief DYN (dynamic data) datagram */
 #define DCC_RAILCOM_ID_DYN                  7
 
-    /** @brief XPOM datagrams (IDs 8..11) */
+    /** @brief XPOM (extended programming-on-main) response; IDs 8..11 echo the command's 2-bit SS sequence number (this one: SS = 00) */
 #define DCC_RAILCOM_ID_XPOM_8               8
+
+    /** @brief XPOM response, SS = 01 */
 #define DCC_RAILCOM_ID_XPOM_9               9
+
+    /** @brief XPOM response, SS = 10 */
 #define DCC_RAILCOM_ID_XPOM_10              10
+
+    /** @brief XPOM response, SS = 11 */
 #define DCC_RAILCOM_ID_XPOM_11              11
 
     /** @brief CV auto-transfer datagram */

@@ -34,7 +34,7 @@
  * Commands:
  *   ADDR <n> <SHORT|LONG|ACC|ACCE>  -- Set decoder address
  *   CLEAR                           -- Flush RECV buffer
- *   ACK [ON|OFF|<width_us>]         -- ACK pulse control
+ *   ACK [ON|OFF|<width_us>|TEST [n]] -- ACK pulse control
  *   STATUS                          -- Show current address
  *   HELP                            -- Show command list
  *
@@ -55,23 +55,31 @@
 
 
 
-/* Maximum command line length */
+    /** @brief Maximum command line length in bytes, including the null terminator. */
 #define CMD_LINE_MAX   128
 
-/* Maximum tokens per command */
+    /** @brief Maximum tokens parsed from one command line. */
 #define CMD_MAX_TOKENS 4
 
+    /** @brief Line buffer filled by TI_UartDriver_read_line(). */
 static char _line_buf[CMD_LINE_MAX];
+    /** @brief Scratch buffer for formatted responses. */
 static char _resp_buf[128];
 
-/* Current decoder address state (for STATUS reporting) */
+    /** @brief Address last set by ADDR, for STATUS reporting. */
 static dcc_address_t _current_addr = 3;
+    /** @brief Address type last set by ADDR, for STATUS reporting. */
 static dcc_address_type_enum _current_type = DCC_ADDRESS_SHORT;
 
 /* ========================================================================== */
 /* Helpers                                                                    */
 /* ========================================================================== */
 
+    /**
+     * @brief Writes a response line followed by CR LF to the terminal.
+     *
+     * @param msg Null-terminated response text.
+     */
 static void _respond(const char *msg) {
 
     TI_UartDriver_write_string(msg);
@@ -79,12 +87,20 @@ static void _respond(const char *msg) {
 
 }
 
+    /**
+     * @brief Prints the "> " prompt.
+     */
 static void _prompt(void) {
 
     TI_UartDriver_write_string("> ");
 
 }
 
+    /**
+     * @brief Uppercases an ASCII string in place.
+     *
+     * @param s Null-terminated string to convert.
+     */
 static void _strupper(char *s) {
 
     while (*s) {
@@ -100,6 +116,17 @@ static void _strupper(char *s) {
 
 }
 
+    /**
+     * @brief Splits a line on spaces and tabs in place.
+     *
+     * @details Each separator is overwritten with a null so the tokens point into line.
+     *
+     * @param line       The line to split; modified in place.
+     * @param tokens     Receives a pointer to the start of each token.
+     * @param max_tokens Capacity of tokens; extra tokens are ignored.
+     *
+     * @return Number of tokens stored.
+     */
 static int _tokenize(char *line, char *tokens[], int max_tokens) {
 
     int count = 0;
@@ -141,6 +168,13 @@ static int _tokenize(char *line, char *tokens[], int max_tokens) {
 
 }
 
+    /**
+     * @brief Maps an address type onto the name used in ADDR and STATUS output.
+     *
+     * @param type Address type to name.
+     *
+     * @return "SHORT", "LONG", "ACC", "ACCE" or "UNKNOWN".
+     */
 static const char *_type_to_string(dcc_address_type_enum type) {
 
     switch (type) {
@@ -159,6 +193,21 @@ static const char *_type_to_string(dcc_address_type_enum type) {
 /* Command handlers                                                           */
 /* ========================================================================== */
 
+    /**
+     * @brief ADDR <n> <SHORT|LONG|ACC|ACCE>: writes the address CVs directly and re-syncs the library.
+     *
+     * @details Algorithm:
+     * -# Read the current CV29 and CV541 so only the relevant bits change.
+     * -# SHORT writes CV1 and clears the CV29 extended-address bit; LONG writes CV17/CV18 and sets it;
+     *    both clear the CV541 accessory bit. ACC and ACCE write CV513/CV521 and set the CV541 accessory
+     *    bit, ACCE also setting the basic/extended bit.
+     * -# The writes bypass the library, so call DccConfig_reload_address_cvs() to refresh the packet
+     *    decoder's address cache (DccConfig_initialize() is not re-run).
+     * -# Record the address for STATUS and acknowledge.
+     *
+     * @param tokens Uppercased token array; tokens[0] is the command word.
+     * @param count  Number of valid entries in tokens.
+     */
 static void _cmd_addr(char *tokens[], int count) {
 
     if (count < 3) {
@@ -238,6 +287,9 @@ static void _cmd_addr(char *tokens[], int count) {
 
 }
 
+    /**
+     * @brief CLEAR: discards all pending RECV lines.
+     */
 static void _cmd_clear(void) {
 
     CallbacksDcc_clear();
@@ -245,6 +297,9 @@ static void _cmd_clear(void) {
 
 }
 
+    /**
+     * @brief STATUS: prints the address and type last set by ADDR.
+     */
 static void _cmd_status(void) {
 
     snprintf(_resp_buf, sizeof(_resp_buf), "STATUS: addr=%u type=%s",
@@ -253,6 +308,16 @@ static void _cmd_status(void) {
 
 }
 
+    /**
+     * @brief ACK [ON|OFF|<width_us>|TEST [count]]: ACK pulse control for the bench.
+     *
+     * @details With no argument it reports the enabled state and width. ON and OFF set the enabled
+     * flag, a number sets the pulse width (1000-20000 us), and TEST fires 1-100 self-timed pulses
+     * with a busy-wait gap, temporarily forcing ACK on so the logic analyzer can see them.
+     *
+     * @param tokens Uppercased token array; tokens[0] is the command word.
+     * @param count  Number of valid entries in tokens.
+     */
 static void _cmd_ack(char *tokens[], int count) {
 
     if (count < 2) {
@@ -341,6 +406,9 @@ static void _cmd_ack(char *tokens[], int count) {
 
 }
 
+    /**
+     * @brief HELP: prints the command list.
+     */
 static void _cmd_help(void) {
 
     _respond("Commands:");
@@ -359,6 +427,9 @@ static void _cmd_help(void) {
 /* Public API                                                                 */
 /* ========================================================================== */
 
+    /**
+     * @brief Resets the recorded address to 3 / SHORT.
+     */
 void DecoderCommandParser_initialize(void) {
 
     _current_addr = 3;
@@ -366,6 +437,11 @@ void DecoderCommandParser_initialize(void) {
 
 }
 
+    /**
+     * @brief Reads one complete line, uppercases and tokenizes it, dispatches on the first token and re-prompts.
+     *
+     * @details Returns immediately when no complete line is waiting. Unknown commands produce an ERR line.
+     */
 void DecoderCommandParser_process(void) {
 
     if (!TI_UartDriver_read_line(_line_buf, CMD_LINE_MAX)) {

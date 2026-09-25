@@ -48,21 +48,40 @@
 extern "C" {
 #endif
 
-// Initialize the UART peripheral and enable the RX interrupt.
+    /**
+     * @brief Enables the UART RX interrupt in the NVIC.
+     *
+     * @details The peripheral itself (baud rate, pins) is configured by SysConfig in SYSCFG_DL_init().
+     */
 extern void TI_UartDriver_initialize(void);
 
-// Check if a complete line (terminated by CR or LF) is available in the
-// receive ring buffer. If so, copy it into 'buffer' (null-terminated, no
-// newline) and return true. Returns false if no complete line is ready yet.
-// max_len is the size of 'buffer' including the null terminator.
+    /**
+     * @brief Copies the next complete line (CR or LF terminated) out of the receive ring buffer.
+     *
+     * @details Non-blocking. The terminator is stripped, a trailing LF after CR (or vice versa)
+     * is consumed, and the line is truncated to fit. Main-loop context only.
+     *
+     * @param buffer  Destination for the null-terminated line, without the newline.
+     * @param max_len Size of buffer including the null terminator.
+     *
+     * @return true if a line was copied, false if no complete line is ready yet.
+     */
 extern bool TI_UartDriver_read_line(char *buffer, uint16_t max_len);
 
-// Echo received characters back to the terminal. Must be called from the
-// main loop -- NOT safe to call from ISR context.
+    /**
+     * @brief Echoes newly received characters back to the terminal (CR is echoed as CR LF).
+     *
+     * @details Uses blocking transmit, so call it from the main loop only, never from an ISR.
+     */
 extern void TI_UartDriver_echo_process(void);
 
-// Transmit a null-terminated string using polling (blocking) TX.
-// Safe to call from main loop. Not ISR-safe.
+    /**
+     * @brief Transmits a null-terminated string using polling (blocking) TX.
+     *
+     * @details Safe from the main loop; not ISR-safe.
+     *
+     * @param str Null-terminated string to send.
+     */
 extern void TI_UartDriver_write_string(const char *str);
 
 #ifdef __cplusplus

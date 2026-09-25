@@ -52,6 +52,11 @@ extern "C" {
 
         /**
          * @brief Fill a POM reply (ID 0): the CV address low byte and the CV value.
+         *
+         * @details Answers a POM read or write. Sets the datagram id and a two-byte
+         * payload; the engine 4/8-encodes it into Channel 2 when the callback returns
+         * DCC_RAILCOM_REPLY_DATA.
+         *
          * @param response Pointer to the @ref dcc_railcom_response_t to fill (the callback's out).
          * @param cv_address CV address (1-based); the low 8 bits are sent.
          * @param value CV value read or written.
@@ -61,6 +66,10 @@ extern "C" {
 
         /**
          * @brief Fill a dynamic-data reply (ID 7): a DV sub-index and its value.
+         *
+         * @details Reports one dynamic variable (speed, load, fuel, ...). Sets the
+         * datagram id and a two-byte payload: sub-index then value.
+         *
          * @param response Pointer to the @ref dcc_railcom_response_t to fill.
          * @param subid Dynamic variable sub-index (0-63).
          * @param value Variable value.
@@ -70,6 +79,10 @@ extern "C" {
 
         /**
          * @brief Fill a CV automatic-transfer reply (ID 12): 24-bit indexed CV address and value.
+         *
+         * @details Sets the datagram id and a four-byte payload: the three address bytes
+         * low byte first, then the value.
+         *
          * @param response Pointer to the @ref dcc_railcom_response_t to fill.
          * @param indexed_cv_address Indexed CV address (page index and offset), low byte first.
          * @param value CV value.
@@ -79,6 +92,11 @@ extern "C" {
 
         /**
          * @brief Fill an arbitrary reply: escape hatch for XPOM and other datagram ids.
+         *
+         * @details Copies the bytes as given; the id is masked to its low 4 bits. A zero
+         * count produces an id-only datagram. On any argument failure the response is
+         * left untouched.
+         *
          * @param response Pointer to the @ref dcc_railcom_response_t to fill.
          * @param datagram_id 4-bit datagram id (DCC_RAILCOM_ID_*).
          * @param data Data bytes to copy; may be NULL when count is 0.

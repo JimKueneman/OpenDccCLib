@@ -89,9 +89,15 @@ typedef struct {
          * @brief Probe the decoder for ALL supported service modes.
          *        Runs Direct → Paged → Register → Address-Only, accumulating a
          *        DCC_SERVICE_MODE_SUPPORTED_* bitmask. If none acknowledge, the bitmask
-         *        is 0 and result is DCC_SERVICE_MODE_NO_ACK; otherwise SUCCESS.
-         * @param on_detect Called when detection completes; supported_modes = capability bitmask.
-         * @return true if started, false if busy.
+         *        is 0 and result is DCC_SERVICE_MODE_NO_ACK; otherwise SUCCESS. A stage
+         *        whose primitive is not wired (NULL) is skipped.
+         * @param on_detect @ref dcc_service_mode_task_on_detect_callback_t called when detection completes; supported_modes = capability
+         *        bitmask. Reports BUSY (with the modes found so far) if a later stage's primitive could not be started.
+         * @return true if started; false if another detection is running, or if the Direct primitive is wired and refuses to start.
+         *
+         * @note When the Direct primitive is not wired, the remaining stages are started from inside this call and it returns
+         *       true unconditionally; if that cascade fails to start or has nothing left to probe, on_detect fires
+         *       synchronously before this call returns. See the .c file for the reasoning behind the asymmetry.
          */
     extern bool DccServiceModeTaskDetect_detect_mode(dcc_service_mode_task_on_detect_callback_t on_detect);
 
@@ -101,7 +107,7 @@ typedef struct {
          *        via dcc_config.c. The task module advances its state machine on this event;
          *        the ACK outcome is taken from @p result (SUCCESS = ACK detected by the common
          *        module's pulse-width measurement, anything else = no ACK).
-         * @param result Result of the primitive operation (passed through from primitive callback).
+         * @param result @ref dcc_service_mode_result_enum of the primitive operation (passed through from primitive callback).
          */
     extern void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_enum result);
 

@@ -27,16 +27,18 @@
  * @file callbacks_dcc.h
  * @brief Application callbacks that respond to DCC library events.
  *
- * @details These functions are wired into the dcc_config_t struct in command_station.c.
- * The library calls them when specific events occur (packet sent, service mode
- * complete, etc.). They run in main-loop context (from DccConfig_run()), NOT
- * from ISR context, so they are safe to use UART output or other slow I/O.
+ * @details These functions are wired into the dcc_config_t struct in saleae_hil_compliance.c.
+ * The library calls them when specific events occur (packet dispatched, RailCom
+ * datagram decoded, etc.). They run in main-loop context (from DccConfig_run()), NOT
+ * from ISR context, so they are safe to use UART output or other slow I/O. The
+ * two exceptions are the trigger/cancel helpers that the bench calls itself from the
+ * UART parser and from the 58 us timer ISR; each one says which.
  *
  * HOW TO ADD NEW CALLBACKS:
  *   1. Write your function here with a signature matching the corresponding
  *      function pointer typedef in dcc_config.h.
  *   2. Declare it in this header inside the DCC_COMPILE_COMMAND_STATION guard.
- *   3. In command_station.c, replace the NULL for that field with your
+ *   3. In saleae_hil_compliance.c, replace the NULL for that field with your
  *      function pointer.
  *
  * COMPILE GUARD: These callbacks are only compiled when
@@ -56,54 +58,110 @@ extern "C" {
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
-// Called after every DCC packet is fully transmitted on the track.
-// In this HIL-compliance firmware it drives the test-trigger GPIO (PB3): when
-// armed via CallbacksDcc_arm_trigger(), the next NON-idle packet raises PB3 so
-// a logic analyzer can hardware-trigger on the exact packet under test.
+    /**
+     * @brief Library on_packet_sent hook: drives the PB3 test trigger for the packet under test.
+     *
+     * @details The library fires on_packet_sent from DccConfig_run() when the packet is
+     * DISPATCHED to the bit encoder (transmit start), not after it has finished on the
+     * wire. When armed via CallbacksDcc_arm_trigger(), the first NON-idle packet raises
+     * PB3 so the logic analyzer can hardware-trigger on that packet. It also feeds the
+     * service-mode mock decoder and the mock-ACK width test.
+     *
+     * @param packet  Pointer to the @ref dcc_packet_t just handed to the encoder.
+     */
 extern void CallbacksDcc_on_packet_sent(const dcc_packet_t *packet);
 
-// Arm the test trigger: clears PB3 low and arms it so the next non-idle packet
-// transmitted drives a single clean rising edge on PB3. Called from the UART
-// "TRIG" command just before the harness sends the command under test.
+    /**
+     * @brief Arm the PB3 test trigger for the next non-idle packet.
+     *
+     * @details Clears PB3 low and arms it so the next non-idle packet dispatched
+     * drives a single clean rising edge on PB3. Called from the UART "TRIG" command
+     * just before the harness sends the command under test. Cancels a pending
+     * "TRIG INSERT" arm.
+     */
 extern void CallbacksDcc_arm_trigger(void);
 
-// Arm the test trigger on the next MAIN-TRACK INSERT instead of the next packet:
-// PB3 rises the moment a UART command hands its packet to the scheduler, so the
-// bench can measure the scheduler's command-to-wire latency (issue #5). Driven by
-// the UART "TRIG INSERT" command; disarmed by the insert (or by a plain TRIG).
+    /**
+     * @brief Arm the PB3 test trigger for the next MAIN-TRACK INSERT instead of the next packet.
+     *
+     * @details PB3 rises the moment a UART command hands its packet to the scheduler,
+     * so the bench can measure the scheduler command-to-wire latency (issue #5).
+     * Driven by the UART "TRIG INSERT" command; disarmed by the insert (or by a
+     * plain TRIG).
+     */
 extern void CallbacksDcc_arm_trigger_on_insert(void);
 
-// Called by the UART command parser right after a successful main-track insert
-// (one-shot or auto-refresh). Fires the insert trigger when armed.
+    /**
+     * @brief Fires the insert trigger (PB3) when armed.
+     *
+     * @details Called by the UART command parser right after a successful main-track
+     * insert (one-shot or auto-refresh). No-op unless armed by CallbacksDcc_arm_trigger_on_insert().
+     */
 extern void CallbacksDcc_on_main_track_insert(void);
 
-// Mock decoder (HIL only). Hold one CV value so the bench can exercise read-back
-// and write+verify end-to-end through the real ACK path. set() makes the mock
-// ACK Direct verify commands for `cv` that match `value` (and accept writes to
-// it); off() disables it. Driven by the UART "SVC MOCKCV" command.
+    /**
+     * @brief Enable the HIL mock decoder holding one CV value.
+     *
+     * @details The mock ACKs Direct verify commands for cv that match value (and
+     * accepts writes to it) so the bench can exercise read-back and write+verify
+     * end-to-end through the real ACK path. Driven by the UART "SVC MOCKCV" command.
+     *
+     * @param cv     1-based CV number the mock decoder holds.
+     * @param value  Initial value of that CV.
+     */
 extern void CallbacksDcc_mock_decoder_set(uint16_t cv, uint8_t value);
+    /** @brief Disable the HIL mock decoder so no verify command is ACKed (failure-path testing). */
 extern void CallbacksDcc_mock_decoder_off(void);
 
-// HIL boundary test: when early=true the width-test mock fires its pulse on the
-// FIRST command packet (inside the blanking window) so a test can confirm the
-// library masks it; false restores normal in-window firing.
+    /**
+     * @brief HIL boundary test: select whether the width-test mock fires early or in-window.
+     *
+     * @details When early is true the width-test mock fires its pulse on the FIRST
+     * command packet (inside the ACK blanking window) so a test can confirm the
+     * library masks it; false restores normal in-window firing.
+     *
+     * @param early  true = fire on the first (blanked) command packet, false = fire in-window.
+     */
 extern void CallbacksDcc_set_mock_ack_early(bool early);
 
-// RailCom cutout cancel (HIL only, S-9.3.2 CS-008). arm() requests a cancel of the
-// next in-progress cutout; the 58us bit-ISR must call cancel_tick() each tick to
-// fire it mid-cutout (restoring the H-bridge early). One-shot; disarms after firing.
+    /**
+     * @brief Arm a one-shot cancel of the next in-progress RailCom cutout (HIL only, S-9.3.2 CS-008).
+     *
+     * @details Requests a cancel of the next cutout that BEGINS after arming. The
+     * 58 us bit-timer ISR must call CallbacksDcc_railcom_cancel_tick() each tick to
+     * fire it mid-cutout, which drops the PB2 cutout strobe early. Disarms after firing.
+     */
 extern void CallbacksDcc_arm_railcom_cancel(void);
+    /**
+     * @brief 58 us ISR tick for the armed RailCom cutout cancel.
+     *
+     * @details Call from the shared DCC timer ISR every tick. Detects a cutout that
+     * begins after arming and cancels it about two ticks in. No-op when not armed.
+     */
 extern void CallbacksDcc_railcom_cancel_tick(void);
 
 #if defined(DCC_COMPILE_RAILCOM)
-// RailCom datagram decoded by the library (HIL loopback, S-9.3.2 CS-010..015).
-// Wired to .on_railcom_datagram_result; fires from DccConfig_run() (main loop),
-// so it prints straight to the command UART:
-//   RC RESULT: addr=<dcc addr> ch=<1|2> id=<datagram id> n=<bytes> data=<hex..>
-// result_count() / reset_result_count() back the RC STATUS / RC MOCK OFF commands.
+    /**
+     * @brief Library on_railcom_datagram_result hook: report a decoded RailCom datagram (HIL loopback, S-9.3.2 CS-010..015).
+     *
+     * @details Fires from DccConfig_run() (main loop), so it prints straight to the
+     * command UART as
+     *   RC RESULT: addr=<dcc addr> ch=<1|2> id=<datagram id> n=<bytes> data=<hex..>
+     * and bumps the result counter behind RC STATUS.
+     *
+     * @param address   DCC address the library tagged the datagram with.
+     * @param channel   RailCom channel the datagram was decoded from (DCC_RAILCOM_CH1 or CH2).
+     * @param datagram  Pointer to the decoded @ref dcc_railcom_datagram_t.
+     */
 extern void CallbacksDcc_on_railcom_datagram(uint16_t address, uint8_t channel,
                                              const dcc_railcom_datagram_t *datagram);
+    /**
+     * @brief Number of RC RESULT lines reported since the last reset (backs RC STATUS).
+     *
+     * @return Count of decoded RailCom datagrams reported.
+     */
 extern uint32_t CallbacksDcc_railcom_result_count(void);
+    /** @brief Zero the RC RESULT counter (backs RC MOCK OFF). */
 extern void CallbacksDcc_railcom_reset_result_count(void);
 #endif /* DCC_COMPILE_RAILCOM */
 

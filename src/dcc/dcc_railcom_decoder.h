@@ -32,6 +32,10 @@
  * packet end-bit edge -- bit-bangs the 4/8-encoded response into the RailCom cutout
  * (S-9.3.2 sec 2.4) via the interface's tx_pin_set, timed off the app's delay_us and
  * bracketed by the shared-resource lock + edge-IRQ mask. Disabled if tx_pin_set is NULL.
+ * Timing: 4 us per bit (DCC_RAILCOM_TX_BIT_US), 80 us blank from the end-bit edge to
+ * Channel 1 (DCC_RAILCOM_TX_BLANK_US), 33 us gap between the channels
+ * (DCC_RAILCOM_TX_GAP_US). Only a multifunction packet addressed to this decoder whose
+ * length the recognizer can size gets a reply.
  *
  * @author Jim Kueneman
  * @date 25 Sep 2026
@@ -69,16 +73,22 @@ typedef struct {
 
         /** @brief App hook: a command addressed to this decoder was recognized before
          *  the XOR. The app fills @p out for Channel 2 and returns the reply status
-         *  (DATA / ACK / BUSY / NACK / NONE). NULL = no Channel 2 (ADR only). Must be
-         *  fast and non-blocking -- it runs while the XOR byte is being received. */
+         *  (DATA / ACK / BUSY / NACK / NONE). NULL = no Channel 2 (ADR only). Called on
+         *  the DCC edge-ISR path (not the main loop) while the XOR byte is being received,
+         *  so it must be fast and non-blocking. */
     dcc_railcom_reply_status_enum (*on_railcom_request)(const uint8_t *instruction,
             uint8_t instruction_count, dcc_railcom_response_t *out);
 
 } interface_dcc_railcom_decoder_t;
 
         /**
-         * @brief Initialize the RailCom encoder module.
-         * @param interface Pointer to populated interface struct.
+         * @brief Initialize the RailCom decoder transmit engine.
+         *
+         * @details Stores the interface pointer and clears the armed reply and ADR
+         *  alternation state. The decoder address is pushed separately through
+         *  @ref DccRailcomDecoder_set_address.
+         *
+         * @param interface Pointer to a populated @ref interface_dcc_railcom_decoder_t; must remain valid for the lifetime of the application.
          */
     extern void DccRailcomDecoder_initialize(const interface_dcc_railcom_decoder_t *interface);
 
@@ -102,7 +112,9 @@ typedef struct {
          *  bytes arrived (see @ref DccRailcomDecoder_on_byte_received). Re-validates the XOR of
          *  the complete packet, and only then bit-bangs ADR (Channel 1) plus the app's optional
          *  Channel 2 reply -- blank, Ch1, gap, Ch2 -- timed off the end-bit edge per S-9.3.2
-         *  sec 2.4. Blocks for the ~454us cutout with interrupts masked; intended for ISR context.
+         *  sec 2.4. Blocks with interrupts masked for the whole reply (80 us blank, two
+         *  Channel 1 bytes, 33 us gap, then any Channel 2 bytes at 40 us per byte); intended
+         *  for ISR context. Sends nothing when tx_pin_set or delay_us is NULL.
          *
          * @param data Complete packet bytes including the trailing XOR byte.
          * @param count Number of bytes in @p data.
@@ -157,7 +169,10 @@ typedef struct {
          *  arrive it recognizes a complete command addressed to this decoder (the next byte is
          *  the XOR) and arms the ADR reply plus the app's optional Channel 2 reply (firing
          *  on_railcom_request before the XOR). The transmit itself happens later, at the
-         *  end-bit edge, in @ref DccRailcomDecoder_transmit.
+         *  end-bit edge, in @ref DccRailcomDecoder_transmit. Only a multifunction packet
+         *  whose length this module can size (see @ref DccRailcomDecoder_packet_length) and
+         *  whose address matches the one set by @ref DccRailcomDecoder_set_address arms a
+         *  reply; accessory, unsized and foreign packets are ignored.
          *
          * @param data Packet bytes assembled so far.
          * @param count Number of bytes in @p data.

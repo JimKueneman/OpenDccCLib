@@ -51,19 +51,28 @@
 #include <ti/driverlib/driverlib.h>
 #include <ti/driverlib/m0p/dl_interrupt.h>
 
+    /** @brief Receive ring depth in bytes: holds a full SEG line (host per_line=32 -> 260 chars). */
 #define UART_RX_RING_SIZE 512   /* holds a full SEG line (host per_line=32 -> 260 chars) */
 
+    /** @brief Receive ring buffer. */
 static volatile uint8_t _rx_ring[UART_RX_RING_SIZE];
+    /** @brief Ring write index; the RX ISR writes it. */
 static volatile uint16_t _rx_head = 0;  /* ISR writes here */
+    /** @brief Ring read index for command parsing; the main loop writes it. */
 static volatile uint16_t _rx_tail = 0;  /* main loop reads from here */
 
+    /** @brief Ring read index for echo; the main loop writes it. */
 static volatile uint16_t _echo_tail = 0;  /* echo read pointer */
 
+    /** @brief Enable the command UART RX interrupt. */
 void TI_UartDriver_initialize(void) {
 
     NVIC_EnableIRQ(UART_CMD_INST_INT_IRQN);
 }
 
+    /**
+     * @brief Echo every byte received since the last call back to the terminal; CR is echoed as CR+LF.
+     */
 void TI_UartDriver_echo_process(void) {
 
     /* Echo any new characters from main loop context (not ISR) */
@@ -77,6 +86,21 @@ void TI_UartDriver_echo_process(void) {
     }
 }
 
+    /**
+     * @brief Fetch one complete line from the receive ring.
+     *
+     * @details Algorithm:
+     * -# Scan from the tail to the head for a CR or LF; return false if none.
+     * -# Copy the bytes before it into buffer, truncating at max_len - 1, and null-terminate.
+     * -# Advance the tail past the terminator and past one following CR/LF (so CR+LF counts as one).
+     *
+     * @verbatim
+     * @param buffer   Destination for the line.
+     * @param max_len  Size of buffer including the null terminator.
+     * @endverbatim
+     *
+     * @return true when a line was copied, false when none is complete yet.
+     */
 bool TI_UartDriver_read_line(char *buffer, uint16_t max_len) {
 
     uint16_t tail = _rx_tail;
@@ -124,6 +148,13 @@ bool TI_UartDriver_read_line(char *buffer, uint16_t max_len) {
     return true;
 }
 
+    /**
+     * @brief Transmit a null-terminated string byte by byte with blocking TX.
+     *
+     * @verbatim
+     * @param str  Null-terminated string to send.
+     * @endverbatim
+     */
 void TI_UartDriver_write_string(const char *str) {
 
     while (*str) {
@@ -132,7 +163,9 @@ void TI_UartDriver_write_string(const char *str) {
     }
 }
 
-/* UART0 RX interrupt handler */
+    /**
+     * @brief Command UART (UART0) RX interrupt: push the received byte on the ring, dropping it if the ring is full.
+     */
 void UART_CMD_INST_IRQHandler(void) {
 
     switch (DL_UART_Main_getPendingInterrupt(UART_CMD_INST)) {

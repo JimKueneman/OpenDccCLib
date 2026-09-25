@@ -64,11 +64,11 @@ typedef struct {
     /** @brief Instance context for the paged service mode module. */
 typedef struct {
 
-    const interface_dcc_service_mode_paged_t *interface;
+    const interface_dcc_service_mode_paged_t *interface;    /**< Injected dependencies (common module access, user callback) */
     uint8_t paged_state;    /**< paged_state_enum cast to uint8_t */
-    uint8_t data_register;
-    uint8_t data_value;
-    bool is_write;
+    uint8_t data_register;  /**< Data register (1-4) within the selected page for the pending data step */
+    uint8_t data_value;     /**< Pending value for the data step */
+    bool is_write;          /**< true = write, false = verify (data step only; the page select is always a write) */
 
 } dcc_service_mode_paged_context_t;
 
@@ -81,19 +81,25 @@ typedef struct {
 
         /**
          * @brief Write a CV value using paged mode.
+         * @details Two-step: writes the page register (register 6) first, then writes the data register.
+         * Per S-9.2.3 the data step follows the page write whether or not it was acknowledged.
+         * The result of the data step is delivered through the interface on_complete callback.
          * @param context Pointer to @ref dcc_service_mode_paged_context_t instance.
          * @param cv_number CV number to write (1-1024).
          * @param value Byte value to write.
-         * @return true if operation started, false if busy.
+         * @return true if the operation started, false if cv_number is out of range, the common module is busy, or a paged operation is already in progress.
          */
     extern bool DccServiceModePaged_write(dcc_service_mode_paged_context_t *context, uint16_t cv_number, uint8_t value);
 
         /**
          * @brief Verify a CV value using paged mode.
+         * @details Two-step: writes the page register (register 6) first, then verifies the data register.
+         * Per S-9.2.3 the data step follows the page write whether or not it was acknowledged.
+         * The result of the data step is delivered through the interface on_complete callback.
          * @param context Pointer to @ref dcc_service_mode_paged_context_t instance.
          * @param cv_number CV number to verify (1-1024).
          * @param value Expected byte value.
-         * @return true if operation started, false if busy.
+         * @return true if the operation started, false if cv_number is out of range, the common module is busy, or a paged operation is already in progress.
          */
     extern bool DccServiceModePaged_verify(dcc_service_mode_paged_context_t *context, uint16_t cv_number, uint8_t value);
 

@@ -118,7 +118,7 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span> </div>
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="keyword">typedef</span> <span class="keyword">struct </span>{</div>
 <div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    <span class="keyword">const</span> interface_dcc_service_mode_register_t *interface;</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    <span class="keyword">const</span> interface_dcc_service_mode_register_t *interface; </div>
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>    uint8_t register_state;    </div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>    uint8_t register_number;   </div>
 <div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    uint8_t value;             </div>
@@ -127,17 +127,17 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
 <div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> DccServiceModeRegister_initialize(dcc_service_mode_register_context_t *context, <span class="keyword">const</span> interface_dcc_service_mode_register_t *interface);</div>
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccServiceModeRegister_write(dcc_service_mode_register_context_t *context, uint8_t register_number, uint8_t value);</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span> </div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccServiceModeRegister_verify(dcc_service_mode_register_context_t *context, uint8_t register_number, uint8_t value);</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span> </div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span><span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>}</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span><span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span><span class="preprocessor"></span></div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span> </div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span><span class="preprocessor">#endif </span><span class="comment">/* DCC_COMPILE_SERVICE_MODE_REGISTER */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccServiceModeRegister_write(dcc_service_mode_register_context_t *context, uint8_t register_number, uint8_t value);</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccServiceModeRegister_verify(dcc_service_mode_register_context_t *context, uint8_t register_number, uint8_t value);</div>
 <div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span><span class="preprocessor">#endif </span><span class="comment">/* __DCC_SERVICE_MODE_REGISTER__ */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span><span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>}</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span><span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span> </div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span><span class="preprocessor">#endif </span><span class="comment">/* DCC_COMPILE_SERVICE_MODE_REGISTER */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span> </div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span><span class="preprocessor">#endif </span><span class="comment">/* __DCC_SERVICE_MODE_REGISTER__ */</span><span class="preprocessor"></span></div>
 <div class="ttc" id="adcc__defines_8h_html"><div class="ttname"><a href="dcc__defines_8h.html">dcc_defines.h</a></div><div class="ttdoc">Protocol constants for NMRA DCC (S-9.1, S-9.2, S-9.2.1, S-9.3.2).</div></div>
 <div class="ttc" id="adcc__types_8h_html"><div class="ttname"><a href="dcc__types_8h.html">dcc_types.h</a></div><div class="ttdoc">Core type definitions, structures, and configuration constants for the OpenDccCLib library.</div></div>
 <div class="ttc" id="adcc__types_8h_html_a10087a262ba226b611af83e1f0d63a46"><div class="ttname"><a href="dcc__types_8h.html#a10087a262ba226b611af83e1f0d63a46">dcc_service_mode_step_callback_t</a></div><div class="ttdeci">void(* dcc_service_mode_step_callback_t)(dcc_service_mode_result_enum result)</div><div class="ttdoc">Callback for primitive service mode operation step completion.</div><div class="ttdef"><b>Definition</b> dcc_types.h:305</div></div>

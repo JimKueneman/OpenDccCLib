@@ -62,6 +62,7 @@
 /* OPTIONAL callbacks can be NULL -- the library skips them if NULL.           */
 /* ========================================================================== */
 
+    /** @brief Library configuration: driver and callback wiring handed to DccConfig_initialize(). */
 const dcc_config_t dcc_config = {
 
     /* --- Platform drivers (REQUIRED) ---
@@ -124,27 +125,38 @@ const dcc_config_t dcc_config = {
 /* ========================================================================== */
 /* Edge timestamp ring buffer                                                 */
 /*                                                                            */
-/* The GPIO ISR captures only a timestamp and stuffs it here.  The main loop  */
-/* drains the buffer, checks the track-select mux, and feeds edges into the   */
-/* DCC bit decoder.  This keeps the ISR under ~1 us so it never overruns the  */
-/* 58 us half-bit period.                                                     */
+/* The GPIO ISR checks the track-select mux, captures a timestamp for edges   */
+/* on the selected input and stuffs it here.  The main loop drains the buffer */
+/* and feeds the edges into the DCC bit decoder.  This keeps the ISR short so */
+/* it never overruns the 58 us half-bit period.                               */
 /* ========================================================================== */
 
+    /** @brief Edge timestamp ring size; must be a power of 2. */
 #define EDGE_BUF_SIZE 256           /* must be power of 2 */
+    /** @brief Index wrap mask for the edge ring. */
 #define EDGE_BUF_MASK (EDGE_BUF_SIZE - 1)
 
+    /** @brief Edge timestamp ring; the GPIO ISR is the only writer. */
 static volatile uint32_t _edge_buf[EDGE_BUF_SIZE];
+    /** @brief Ring write index, advanced by the GPIO ISR only. */
 static volatile uint16_t _edge_head;   /* written by ISR only  */
+    /** @brief Ring read index, advanced by _drain_edge_buffer() only. */
 static volatile uint16_t _edge_tail;   /* read by main loop only */
 
 /* ========================================================================== */
 /* ISR handlers                                                               */
 /* ========================================================================== */
 
-/* DCC input edge ISR -- PB1 (main) and PB4 (service) are both on GPIOB,
- * which uses the GROUP1 interrupt.  The ISR captures a timestamp into the
- * ring buffer and clears the interrupt — nothing else.  The main loop
- * decides which input is active and feeds edges to the bit decoder. */
+    /**
+     * @brief DCC input edge ISR for PB1 (main) and PB4 (service), both on GPIOB's GROUP1 interrupt.
+     *
+     * @details Algorithm:
+     * -# Read which of the two DCC input pins raised the interrupt.
+     * -# Read the track-select pin (PB17, driven by the command station): LOW selects PB1, HIGH selects PB4.
+     * -# If the edge came from the selected input, push the current timestamp into the edge ring
+     *    (dropped when full) and toggle the test pin (PB3) so the logic analyzer shows ISR activity.
+     * -# Clear both pins' interrupt status; edges on the unselected input are discarded here.
+     */
 void GROUP1_IRQHandler(void) {
 
     uint32_t status = DL_GPIO_getEnabledInterruptStatus(GPIOB,
@@ -175,8 +187,9 @@ void GROUP1_IRQHandler(void) {
 
 }
 
-/* SysTick ISR -- 100 ms periodic tick.
- * Blinks LED1 as a heartbeat (toggle every 500 ms = 5 ticks). */
+    /**
+     * @brief SysTick ISR; 100 ms periodic tick that blinks LED1 as a heartbeat (toggle every 500 ms = 5 ticks).
+     */
 void SysTick_Handler(void) {
 
     static uint8_t heartbeat_count = 0;
@@ -195,13 +208,13 @@ void SysTick_Handler(void) {
 /* Edge buffer drain — called from main loop                                  */
 /* ========================================================================== */
 
-/* Drains all pending edge timestamps from the ISR ring buffer and feeds
- * them to the DCC bit decoder.  The track-select pin (PB17) determines
- * which physical input is active; edges arriving while the wrong input
- * fired are still valid timestamps because the ISR captured them
- * unconditionally — the mux only matters for future multi-decoder work.
- * Toggles the test pin (PB3) for each edge so the LA still shows ISR
- * activity. */
+    /**
+     * @brief Feeds every pending edge timestamp from the ISR ring into the DCC bit decoder.
+     *
+     * @details Track selection and the test-pin toggle already happened in GROUP1_IRQHandler(),
+     * so every timestamp in the ring belongs to the selected input; this just calls
+     * DccConfig_decoder_edge_isr() for each one in order.
+     */
 static void _drain_edge_buffer(void) {
 
     while (_edge_tail != _edge_head) {
@@ -219,21 +232,28 @@ static void _drain_edge_buffer(void) {
 /* Main                                                                       */
 /* ========================================================================== */
 
-/* Initialization order matters:
- *  1. SYSCFG_DL_init()          -- clocks, GPIO, timers, UART (generated)
- *  2. NVIC_EnableIRQ(...)       -- enable interrupts not covered by SysConfig
- *  3. TI_DccDriver_initialize() -- start the free-running timestamp timer
- *  4. TI_UartDriver_initialize()-- enable UART RX interrupt
- *  5. CallbacksDcc_initialize() -- clear ring buffer, set CV defaults
- *  6. DccConfig_initialize()    -- hand the config struct to the library
- *                                  (reads CV1/CV29 defaults for address)
- *
- * After that, the main loop calls four functions repeatedly:
- *   DccConfig_run()                -- library periodic housekeeping
- *   CallbacksDcc_drain()           -- push queued RECV lines out over UART
- *   TI_UartDriver_echo_process()   -- echo typed characters back to terminal
- *   DecoderCommandParser_process() -- handle typed commands (ADDR, HELP, etc.)
- */
+    /**
+     * @brief Decoder entry point.
+     *
+     * @details Initialization order matters:
+     *  -# SYSCFG_DL_init()          -- clocks, GPIO, timers, UART (generated)
+     *  -# NVIC_EnableIRQ(...)       -- enable interrupts not covered by SysConfig
+     *  -# TI_DccDriver_initialize() -- start the free-running timestamp timer
+     *  -# TI_UartDriver_initialize()-- enable UART RX interrupt
+     *  -# AckPulseDriver_initialize() -- ACK pin low, defaults restored
+     *  -# CallbacksDcc_initialize() -- clear ring buffer, set CV defaults
+     *  -# DccConfig_initialize()    -- hand the config struct to the library
+     *                                  (reads CV1/CV29 defaults for address)
+     *
+     * After that, the main loop calls five non-blocking functions repeatedly:
+     *   _drain_edge_buffer()           -- feed captured edges to the bit decoder
+     *   DccConfig_run()                -- packet dispatch, failsafe and ACK timing
+     *   CallbacksDcc_drain()           -- push queued RECV lines out over UART
+     *   TI_UartDriver_echo_process()   -- echo typed characters back to terminal
+     *   DecoderCommandParser_process() -- handle typed commands (ADDR, HELP, etc.)
+     *
+     * @return Never returns; the int is only the C signature.
+     */
 int main(void) {
 
     /* SysConfig-generated device initialization (clocks, GPIO, timers, UART) */

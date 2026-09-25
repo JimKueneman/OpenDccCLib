@@ -33,8 +33,9 @@
  * in the dcc_config_t struct.
  *
  * This is the decoder-only version: it provides lock/unlock (interrupt
- * disable/enable) and a microsecond timestamp.  The command-station
- * version also needs timer start/stop/set_period and track power control.
+ * disable/enable), a microsecond timestamp and the RailCom bit-bang delay.
+ * The command-station version also needs the shared 58 us timer, the RailCom
+ * cutout timer, pin toggling and track power control.
  *
  * @author Jim Kueneman
  * @date 25 Sep 2026
@@ -49,21 +50,33 @@
 extern "C" {
 #endif
 
-/* Start the free-running timestamp timer. */
+    /** @brief Start the free-running timestamp timer (TIMESTAMP_TIMER, TIMA0 at 1 MHz). */
 extern void TI_DccDriver_initialize(void);
 
-/* Disable all interrupts (used by the library to protect shared state). */
+    /** @brief Disable all interrupts (the library uses it to protect shared state). */
 extern void TI_DccDriver_lock_shared_resources(void);
 
-/* Re-enable interrupts. */
+    /** @brief Re-enable interrupts. */
 extern void TI_DccDriver_unlock_shared_resources(void);
 
-/* Return the current time in microseconds from a free-running counter.
- * The counter wraps at ~4295 seconds (32-bit overflow). */
+    /**
+     * @brief Current time in microseconds from a free-running counter.
+     *
+     * @details Built from the 16-bit 1 MHz timer plus an overflow count; wraps at
+     * ~4295 seconds (32-bit overflow).
+     *
+     * @return Microseconds since TI_DccDriver_initialize().
+     */
 extern uint32_t TI_DccDriver_get_timestamp_usec(void);
 
-/* Blocking microsecond delay for the RailCom Tx bit-bang, accurate at the 4 us
- * bit period via a 20 MHz (50 ns/tick) one-shot timer. */
+    /**
+     * @brief Blocking microsecond delay for the RailCom Tx bit-bang (wired to dcc_config_t.railcom_delay_us).
+     *
+     * @details Accurate at the 4 us bit period via the DELAY_TIMER SysConfig instance
+     * (TIMG0, 20 MHz, 50 ns per tick) that this firmware defines for the library.
+     *
+     * @param us  Delay in microseconds.
+     */
 extern void TI_DccDriver_railcom_delay_us(uint16_t us);
 
 #ifdef __cplusplus

@@ -43,9 +43,10 @@
 #include <ti/driverlib/driverlib.h>
 #include <ti/driverlib/m0p/dl_interrupt.h>
 
-/* Overflow counter for 32-bit microsecond timestamp from 16-bit timer */
+    /** @brief Number of 16-bit timer wraps, for the 32-bit microsecond timestamp. */
 static volatile uint32_t _timestamp_overflows = 0;
 
+    /** @brief Start the free-running timestamp timer. */
 void TI_DccDriver_initialize(void) {
 
     /* Start the free-running timestamp timer */
@@ -53,22 +54,30 @@ void TI_DccDriver_initialize(void) {
 
 }
 
+    /** @brief Disable all interrupts (library critical-section enter). */
 void TI_DccDriver_lock_shared_resources(void) {
 
     __disable_irq();
 
 }
 
+    /** @brief Re-enable interrupts (library critical-section exit). */
 void TI_DccDriver_unlock_shared_resources(void) {
 
     __enable_irq();
 
 }
 
-/* Build a 32-bit microsecond timestamp from the 16-bit hardware timer.
- * Interrupts are briefly disabled so the overflow count and timer value
- * are read atomically (prevents a race where the timer overflows between
- * reading the overflow counter and reading the timer register). */
+    /**
+     * @brief Build a 32-bit microsecond timestamp from the 16-bit hardware timer.
+     *
+     * @details Interrupts are briefly disabled so the overflow count and timer value
+     * are read atomically (prevents a race where the timer overflows between
+     * reading the overflow counter and reading the timer register). The timer
+     * counts down from the load value at 1 MHz, so the elapsed part is 65535 - count.
+     *
+     * @return Microseconds since initialization.
+     */
 uint32_t TI_DccDriver_get_timestamp_usec(void) {
 
     uint32_t overflows;
@@ -84,9 +93,9 @@ uint32_t TI_DccDriver_get_timestamp_usec(void) {
 
 }
 
-/* Timer overflow ISR -- fires every 65536 us (~65 ms).
- * Increments the overflow counter so get_timestamp_usec() can compute
- * the full 32-bit time. */
+    /**
+     * @brief Timestamp timer overflow ISR, every 65536 us (~65 ms): count the wrap.
+     */
 void TIMESTAMP_TIMER_INST_IRQHandler(void) {
 
     switch (DL_TimerA_getPendingInterrupt(TIMESTAMP_TIMER_INST)) {
@@ -104,12 +113,18 @@ void TIMESTAMP_TIMER_INST_IRQHandler(void) {
 
 }
 
-/* Blocking microsecond delay for the RailCom Tx bit-bang.  Uses a one-shot
- * 20 MHz hardware timer (20 ticks/us, 50 ns resolution) so the 4 us bit period
- * is accurate -- the 1 MHz timestamp timer is too coarse (1 us = 25% of a bit).
- *
- * PORTING: Replace with your MCU's equivalent one-shot timer or a cycle-accurate
- * busy-wait.  The requirement is sub-microsecond accuracy at a 4 us bit. */
+    /**
+     * @brief Blocking microsecond delay for the RailCom Tx bit-bang.
+     *
+     * @details Loads the one-shot 20 MHz DELAY_TIMER (20 ticks per us, 50 ns
+     * resolution) and spins until its ZERO event, so the 4 us bit period is accurate;
+     * the 1 MHz timestamp timer is too coarse (1 us = 25% of a bit). PORTING: replace
+     * with your MCU equivalent one-shot timer or a cycle-accurate busy-wait.
+     *
+     * @verbatim
+     * @param us  Delay in microseconds.
+     * @endverbatim
+     */
 void TI_DccDriver_railcom_delay_us(uint16_t us) {
 
     DL_TimerG_setLoadValue(DELAY_TIMER_INST, (uint16_t)(us * 20u));   /* 20 ticks/us @ 50 ns */

@@ -39,7 +39,7 @@
  * (kept in the refresh cycle until explicitly removed).
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_APPLICATION_COMMAND_STATION_MAIN_TRACK__
@@ -84,43 +84,82 @@ typedef struct {
 
         /**
          * @brief Initialize the command station main track application module.
-         * @param interface Pointer to populated interface struct (wired by dcc_config.c).
+         *
+         * @details Every other function in this module is a no-op (or returns
+         *  false) until this has been called.
+         *
+         * @param interface Pointer to populated @ref interface_dcc_application_command_station_main_track_t (wired by dcc_config.c).
          */
     extern void DccApplicationCommandStationMainTrack_initialize(const interface_dcc_application_command_station_main_track_t *interface);
 
-        /** @brief Enable main track power output and start DCC signal generation. */
+        /**
+         * @brief Enable main track power output and start DCC signal generation.
+         *
+         * @details Applies track power first, then starts the timer at the DCC
+         *  one-bit half period and starts the bit encoder.
+         */
     extern void DccApplicationCommandStationMainTrack_power_on(void);
 
-        /** @brief Disable main track power output and stop DCC signal generation. */
+        /**
+         * @brief Disable main track power output and stop DCC signal generation.
+         *
+         * @details Stops the bit encoder and the timer, then removes track power
+         *  last.
+         */
     extern void DccApplicationCommandStationMainTrack_power_off(void);
 
         /**
          * @brief Send a one-shot packet on the main track (not auto-refreshed).
-         * @param packet The DCC packet to schedule.
-         * @param address DCC address for duplicate combining key.
-         * @param tag Sub-key for duplicate combining (e.g., function group).
-         * @param priority Packet priority level.
-         * @return true if packet was scheduled, false if no free slots.
+         *
+         * @details The packet is transmitted repeat_count times and its slot is
+         *  then released. If a slot keyed on the same address and tag is already
+         *  active -- an auto-refresh slot included -- its packet data is replaced
+         *  and that slot becomes a one-shot.
+         *
+         * @param packet Pointer to the @ref dcc_packet_t to schedule.
+         * @param address @ref dcc_address_t used as the primary duplicate-combining key.
+         * @param tag Sub-key for duplicate combining, per @ref dcc_tag_enum (e.g. function group).
+         * @param priority Packet priority level, per @ref dcc_priority_enum.
+         * @return true if the packet was scheduled; false if the scheduler has no
+         *  free slot, if the packet's repeat_count is 0 (it would never be sent),
+         *  or if the module has not been initialized.
          */
     extern bool DccApplicationCommandStationMainTrack_send_packet(const dcc_packet_t *packet, dcc_address_t address, dcc_tag_enum tag, dcc_priority_enum priority);
 
         /**
          * @brief Add a packet to the main track auto-refresh cycle.
-         * @param packet The DCC packet to schedule.
-         * @param address DCC address for duplicate combining key.
-         * @param tag Sub-key for duplicate combining (e.g., function group).
-         * @param priority Packet priority level.
-         * @return true if packet was scheduled, false if no free slots.
+         *
+         * @details The packet is resent in the refresh cycle until it is replaced
+         *  or removed; repeat_count is ignored for refresh slots. If a slot keyed
+         *  on the same address and tag is already active -- a pending one-shot
+         *  included -- its packet data is replaced and that slot becomes a
+         *  refresh slot.
+         *
+         * @param packet Pointer to the @ref dcc_packet_t to schedule.
+         * @param address @ref dcc_address_t used as the primary duplicate-combining key.
+         * @param tag Sub-key for duplicate combining, per @ref dcc_tag_enum (e.g. function group).
+         * @param priority Packet priority level, per @ref dcc_priority_enum.
+         * @return true if the packet was scheduled; false if the scheduler has no
+         *  free slot or the module has not been initialized.
          */
     extern bool DccApplicationCommandStationMainTrack_add_to_auto_refresh(const dcc_packet_t *packet, dcc_address_t address, dcc_tag_enum tag, dcc_priority_enum priority);
 
         /**
-         * @brief Remove all auto-refresh slots for a given address.
-         * @param address The address to purge.
+         * @brief Remove every active scheduler slot for an address.
+         *
+         * @details Deactivates all slots keyed on the address -- one-shots that
+         *  have not finished sending included, not only auto-refresh slots.
+         *
+         * @param address The @ref dcc_address_t whose slots are purged.
          */
     extern void DccApplicationCommandStationMainTrack_remove_from_auto_refresh(dcc_address_t address);
 
-        /** @brief Remove all active auto-refresh slots. */
+        /**
+         * @brief Clear every scheduler slot, auto-refresh and pending one-shots alike.
+         *
+         * @details Nothing is left for the scheduler to send until a new packet
+         *  is inserted.
+         */
     extern void DccApplicationCommandStationMainTrack_remove_all_auto_refresh(void);
 
 #ifdef __cplusplus

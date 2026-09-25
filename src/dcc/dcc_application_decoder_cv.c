@@ -47,6 +47,11 @@ static const interface_dcc_application_decoder_cv_t *_interface = (void *)0;
 // =============================================================================
 
     /**
+     * @brief Initialize the decoder CV application module.
+     *
+     * @details Stores the interface pointer. Called by dcc_config.c during
+     * DccConfig_initialize().
+     *
      * @verbatim
      * @param interface  Pointer to populated interface struct (wired by dcc_config.c).
      * @endverbatim
@@ -58,11 +63,17 @@ void DccApplicationDecoderCv_initialize(const interface_dcc_application_decoder_
 }
 
     /**
+     * @brief Read a CV value.
+     *
+     * @details Returns false when uninitialized, otherwise forwards to the cv_read
+     * hook (DccCvStorage_read when wired by dcc_config.c).
+     *
      * @verbatim
      * @param cv_number  CV number (1-based per NMRA convention).
      * @param value      Pointer to receive the CV value.
      * @endverbatim
-     * @return true if the read succeeded, false on error or NULL interface.
+     *
+     * @return true if the read succeeded; false on error or when the module is not initialized.
      */
 bool DccApplicationDecoderCv_read(uint16_t cv_number, uint8_t *value) {
 
@@ -77,11 +88,21 @@ bool DccApplicationDecoderCv_read(uint16_t cv_number, uint8_t *value) {
 }
 
     /**
+     * @brief Write a CV value with decoder lock enforcement.
+     *
+     * @details Algorithm:
+     * -# Return false when uninitialized.
+     * -# Return false when the is_locked hook reports the lock engaged (this happens
+     *    before the storage layer's own CV 15/16 and CV 8 exceptions).
+     * -# Forward to the cv_write hook; dcc_config.c wires it to a wrapper that applies
+     *    the DccCvStorage_write rules and refreshes the packet decoder's address cache.
+     *
      * @verbatim
      * @param cv_number  CV number (1-based per NMRA convention).
      * @param value      Value to write.
      * @endverbatim
-     * @return true if the write succeeded, false if locked or on error.
+     *
+     * @return true if the write succeeded; false if locked, on error, or when the module is not initialized.
      */
 bool DccApplicationDecoderCv_write(uint16_t cv_number, uint8_t value) {
 
@@ -102,7 +123,12 @@ bool DccApplicationDecoderCv_write(uint16_t cv_number, uint8_t value) {
 }
 
     /**
-     * @return true if locked (CV 15 != CV 16), false if unlocked.
+     * @brief Check if the decoder lock is engaged.
+     *
+     * @details Returns false when uninitialized, otherwise forwards to the is_locked
+     * hook (DccCvStorage_is_locked when wired).
+     *
+     * @return true if locked (CV 15 != CV 16); false if unlocked or when the module is not initialized.
      */
 bool DccApplicationDecoderCv_is_locked(void) {
 

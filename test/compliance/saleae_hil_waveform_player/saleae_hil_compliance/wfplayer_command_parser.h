@@ -36,7 +36,13 @@
 #ifndef __WFPLAYER_COMMAND_PARSER__
 #define __WFPLAYER_COMMAND_PARSER__
 
+    /** @brief Initialize the parser (currently nothing to set up). */
 void WfCmdParser_initialize(void);
+    /**
+     * @brief Read one complete UART line if available, dispatch it, and write exactly one OK/ERR reply.
+     *
+     * @details Call once per main-loop iteration. Non-blocking.
+     */
 void WfCmdParser_process(void);
 
 #endif /* __WFPLAYER_COMMAND_PARSER__ */

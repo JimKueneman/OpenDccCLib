@@ -39,6 +39,7 @@
 // Static state
 // =============================================================================
 
+    /** @brief Injected clock, CV-read and notification hooks, set by DccFailsafe_initialize. */
 static const interface_dcc_failsafe_t *_interface;
 
     /** @brief Timestamp (us) of the last command packet addressed to us. */
@@ -51,6 +52,18 @@ static bool _active;
 // Public API
 // =============================================================================
 
+    /**
+     * @brief Initialize the fail-safe module.
+     *
+     * @details Algorithm:
+     * -# Store the interface pointer and clear the tripped state.
+     * -# Stamp the last-packet clock with "now" (0 without a clock hook) so a
+     *    fresh decoder does not trip before its first packet.
+     *
+     * @verbatim
+     * @param interface Pointer to a populated interface_dcc_failsafe_t.
+     * @endverbatim
+     */
 void DccFailsafe_initialize(const interface_dcc_failsafe_t *interface) {
 
     _interface = interface;
@@ -62,6 +75,14 @@ void DccFailsafe_initialize(const interface_dcc_failsafe_t *interface) {
 
 }
 
+    /**
+     * @brief Note that a command packet addressed to this decoder was received.
+     *
+     * @details Algorithm:
+     * -# Ignore the call if the module is not initialized.
+     * -# Re-stamp the last-packet clock.
+     * -# If currently tripped, clear the state and fire on_failsafe_exited once.
+     */
 void DccFailsafe_note_valid_packet(void) {
 
     if (!_interface) {
@@ -91,6 +112,18 @@ void DccFailsafe_note_valid_packet(void) {
 
 }
 
+    /**
+     * @brief Periodic poll. Call from the main loop (DccConfig_run).
+     *
+     * @details Algorithm:
+     * -# Return if uninitialized or the cv_read / clock hooks are absent.
+     * -# Return while already tripped: recovery happens only in
+     *    DccFailsafe_note_valid_packet.
+     * -# Read CV11; return if unreadable or 0 (time-out disabled).
+     * -# Trip and fire on_failsafe_entered once when the time since the last
+     *    addressed packet reaches CV11 * DCC_FAILSAFE_CV11_UNIT_US (unsigned
+     *    arithmetic tolerates clock wrap).
+     */
 void DccFailsafe_run(void) {
 
     uint8_t cv11;
@@ -143,6 +176,10 @@ void DccFailsafe_run(void) {
 
 }
 
+    /**
+     * @brief Query whether the decoder is currently in fail-safe.
+     * @return true if tripped (timed out and not yet recovered).
+     */
 bool DccFailsafe_is_active(void) {
 
     return _active;

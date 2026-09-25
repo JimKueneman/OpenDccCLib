@@ -30,8 +30,9 @@
  * @details Manages a static array of scheduler slots. Supports:
  * - Duplicate combining via (address, tag) composite key
  * - Auto-refresh of speed/function slots per NMRA requirements
- * - Priority ordering (e-stop > speed > function > accessory > CV > idle)
- * - Round-robin through refresh slots
+ * - One-shot packets always go out before refresh slots; priority
+ *   (e-stop > speed > function > accessory > CV > idle) ranks only the one-shots
+ * - Round-robin through refresh slots, with a prompt burst after every insert
  *
  * @author Jim Kueneman
  * @date 25 Sep 2026
@@ -84,10 +85,19 @@ typedef struct {
      */
 typedef struct {
 
+        /** @brief Injected dependencies; NULL until DccScheduler_initialize(). */
     const interface_dcc_scheduler_t *interface;
+
+        /** @brief Slot pool; inactive slots are free. */
     dcc_scheduler_slot_t slots[USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT];
+
+        /** @brief Round-robin cursor of the burst pass and of the flat ring; an insert moves it to the changed slot. */
     uint8_t refresh_index;
+
+        /** @brief Set from ISR context by DccScheduler_on_packet_complete(), consumed by DccScheduler_run(). */
     volatile bool packet_complete_flag;
+
+        /** @brief false until the first packet is loaded; DccScheduler_run() does not wait for packet_complete_flag before that. */
     bool first_packet_sent;
 
         /** @brief First byte (address byte) of the last non-idle packet loaded.
@@ -96,17 +106,19 @@ typedef struct {
          *  was an idle packet. */
     uint8_t last_addr_byte;
 
-        /** @brief Auto-refresh pacing, set from DCC_REFRESH_PROMPT_SENDS,
-         *  DCC_REFRESH_COLD_CYCLES and DCC_REFRESH_COLD_MAX_CYCLES by
-         *  DccScheduler_initialize(). refresh_cold_cycles = 0: flat round-robin. */
+        /** @brief Full-rate sends a refresh slot gets after each insert; set from DCC_REFRESH_PROMPT_SENDS by DccScheduler_initialize(). */
     uint8_t refresh_prompt_sends;
+
+        /** @brief Keep-alive interval in packet cycles; set from DCC_REFRESH_COLD_CYCLES. 0 = flat round-robin, no cold tier. */
     uint16_t refresh_cold_cycles;
+
+        /** @brief Starvation bound in packet cycles; set from DCC_REFRESH_COLD_MAX_CYCLES. A slot unsent this long is overdue. */
     uint16_t refresh_cold_max_cycles;
 
-        /** @brief Round-robin cursor of the overdue and due passes (the burst
-         *  pass uses refresh_index), and whether the last refresh send was an
-         *  overdue one -- see _select_refresh() in dcc_scheduler.c. */
+        /** @brief Round-robin cursor of the overdue and due passes (the burst pass uses refresh_index) -- see _select_refresh() in dcc_scheduler.c. */
     uint8_t refresh_cold_index;
+
+        /** @brief true when the last refresh send was an overdue one, so a waiting burst goes next. */
     bool refresh_last_was_overdue;
 
 } dcc_scheduler_context_t;
@@ -122,9 +134,12 @@ typedef struct {
          * @brief Main loop processing. Selects next packet and feeds to bit encoder.
          * @param context Pointer to @ref dcc_scheduler_context_t instance.
          *
-         * @details Called from DccConfig_run(). Checks if the bit encoder is idle,
-         * selects the highest-priority packet, handles auto-refresh round-robin,
-         * and loads the next packet.
+         * @details Called from DccConfig_run(). Does nothing until the bit encoder
+         * has finished the previous packet and reports idle. Then sends the
+         * highest-priority pending one-shot if there is one, otherwise the next
+         * auto-refresh slot in round-robin order, otherwise an idle packet. Two
+         * consecutive packets to the same short address 112-127 are separated by
+         * an idle packet (S-9.2 Section C footnote 11).
          */
     extern void DccScheduler_run(dcc_scheduler_context_t *context);
 
@@ -134,9 +149,11 @@ typedef struct {
          *
          * @details If a slot with matching (address, tag) exists and is active,
          * its packet data is overwritten (duplicate combining). Otherwise a new
-         * slot is allocated.
+         * slot is allocated. Every insert re-arms the refresh slot's prompt burst
+         * (refresh_prompt_sends full-rate sends before it drops to the keep-alive).
          *
          * @param packet Pointer to @ref dcc_packet_t to schedule.
+         * @note Contents of the packet are copied; the caller's copy may be reused after the call.
          * @param address DCC address for duplicate combining key.
          * @param tag Sub-key for duplicate combining (@ref dcc_tag_enum).
          * @param priority Packet priority level (@ref dcc_priority_enum).

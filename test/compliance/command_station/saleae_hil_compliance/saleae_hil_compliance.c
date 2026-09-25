@@ -25,9 +25,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @file saleae_hil_compliance.c
- * @brief Main entry point for the Saleae hardware-in-the-loop DCC compliance test firmware on the MSPM0G3507 LaunchPad. Cloned from the command_station demo: same UART command interface, used to drive the DCC signal under test while a Saleae logic analyzer captures and verifies it against the NMRA standards.
+ * @brief Main entry point for the Saleae hardware-in-the-loop DCC compliance test firmware on the MSPM0G3507 LaunchPad.
  *
- * @details INTEGRATION PATTERN:
+ * @details Cloned from the command_station demo: same UART command interface, used to
+ * drive the DCC signal under test while a Saleae logic analyzer captures and verifies
+ * it against the NMRA standards.
+ *
+ * INTEGRATION PATTERN:
  *   1. Fill a dcc_config_t struct with function pointers to your hardware
  *      drivers and (optionally) your application callbacks.
  *   2. Call DccConfig_initialize(&config) once at startup.
@@ -87,6 +91,7 @@
 /* both mirror the window to PB18 for the Saleae AND gate the receiver.        */
 /* ========================================================================== */
 
+    /** @brief Main-track RailCom hooks: PB2 cutout strobe, PB18 window marker, and the loopback receive path. */
 static const dcc_railcom_hw_t _main_railcom_hw = {
     .begin_railcom_cutout       = &TI_DccDriver_main_cutout_begin,
     .end_railcom_cutout         = &TI_DccDriver_main_cutout_end,
@@ -101,6 +106,7 @@ static const dcc_railcom_hw_t _main_railcom_hw = {
     .on_railcom_datagram_result = &CallbacksDcc_on_railcom_datagram,
 };
 
+    /** @brief The DCC library configuration: every hardware hook and application callback this bench wires in. */
 static const dcc_config_t dcc_config = {
 
     // REQUIRED -- these three are needed for every role (command station or decoder).
@@ -114,7 +120,7 @@ static const dcc_config_t dcc_config = {
     .shared_timer_stop       = &TI_DccDriver_shared_timer_stop,
 
     // RailCom cutout one-shot timer drives the cutout state machine
-    // via DccConfig_railcom_cutout_timer_isr().
+    // via DccConfig_railcom_oneshot_timer_isr().
     .railcom_timer_start     = &TI_DccDriver_railcom_timer_start,
     .railcom_timer_stop      = &TI_DccDriver_railcom_timer_stop,
 
@@ -154,9 +160,16 @@ static const dcc_config_t dcc_config = {
 /* ISR handlers                                                               */
 /* ========================================================================== */
 
-// Shared DCC timer ISR. Fires every 58us (fixed period). Drives the tick ISR
-// for both main track and service track bit encoders. Pin toggling is handled
-// inside the library via the pin_toggle callbacks — not here.
+    /**
+     * @brief Shared DCC timer ISR (TIMA1, every 58 us).
+     *
+     * @details Brackets itself with the ISR_TIME pin (PA15) for scoping, then in
+     * order: advances the software timestamp, drives the mock-ACK pulse (before the
+     * library samples the ACK), runs DccConfig_58us_timer_isr() for both track bit
+     * encoders, and services an armed RailCom cutout cancel (same priority as the
+     * cutout one-shot ISR, so no nesting). Pin toggling happens inside the library
+     * through the pin_toggle hooks, not here.
+     */
 void DCC_BIT_TIMER_INST_IRQHandler(void) {
 
     DL_GPIO_setPins(GPIO_ISR_TIME_PORT, GPIO_ISR_TIME_ISR_TIME_PIN);
@@ -177,9 +190,13 @@ void DCC_BIT_TIMER_INST_IRQHandler(void) {
     DL_GPIO_clearPins(GPIO_ISR_TIME_PORT, GPIO_ISR_TIME_ISR_TIME_PIN);
 }
 
-// RailCom cutout one-shot timer ISR. Fires at each state expiry of the cutout
-// sequence (DELAY 26us, SETTLING 54us, CH1 97us, GAP 16us, CH2 261us).
-// Drives the cutout state machine.
+    /**
+     * @brief RailCom cutout one-shot timer ISR (TIMA0).
+     *
+     * @details Fires at each state expiry of the cutout sequence (DELAY, SETTLING,
+     * CH1, GAP, CH2; periods from the calibrated values in dcc_config) and steps
+     * the cutout state machine via DccConfig_railcom_oneshot_timer_isr().
+     */
 void RAILCOM_TIMER_INST_IRQHandler(void) {
 
     switch (DL_TimerA_getPendingInterrupt(RAILCOM_TIMER_INST)) {
@@ -193,10 +210,13 @@ void RAILCOM_TIMER_INST_IRQHandler(void) {
     }
 }
 
-// SysTick ISR -- fires every 100 ms.
-// Calls DccConfig_100ms_timer_tick() for library housekeeping (timeouts,
-// periodic maintenance). Also blinks LED1 as a heartbeat (toggles every
-// 500 ms = 5 ticks).
+    /**
+     * @brief SysTick ISR, every 100 ms.
+     *
+     * @details Calls DccConfig_100ms_timer_tick(), which is currently an empty
+     * reserved hook in the library, and toggles LED1 every 5 ticks (500 ms) as a
+     * firmware-alive heartbeat.
+     */
 void SysTick_Handler(void) {
 
     static uint8_t heartbeat_count = 0;
@@ -214,6 +234,16 @@ void SysTick_Handler(void) {
 /* Main                                                                       */
 /* ========================================================================== */
 
+    /**
+     * @brief Firmware entry: bring up the board, hand the config to the library, then run the main loop forever.
+     *
+     * @details Order: SYSCFG_DL_init(), the three hardware drivers (DCC, UART, RailCom
+     * loopback), DccConfig_initialize(), the command parser, the banner. Track power
+     * stays off until a UART POWER ON. The loop runs DccConfig_run(), UART echo and
+     * the command parser; all three are non-blocking.
+     *
+     * @return Never returns.
+     */
 int main(void) {
 
     // SysConfig-generated device initialization (clocks, GPIO, timers, UART).

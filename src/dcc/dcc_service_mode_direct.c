@@ -37,6 +37,13 @@
 
 #include <string.h>
 
+    /**
+     * @brief Append the XOR error-detection byte to a packet.
+     *
+     * @details XORs data[0..byte_count-1] into data[byte_count] and increments byte_count.
+     *
+     * @param packet Pointer to the packet being built; byte_count must be the payload length.
+     */
 static void _append_xor(dcc_packet_t *packet) {
 
     uint8_t xor_byte = 0;
@@ -55,11 +62,16 @@ static void _append_xor(dcc_packet_t *packet) {
 
 static void _on_step_complete(dcc_service_mode_result_enum result);
 
-/* We need the context to reach interface->on_complete in the callback, but the callback
- * signature is fixed (takes only result). Store a module-level pointer to the
- * active context. This is safe because only one operation runs at a time. */
+    /** @brief Context of the operation in flight; the step-callback signature carries no context, and only one operation runs at a time. */
 static dcc_service_mode_direct_context_t *_active_context = (void *)0;
 
+    /**
+     * @brief Step callback from the common module: forwards the result to the user.
+     *
+     * @details Calls interface->on_complete of the active context when both are set.
+     *
+     * @param result Outcome of the single operation step.
+     */
 static void _on_step_complete(dcc_service_mode_result_enum result) {
 
     if (_active_context && _active_context->interface->on_complete) {
@@ -70,12 +82,38 @@ static void _on_step_complete(dcc_service_mode_result_enum result) {
 
 }
 
+    /**
+     * @brief Initialize the direct service mode module.
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_direct_context_t instance.
+     * @param interface Pointer to populated interface_dcc_service_mode_direct_t struct.
+     * @endverbatim
+     */
 void DccServiceModeDirect_initialize(dcc_service_mode_direct_context_t *context, const interface_dcc_service_mode_direct_t *interface) {
 
     context->interface = interface;
 
 }
 
+    /**
+     * @brief Write a byte to a CV using direct mode.
+     *
+     * @details Algorithm:
+     * -# Return false if cv_number is outside 1-1024 or the common module is busy
+     * -# Encode the 0-based wire CV (cv_number - 1): data[0] = DCC_SERVICE_DIRECT_WRITE_PREFIX | CV bits 9-8,
+     *    data[1] = CV bits 7-0, data[2] = value, then the XOR byte
+     * -# Latch this context for the callback and start a write operation with
+     *    DCC_SERVICE_MODE_COMMAND_REPEAT command packets and DCC_SERVICE_MODE_RECOVERY_COUNT recovery packets
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_direct_context_t instance.
+     * @param cv_number CV number to write (1-1024).
+     * @param value Byte value to write.
+     * @endverbatim
+     *
+     * @return true if the operation started, false if cv_number is out of range or the common module is busy.
+     */
 bool DccServiceModeDirect_write_byte(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t value) {
 
     dcc_packet_t packet;
@@ -109,6 +147,24 @@ bool DccServiceModeDirect_write_byte(dcc_service_mode_direct_context_t *context,
 
 }
 
+    /**
+     * @brief Verify a CV byte value using direct mode.
+     *
+     * @details Algorithm:
+     * -# Return false if cv_number is outside 1-1024 or the common module is busy
+     * -# Encode the 0-based wire CV (cv_number - 1): data[0] = DCC_SERVICE_DIRECT_VERIFY_PREFIX | CV bits 9-8,
+     *    data[1] = CV bits 7-0, data[2] = value, then the XOR byte
+     * -# Latch this context for the callback and start a verify operation with
+     *    DCC_SERVICE_MODE_COMMAND_REPEAT command packets and no recovery packets
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_direct_context_t instance.
+     * @param cv_number CV number to verify (1-1024).
+     * @param value Expected byte value.
+     * @endverbatim
+     *
+     * @return true if the operation started, false if cv_number is out of range or the common module is busy.
+     */
 bool DccServiceModeDirect_verify_byte(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t value) {
 
     dcc_packet_t packet;
@@ -142,6 +198,25 @@ bool DccServiceModeDirect_verify_byte(dcc_service_mode_direct_context_t *context
 
 }
 
+    /**
+     * @brief Write a single bit to a CV using direct mode.
+     *
+     * @details Algorithm:
+     * -# Return false if cv_number is outside 1-1024, bit_position is above 7, or the common module is busy
+     * -# Encode the 0-based wire CV (cv_number - 1): data[0] = DCC_SERVICE_DIRECT_BIT_PREFIX | CV bits 9-8,
+     *    data[1] = CV bits 7-0, data[2] = 1111DBBB (D = bit_value, BBB = bit_position), then the XOR byte
+     * -# Latch this context for the callback and start a write operation with
+     *    DCC_SERVICE_MODE_COMMAND_REPEAT command packets and DCC_SERVICE_MODE_RECOVERY_COUNT recovery packets
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_direct_context_t instance.
+     * @param cv_number CV number to write (1-1024).
+     * @param bit_position Bit position within the CV (0-7).
+     * @param bit_value Value to write (true = 1, false = 0).
+     * @endverbatim
+     *
+     * @return true if the operation started, false if cv_number or bit_position is out of range or the common module is busy.
+     */
 bool DccServiceModeDirect_write_bit(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t bit_position, bool bit_value) {
 
     dcc_packet_t packet;
@@ -181,6 +256,25 @@ bool DccServiceModeDirect_write_bit(dcc_service_mode_direct_context_t *context, 
 
 }
 
+    /**
+     * @brief Verify a single bit in a CV using direct mode.
+     *
+     * @details Algorithm:
+     * -# Return false if cv_number is outside 1-1024, bit_position is above 7, or the common module is busy
+     * -# Encode the 0-based wire CV (cv_number - 1): data[0] = DCC_SERVICE_DIRECT_BIT_PREFIX | CV bits 9-8,
+     *    data[1] = CV bits 7-0, data[2] = 1110DBBB (D = bit_value, BBB = bit_position), then the XOR byte
+     * -# Latch this context for the callback and start a verify operation with
+     *    DCC_SERVICE_MODE_COMMAND_REPEAT command packets and no recovery packets
+     *
+     * @verbatim
+     * @param context Pointer to dcc_service_mode_direct_context_t instance.
+     * @param cv_number CV number to verify (1-1024).
+     * @param bit_position Bit position within the CV (0-7).
+     * @param bit_value Expected bit value (true = 1, false = 0).
+     * @endverbatim
+     *
+     * @return true if the operation started, false if cv_number or bit_position is out of range or the common module is busy.
+     */
 bool DccServiceModeDirect_verify_bit(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t bit_position, bool bit_value) {
 
     dcc_packet_t packet;

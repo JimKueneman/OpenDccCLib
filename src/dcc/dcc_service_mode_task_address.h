@@ -75,9 +75,10 @@ typedef struct {
 
         /**
          * @brief Read CV#1 (short address) using address-only mode. Iterates address_verify 0-127 until ACK.
-         * @param on_complete Called when complete; value = address found (0-127).
-         * @param on_progress Called after each step (nullable).
-         * @return true if started, false if busy.
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when complete: SUCCESS with the address found (0-127);
+         *        ERROR (value 0) if no address 0-127 was ACKed.
+         * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t called after each scan step (nullable); estimated_steps is reported as 0.
+         * @return true if started, false if another operation is running.
          */
     extern bool DccServiceModeTaskAddress_read(dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
@@ -85,27 +86,29 @@ typedef struct {
          * @brief Write CV#1 (short address) then verify. Always 2 operations (write + verify).
          *        Decoder automatically clears CV#29 bit 5 and CV#19 on success.
          * @param address Address to write (1-127).
-         * @param on_complete Called when complete; value = address verified.
-         * @param on_progress Called after each step (nullable).
-         * @return true if started, false if busy or address out of range.
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when complete: SUCCESS if the verify was ACKed,
+         *        VERIFY_FAIL if not; value = the address written either way.
+         * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t called after each step (nullable); estimated_steps is reported as 0.
+         * @return true if started, false if another operation is running or the address is out of range.
          */
     extern bool DccServiceModeTaskAddress_write(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /**
          * @brief Verify CV#1 (short address) against a value (one verify op).
          * @param address Expected address value (1-127).
-         * @param on_complete Called with SUCCESS if it verified (ACK), VERIFY_FAIL otherwise.
-         * @param on_progress Optional progress callback (may be NULL).
-         * @return true if started, false if busy or address out of range.
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called with SUCCESS if it verified (ACK), VERIFY_FAIL otherwise; value = the expected address.
+         * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t; not used by this operation (nullable).
+         * @return true if started, false if another operation is running or the address is out of range.
          */
     extern bool DccServiceModeTaskAddress_verify(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /**
          * @brief Read a single bit from CV#1. Reads full byte via iteration, extracts bit.
          * @param bit_position Bit position (0-6; bit 7 is always 0 in 7-bit address).
-         * @param on_complete Called when complete; value = 0 or 1.
-         * @param on_progress Called after each step (nullable).
-         * @return true if started, false if busy or bit out of range.
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when complete: SUCCESS with value 0 or 1;
+         *        ERROR (value 0) if no address 0-127 was ACKed.
+         * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t called after each scan step (nullable); estimated_steps is reported as 0.
+         * @return true if started, false if another operation is running or the bit is out of range.
          */
     extern bool DccServiceModeTaskAddress_read_bit(uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
@@ -113,9 +116,11 @@ typedef struct {
          * @brief Write a single bit to CV#1 using read-modify-write. Reads byte first, then writes modified byte.
          * @param bit_position Bit position (0-6).
          * @param bit_value Value to write.
-         * @param on_complete Called when complete; value = bit value verified (0 or 1).
-         * @param on_progress Called after each step (nullable).
-         * @return true if started, false if busy or bit out of range.
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when complete: SUCCESS if the modified address verified,
+         *        VERIFY_FAIL if not (value = the bit written, 0 or 1); ERROR (value 0) if the read scan found no ACKed address.
+         * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t called after each scan step of the read phase only (nullable);
+         *        estimated_steps is reported as 0.
+         * @return true if started, false if another operation is running or the bit is out of range.
          */
     extern bool DccServiceModeTaskAddress_write_bit(uint8_t bit_position, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
@@ -125,7 +130,7 @@ typedef struct {
          *        via dcc_config.c. The task module advances its state machine on this event;
          *        the ACK outcome is taken from @p result (SUCCESS = ACK detected by the common
          *        module's pulse-width measurement, anything else = no ACK).
-         * @param result Result of the primitive operation (passed through from primitive callback).
+         * @param result @ref dcc_service_mode_result_enum of the primitive operation (passed through from primitive callback).
          */
     extern void DccServiceModeTaskAddress_on_primitive_complete(dcc_service_mode_result_enum result);
 

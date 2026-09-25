@@ -46,19 +46,40 @@
 extern "C" {
 #endif
 
-/* Enable the UART RX interrupt. */
+    /**
+     * @brief Enables the UART RX interrupt in the NVIC.
+     *
+     * @details The peripheral itself (baud rate, pins) is configured by SysConfig in SYSCFG_DL_init().
+     */
 extern void TI_UartDriver_initialize(void);
 
-/* Check whether a complete line (terminated by CR or LF) has been received.
- * If so, copy it into 'buffer' (null-terminated, no newline) and return true.
- * If no complete line is available yet, return false. */
+    /**
+     * @brief Copies the next complete line (CR or LF terminated) out of the receive ring buffer.
+     *
+     * @details Non-blocking. The terminator is stripped, a trailing LF after CR (or vice versa)
+     * is consumed, and the line is truncated to fit. Main-loop context only.
+     *
+     * @param buffer  Destination for the null-terminated line, without the newline.
+     * @param max_len Size of buffer including the null terminator.
+     *
+     * @return true if a line was copied, false if no complete line is ready yet.
+     */
 extern bool TI_UartDriver_read_line(char *buffer, uint16_t max_len);
 
-/* Echo received characters back to the terminal.
- * Call from main loop -- not ISR-safe. */
+    /**
+     * @brief Echoes newly received characters back to the terminal (CR is echoed as CR LF).
+     *
+     * @details Uses blocking transmit, so call it from the main loop only, never from an ISR.
+     */
 extern void TI_UartDriver_echo_process(void);
 
-/* Transmit a null-terminated string by polling the TX register. */
+    /**
+     * @brief Transmits a null-terminated string by polling the TX register (blocking).
+     *
+     * @details Safe from the main loop; not ISR-safe.
+     *
+     * @param str Null-terminated string to send.
+     */
 extern void TI_UartDriver_write_string(const char *str);
 
 #ifdef __cplusplus

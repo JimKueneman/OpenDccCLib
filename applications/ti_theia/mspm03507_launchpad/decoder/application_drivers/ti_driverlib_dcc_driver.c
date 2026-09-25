@@ -43,9 +43,12 @@
 #include <ti/driverlib/driverlib.h>
 #include <ti/driverlib/m0p/dl_interrupt.h>
 
-/* Overflow counter for 32-bit microsecond timestamp from 16-bit timer */
+    /** @brief Number of times the 16-bit timestamp timer has wrapped; upper bits of the 32-bit timestamp. */
 static volatile uint32_t _timestamp_overflows = 0;
 
+    /**
+     * @brief Starts the free-running timestamp timer.
+     */
 void TI_DccDriver_initialize(void) {
 
     /* Start the free-running timestamp timer */
@@ -53,22 +56,33 @@ void TI_DccDriver_initialize(void) {
 
 }
 
+    /**
+     * @brief Disables all interrupts (bare __disable_irq(), not nest-counted).
+     */
 void TI_DccDriver_lock_shared_resources(void) {
 
     __disable_irq();
 
 }
 
+    /**
+     * @brief Re-enables interrupts.
+     */
 void TI_DccDriver_unlock_shared_resources(void) {
 
     __enable_irq();
 
 }
 
-/* Build a 32-bit microsecond timestamp from the 16-bit hardware timer.
- * Interrupts are briefly disabled so the overflow count and timer value
- * are read atomically (prevents a race where the timer overflows between
- * reading the overflow counter and reading the timer register). */
+    /**
+     * @brief Builds a 32-bit microsecond timestamp from the 16-bit hardware timer and the overflow count.
+     *
+     * @details Interrupts are briefly disabled so the overflow count and timer value are read
+     * atomically; otherwise the timer could wrap between the two reads. The timer counts down
+     * from its load value at 1 MHz, so the elapsed part is 65535 - count.
+     *
+     * @return Microseconds since TI_DccDriver_initialize().
+     */
 uint32_t TI_DccDriver_get_timestamp_usec(void) {
 
     uint32_t overflows;
@@ -84,9 +98,12 @@ uint32_t TI_DccDriver_get_timestamp_usec(void) {
 
 }
 
-/* Timer overflow ISR -- fires every 65536 us (~65 ms).
- * Increments the overflow counter so get_timestamp_usec() can compute
- * the full 32-bit time. */
+    /**
+     * @brief Timestamp timer overflow ISR; fires every 65536 us (~65 ms).
+     *
+     * @details Increments the overflow counter so TI_DccDriver_get_timestamp_usec() can compute
+     * the full 32-bit time.
+     */
 void TIMESTAMP_TIMER_INST_IRQHandler(void) {
 
     switch (DL_TimerA_getPendingInterrupt(TIMESTAMP_TIMER_INST)) {
@@ -104,20 +121,28 @@ void TIMESTAMP_TIMER_INST_IRQHandler(void) {
 
 }
 
-/* Blocking microsecond delay for the RailCom Tx bit-bang.  Uses a one-shot
- * 20 MHz hardware timer (20 ticks/us, 50 ns resolution) so the 4 us bit period
- * is accurate -- the 1 MHz timestamp timer is too coarse (1 us = 25% of a bit).
- *
- * NOT FINISHED (2026-09-25): DELAY_TIMER_INST is not defined for this demo.
- * decoder.syscfg has only TIMESTAMP_TIMER and ACK_PULSE_TIMER, so this file
- * does not compile as committed.  Add a third TIMER instance in SysConfig
- * named DELAY_TIMER with a 50.00 ns period (SysConfig places it on TIMG0,
- * one-shot, fed by the 20 MHz low-power bus clock).  The HIL decoder firmware
- * at test/compliance/mobile_decoder/saleae_hil_compliance/decoder.syscfg has
- * the working instance (TIMER3) and uses this identical driver file.
- *
- * PORTING: Replace with your MCU's equivalent one-shot timer or a cycle-accurate
- * busy-wait.  The requirement is sub-microsecond accuracy at a 4 us bit. */
+    /**
+     * @brief Blocking microsecond delay for the RailCom Tx bit-bang.
+     *
+     * @details Uses a one-shot 20 MHz hardware timer (20 ticks/us, 50 ns resolution) so the
+     * 4 us bit period is accurate; the 1 MHz timestamp timer is too coarse (1 us = 25% of a bit).
+     * Loads us * 20 ticks, starts the counter and spins until the zero event, then clears it.
+     *
+     * NOT FINISHED (2026-09-25): DELAY_TIMER_INST is not defined for this demo.
+     * decoder.syscfg has only TIMESTAMP_TIMER and ACK_PULSE_TIMER, so this file
+     * does not compile as committed.  Add a third TIMER instance in SysConfig
+     * named DELAY_TIMER with a 50.00 ns period (SysConfig places it on TIMG0,
+     * one-shot, fed by the 20 MHz low-power bus clock).  The HIL decoder firmware
+     * at test/compliance/mobile_decoder/saleae_hil_compliance/decoder.syscfg has
+     * the working instance (TIMER3) and uses this identical driver file.
+     *
+     * PORTING: Replace with your MCU's equivalent one-shot timer or a cycle-accurate
+     * busy-wait.  The requirement is sub-microsecond accuracy at a 4 us bit.
+     *
+     * @verbatim
+     * @param us Delay in microseconds.
+     * @endverbatim
+     */
 void TI_DccDriver_railcom_delay_us(uint16_t us) {
 
     DL_TimerG_setLoadValue(DELAY_TIMER_INST, (uint16_t)(us * 20u));   /* 20 ticks/us @ 50 ns */

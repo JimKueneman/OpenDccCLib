@@ -41,8 +41,11 @@
 // Static state
 // =============================================================================
 
+    /** @brief Injected callbacks and CV access; set by DccPacketDecoder_initialize. */
 static const interface_dcc_packet_decoder_t *_interface;
+    /** @brief Cached decoder address: CV1, CV17/CV18, or the accessory board/output address from CV513/CV521. */
 static dcc_address_t _my_address;
+    /** @brief Kind of address held in _my_address; selects which packet types this decoder answers. */
 static dcc_address_type_enum _my_address_type;
     /** @brief Cached CV29 bit 1: true = 28/128-step, false = 14-step. */
 static bool _use_28_step;
@@ -78,8 +81,11 @@ static bool _last_direction;
      *  Single-producer (ISR) / single-consumer (poll): head/tail are volatile and one
      *  slot is reserved, so no shared counter and no lock is needed. */
 static uint8_t _packet_queue[USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH][DCC_PACKET_MAX_BYTES];
+    /** @brief Byte count of each queued packet, indexed like _packet_queue. */
 static uint8_t _packet_queue_count[USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH];
+    /** @brief Next slot to dispatch; advanced only by DccPacketDecoder_run. */
 static volatile uint8_t _packet_queue_head;
+    /** @brief Next free slot; advanced only by DccPacketDecoder_enqueue. */
 static volatile uint8_t _packet_queue_tail;
 
     /** @brief Consecutive reset packet counter for service mode detection. */
@@ -112,7 +118,12 @@ static void _update_extended_address(void) {
 
     /**
      * @brief True for the CVs whose value feeds the address cache.
+     *
+     * @details Covers CV1, CV17/CV18, CV19, CV21/CV22, CV29, CV513, CV521, CV541 and CV8
+     * (a CV8 write is a factory reset, after which any of the others may have changed).
+     *
      * @param cv_number CV number (1-based).
+     * @return true if a write to this CV must trigger a cache reload.
      */
 static bool _is_address_cv(uint16_t cv_number) {
 
@@ -133,6 +144,7 @@ static bool _is_address_cv(uint16_t cv_number) {
     /**
      * @brief Apply CV29 bit 0 and, for a consist-addressed packet, CV19 bit 7.
      * @param packet_direction Direction bit as decoded from the packet.
+     * @return Direction to report to the application after any reversal (true = forward).
      */
 static bool _effective_direction(bool packet_direction) {
 
@@ -151,6 +163,7 @@ static bool _effective_direction(bool packet_direction) {
     /**
      * @brief Does this function answer the consist address (S-9.2.2 CV21/CV22)?
      * @param function_number Function number; FL is 0.
+     * @return true if CV21/CV22 enable the function for consist-addressed packets; always false for F13 and above.
      */
 static bool _consist_function_enabled(uint8_t function_number) {
 
@@ -177,7 +190,11 @@ static bool _consist_function_enabled(uint8_t function_number) {
 }
 
     /**
-     * @brief Read CV19 and cache the consist address and its direction bit.
+     * @brief Read CV19, CV21 and CV22 and cache the consist address, its direction bit
+     *  and the consist function enables.
+     *
+     * @details A failed read leaves the corresponding value cleared: no consist, no
+     * functions enabled.
      */
 static void _update_consist_address(void) {
 
@@ -275,12 +292,16 @@ static void _update_accessory_address(void) {
      *        the appropriate address and configuration CVs.
      *
      * @details Algorithm:
-     * -# If cv_read is unavailable, set safe multi-function defaults
+     * -# If cv_read is unavailable, set safe multi-function defaults and return
      * -# Read CV541; if bit 7 is set this is an accessory decoder
-     * -# Accessory path: read CV513/CV521 for address, CV541 bit 5 for type
-     * -# Multi-function path: read CV29 for speed mode, direction, address mode
+     * -# Accessory path: clear the consist state, read CV513/CV521 for the address and
+     *    CV541 bits 5 (basic/extended) and 6 (board/output addressing), then return
+     * -# Multi-function path: read CV29 for speed mode, direction and address mode
+     *    (an unreadable CV29 falls back to the safe defaults)
      * -# Multi-function extended address: read CV17/CV18
      * -# Multi-function short address: read CV1
+     * -# Read CV19/CV21/CV22 for the consist address and function enables
+     * -# With DCC_COMPILE_RAILCOM, push the resolved address through on_address_changed
      */
 static void _update_address_cv_cache(void) {
 
@@ -373,6 +394,11 @@ static bool _validate_xor(const uint8_t *data, uint8_t byte_count) {
 
     /**
      * @brief Dispatch a 128-step speed command.
+     *
+     * @details A speed value of DCC_SPEED_128_ESTOP routes to on_emergency_stop_command
+     * instead of on_speed_command. The direction passes through _effective_direction and
+     * is remembered as the direction last reported, which selects the CV22 FL bit.
+     *
      * @param address DCC address.
      * @param speed_byte Second instruction byte (direction + speed).
      */
@@ -403,15 +429,17 @@ static void _dispatch_speed_128(uint16_t address, uint8_t speed_byte) {
 
 }
 
+    /** @brief Table value for the 28-step stop entries (encoded 0-1). */
+#define DCC_SPEED_28_STOP   0
+    /** @brief Table value for the 28-step e-stop entries (encoded 2-3). */
+#define DCC_SPEED_28_ESTOP  0xFF
+
     /**
      * @brief 28-step decode lookup table per NMRA S-9.2 Figure 2.
      *
-     * Index = encoded value ((SSSS << 1) | C), range 0-31.
+     * @details Index = encoded value ((SSSS << 1) | C), range 0-31.
      * Value = API speed (0 = stop, 0xFF = e-stop, 2-29 = steps 1-28).
      */
-#define DCC_SPEED_28_STOP   0
-#define DCC_SPEED_28_ESTOP  0xFF
-
 static const uint8_t _speed_28_decode[32] = {
 
     DCC_SPEED_28_STOP,  DCC_SPEED_28_STOP,                          /* encoded  0-1:  Stop     */
@@ -425,6 +453,10 @@ static const uint8_t _speed_28_decode[32] = {
 
     /**
      * @brief Dispatch a 28-step speed command.
+     *
+     * @details Decodes the C and SSSS bits through _speed_28_decode; an e-stop entry
+     * routes to on_emergency_stop_command. Direction handling is as for _dispatch_speed_128.
+     *
      * @param address DCC address.
      * @param instruction The speed/direction instruction byte (01Dxxxxx).
      */
@@ -460,6 +492,11 @@ static void _dispatch_speed_28(uint16_t address, uint8_t instruction) {
 
     /**
      * @brief Dispatch a 14-step speed command.
+     *
+     * @details Speed code 1 is e-stop and routes to on_emergency_stop_command; 0 (stop)
+     * and 2-15 (steps 1-14) pass through unchanged. Direction handling is as for
+     * _dispatch_speed_128.
+     *
      * @param address DCC address.
      * @param instruction The speed/direction instruction byte (01Dxxxxx).
      */
@@ -493,7 +530,7 @@ static void _dispatch_speed_14(uint16_t address, uint8_t instruction) {
 }
 
     /**
-     * @brief Dispatch a 14 or 28-step speed command.
+     * @brief Dispatch a 14 or 28-step speed command, selected by the cached CV29 bit 1.
      * @param address DCC address.
      * @param instruction The speed/direction instruction byte (01Dxxxxx).
      */
@@ -513,6 +550,11 @@ static void _dispatch_speed_14_28(uint16_t address, uint8_t instruction) {
 
     /**
      * @brief Dispatch function group callbacks.
+     *
+     * @details Fires on_function_command once per function in the group. For a packet
+     * that arrived via the consist address each function is skipped unless CV21/CV22
+     * enable it. Does nothing when on_function_command is NULL.
+     *
      * @param address DCC address.
      * @param start_function First function number in this group.
      * @param count Number of functions in this group.
@@ -544,6 +586,11 @@ static void _dispatch_functions(uint16_t address, uint8_t start_function, uint8_
 
     /**
      * @brief Dispatch a function group 1 instruction (FL, F1-F4).
+     *
+     * @details FL is bit 4 and, for a packet that arrived via the consist address, is
+     * gated by the CV22 FL bit for the direction last reported; F1-F4 (bits 0-3) go
+     * through _dispatch_functions.
+     *
      * @param address DCC address.
      * @param instruction The function group 1 byte (100DDDDD).
      */
@@ -584,6 +631,11 @@ static void _fire_ack(void) {
 
     /**
      * @brief Write a CV value and fire notifications.
+     *
+     * @details Fails without side effects when cv_write is NULL or refuses the write
+     * (decoder lock). On success: fires the ACK pulse in service mode, reloads the address
+     * cache if the CV is one it depends on, then fires on_cv_write_command.
+     *
      * @param cv_number 1-based CV number.
      * @param data_byte Value to write.
      * @param is_service_mode true to fire ACK pulse on success.
@@ -664,8 +716,14 @@ static void _cv_bit_manipulate(uint16_t cv_number, uint8_t bit_position, bool bi
 
     /**
      * @brief Dispatch CV access long form instruction.
-     * @param address DCC address (for callback).
-     * @param instruction_bytesInstruction bytes pointer.
+     *
+     * @details Requires 3 instruction bytes (opcode/CV high bits, CV low byte, data).
+     * Write (111011AA) goes through _cv_write_and_notify; bit manipulation (111010AA)
+     * writes the bit when K is set and always fires on_cv_bit_command; verify (111001AA)
+     * only fires on_cv_verify_command, since ops mode has no ACK.
+     *
+     * @param address DCC address (not used by the CV callbacks).
+     * @param instruction_bytes Instruction bytes pointer.
      * @param instruction_byte_count Number of instruction bytes.
      */
 static void _dispatch_cv_access(uint16_t address, const uint8_t *instruction_bytes, uint8_t instruction_byte_count) {
@@ -724,6 +782,11 @@ static void _dispatch_cv_access(uint16_t address, const uint8_t *instruction_byt
 
     /**
      * @brief Write a CV value and fire accessory-specific notification.
+     *
+     * @details Fails without side effects when cv_write is NULL or refuses the write.
+     * On success reloads the address cache if the CV is an address or configuration CV,
+     * then fires on_acc_cv_write.
+     *
      * @param cv_number 1-based CV number.
      * @param data_byte Value to write.
      * @return true if the write succeeded.
@@ -803,7 +866,11 @@ static void _cv_bit_manipulate_acc(uint16_t cv_number, uint8_t bit_position, boo
 
     /**
      * @brief Dispatch accessory CV access long form instruction.
-     * @param instruction_bytesInstruction bytes pointer (starting at CV instruction).
+     *
+     * @details Same sub-commands as _dispatch_cv_access (write, bit manipulation,
+     * verify) routed to the accessory CV path and the on_acc_cv_* callbacks.
+     *
+     * @param instruction_bytes Instruction bytes pointer (starting at CV instruction).
      * @param instruction_byte_count Number of instruction bytes.
      */
 static void _dispatch_acc_cv_access(const uint8_t *instruction_bytes, uint8_t instruction_byte_count) {
@@ -863,6 +930,8 @@ static void _dispatch_acc_cv_access(const uint8_t *instruction_bytes, uint8_t in
     /**
      * @brief Accessory CV-access long form: does the packet's address select this decoder
      *  under the active addressing method (output address or board address)?
+     * @param data Raw packet bytes; the accessory address is in bytes 0-1.
+     * @return true if the address matches the cached decoder address.
      */
 static bool _acc_cv_access_is_for_me(const uint8_t *data) {
 
@@ -885,6 +954,14 @@ static bool _acc_cv_access_is_for_me(const uint8_t *data) {
 
     /**
      * @brief Dispatch a basic accessory instruction.
+     *
+     * @details Packets under 3 bytes are ignored. A 6-byte packet whose third byte
+     * starts with 1110 is ops-mode CV access and goes to _dispatch_acc_cv_access when
+     * _acc_cv_access_is_for_me. Otherwise the 9-bit board address is rebuilt from the
+     * inverted high bits and matched against _my_address: in output-address mode (CV541
+     * bit 6) DDD bits 0-1 are folded into an 11-bit output address and bit 2 is reported
+     * as output_pair; in decoder-address mode the 3-bit DDD field is reported as output_pair.
+     *
      * @param data Raw packet bytes.
      * @param byte_count Number of bytes.
      */
@@ -967,6 +1044,13 @@ static void _dispatch_accessory_basic(const uint8_t *data, uint8_t byte_count) {
 
     /**
      * @brief Dispatch an extended accessory instruction.
+     *
+     * @details Packets under 4 bytes are ignored. A 6-byte packet whose third byte
+     * starts with 1110 is ops-mode CV access, matched on the 11-bit address and routed to
+     * _dispatch_acc_cv_access. Otherwise the 11-bit address (bits 1-2 of byte 1 supply
+     * the two most significant bits) is matched against _my_address and byte 2 is
+     * reported as the aspect.
+     *
      * @param data Raw packet bytes.
      * @param byte_count Number of bytes.
      */
@@ -1030,8 +1114,13 @@ static void _dispatch_accessory_extended(const uint8_t *data, uint8_t byte_count
 
     /**
      * @brief Dispatch advanced operations (001xxxxx).
+     *
+     * @details DCC_ADV_OPS_128_SPEED with at least 2 bytes goes to _dispatch_speed_128;
+     * DCC_ADV_OPS_ANALOG_FUNCTION with at least 3 bytes fires on_analog_function_command.
+     * Other sub-instructions are ignored.
+     *
      * @param address DCC address.
-     * @param instruction_bytesInstruction bytes pointer.
+     * @param instruction_bytes Instruction bytes pointer.
      * @param instruction_byte_count Number of instruction bytes.
      */
 static void _dispatch_advanced_ops(uint16_t address, const uint8_t *instruction_bytes, uint8_t instruction_byte_count) {
@@ -1056,8 +1145,13 @@ static void _dispatch_advanced_ops(uint16_t address, const uint8_t *instruction_
 
     /**
      * @brief Dispatch feature expansion instructions (110xxxxx).
+     *
+     * @details Routes the F13-F68 groups to _dispatch_functions, binary state short
+     * (one data byte) to on_binary_state_short_command and binary state long (two data
+     * bytes, so at least 3 instruction bytes) to on_binary_state_long_command.
+     *
      * @param address DCC address.
-     * @param instruction_bytesInstruction bytes pointer.
+     * @param instruction_bytes Instruction bytes pointer.
      * @param instruction_byte_count Number of instruction bytes.
      */
 static void _dispatch_feature_expansion(uint16_t address, const uint8_t *instruction_bytes, uint8_t instruction_byte_count) {
@@ -1123,8 +1217,21 @@ static void _dispatch_feature_expansion(uint16_t address, const uint8_t *instruc
 
     /**
      * @brief Dispatch instruction bytes for a multi-function decoder.
+     *
+     * @details Algorithm:
+     * -# Consist control (0001xxxx, 2+ bytes): set (0x12 normal / 0x13 reversed) stores
+     *    the 7-bit consist address in CV19 with bit 7 = reversed; clear (0x10), or a set
+     *    with address 0, stores 0. The write goes through _cv_write_and_notify so the
+     *    decoder lock applies; on_consist_command fires only when the write succeeds.
+     * -# Speed/direction (01Dxxxxx): 14 or 28-step per CV29 bit 1
+     * -# Advanced operations (001xxxxx): 128-step speed, analog function
+     * -# Function group 1 (100xxxxx), 2a (1011xxxx, F5-F8), 2b (1010xxxx, F9-F12)
+     * -# Feature expansion (110xxxxx, 2+ bytes): F13-F68, binary state
+     * -# CV access long form (111xxxxx)
+     * -# Anything else is ignored
+     *
      * @param address DCC address.
-     * @param instruction_bytesPointer to first instruction byte.
+     * @param instruction_bytes Pointer to first instruction byte.
      * @param instruction_byte_count Number of instruction bytes.
      */
 static void _dispatch_instruction(uint16_t address, const uint8_t *instruction_bytes, uint8_t instruction_byte_count) {
@@ -1342,6 +1449,11 @@ static void _dispatch_service_mode_register(const uint8_t *data) {
 
 }
 
+    /**
+     * @brief Route a service mode packet by length: 4 bytes is direct mode, 3 bytes is register/paged mode.
+     * @param data Raw packet bytes.
+     * @param byte_count Number of bytes.
+     */
 static void _dispatch_service_mode(const uint8_t *data, uint8_t byte_count) {
 
     if (byte_count == 4) {
@@ -1360,6 +1472,17 @@ static void _dispatch_service_mode(const uint8_t *data, uint8_t byte_count) {
 // Public API
 // =============================================================================
 
+    /**
+     * @brief Initialize the packet decoder module.
+     *
+     * @details Stores the interface, clears the address cache, consist state, service
+     * mode tracking and the packet FIFO, then loads the address CVs through
+     * _update_address_cv_cache.
+     *
+     * @verbatim
+     * @param interface Pointer to populated interface_dcc_packet_decoder_t.
+     * @endverbatim
+     */
 void DccPacketDecoder_initialize(const interface_dcc_packet_decoder_t *interface) {
 
     _interface = interface;
@@ -1382,6 +1505,11 @@ void DccPacketDecoder_initialize(const interface_dcc_packet_decoder_t *interface
 
 }
 
+    /**
+     * @brief Re-read the address CVs into the match cache.
+     *
+     * @details Does nothing before initialize (NULL interface).
+     */
 void DccPacketDecoder_reload_address_cache(void) {
 
     if (!_interface) {
@@ -1394,6 +1522,15 @@ void DccPacketDecoder_reload_address_cache(void) {
 
 }
 
+    /**
+     * @brief Note that the application wrote a CV; reload the address cache when it is one the cache depends on.
+     *
+     * @details Does nothing before initialize or for CVs outside _is_address_cv.
+     *
+     * @verbatim
+     * @param cv_number CV number (1-based) that was written.
+     * @endverbatim
+     */
 void DccPacketDecoder_on_cv_written(uint16_t cv_number) {
 
     if (!_interface || !_is_address_cv(cv_number)) {
@@ -1437,6 +1574,7 @@ static void _dispatch_accessory(const uint8_t *data, uint8_t byte_count) {
      *  speed (01xxxxxx), 128-step speed (advanced ops 0x3F), and function groups 1
      *  and 2, whose individual functions are then gated by CV21/CV22 (S-9.2.2).
      * @param first First instruction byte.
+     * @return true if a packet carrying this instruction may be accepted on the consist address.
      */
 static bool _is_consist_instruction(uint8_t first) {
 
@@ -1447,6 +1585,31 @@ static bool _is_consist_instruction(uint8_t first) {
 
 }
 
+    /**
+     * @brief Process a complete raw packet from the bit decoder.
+     *
+     * @details Algorithm:
+     * -# Drop the packet if the XOR byte does not check.
+     * -# Idle packet (0xFF): ignore without touching the reset counter.
+     * -# Broadcast reset (00 00): count it; DCC_SERVICE_MODE_RESET_PRE_COUNT consecutive
+     *    resets arm service mode. Return.
+     * -# Byte 0 in 0x70-0x7F while service mode is armed: _dispatch_service_mode. Return.
+     * -# Any other packet clears the reset counter and disarms service mode.
+     * -# Accessory packet (10xxxxxx): _dispatch_accessory (only an accessory decoder
+     *    answers). Return.
+     * -# An accessory decoder ignores every multifunction packet, including broadcast.
+     * -# Short address (0x00-0x7F): accept if ours or broadcast, or if it is the CV19
+     *    consist address, this is a short/long decoder and the instruction is one a
+     *    consist answers (_via_consist is set for the dispatch).
+     * -# Long address (0xC0-0xE7, 4+ bytes): accept only when our address is long and equal.
+     * -# Fire on_addressed_packet, dispatch the instruction bytes (address and XOR
+     *    excluded), then clear _via_consist.
+     *
+     * @verbatim
+     * @param data Raw packet bytes (including XOR byte).
+     * @param byte_count Number of bytes in the packet.
+     * @endverbatim
+     */
 void DccPacketDecoder_process_packet(const uint8_t *data, uint8_t byte_count) {
 
     uint16_t packet_address;

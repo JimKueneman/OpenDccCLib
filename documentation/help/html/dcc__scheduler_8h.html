@@ -110,8 +110,8 @@ $(function(){ initResizable(false); });
 <p>Manages a static array of scheduler slots. Supports:</p><ul>
 <li>Duplicate combining via (address, tag) composite key</li>
 <li>Auto-refresh of speed/function slots per NMRA requirements</li>
-<li>Priority ordering (e-stop &gt; speed &gt; function &gt; accessory &gt; CV &gt; idle)</li>
-<li>Round-robin through refresh slots</li>
+<li>One-shot packets always go out before refresh slots; priority (e-stop &gt; speed &gt; function &gt; accessory &gt; CV &gt; idle) ranks only the one-shots</li>
+<li>Round-robin through refresh slots, with a prompt burst after every insert</li>
 </ul>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>

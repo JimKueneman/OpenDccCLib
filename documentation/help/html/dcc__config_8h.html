@@ -154,13 +154,22 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Initialize the DCC library with user configuration. </p>
+<p>Wires every compiled module to the hardware drivers and callbacks in the struct and initializes them. Call once at startup, before <a class="el" href="dcc__config_8c.html#a6973e4dcdbdf005108c57fb42c9bfd5d" title="Main loop processing.">DccConfig_run()</a> or any ISR entry point. <a class="el" href="dcc__config_8c.html#a6973e4dcdbdf005108c57fb42c9bfd5d" title="Main loop processing.">DccConfig_run()</a> returns immediately until a non-NULL configuration has been installed.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">config</td><td>Pointer to user-populated configuration struct. </td></tr>
+    <tr><td class="paramname">config</td><td>Pointer to the user-populated <a class="el" href="structdcc__config__t.html">dcc_config_t</a>. The library keeps the pointer, so it must remain valid for the lifetime of the application.</td></tr>
   </table>
   </dd>
 </dl>
-
+<p>Algorithm:</p><ol type="1">
+<li>Store the configuration pointer; return if it is NULL</li>
+<li>Command station: wire and initialize the main track bit encoder, scheduler, RailCom receiver and cutout state machine (RailCom builds), and the main track application layer</li>
+<li>Command station: wire and initialize the service track bit encoder, service mode common module and service track application layer, pointing the programming API at the task orchestrators</li>
+<li>Wire and initialize each compiled service mode primitive and task orchestrator</li>
+<li>Decoder: wire and initialize CV storage, the CV application layer, the packet decoder, the packet-timeout fail-safe, the bit decoder and (RailCom builds) the RailCom transmitter; reset the ACK pulse state</li>
+</ol>
+<pre class="fragment">* @param config Pointer to the user-populated dcc_config_t. Must remain valid for the lifetime of the application.
+* </pre> 
 </div>
 </div>
 <a id="a6973e4dcdbdf005108c57fb42c9bfd5d" name="a6973e4dcdbdf005108c57fb42c9bfd5d"></a>
@@ -187,7 +196,17 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Main loop processing. Call repeatedly from your main loop. </p>
-<p>Runs the scheduler, drains RailCom buffers, processes decoded packets, fires application callbacks. All callbacks fire from this context. Also handles 6ms ACK pulse timing when an ACK is in progress. </p>
+<p>Runs the scheduler, drains RailCom buffers, processes decoded packets, fires application callbacks. All callbacks fire from this context. Also handles 6ms ACK pulse timing when an ACK is in progress.</p>
+<p>Main loop processing. Call repeatedly from your main loop.</p>
+<p>Algorithm:</p><ol type="1">
+<li>Return if <a class="el" href="#a4e86c59e8b73091bd49e69d4fd66672c" title="Initialize the DCC library with user configuration.">DccConfig_initialize()</a> has not installed a configuration</li>
+<li>Command station: run the main track scheduler</li>
+<li>Command station: run the service track state machine while service mode is active</li>
+<li>Command station, RailCom builds: drain the receiver and fire on_railcom_datagram_result</li>
+<li>Decoder: dispatch packets queued by the end-bit ISR, firing the instruction callbacks</li>
+<li>Decoder: poll the packet-timeout fail-safe</li>
+<li>Decoder: poll the ACK pulse and stop it once 6 ms have elapsed </li>
+</ol>
 
 </div>
 </div>

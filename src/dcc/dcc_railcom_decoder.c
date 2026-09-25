@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @file dcc_railcom_decoder.c
- * @brief RailCom 4/8 encoding and datagram transmission for decoders.
+ * @brief RailCom decoder-side transmit engine.
  *
  * @author Jim Kueneman
  * @date 25 Sep 2026
@@ -42,6 +42,7 @@
 // Static state
 // =============================================================================
 
+    /** @brief Injected Tx pin, delay, lock and app-reply hooks, set by DccRailcomDecoder_initialize. */
 static const interface_dcc_railcom_decoder_t *_interface;
 
     /** @brief This decoder's active address, pushed by the packet decoder. */
@@ -69,6 +70,17 @@ static uint8_t _pending_ch2_count;
 // Public API
 // =============================================================================
 
+    /**
+     * @brief Initialize the RailCom decoder transmit engine.
+     *
+     * @details Stores the interface pointer and clears the ADR alternation, the armed
+     *  flag and the pending Channel 2 count. The cached address is left for
+     *  DccRailcomDecoder_set_address.
+     *
+     * @verbatim
+     * @param interface Pointer to a populated interface_dcc_railcom_decoder_t.
+     * @endverbatim
+     */
 void DccRailcomDecoder_initialize(const interface_dcc_railcom_decoder_t *interface) {
 
     _interface = interface;
@@ -78,6 +90,17 @@ void DccRailcomDecoder_initialize(const interface_dcc_railcom_decoder_t *interfa
 
 }
 
+    /**
+     * @brief Cache this decoder's active address and type for the ADR datagram.
+     *
+     * @details Pushed by the packet decoder (via dcc_config) at init and whenever an
+     *  address-CV write changes the resolved address, so the cutout path never reads CVs.
+     *
+     * @verbatim
+     * @param address The decoder's resolved address.
+     * @param type    The resolved address type (short / long).
+     * @endverbatim
+     */
 void DccRailcomDecoder_set_address(dcc_address_t address, dcc_address_type_enum type) {
 
     _decoder_address = address;
@@ -463,6 +486,7 @@ static void _fill_ch2(const uint8_t *data, uint8_t count) {
      * @brief Bit-bang one byte as a 250 kbaud UART frame: start bit "0", 8 data bits
      *  least-significant first, stop bit "1" (S-9.3.2 sec 2.4), 4us per bit. Timing comes
      *  from the app's delay_us, which must be accurate at the 4us bit period.
+     * @param value Byte to send.
      */
 static void _transmit_byte(uint8_t value) {
 
@@ -487,7 +511,9 @@ static void _transmit_byte(uint8_t value) {
      * @brief Bit-bang the pending ADR (Channel 1) and any Channel 2 reply into the cutout,
      *  timed off the packet end-bit edge: blank -> Ch1 -> gap -> Ch2 (S-9.3.2 sec 2.4).
      *  Runs with all interrupts locked (4us bit timing); the lock also masks the DCC edge
-     *  IRQ, so the decoder's own injected current cannot self-trigger it. Blocks ~454us.
+     *  IRQ, so the decoder's own injected current cannot self-trigger it. Blocks for the
+     *  whole reply: 80us blank, two Ch1 bytes, 33us gap, then the Ch2 bytes at 40us each.
+     *  No-op if tx_pin_set or delay_us is NULL.
      */
 static void _transmit_pending(void) {
 
@@ -532,6 +558,24 @@ static void _transmit_pending(void) {
 
 }
 
+    /**
+     * @brief Feed one assembled packet byte to the RailCom Tx recognizer.
+     *
+     * @details Algorithm:
+     * -# At count 1 (a new packet) drop any stale armed state.
+     * -# If already armed for this packet, wait for the end-bit edge.
+     * -# Size the packet from the bytes so far; continue only when the length is
+     *    exactly count + 1 (the next byte is the XOR). Unsized, accessory and
+     *    incomplete packets never arm.
+     * -# Decode the address; if it matches the cached decoder address and type,
+     *    fill Channel 1 (ADR), ask the app for Channel 2 through
+     *    on_railcom_request (edge-ISR path) and arm the reply.
+     *
+     * @verbatim
+     * @param data  Packet bytes assembled so far.
+     * @param count Number of bytes in data.
+     * @endverbatim
+     */
 void DccRailcomDecoder_on_byte_received(const uint8_t *data, uint8_t count) {
 
     dcc_address_t address;
@@ -568,6 +612,20 @@ void DccRailcomDecoder_on_byte_received(const uint8_t *data, uint8_t count) {
 
 }
 
+    /**
+     * @brief Transmit the armed RailCom reply into the cutout (packet end-bit edge).
+     *
+     * @details Algorithm:
+     * -# Return unless a command addressed to this decoder was armed before its XOR.
+     * -# Disarm (one reply per packet, whatever the outcome).
+     * -# Validate the complete packet's XOR; on failure send nothing.
+     * -# Bit-bang the pending Channel 1 (ADR) and any Channel 2 bytes.
+     *
+     * @verbatim
+     * @param data  Complete packet bytes including the trailing XOR byte.
+     * @param count Number of bytes in data.
+     * @endverbatim
+     */
 void DccRailcomDecoder_transmit(const uint8_t *data, uint8_t count) {
 
     /* Only respond to a command we recognized as addressed to us before its XOR. */

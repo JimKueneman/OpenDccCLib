@@ -41,26 +41,45 @@
 // Static state
 // =============================================================================
 
+    /** @brief Injected CV hooks, set by DccCvStorage_initialize. */
 static const interface_dcc_cv_storage_t *_interface;
 
 // =============================================================================
 // Public API
 // =============================================================================
 
+    /**
+     * @brief Initialize the CV storage module.
+     *
+     * @details Stores the interface pointer; no CV is touched.
+     *
+     * @verbatim
+     * @param interface Pointer to a populated interface_dcc_cv_storage_t.
+     * @endverbatim
+     */
 void DccCvStorage_initialize(const interface_dcc_cv_storage_t *interface) {
 
     _interface = interface;
 
 }
 
-/* Resolve the indexed-window page pointer (CV31 high, CV32 low). */
+    /**
+     * @brief Resolve the indexed-window page pointer (CV 31 high, CV 32 low).
+     * @param page_hi Receives the CV 31 value.
+     * @param page_lo Receives the CV 32 value.
+     * @return true if both CVs were read through the cv_read hook.
+     */
 static bool _index_page(uint8_t *page_hi, uint8_t *page_lo) {
 
     return _interface->cv_read(DCC_CV_INDEX_HIGH, page_hi) && _interface->cv_read(DCC_CV_INDEX_LOW, page_lo);
 
 }
 
-/* Decode a CV29 byte into the named feature flags. */
+    /**
+     * @brief Decode a CV 29 byte into the named feature flags.
+     * @param value Raw CV 29 byte.
+     * @param flags Receives one flag per S-9.2.2 feature bit (reserved bit 6 is not represented).
+     */
 static void _decode_cv29(uint8_t value, dcc_cv29_flags_t *flags) {
 
     flags->direction_reversed      = (value & DCC_CV29_DIRECTION_BIT)        != 0;
@@ -73,7 +92,11 @@ static void _decode_cv29(uint8_t value, dcc_cv29_flags_t *flags) {
 
 }
 
-/* Re-encode the named feature flags into a CV29 byte (reserved bit 6 stays 0). */
+    /**
+     * @brief Re-encode the named feature flags into a CV 29 byte.
+     * @param flags Feature flags as left set by the application hook.
+     * @return CV 29 byte with reserved bit 6 clear.
+     */
 static uint8_t _encode_cv29(const dcc_cv29_flags_t *flags) {
 
     uint8_t value = 0;
@@ -90,6 +113,23 @@ static uint8_t _encode_cv29(const dcc_cv29_flags_t *flags) {
 
 }
 
+    /**
+     * @brief Read a CV value.
+     *
+     * @details Algorithm:
+     * -# Return false if the cv_read hook is absent.
+     * -# CV 257-512 (indexed window): return false without cv_read_indexed or a
+     *    readable CV 31/32 page pointer; otherwise read offset cv_number - 257 of
+     *    that page through cv_read_indexed.
+     * -# Any other CV: read through cv_read.
+     *
+     * @verbatim
+     * @param cv_number CV number (1-based).
+     * @param value     Pointer to receive the value.
+     * @endverbatim
+     *
+     * @return true if the read succeeded; false when a hook is absent, the page pointer could not be read, or the hook failed.
+     */
 bool DccCvStorage_read(uint16_t cv_number, uint8_t *value) {
 
     if (!_interface->cv_read) {
@@ -119,6 +159,30 @@ bool DccCvStorage_read(uint16_t cv_number, uint8_t *value) {
 
 }
 
+    /**
+     * @brief Write a CV value with decoder lock enforcement.
+     *
+     * @details Algorithm:
+     * -# Return false if the cv_write hook is absent.
+     * -# CV 15 / CV 16: always forward to cv_write (they control the lock).
+     * -# CV 8 with value 8: call factory_reset if provided, store nothing, return
+     *    true (bypasses the lock). Any other CV 8 value falls through as an
+     *    ordinary CV.
+     * -# Return false if the lock is engaged (CV 15 != CV 16).
+     * -# CV 257-512 (indexed window): return false without cv_write_indexed or a
+     *    readable CV 31/32 page pointer; otherwise write through cv_write_indexed.
+     * -# CV 29: force reserved bit 6 clear, decode to flags, let the application
+     *    clear unsupported features via cv29_apply_supported_features (if
+     *    provided), re-encode and forward to cv_write.
+     * -# Any other CV: forward to cv_write.
+     *
+     * @verbatim
+     * @param cv_number CV number (1-based).
+     * @param value     Value to write.
+     * @endverbatim
+     *
+     * @return true if the write succeeded or the reset was triggered; false when locked, a hook is absent, the page pointer could not be read, or the hook failed.
+     */
 bool DccCvStorage_write(uint16_t cv_number, uint8_t value) {
 
     if (!_interface->cv_write) {
@@ -200,6 +264,16 @@ bool DccCvStorage_write(uint16_t cv_number, uint8_t value) {
 
 }
 
+    /**
+     * @brief Check if the decoder lock is engaged.
+     *
+     * @details Algorithm:
+     * -# Report unlocked if the cv_read hook is absent.
+     * -# Read CV 15 and CV 16; a failed read also reports unlocked.
+     * -# Locked when the two values differ.
+     *
+     * @return true if locked (CV 15 != CV 16); false if unlocked or unreadable.
+     */
 bool DccCvStorage_is_locked(void) {
 
     uint8_t cv15_value;

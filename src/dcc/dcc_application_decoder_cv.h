@@ -28,9 +28,12 @@
  * @brief Application-layer API for decoder CV access.
  *
  * @details Provides the user-facing functions for reading and writing CVs on a
- * decoder. Wraps the internal dcc_cv_storage module through an interface struct
- * wired by dcc_config.c during DccConfig_initialize(). Application code
- * includes this header instead of the internal CV storage header.
+ * decoder. dcc_config.c wires the interface onto DccCvStorage_read and
+ * DccCvStorage_is_locked, and onto a write wrapper that applies the
+ * DccCvStorage_write rules (decoder lock, CV 8 reset, CV 29 filter, indexed
+ * window) and then refreshes the packet decoder's address cache when an
+ * address CV changed. Application code includes this header instead of the
+ * internal CV storage header.
  *
  * @author Jim Kueneman
  * @date 25 Sep 2026
@@ -53,7 +56,7 @@ typedef struct {
         /** @brief Read a CV value from persistent storage. */
     bool (*cv_read)(uint16_t cv_number, uint8_t *value);
 
-        /** @brief Write a CV value to persistent storage (with lock enforcement). */
+        /** @brief Write a CV value (storage rules applied, then the packet decoder's address cache refreshed). */
     bool (*cv_write)(uint16_t cv_number, uint8_t value);
 
         /** @brief Check if the decoder lock is engaged. */
@@ -63,6 +66,10 @@ typedef struct {
 
         /**
          * @brief Initialize the decoder CV application module.
+         *
+         * @details Stores the interface pointer. Called by dcc_config.c during
+         * DccConfig_initialize(); application code does not call it directly.
+         *
          * @param interface Pointer to populated
          *        @ref interface_dcc_application_decoder_cv_t (wired by dcc_config.c).
          */
@@ -70,23 +77,39 @@ typedef struct {
 
         /**
          * @brief Read a CV value.
+         *
+         * @details Forwards to the cv_read hook (DccCvStorage_read when wired by
+         * dcc_config.c, which also serves the CV 257-512 indexed window).
+         *
          * @param cv_number CV number (1-based per NMRA convention).
          * @param value Pointer to receive the CV value.
-         * @return true if the read succeeded, false on error or NULL interface.
+         *
+         * @return true if the read succeeded; false on error or when the module is not initialized.
          */
     extern bool DccApplicationDecoderCv_read(uint16_t cv_number, uint8_t *value);
 
         /**
          * @brief Write a CV value with decoder lock enforcement.
+         *
+         * @details Refuses the write while the decoder lock is engaged, then forwards to
+         * the cv_write hook. When wired by dcc_config.c the hook applies the
+         * DccCvStorage_write rules and refreshes the packet decoder's address cache.
+         * Because the lock is checked here first, a locked decoder cannot reach the
+         * storage layer's CV 15/16 and CV 8 exceptions through this function.
+         *
          * @param cv_number CV number (1-based per NMRA convention).
          * @param value Value to write.
-         * @return true if the write succeeded, false if locked or on error.
+         *
+         * @return true if the write succeeded; false if locked, on error, or when the module is not initialized.
          */
     extern bool DccApplicationDecoderCv_write(uint16_t cv_number, uint8_t value);
 
         /**
          * @brief Check if the decoder lock is engaged.
-         * @return true if locked (CV 15 != CV 16), false if unlocked.
+         *
+         * @details Forwards to the is_locked hook (DccCvStorage_is_locked when wired).
+         *
+         * @return true if locked (CV 15 != CV 16); false if unlocked or when the module is not initialized.
          */
     extern bool DccApplicationDecoderCv_is_locked(void);
 

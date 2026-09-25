@@ -39,27 +39,34 @@
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
-// Test trigger state. When armed, the next NON-idle packet raises PB3 once so a
-// logic analyzer can hardware-trigger on the exact packet under test.
+    /** @brief Packet-trigger state: when true the next NON-idle packet dispatched raises PB3 once. */
 static volatile bool _test_trigger_armed = false;
 
-// Insert-trigger state. When armed, the next main-track insert raises PB3 at
-// once (from the command parser, not from a packet), so the bench measures the
-// scheduler's command-to-wire latency from the moment the command was queued.
+    /** @brief Insert-trigger state: when true the next main-track insert raises PB3 at once (from the parser, not a packet) for scheduler latency. */
 static volatile bool _test_trigger_on_insert = false;
 
-// When true, the width-test mock fires on the FIRST command packet (before the
-// ACK blanking window) instead of in-window -- used to prove the library masks an
-// early pulse (S-9.2.3 line 55 boundary test).
+    /** @brief When true the width-test mock fires on the FIRST command packet (inside the ACK blanking window) to prove the library masks it (S-9.2.3 line 55). */
 static volatile bool _mock_ack_early = false;
 
-// The DCC idle packet (S-9.2): 11111111 00000000 11111111.
+    /**
+     * @brief True when p is the DCC idle packet (S-9.2): 11111111 00000000 11111111.
+     *
+     * @param p  Pointer to the packet to test.
+     *
+     * @return true for the 3-byte FF 00 FF idle packet, false otherwise.
+     */
 static bool _is_idle_packet(const dcc_packet_t *p) {
 
     return p->byte_count == 3 &&
            p->data[0] == 0xFF && p->data[1] == 0x00 && p->data[2] == 0xFF;
 }
 
+    /**
+     * @brief Arm the PB3 test trigger for the next non-idle packet.
+     *
+     * @details Drops PB3 low first so the armed packet produces one clean rising
+     * edge, cancels any pending insert-trigger arm, then sets the packet arm.
+     */
 void CallbacksDcc_arm_trigger(void) {
 
     // Drop PB3 low first so the armed packet produces one clean rising edge.
@@ -68,6 +75,12 @@ void CallbacksDcc_arm_trigger(void) {
     _test_trigger_armed = true;
 }
 
+    /**
+     * @brief Arm the PB3 test trigger for the next main-track insert.
+     *
+     * @details Drops PB3 low, cancels any pending packet-trigger arm, then sets the
+     * insert arm so CallbacksDcc_on_main_track_insert() raises PB3.
+     */
 void CallbacksDcc_arm_trigger_on_insert(void) {
 
     DL_GPIO_clearPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_PACKET_LOAD_PIN);
@@ -75,6 +88,9 @@ void CallbacksDcc_arm_trigger_on_insert(void) {
     _test_trigger_on_insert = true;
 }
 
+    /**
+     * @brief Raise PB3 on a main-track insert when the insert trigger is armed, then disarm.
+     */
 void CallbacksDcc_on_main_track_insert(void) {
 
     if (_test_trigger_on_insert) {
@@ -91,19 +107,29 @@ void CallbacksDcc_on_main_track_insert(void) {
 // lets the bench exercise read-back and write+verify end-to-end through the real
 // ACK path -- both success (value matches) and failure (mock off / wrong value).
 // ---------------------------------------------------------------------------
+    /** @brief Mock-decoder ACK pulse width in microseconds: a valid 6 ms pulse (~103 of the 85..120 sample window). */
 #define MOCK_DECODER_ACK_US 6000u   /* valid pulse (~103 of the 85..120 sample window) */
 
+    /** @brief Mock decoder enabled (SVC MOCKCV set). */
 static volatile bool     _mock_dec_enabled = false;
+    /** @brief The single 1-based CV number the mock decoder holds. */
 static volatile uint16_t _mock_dec_cv      = 0;
+    /** @brief Current value of the held CV; updated by Direct/bit writes. */
 static volatile uint8_t  _mock_dec_value   = 0;
+    /** @brief True once the mock has ACKed during the current service-mode operation (reset by each reset packet). */
 static volatile bool     _mock_dec_fired   = false;  /* ACKed once this operation */
 
-/* Command-packet position within the current service-mode op (reset by each
- * reset packet). The mock only ACKs once this passes the library's ACK blanking
- * window -- i.e. it behaves like a compliant decoder that cannot ACK until it
- * has received 2 identical command packets (S-9.2.3 line 55). */
+    /** @brief Command-packet position within the current service-mode op (reset by each reset packet); the mock ACKs only once this passes the library ACK blanking window (S-9.2.3 line 55). */
 static volatile uint8_t  _mock_cmd_count   = 0;
 
+    /**
+     * @brief Enable the HIL mock decoder holding one CV value.
+     *
+     * @verbatim
+     * @param cv     1-based CV number the mock decoder holds.
+     * @param value  Initial value of that CV.
+     * @endverbatim
+     */
 void CallbacksDcc_mock_decoder_set(uint16_t cv, uint8_t value) {
 
     _mock_dec_cv = cv;
@@ -111,16 +137,44 @@ void CallbacksDcc_mock_decoder_set(uint16_t cv, uint8_t value) {
     _mock_dec_enabled = true;
 }
 
+    /** @brief Disable the HIL mock decoder. */
 void CallbacksDcc_mock_decoder_off(void) {
 
     _mock_dec_enabled = false;
 }
 
+    /**
+     * @brief Select early (blanked) or in-window firing for the width-test mock.
+     *
+     * @verbatim
+     * @param early  true = fire on the first (blanked) command packet, false = fire in-window.
+     * @endverbatim
+     */
 void CallbacksDcc_set_mock_ack_early(bool early) {
 
     _mock_ack_early = early;
 }
 
+    /**
+     * @brief Behave like a one-CV decoder on the programming track for the packet just dispatched.
+     *
+     * @details Algorithm:
+     * -# Return at once when the mock is disabled.
+     * -# 3-byte non-Direct byte-VERIFY (byte0 0x70-0x77, the register/paged 0..255
+     *    scan): ACK when the verified data byte matches the held value, so the scan
+     *    terminates early instead of running all 256 values (~90 s). Match on value
+     *    only; writes (0x78-0x7F, incl. the 0x7D page preset) are ignored.
+     * -# Otherwise require a 4-byte Direct command (0111CCAA AAAAAAAA data EEEEEEEE)
+     *    whose CV (AA:AAAAAAAA + 1) equals the held CV.
+     * -# CC=11 write byte: accept into the held value. CC=01 verify byte: match when
+     *    equal. CC=10 bit manipulation (111KDBBB): K=1 writes bit BBB to D, K=0
+     *    matches when bit BBB equals D.
+     * -# On a match, fire one valid-width mock ACK, but only once per operation and
+     *    only after the library ACK scan window has opened.
+     *
+     * @param p            Pointer to the packet just dispatched.
+     * @param window_open  true once the library ACK blanking window has passed.
+     */
 static void _mock_decoder_handle(const dcc_packet_t *p, bool window_open) {
 
     if (!_mock_dec_enabled) {
@@ -200,6 +254,28 @@ static void _mock_decoder_handle(const dcc_packet_t *p, bool window_open) {
     }
 }
 
+    /**
+     * @brief Library on_packet_sent hook: PB3 trigger, ACK-window tracking, and the two service-mode mocks.
+     *
+     * @details Algorithm:
+     * -# When the packet trigger is armed and this is not an idle packet, raise PB3
+     *    and disarm, so the rising edge is unambiguous for the analyzer trigger.
+     * -# Track the command-packet position within the service-mode op: a reset
+     *    packet (00 00 00) zeroes the count and the fired flag; a service command
+     *    packet (0111xxxx) increments it. The ACK window is open once the count
+     *    exceeds DCC_SERVICE_MODE_ACK_BLANK_PACKETS (S-9.2.3 line 55).
+     * -# Width-test mock (SVC MOCKACK): start the armed pulse on a Direct bit-verify
+     *    command (byte0 & 0xFC == 0x78) when the window is open, or on the first
+     *    (blanked) packet in EARLY mode.
+     * -# Mock decoder (SVC MOCKCV): hand the packet to _mock_decoder_handle().
+     *
+     * Fires from DccConfig_run() at packet dispatch (transmit start), which is what
+     * the bench trigger timing relies on.
+     *
+     * @verbatim
+     * @param packet  Pointer to the dcc_packet_t just handed to the encoder.
+     * @endverbatim
+     */
 void CallbacksDcc_on_packet_sent(const dcc_packet_t *packet) {
 
     // When armed, fire the trigger on the first non-idle packet (the packet
@@ -250,21 +326,38 @@ void CallbacksDcc_on_packet_sent(const dcc_packet_t *packet) {
 // RailCom cutout cancel (HIL only, S-9.3.2 CS-008). `RAILCOM CANCEL` arms this; the
 // 58us bit-timer ISR (same priority as the cutout one-shot ISR, so no nesting) calls
 // cancel_tick() each tick. To make the cancel land deterministically EARLY in a
-// cutout (during SETTLING/CH1, past DELAY so the H-bridge is tristated), we wait for
-// a cutout that BEGINS after arming -- detected as a rising edge of "cutout active" --
-// then fire ~2 ticks (~58-116us) in. PB2 then shows one short pulse instead of the
-// full ~440us. One-shot: disarms after firing.
+// cutout (during SETTLING/CH1, past DELAY so the PB2 cutout strobe is already up), we
+// wait for a cutout that BEGINS after arming -- detected as a rising edge of "cutout
+// active" -- then fire ~2 ticks (~58-116us) in. PB2 then shows one short pulse
+// instead of the full ~440us. One-shot: disarms after firing.
+    /** @brief RAILCOM CANCEL armed; cleared once the cancel fires. */
 static volatile bool    _railcom_cancel_armed    = false;
+    /** @brief Cutout-active level seen on the previous tick, for rising-edge detection. */
 static volatile bool    _railcom_prev_active     = false;
+    /** @brief True while counting ticks into the cutout that began after arming. */
 static volatile bool    _railcom_cancel_counting = false;
+    /** @brief Ticks elapsed since that cutout began; the cancel fires at 2. */
 static volatile uint8_t _railcom_cancel_ticks    = 0;
 
+    /**
+     * @brief Arm a one-shot cancel of the next RailCom cutout that begins after this call.
+     */
 void CallbacksDcc_arm_railcom_cancel(void) {
 
     _railcom_cancel_armed = true;
     _railcom_cancel_counting = false;
 }
 
+    /**
+     * @brief 58 us ISR tick: fire the armed cutout cancel about two ticks into a new cutout.
+     *
+     * @details Algorithm:
+     * -# Read DccConfig_railcom_cutout_is_active().
+     * -# When armed and the level just rose, start counting from zero.
+     * -# While counting and still active, count the tick; at 2 ticks (past DELAY,
+     *    in SETTLING/CH1) call DccConfig_cancel_railcom_cutout() and disarm.
+     * -# Remember the level for the next edge detection.
+     */
 void CallbacksDcc_railcom_cancel_tick(void) {
 
     bool active = DccConfig_railcom_cutout_is_active();
@@ -302,8 +395,22 @@ void CallbacksDcc_railcom_cancel_tick(void) {
 // ---------------------------------------------------------------------------
 #if defined(DCC_COMPILE_RAILCOM)
 
+    /** @brief RC RESULT lines reported since the last RC MOCK OFF. */
 static volatile uint32_t _rc_result_count = 0;
 
+    /**
+     * @brief Library on_railcom_datagram_result hook: print one RC RESULT line and count it.
+     *
+     * @details Formats "RC RESULT: addr=<n> ch=<1|2> id=<n> n=<bytes> data=<hex..>"
+     * into a local buffer, stopping early if the line would overflow, then writes it
+     * on the command UART. Runs from DccConfig_run(), so blocking UART output is fine.
+     *
+     * @verbatim
+     * @param address   DCC address the library tagged the datagram with.
+     * @param channel   RailCom channel the datagram was decoded from (DCC_RAILCOM_CH1 or CH2).
+     * @param datagram  Pointer to the decoded dcc_railcom_datagram_t.
+     * @endverbatim
+     */
 void CallbacksDcc_on_railcom_datagram(uint16_t address, uint8_t channel,
                                       const dcc_railcom_datagram_t *datagram) {
 
@@ -322,11 +429,17 @@ void CallbacksDcc_on_railcom_datagram(uint16_t address, uint8_t channel,
     TI_UartDriver_write_string("\r\n");
 }
 
+    /**
+     * @brief Number of RC RESULT lines reported since the last reset.
+     *
+     * @return Count of decoded RailCom datagrams reported.
+     */
 uint32_t CallbacksDcc_railcom_result_count(void) {
 
     return _rc_result_count;
 }
 
+    /** @brief Zero the RC RESULT counter. */
 void CallbacksDcc_railcom_reset_result_count(void) {
 
     _rc_result_count = 0;

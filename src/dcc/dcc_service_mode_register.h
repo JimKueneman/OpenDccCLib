@@ -64,7 +64,7 @@ typedef struct {
     /** @brief Instance context for the register service mode module. */
 typedef struct {
 
-    const interface_dcc_service_mode_register_t *interface;
+    const interface_dcc_service_mode_register_t *interface; /**< Injected dependencies (common module access, user callback) */
     uint8_t register_state;    /**< register_state_enum cast to uint8_t */
     uint8_t register_number;   /**< pending register for the command step */
     uint8_t value;             /**< pending value for the command step */
@@ -81,19 +81,25 @@ typedef struct {
 
         /**
          * @brief Write a register value using register mode.
+         * @details Two-step: a page-preset (page register -> page 1) followed unconditionally by the register write.
+         * A write to register 1 uses the longer 10-packet recovery (S-9.2.3). The result of the write step is
+         * delivered through the interface on_complete callback.
          * @param context Pointer to @ref dcc_service_mode_register_context_t instance.
          * @param register_number Register number to write (1-8).
          * @param value Byte value to write.
-         * @return true if operation started, false if busy.
+         * @return true if the operation started, false if register_number is out of range, the common module is busy, or a register operation is already in progress.
          */
     extern bool DccServiceModeRegister_write(dcc_service_mode_register_context_t *context, uint8_t register_number, uint8_t value);
 
         /**
          * @brief Verify a register value using register mode.
+         * @details Two-step: a page-preset (page register -> page 1) followed unconditionally by the register verify,
+         * which sends 7 command packets (S-9.2.3) and has no recovery phase. The result of the verify step is
+         * delivered through the interface on_complete callback.
          * @param context Pointer to @ref dcc_service_mode_register_context_t instance.
          * @param register_number Register number to verify (1-8).
          * @param value Expected byte value.
-         * @return true if operation started, false if busy.
+         * @return true if the operation started, false if register_number is out of range, the common module is busy, or a register operation is already in progress.
          */
     extern bool DccServiceModeRegister_verify(dcc_service_mode_register_context_t *context, uint8_t register_number, uint8_t value);
 

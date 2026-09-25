@@ -46,8 +46,10 @@
 //                                 packet parser for receiving DCC commands.
 // =============================================================================
 
+    /** @brief Build the command-station role: packet scheduler, bit encoder, service mode, RailCom cutout. */
 #define DCC_COMPILE_COMMAND_STATION
 // #define DCC_COMPILE_DECODER
+    /** @brief Build the RailCom cutout and receive path (comment out to strip). */
 #define DCC_COMPILE_RAILCOM           // RailCom cutout + Rx (comment out to strip)
 
 // =============================================================================
@@ -61,19 +63,28 @@
 //   ADDRESS  -- short-address-only programming (legacy)
 // =============================================================================
 
+    /** @brief Direct-mode CV byte/bit read/write (S-9.2.3; most common, recommended). */
 #define DCC_COMPILE_SERVICE_MODE_DIRECT
+    /** @brief Paged mode for older decoders. */
 #define DCC_COMPILE_SERVICE_MODE_PAGED
+    /** @brief Register mode for very old decoders. */
 #define DCC_COMPILE_SERVICE_MODE_REGISTER
+    /** @brief Short-address-only programming (legacy). */
 #define DCC_COMPILE_SERVICE_MODE_ADDRESS
 
 // =============================================================================
 // Service Mode Task Selection (requires DCC_COMPILE_COMMAND_STATION)
 // =============================================================================
 
+    /** @brief Application-level Direct-mode tasks (read/write CV and bit with retries). */
 #define DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
+    /** @brief Application-level paged-mode tasks. */
 #define DCC_COMPILE_SERVICE_MODE_TASK_PAGED
+    /** @brief Application-level register-mode tasks. */
 #define DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
+    /** @brief Application-level address-mode tasks. */
 #define DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
+    /** @brief Application-level task that probes which service modes a decoder supports. */
 #define DCC_COMPILE_SERVICE_MODE_TASK_DETECT
 
 // =============================================================================
@@ -85,39 +96,59 @@
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
-// Max concurrent packets the scheduler can hold. Each slot is ~20 bytes.
-// 24 handles 10 locos with speed+function refresh plus a few one-shot packets.
-// Increase if you see scheduler-full errors; decrease to save RAM.
+    /**
+     * @brief Max concurrent packets the scheduler can hold. Each slot is ~20 bytes.
+     *
+     * @details 24 handles 10 locos with speed+function refresh plus a few one-shot
+     * packets. Increase if you see scheduler-full errors; decrease to save RAM.
+     */
 #define USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT    24
 
-// Ops-mode preamble bits the CS transmits. RailCom build: >= 16 required
-// (S-9.3.2 sec 2.4), 18 recommended for post-cutout relock margin.
+    /**
+     * @brief Ops-mode preamble bits the command station transmits.
+     *
+     * @details RailCom build: >= 16 required (S-9.3.2 sec 2.4), 18 recommended for
+     * post-cutout relock margin.
+     */
 #define USER_DEFINED_DCC_PREAMBLE_BITS_OPS       18
 
-// Max locos with automatic speed/function refresh. Each loco uses one
-// scheduler slot permanently. Must be <= SCHEDULER_SLOT_COUNT minus headroom
-// for one-shot packets (accessory, CV, etc.).
+    /**
+     * @brief Max locos with automatic speed/function refresh.
+     *
+     * @details Each loco uses one scheduler slot permanently. Must be <=
+     * USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT minus headroom for one-shot packets
+     * (accessory, CV, etc.).
+     */
 #define USER_DEFINED_DCC_MAX_LOCOS               10
 
-// Depth of the RailCom receive ring buffer. Only matters if you wire
-// railcom_uart_read in dcc_config_t. 4 is usually enough.
+    /** @brief Depth of the RailCom receive ring buffer. Only matters when uart_read is wired in dcc_railcom_hw_t; 4 is usually enough. */
 #define USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH     4
 
-// Number of retries for service mode read/write/verify before giving up.
+    /** @brief Number of retries for service mode read/write/verify before giving up. */
 #define USER_DEFINED_DCC_SERVICE_MODE_RETRIES     3
 
-// Service mode ACK detection: the decoder pulls >= this many milliamps
-// for between ACK_MIN and ACK_MAX microseconds to signal success.
-// NMRA S-9.2.3 recommends 60 mA, 5-7 ms. Adjust if your current sense
-// circuit has different scaling.
+    /**
+     * @brief Service-mode ACK current threshold in milliamps.
+     *
+     * @details The decoder pulls at least this much for between ACK_MIN and ACK_MAX
+     * microseconds to signal success. NMRA S-9.2.3 recommends 60 mA, 5-7 ms. Adjust
+     * if your current-sense circuit has different scaling. On this bench the mock ACK
+     * pin reads as 100 when high, so it clears the threshold.
+     */
 #define USER_DEFINED_DCC_ACK_THRESHOLD_MA        60
+    /** @brief Shortest pulse accepted as an ACK, in microseconds (S-9.2.3: 6 ms - 1 ms). */
 #define USER_DEFINED_DCC_ACK_MIN_DURATION_US   5000
+    /** @brief Longest pulse accepted as an ACK, in microseconds (S-9.2.3: 6 ms + 1 ms). */
 #define USER_DEFINED_DCC_ACK_MAX_DURATION_US   7000
 
-// Bridge brief current-sense dropouts during an ACK (noisy motor loads /
-// comparator chatter). 0 = strict consecutive-high. Keep it a small fraction of
-// the 6 ms ACK (single-digit samples at the 58 us sample period) or it defeats
-// the width discrimination. ~116 us = 2 samples.
+    /**
+     * @brief Bridge brief current-sense dropouts during an ACK, in microseconds.
+     *
+     * @details Covers noisy motor loads and comparator chatter. 0 = strict
+     * consecutive-high. Keep it a small fraction of the 6 ms ACK (single-digit
+     * samples at the 58 us sample period) or it defeats the width discrimination.
+     * ~116 us = 2 samples.
+     */
 #define USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US 116
 
 #endif /* DCC_COMPILE_COMMAND_STATION */

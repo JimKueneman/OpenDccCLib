@@ -310,7 +310,7 @@ extern "C" {
          *     displayed by the addressed decoder.
          *
          * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-         * @param address 11-bit address (0-2047).
+         * @param address 11-bit extended accessory address (0-2047).
          * @param aspect Signal aspect value (0-255).
          * @return true if packet was built successfully, false if invalid parameters.
          */
@@ -327,6 +327,9 @@ extern "C" {
          * @param packet Pointer to a @ref dcc_packet_t struct to fill.
          * @param address 11-bit accessory address (0-2047).
          * @param is_extended false = basic accessory decoder (T=0); true = extended (T=1).
+         *
+         * @note Loaded with repeat_count 1 (one send).
+         *
          * @return true if packet was built successfully, false if invalid parameters.
          */
     extern bool DccApplicationCommandStationPacket_load_accessory_nop(dcc_packet_t *packet, uint16_t address, bool is_extended);
@@ -343,6 +346,9 @@ extern "C" {
          * @param packet Pointer to a @ref dcc_packet_t struct to fill.
          * @param board_address 9-bit board address (0-511).
          * @param output_pair Output selection (0-7).
+         *
+         * @note Loaded with repeat_count 1 (one send).
+         *
          * @return true if packet was built successfully, false if invalid parameters.
          */
     extern bool DccApplicationCommandStationPacket_load_accessory_basic_stop(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair);
@@ -357,6 +363,9 @@ extern "C" {
          *
          * @param packet Pointer to a @ref dcc_packet_t struct to fill.
          * @param address 11-bit address (0-2047).
+         *
+         * @note Loaded with repeat_count 1 (one send).
+         *
          * @return true if packet was built successfully, false if invalid parameters.
          */
     extern bool DccApplicationCommandStationPacket_load_accessory_extended_stop(dcc_packet_t *packet, uint16_t address);
@@ -377,6 +386,9 @@ extern "C" {
          * @param output_pair Output pair (0-3) for sub-address within board.
          * @param cv_number CV number (1-1024, 1-based).
          * @param value Byte value to write.
+         *
+         * @note Loaded with repeat_count 2: S-9.2.1 requires two identical WRITE BYTE packets before a decoder modifies a CV.
+         *
          * @return true if packet was built successfully, false if invalid parameters.
          */
     extern bool DccApplicationCommandStationPacket_load_accessory_basic_cv_write(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair, uint16_t cv_number, uint8_t value);
@@ -393,6 +405,9 @@ extern "C" {
          * @param output_pair Output pair (0-3) for sub-address within board.
          * @param cv_number CV number (1-1024, 1-based).
          * @param value Expected byte value to verify.
+         *
+         * @note Loaded with repeat_count 1: a decoder acts on the first VERIFY BYTE packet it receives.
+         *
          * @return true if packet was built successfully, false if invalid parameters.
          */
     extern bool DccApplicationCommandStationPacket_load_accessory_basic_cv_verify(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair, uint16_t cv_number, uint8_t value);
@@ -411,6 +426,9 @@ extern "C" {
          * @param bit_position Bit position within the CV byte (0-7).
          * @param bit_value Desired bit value (true=1, false=0).
          * @param write true=write the bit, false=verify the bit.
+         *
+         * @note Loaded with repeat_count 2 for a write (S-9.2.1 requires two identical WRITE BIT packets) and 1 for a verify.
+         *
          * @return true if packet was built successfully, false if invalid parameters.
          */
     extern bool DccApplicationCommandStationPacket_load_accessory_basic_cv_bit(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair, uint16_t cv_number, uint8_t bit_position, bool bit_value, bool write);
@@ -425,6 +443,9 @@ extern "C" {
          * @param address 11-bit address (0-2047).
          * @param cv_number CV number (1-1024, 1-based).
          * @param value Byte value to write.
+         *
+         * @note Loaded with repeat_count 2: S-9.2.1 requires two identical WRITE BYTE packets before a decoder modifies a CV.
+         *
          * @return true if packet was built successfully, false if invalid parameters.
          */
     extern bool DccApplicationCommandStationPacket_load_accessory_extended_cv_write(dcc_packet_t *packet, uint16_t address, uint16_t cv_number, uint8_t value);
@@ -440,6 +461,9 @@ extern "C" {
          * @param address 11-bit address (0-2047).
          * @param cv_number CV number (1-1024, 1-based).
          * @param value Expected byte value to verify.
+         *
+         * @note Loaded with repeat_count 1: a decoder acts on the first VERIFY BYTE packet it receives.
+         *
          * @return true if packet was built successfully, false if invalid parameters.
          */
     extern bool DccApplicationCommandStationPacket_load_accessory_extended_cv_verify(dcc_packet_t *packet, uint16_t address, uint16_t cv_number, uint8_t value);
@@ -456,6 +480,9 @@ extern "C" {
          * @param bit_position Bit position within the CV byte (0-7).
          * @param bit_value Desired bit value (true=1, false=0).
          * @param write true=write the bit, false=verify the bit.
+         *
+         * @note Loaded with repeat_count 2 for a write (S-9.2.1 requires two identical WRITE BIT packets) and 1 for a verify.
+         *
          * @return true if packet was built successfully, false if invalid parameters.
          */
     extern bool DccApplicationCommandStationPacket_load_accessory_extended_cv_bit(dcc_packet_t *packet, uint16_t address, uint16_t cv_number, uint8_t bit_position, bool bit_value, bool write);
@@ -476,6 +503,9 @@ extern "C" {
          * @param address_type Short or long address per @ref dcc_address_type_enum.
          * @param cv_number CV number (1-1024, 1-based per NMRA convention).
          * @param value Byte value to write.
+         *
+         * @note Loaded with repeat_count 2: S-9.2.1 requires two identical WRITE BYTE packets before a decoder modifies a CV.
+         *
          * @return true if packet was built successfully, false if invalid parameters.
          */
     extern bool DccApplicationCommandStationPacket_load_cv_write_pom(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint16_t cv_number, uint8_t value);
@@ -492,6 +522,9 @@ extern "C" {
          * @param address_type Short or long address per @ref dcc_address_type_enum.
          * @param cv_number CV number (1-1024, 1-based per NMRA convention).
          * @param value Expected byte value to verify.
+         *
+         * @note Loaded with repeat_count 1: a decoder acts on the first VERIFY BYTE packet it receives.
+         *
          * @return true if packet was built successfully, false if invalid parameters.
          */
     extern bool DccApplicationCommandStationPacket_load_cv_verify_pom(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint16_t cv_number, uint8_t value);
@@ -510,6 +543,9 @@ extern "C" {
          * @param bit_position Bit position within the CV byte (0-7).
          * @param bit_value Desired bit value (true=1, false=0).
          * @param write true=write the bit, false=verify the bit.
+         *
+         * @note Loaded with repeat_count 2 for a write (S-9.2.1 requires two identical WRITE BIT packets) and 1 for a verify.
+         *
          * @return true if packet was built successfully, false if invalid parameters.
          */
     extern bool DccApplicationCommandStationPacket_load_cv_bit_pom(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint16_t cv_number, uint8_t bit_position, bool bit_value, bool write);
@@ -672,6 +708,9 @@ extern "C" {
          * @param day Day of the month (1-31).
          * @param month Month (1-12, 1=January).
          * @param year Year (0-4095).
+         *
+         * @note Loaded with repeat_count 3: S-9.2.1 says the date is transmitted at least three times when it changes.
+         *
          * @return true if the packet was built, false if any field is out of range.
          */
     extern bool DccApplicationCommandStationPacket_load_model_date(dcc_packet_t *packet, uint8_t day, uint8_t month, uint16_t year);

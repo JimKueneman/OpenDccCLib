@@ -83,45 +83,49 @@ typedef struct {
         /**
          * @brief Read a CV byte using direct mode. Sequences 8 verify_bit operations (bits 0-7),
          * then one verify_byte of the assembled value.
-         * @param cv_number CV number (1-1023).
-         * @param on_complete Called when complete: SUCCESS with the CV byte if verify_byte is ACKed;
+         * @param cv_number CV number (1-1024).
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when complete: SUCCESS with the CV byte if verify_byte is ACKed;
          *        NO_ACK (value 0) if nothing was ACKed at all, i.e. no decoder; VERIFY_FAIL (value =
-         *        the assembled byte) if some bits were ACKed but the byte was not.
-         * @param on_progress Called after each of the 9 steps (nullable).
-         * @return true if started, false if busy or cv out of range.
+         *        the assembled byte) if some bits were ACKed but the byte was not; BUSY (value 0) if a
+         *        later primitive could not be started.
+         * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t called after each of the 9 steps (nullable).
+         * @return true if started; false if another operation is running, the CV is out of range, or the first primitive could not start.
          */
     extern bool DccServiceModeTaskDirect_read_cv(uint16_t cv_number, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /**
          * @brief Write a CV byte then verify. Always 2 operations (write + verify).
-         * @param cv_number CV number (1-1023).
+         * @param cv_number CV number (1-1024).
          * @param value Byte to write.
-         * @param on_complete Called when complete; value = byte verified.
-         * @param on_progress Called after each step (nullable).
-         * @return true if started, false if busy or cv out of range.
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when complete: SUCCESS if the verify was ACKed,
+         *        VERIFY_FAIL if not (value = the byte written either way); BUSY (value 0) if the verify could not be started.
+         * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t called after each step (nullable).
+         * @return true if started; false if another operation is running, the CV is out of range, or the write could not start.
          */
     extern bool DccServiceModeTaskDirect_write_cv(uint16_t cv_number, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /**
          * @brief Read a single CV bit. Issues a verify_bit for value 1; if that is not ACKed,
          * a second verify_bit for value 0 confirms the bit is really 0 rather than unanswered.
-         * @param cv_number CV number (1-1023).
+         * @param cv_number CV number (1-1024).
          * @param bit_position Bit position (0-7).
-         * @param on_complete Called when complete: SUCCESS with value 1 or 0 when the decoder
-         *        ACKed that value; NO_ACK (value 0) when neither verify was ACKed, i.e. no decoder.
-         * @param on_progress Not used by this operation (nullable).
-         * @return true if started, false if busy or parameters out of range.
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when complete: SUCCESS with value 1 or 0 when the decoder
+         *        ACKed that value; NO_ACK (value 0) when neither verify was ACKed, i.e. no decoder; BUSY (value 0) if the
+         *        confirming verify could not be started.
+         * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t; not used by this operation (nullable).
+         * @return true if started; false if another operation is running, a parameter is out of range, or the first verify could not start.
          */
     extern bool DccServiceModeTaskDirect_read_bit(uint16_t cv_number, uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /**
          * @brief Write a single CV bit then verify. Always 2 operations (write_bit + verify_bit).
-         * @param cv_number CV number (1-1023).
+         * @param cv_number CV number (1-1024).
          * @param bit_position Bit position (0-7).
          * @param bit_value Value to write.
-         * @param on_complete Called when complete; value = bit value verified (0 or 1).
-         * @param on_progress Called after each step (nullable).
-         * @return true if started, false if busy or parameters out of range.
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when complete: SUCCESS if the verify was ACKed,
+         *        VERIFY_FAIL if not (value = the bit written, 0 or 1); BUSY (value 0) if the verify could not be started.
+         * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t; not used by this operation (nullable).
+         * @return true if started; false if another operation is running, a parameter is out of range, or the write could not start.
          */
     extern bool DccServiceModeTaskDirect_write_bit(uint16_t cv_number, uint8_t bit_position, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
@@ -131,7 +135,7 @@ typedef struct {
          *        via dcc_config.c. The task module advances its state machine on this event;
          *        the ACK outcome is taken from @p result (SUCCESS = ACK detected by the common
          *        module's pulse-width measurement, anything else = no ACK).
-         * @param result Result of the primitive operation (passed through from primitive callback).
+         * @param result @ref dcc_service_mode_result_enum of the primitive operation (passed through from primitive callback).
          */
     extern void DccServiceModeTaskDirect_on_primitive_complete(dcc_service_mode_result_enum result);
 

@@ -64,7 +64,7 @@ typedef struct {
     /** @brief Instance context for the direct service mode module. */
 typedef struct {
 
-    const interface_dcc_service_mode_direct_t *interface;
+    const interface_dcc_service_mode_direct_t *interface;   /**< Injected dependencies (common module access, user callback) */
 
 } dcc_service_mode_direct_context_t;
 
@@ -77,39 +77,43 @@ typedef struct {
 
         /**
          * @brief Write a byte to a CV using direct mode.
+         * @details Single-step write with a recovery phase; the result is delivered through the interface on_complete callback.
          * @param context Pointer to @ref dcc_service_mode_direct_context_t instance.
          * @param cv_number CV number to write (1-1024).
          * @param value Byte value to write.
-         * @return true if operation started, false if busy.
+         * @return true if the operation started, false if cv_number is out of range or the common module is busy.
          */
     extern bool DccServiceModeDirect_write_byte(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t value);
 
         /**
          * @brief Verify a CV byte value using direct mode.
+         * @details Single-step verify (no recovery phase); the decoder ACKs only if the CV matches. Result via on_complete.
          * @param context Pointer to @ref dcc_service_mode_direct_context_t instance.
          * @param cv_number CV number to verify (1-1024).
          * @param value Expected byte value.
-         * @return true if operation started, false if busy.
+         * @return true if the operation started, false if cv_number is out of range or the common module is busy.
          */
     extern bool DccServiceModeDirect_verify_byte(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t value);
 
         /**
          * @brief Write a single bit to a CV using direct mode.
+         * @details Single-step bit-manipulation write with a recovery phase. Result via on_complete.
          * @param context Pointer to @ref dcc_service_mode_direct_context_t instance.
          * @param cv_number CV number to write (1-1024).
          * @param bit_position Bit position within the CV (0-7).
          * @param bit_value Value to write (true = 1, false = 0).
-         * @return true if operation started, false if busy.
+         * @return true if the operation started, false if cv_number or bit_position is out of range or the common module is busy.
          */
     extern bool DccServiceModeDirect_write_bit(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t bit_position, bool bit_value);
 
         /**
          * @brief Verify a single bit in a CV using direct mode.
+         * @details Single-step bit-manipulation verify (no recovery phase); the decoder ACKs only if the bit matches. Result via on_complete.
          * @param context Pointer to @ref dcc_service_mode_direct_context_t instance.
          * @param cv_number CV number to verify (1-1024).
          * @param bit_position Bit position within the CV (0-7).
          * @param bit_value Expected bit value (true = 1, false = 0).
-         * @return true if operation started, false if busy.
+         * @return true if the operation started, false if cv_number or bit_position is out of range or the common module is busy.
          */
     extern bool DccServiceModeDirect_verify_bit(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t bit_position, bool bit_value);
 

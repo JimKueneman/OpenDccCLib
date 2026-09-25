@@ -28,8 +28,11 @@
  * @brief ISR-level bit encoder for DCC packet transmission.
  *
  * @details Serializes a dcc_packet_t into preamble + framed bytes + end bit
- * on the wire by driving the hardware timer compare register. The user's
- * timer output compare toggle mode handles the actual pin transitions.
+ * on the wire from a fixed-period 58 us tick ISR. The encoder decides on each
+ * tick whether the next tick must toggle the DCC output pin (toggle_next); the
+ * caller performs that toggle through pin_toggle() before calling
+ * DccBitEncoder_tick_isr() again. A one-bit half is one tick (58 us), a
+ * zero-bit half is two ticks (116 us).
  *
  * The bit encoder holds a single active packet plus a packet_loaded flag: it
  * transmits the active packet, and on completion signals the main loop, which
@@ -37,7 +40,7 @@
  * front/back buffer swap; the reload happens within the inter-packet window.)
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_BIT_ENCODER__
@@ -76,14 +79,31 @@ typedef struct {
      */
 typedef struct {
 
+        /** @brief Injected dependencies; NULL until DccBitEncoder_initialize(). */
     const interface_dcc_bit_encoder_t *interface;
+
+        /** @brief Current bit-level transmit state (@ref dcc_bit_state_enum). */
     dcc_bit_state_enum state;
+
+        /** @brief Packet being transmitted; a copy of what was handed to DccBitEncoder_load_packet(). */
     dcc_packet_t active_packet;
+
+        /** @brief Handoff flag: set by DccBitEncoder_load_packet() after the copy, cleared by the ISR when the end bit is done. */
     volatile bool packet_loaded;
+
+        /** @brief true between DccBitEncoder_start() and DccBitEncoder_stop(); the tick ISR does nothing while false. */
     bool running;
+
+        /** @brief Preamble one-bits still to send in the PREAMBLE state. */
     uint8_t preamble_count;
+
+        /** @brief Index of the byte being sent within active_packet.data. */
     uint8_t byte_index;
+
+        /** @brief Bit position (7..0) of the data bit currently being sent; the byte is done once bit 0 has gone out. */
     uint8_t bit_index;
+
+        /** @brief 0 during the first half of a bit, 1 during the second; the state machine advances when the bit completes. */
     uint8_t half_bit;
 
         /** @brief Tick counter for fixed-period ISR (DccBitEncoder_tick_isr).
@@ -110,48 +130,54 @@ typedef struct {
 
         /**
          * @brief Initialize the bit encoder module.
-         *  context Pointer to  dcc_bit_encoder_context_t instance.
-         *  interface Pointer to populated  interface_dcc_bit_encoder_t struct.
+         * @param context Pointer to @ref dcc_bit_encoder_context_t instance.
+         * @param interface Pointer to populated @ref interface_dcc_bit_encoder_t struct.
          */
     extern void DccBitEncoder_initialize(dcc_bit_encoder_context_t *context, const interface_dcc_bit_encoder_t *interface);
 
         /**
          * @brief Fixed-period tick ISR entry point — call every 58us from shared timer.
-         *  context Pointer to  dcc_bit_encoder_context_t instance.
+         * @param context Pointer to @ref dcc_bit_encoder_context_t instance.
          *
-         * @details Alternative to DccBitEncoder_half_bit_isr() for the shared-timer
-         * architecture. The timer period never changes. One-bits toggle every tick
+         * @details The timer period never changes. One-bits toggle every tick
          * (58us half-period), zero-bits skip one tick and toggle on the second
-         * (116us half-period). Uses pin_toggle() instead of timer_set_period().
+         * (116us half-period). The caller must toggle the pin via pin_toggle()
+         * BEFORE this call whenever toggle_next is set; this call then advances
+         * the state machine and recomputes toggle_next for the next tick. The
+         * RailCom cutout (railcom_cutout_begin) is armed on the tick whose toggle
+         * is the end bit's last edge, and on_packet_complete fires when the end
+         * bit is done.
          */
     extern void DccBitEncoder_tick_isr(dcc_bit_encoder_context_t *context);
 
         /**
          * @brief Load a new packet for transmission.
-         *  context Pointer to  dcc_bit_encoder_context_t instance.
-         *  packet Pointer to  dcc_packet_t to transmit. Contents are copied.
+         * @param context Pointer to @ref dcc_bit_encoder_context_t instance.
+         * @param packet Pointer to @ref dcc_packet_t to transmit. Contents are copied.
          *
-         * @details Called from main loop context (under lock). The bit encoder begins
-         * transmitting this packet starting with the preamble on the next ISR cycle.
+         * @details Called from main loop context, only while
+         * DccBitEncoder_is_idle() is true. The copy is published to the ISR as a
+         * whole; the encoder begins transmitting the packet, starting with its
+         * preamble, at the next full-bit boundary.
          */
     extern void DccBitEncoder_load_packet(dcc_bit_encoder_context_t *context, const dcc_packet_t *packet);
 
         /**
          * @brief Check if the bit encoder has finished transmitting its current packet.
-         *  context Pointer to  dcc_bit_encoder_context_t instance.
+         * @param context Pointer to @ref dcc_bit_encoder_context_t instance.
          * @return true if idle (ready for a new packet), false if transmitting.
          */
     extern bool DccBitEncoder_is_idle(const dcc_bit_encoder_context_t *context);
 
         /**
-         * @brief Start the bit encoder. Begins generating DCC signal.
-         *  context Pointer to  dcc_bit_encoder_context_t instance.
+         * @brief Start the bit encoder. Begins generating DCC signal (idle one-bits until a packet is loaded).
+         * @param context Pointer to @ref dcc_bit_encoder_context_t instance.
          */
     extern void DccBitEncoder_start(dcc_bit_encoder_context_t *context);
 
         /**
          * @brief Stop the bit encoder. Halts DCC signal generation.
-         *  context Pointer to  dcc_bit_encoder_context_t instance.
+         * @param context Pointer to @ref dcc_bit_encoder_context_t instance.
          */
     extern void DccBitEncoder_stop(dcc_bit_encoder_context_t *context);
 

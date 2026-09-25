@@ -211,7 +211,7 @@ typedef struct {
 
     uint8_t data[DCC_PACKET_MAX_BYTES]; /**< Raw packet bytes including XOR */
     uint8_t byte_count;                 /**< Number of valid bytes in data[] */
-    uint8_t preamble_bits;              /**< Preamble one-bits (14 ops, 20 service) */
+    uint8_t preamble_bits;              /**< Preamble one-bits (DCC_PREAMBLE_BITS_OPS ops, DCC_PREAMBLE_BITS_SERVICE service) */
     uint8_t repeat_count;               /**< Times to send before dropping */
 
 } dcc_packet_t;
@@ -311,35 +311,41 @@ typedef void (*dcc_service_mode_step_callback_t)(dcc_service_mode_result_enum re
     /** @brief Decoder type for register mode CV mapping (mobile vs accessory). */
 typedef enum {
 
-    DCC_DECODER_TYPE_MOBILE,
-    DCC_DECODER_TYPE_ACCESSORY,
+    DCC_DECODER_TYPE_MOBILE,        /**< Multifunction (locomotive) decoder: registers 1-8 map to CV1-4, CV29, CV7, CV8 (S-9.2.3) */
+    DCC_DECODER_TYPE_ACCESSORY,     /**< Accessory decoder: registers map to CV513, CV7, CV520 (S-9.2.3) */
 
 } dcc_decoder_type_enum;
 
     /** @brief Service mode type identifier (result of decoder mode detection). */
 typedef enum {
 
-    DCC_SERVICE_MODE_TYPE_DIRECT,
-    DCC_SERVICE_MODE_TYPE_PAGED,
-    DCC_SERVICE_MODE_TYPE_REGISTER,
-    DCC_SERVICE_MODE_TYPE_ADDRESS,
-    DCC_SERVICE_MODE_TYPE_UNKNOWN,
+    DCC_SERVICE_MODE_TYPE_DIRECT,   /**< Direct CV addressing (S-9.2.3) */
+    DCC_SERVICE_MODE_TYPE_PAGED,    /**< Paged CV addressing (S-9.2.3) */
+    DCC_SERVICE_MODE_TYPE_REGISTER, /**< Physical register addressing (S-9.2.3) */
+    DCC_SERVICE_MODE_TYPE_ADDRESS,  /**< Address-only mode (S-9.2.3) */
+    DCC_SERVICE_MODE_TYPE_UNKNOWN,  /**< No mode detected or not yet probed */
 
 } dcc_service_mode_type_enum;
 
-    /** @brief Supported-mode flags returned by detect_mode (bitmask in a uint8_t).
-     *         supported_modes == 0 means no service mode was detected. */
+    /** @brief detect_mode supported_modes bit: the decoder answered a direct-mode probe.
+     *  The flags share one uint8_t bitmask; a value of 0 means no service mode was detected. */
 #define DCC_SERVICE_MODE_SUPPORTED_DIRECT   (1u << 0)
+
+    /** @brief detect_mode supported_modes bit: the decoder answered a paged-mode probe. */
 #define DCC_SERVICE_MODE_SUPPORTED_PAGED    (1u << 1)
+
+    /** @brief detect_mode supported_modes bit: the decoder answered a register-mode probe. */
 #define DCC_SERVICE_MODE_SUPPORTED_REGISTER (1u << 2)
+
+    /** @brief detect_mode supported_modes bit: the decoder answered an address-only probe. */
 #define DCC_SERVICE_MODE_SUPPORTED_ADDRESS  (1u << 3)
 
     /** @brief Current phase of a task orchestrator operation. */
 typedef enum {
 
-    DCC_TASK_PHASE_READ,
-    DCC_TASK_PHASE_WRITE,
-    DCC_TASK_PHASE_VERIFY,
+    DCC_TASK_PHASE_READ,            /**< Reading the CV value (bit or byte probes) */
+    DCC_TASK_PHASE_WRITE,           /**< Writing the CV value */
+    DCC_TASK_PHASE_VERIFY,          /**< Verifying the value after a write */
 
 } dcc_task_phase_enum;
 

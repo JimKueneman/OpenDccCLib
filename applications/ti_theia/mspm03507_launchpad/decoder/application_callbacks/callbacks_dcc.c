@@ -28,11 +28,12 @@
  * @brief DCC decoder callback implementations.
  *
  * @details HOW THIS WORKS:
- * The DCC library calls your callbacks from ISR context.  Because you
- * cannot safely call printf or UART transmit inside an ISR, this demo
- * uses a ring buffer pattern:
+ * The DCC library dispatches your callbacks from DccConfig_run() in
+ * main-loop context.  The demo still keeps them short and defers the slow
+ * UART output through a ring buffer, so the edge drain in main() is never
+ * starved and the code stays safe if the dispatch is ever moved into an ISR:
  *
- *   ISR -> callback -> _recv_enqueue("RECV ...") -> ring buffer
+ *   DccConfig_run() -> callback -> _recv_enqueue("RECV ...") -> ring buffer
  *   main loop -> CallbacksDcc_drain() -> UART output
  *
  * TO ADAPT FOR A REAL DECODER:
@@ -59,21 +60,33 @@
 /* RECV ring buffer                                                           */
 /*                                                                            */
 /* A lock-free single-producer / single-consumer ring buffer.                 */
-/*   Producer: ISR context  (writes to _recv_head)                            */
-/*   Consumer: main loop    (reads from _recv_tail)                           */
-/* No mutex is needed because there is exactly one writer and one reader,     */
-/* and the head/tail indices are volatile.                                    */
+/*   Producer: library callbacks (writes to _recv_head)                       */
+/*   Consumer: CallbacksDcc_drain() (reads from _recv_tail)                   */
+/* Both run in the main loop today; the split still matters because it keeps  */
+/* exactly one writer and one reader with volatile indices, so no lock would  */
+/* be needed even if the producer moved into an ISR.                          */
 /* ========================================================================== */
 
+    /** @brief Number of RECV lines the ring can hold (one slot is always kept free). */
 #define RECV_RING_SLOTS   64
+    /** @brief Bytes per RECV line including the null terminator. */
 #define RECV_SLOT_SIZE    80
 
+    /** @brief RECV line ring buffer. */
 static char _recv_ring[RECV_RING_SLOTS][RECV_SLOT_SIZE];
+    /** @brief Ring write index, advanced by the producer only. */
 static volatile uint8_t _recv_head = 0;   /* ISR writes here */
+    /** @brief Ring read index, advanced by CallbacksDcc_drain() only. */
 static volatile uint8_t _recv_tail = 0;   /* main loop reads here */
 
-/* Enqueue a formatted RECV line.  Called from ISR context only.
- * If the ring is full the message is silently dropped. */
+    /**
+     * @brief Formats a RECV line into the next free ring slot.
+     *
+     * @details Called by the library callbacks. When the ring is full the line is silently dropped.
+     *
+     * @param fmt printf-style format string.
+     * @param ... Format arguments.
+     */
 static void _recv_enqueue(const char *fmt, ...) {
 
     uint8_t next = (_recv_head + 1) % RECV_RING_SLOTS;
@@ -100,14 +113,19 @@ static void _recv_enqueue(const char *fmt, ...) {
 /* The array is indexed by (cv_number - 1) because DCC CVs are 1-based.      */
 /* ========================================================================== */
 
+    /** @brief Number of CVs held in RAM; CV numbers 1..CV_STORAGE_SIZE are valid. */
 #define CV_STORAGE_SIZE  1024
 
+    /** @brief RAM CV store, indexed by (cv_number - 1). Lost on power cycle. */
 static uint8_t _cv_storage[CV_STORAGE_SIZE];
 
 /* ========================================================================== */
 /* Public API                                                                 */
 /* ========================================================================== */
 
+    /**
+     * @brief Clears the RECV ring buffer and restores the CV storage to factory defaults.
+     */
 void CallbacksDcc_initialize(void) {
 
     /* Clear ring buffer */
@@ -119,6 +137,9 @@ void CallbacksDcc_initialize(void) {
 
 }
 
+    /**
+     * @brief Zeroes the CV store and writes the NMRA defaults for CV1, CV15, CV16 and CV29.
+     */
 void CallbacksDcc_factory_reset(void) {
 
     /* Restore CV storage to NMRA defaults.
@@ -133,6 +154,11 @@ void CallbacksDcc_factory_reset(void) {
 
 }
 
+    /**
+     * @brief Writes one pending RECV line (if any) to the UART and advances the read index.
+     *
+     * @details One line per call keeps each main-loop pass short.
+     */
 void CallbacksDcc_drain(void) {
 
     if (_recv_tail != _recv_head) {
@@ -145,6 +171,9 @@ void CallbacksDcc_drain(void) {
 
 }
 
+    /**
+     * @brief Resets both ring indices, discarding every pending RECV line.
+     */
 void CallbacksDcc_clear(void) {
 
     _recv_head = 0;
@@ -159,6 +188,16 @@ void CallbacksDcc_clear(void) {
 /* Return true on success, false if cv_number is out of range.                */
 /* ========================================================================== */
 
+    /**
+     * @brief Reads one CV from the RAM store after a range check.
+     *
+     * @verbatim
+     * @param cv_number 1-based CV number.
+     * @param value     Receives the CV value on success.
+     * @endverbatim
+     *
+     * @return true on success, false when the CV number is outside 1..CV_STORAGE_SIZE.
+     */
 bool CallbacksDcc_cv_read(uint16_t cv_number, uint8_t *value) {
 
     if (cv_number < 1 || cv_number > CV_STORAGE_SIZE) {
@@ -172,6 +211,16 @@ bool CallbacksDcc_cv_read(uint16_t cv_number, uint8_t *value) {
 
 }
 
+    /**
+     * @brief Writes one CV to the RAM store after a range check.
+     *
+     * @verbatim
+     * @param cv_number 1-based CV number.
+     * @param value     Value to store.
+     * @endverbatim
+     *
+     * @return true on success, false when the CV number is outside 1..CV_STORAGE_SIZE.
+     */
 bool CallbacksDcc_cv_write(uint16_t cv_number, uint8_t value) {
 
     if (cv_number < 1 || cv_number > CV_STORAGE_SIZE) {
@@ -191,8 +240,21 @@ bool CallbacksDcc_cv_write(uint16_t cv_number, uint8_t value) {
 /* with (page, offset).  Unsupported pages return false (NACK).                */
 /* ========================================================================== */
 
+    /** @brief Indexed CV pages: CV31 = 0, CV32 = 0..3, 256 bytes each. */
 static uint8_t _idx_store[4][256];
 
+    /**
+     * @brief Reads one byte from the demo's four indexed CV pages.
+     *
+     * @verbatim
+     * @param page_hi CV31 value; only 0 is supported.
+     * @param page_lo CV32 value; 0..3 are supported.
+     * @param offset  Byte offset within the page.
+     * @param value   Receives the byte on success.
+     * @endverbatim
+     *
+     * @return true on success, false for an unsupported page.
+     */
 bool CallbacksDcc_cv_read_indexed(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t *value) {
 
     if (page_hi != 0 || page_lo >= 4) {
@@ -206,6 +268,18 @@ bool CallbacksDcc_cv_read_indexed(uint8_t page_hi, uint8_t page_lo, uint8_t offs
 
 }
 
+    /**
+     * @brief Writes one byte to the demo's four indexed CV pages and logs a RECV CVIDX line.
+     *
+     * @verbatim
+     * @param page_hi CV31 value; only 0 is supported.
+     * @param page_lo CV32 value; 0..3 are supported.
+     * @param offset  Byte offset within the page.
+     * @param value   Byte to store.
+     * @endverbatim
+     *
+     * @return true on success, false for an unsupported page.
+     */
 bool CallbacksDcc_cv_write_indexed(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t value) {
 
     if (page_hi != 0 || page_lo >= 4) {
@@ -222,6 +296,16 @@ bool CallbacksDcc_cv_write_indexed(uint8_t page_hi, uint8_t page_lo, uint8_t off
 
 }
 
+    /**
+     * @brief Clears the CV29 features this demo does not implement, then logs what will be stored.
+     *
+     * @details Analog operation and the speed table are always cleared; RailCom is cleared only
+     * when DCC_COMPILE_RAILCOM is not defined.
+     *
+     * @verbatim
+     * @param flags Decoded dcc_cv29_flags_t to adjust in place.
+     * @endverbatim
+     */
 void CallbacksDcc_cv29_apply_supported_features(dcc_cv29_flags_t *flags) {
 
     /* The library decoded the requested CV29 config and forced the reserved bit; our job is
@@ -248,7 +332,7 @@ void CallbacksDcc_cv29_apply_supported_features(dcc_cv29_flags_t *flags) {
 }
 
 /* ========================================================================== */
-/* DCC library callbacks (called from ISR context)                            */
+/* DCC library callbacks (dispatched from DccConfig_run())                    */
 /*                                                                            */
 /* Each function below is called when the library decodes the corresponding   */
 /* DCC command.  This demo just logs them to the ring buffer.                 */
@@ -261,6 +345,16 @@ void CallbacksDcc_cv29_apply_supported_features(dcc_cv29_flags_t *flags) {
 /*   }                                                                        */
 /* ========================================================================== */
 
+    /**
+     * @brief Logs a RECV SPEED line with the step mode shown as 14, 28 or 128.
+     *
+     * @verbatim
+     * @param address   Decoded locomotive address.
+     * @param speed     Speed step in the given mode.
+     * @param direction true = forward, false = reverse.
+     * @param mode      Step mode of the packet.
+     * @endverbatim
+     */
 void CallbacksDcc_on_speed_command(uint16_t address, uint8_t speed,
                                     bool direction,
                                     dcc_speed_mode_enum mode) {
@@ -272,12 +366,28 @@ void CallbacksDcc_on_speed_command(uint16_t address, uint8_t speed,
 
 }
 
+    /**
+     * @brief Logs a RECV ESTOP line.
+     *
+     * @verbatim
+     * @param address Decoded locomotive address.
+     * @endverbatim
+     */
 void CallbacksDcc_on_emergency_stop(uint16_t address) {
 
     _recv_enqueue("RECV ESTOP addr=%u", address);
 
 }
 
+    /**
+     * @brief Logs a RECV FUNC line.
+     *
+     * @verbatim
+     * @param address         Decoded locomotive address.
+     * @param function_number Function number 0-68.
+     * @param state           true = on, false = off.
+     * @endverbatim
+     */
 void CallbacksDcc_on_function_command(uint16_t address,
                                        uint8_t function_number,
                                        bool state) {
@@ -287,6 +397,15 @@ void CallbacksDcc_on_function_command(uint16_t address,
 
 }
 
+    /**
+     * @brief Logs a RECV ACC line.
+     *
+     * @verbatim
+     * @param board_address 9-bit accessory board address.
+     * @param output_pair   Output pair 0-3.
+     * @param activate      true = activate, false = deactivate.
+     * @endverbatim
+     */
 void CallbacksDcc_on_accessory_basic_command(uint16_t board_address,
                                               uint8_t output_pair,
                                               bool activate) {
@@ -296,6 +415,14 @@ void CallbacksDcc_on_accessory_basic_command(uint16_t board_address,
 
 }
 
+    /**
+     * @brief Logs a RECV ACCE line.
+     *
+     * @verbatim
+     * @param address 11-bit extended accessory address.
+     * @param aspect  Aspect value 0-255.
+     * @endverbatim
+     */
 void CallbacksDcc_on_accessory_extended_command(uint16_t address,
                                                  uint8_t aspect) {
 
@@ -303,6 +430,15 @@ void CallbacksDcc_on_accessory_extended_command(uint16_t address,
 
 }
 
+    /**
+     * @brief Logs a RECV CV_WRITE line; the service_mode flag is not reported.
+     *
+     * @verbatim
+     * @param cv_number    1-based CV number.
+     * @param value        Value written.
+     * @param service_mode true for service mode, false for ops mode (unused).
+     * @endverbatim
+     */
 void CallbacksDcc_on_cv_write(uint16_t cv_number, uint8_t value,
                                bool service_mode) {
 
@@ -311,6 +447,15 @@ void CallbacksDcc_on_cv_write(uint16_t cv_number, uint8_t value,
 
 }
 
+    /**
+     * @brief Logs a RECV CV_VERIFY line; the service_mode flag is not reported.
+     *
+     * @verbatim
+     * @param cv_number    1-based CV number.
+     * @param value        Value the command station asked to verify.
+     * @param service_mode true for service mode, false for ops mode (unused).
+     * @endverbatim
+     */
 void CallbacksDcc_on_cv_verify(uint16_t cv_number, uint8_t value,
                                 bool service_mode) {
 
@@ -319,6 +464,16 @@ void CallbacksDcc_on_cv_verify(uint16_t cv_number, uint8_t value,
 
 }
 
+    /**
+     * @brief Logs a RECV CV_BIT line; the service_mode flag is not reported.
+     *
+     * @verbatim
+     * @param cv_number    1-based CV number.
+     * @param bit_position Bit position 0-7.
+     * @param bit_value    Bit value written or verified.
+     * @param service_mode true for service mode, false for ops mode (unused).
+     * @endverbatim
+     */
 void CallbacksDcc_on_cv_bit(uint16_t cv_number, uint8_t bit_position,
                              bool bit_value, bool service_mode) {
 
@@ -328,6 +483,15 @@ void CallbacksDcc_on_cv_bit(uint16_t cv_number, uint8_t bit_position,
 
 }
 
+    /**
+     * @brief Logs a RECV CONSIST line.
+     *
+     * @verbatim
+     * @param address          Decoded locomotive address.
+     * @param consist_address  Consist address, 0 to leave the consist.
+     * @param direction_normal true when the loco faces the consist's normal direction.
+     * @endverbatim
+     */
 void CallbacksDcc_on_consist_command(uint16_t address,
                                       uint8_t consist_address,
                                       bool direction_normal) {
@@ -338,6 +502,15 @@ void CallbacksDcc_on_consist_command(uint16_t address,
 
 }
 
+    /**
+     * @brief Logs a RECV BSS line.
+     *
+     * @verbatim
+     * @param address      Decoded locomotive address.
+     * @param state_number Binary state number 1-127.
+     * @param active       true = on, false = off.
+     * @endverbatim
+     */
 void CallbacksDcc_on_binary_state_short(uint16_t address,
                                          uint8_t state_number,
                                          bool active) {
@@ -347,6 +520,15 @@ void CallbacksDcc_on_binary_state_short(uint16_t address,
 
 }
 
+    /**
+     * @brief Logs a RECV BSL line.
+     *
+     * @verbatim
+     * @param address      Decoded locomotive address.
+     * @param state_number Binary state number 1-32767.
+     * @param active       true = on, false = off.
+     * @endverbatim
+     */
 void CallbacksDcc_on_binary_state_long(uint16_t address,
                                         uint16_t state_number,
                                         bool active) {
@@ -356,6 +538,15 @@ void CallbacksDcc_on_binary_state_long(uint16_t address,
 
 }
 
+    /**
+     * @brief Logs a RECV ANALOG line.
+     *
+     * @verbatim
+     * @param address       Decoded locomotive address.
+     * @param output_number Analog output number.
+     * @param value         Output value 0-255.
+     * @endverbatim
+     */
 void CallbacksDcc_on_analog_function(uint16_t address,
                                       uint8_t output_number,
                                       uint8_t value) {
@@ -365,12 +556,18 @@ void CallbacksDcc_on_analog_function(uint16_t address,
 
 }
 
+    /**
+     * @brief Logs a RECV FAILSAFE_ENTER line.
+     */
 void CallbacksDcc_on_failsafe_entered(void) {
 
     _recv_enqueue("RECV FAILSAFE_ENTER");
 
 }
 
+    /**
+     * @brief Logs a RECV FAILSAFE_EXIT line.
+     */
 void CallbacksDcc_on_failsafe_exited(void) {
 
     _recv_enqueue("RECV FAILSAFE_EXIT");

@@ -46,19 +46,30 @@
 extern "C" {
 #endif
 
-/* Enable the UART RX interrupt. */
+    /** @brief Enable the command UART RX interrupt (the peripheral itself is set up by SysConfig). */
 extern void TI_UartDriver_initialize(void);
 
-/* Check whether a complete line (terminated by CR or LF) has been received.
- * If so, copy it into 'buffer' (null-terminated, no newline) and return true.
- * If no complete line is available yet, return false. */
+    /**
+     * @brief Fetch one complete line (terminated by CR or LF) from the receive ring buffer.
+     *
+     * @details Copies the line into buffer null-terminated with no newline and
+     * consumes it, including a CR+LF pair. Main-loop context only.
+     *
+     * @param buffer   Destination for the line.
+     * @param max_len  Size of buffer including the null terminator; longer lines are truncated.
+     *
+     * @return true when a complete line was copied, false when none is ready yet.
+     */
 extern bool TI_UartDriver_read_line(char *buffer, uint16_t max_len);
 
-/* Echo received characters back to the terminal.
- * Call from main loop -- not ISR-safe. */
+    /** @brief Echo received characters back to the terminal (CR becomes CR+LF). Main loop only, not ISR-safe. */
 extern void TI_UartDriver_echo_process(void);
 
-/* Transmit a null-terminated string by polling the TX register. */
+    /**
+     * @brief Transmit a null-terminated string by polling the TX register (blocking).
+     *
+     * @param str  Null-terminated string to send.
+     */
 extern void TI_UartDriver_write_string(const char *str);
 
 #ifdef __cplusplus

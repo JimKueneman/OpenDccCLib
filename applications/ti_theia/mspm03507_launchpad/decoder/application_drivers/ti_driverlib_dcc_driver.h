@@ -33,8 +33,9 @@
  * in the dcc_config_t struct.
  *
  * This is the decoder-only version: it provides lock/unlock (interrupt
- * disable/enable) and a microsecond timestamp.  The command-station
- * version also needs timer start/stop/set_period and track power control.
+ * disable/enable), a microsecond timestamp and the RailCom bit-bang delay.
+ * The command-station version also needs shared and RailCom timer control,
+ * DCC pin toggling and track power control.
  *
  * @author Jim Kueneman
  * @date 25 Sep 2026
@@ -49,21 +50,43 @@
 extern "C" {
 #endif
 
-/* Start the free-running timestamp timer. */
+    /**
+     * @brief Starts the free-running 1 MHz timestamp timer.
+     *
+     * @details Call after SYSCFG_DL_init() and before DccConfig_initialize().
+     */
 extern void TI_DccDriver_initialize(void);
 
-/* Disable all interrupts (used by the library to protect shared state). */
+    /**
+     * @brief Disables all interrupts; the library uses this to protect shared state.
+     *
+     * @details A bare __disable_irq(), not nest-counted, so every lock must be matched by exactly one unlock.
+     */
 extern void TI_DccDriver_lock_shared_resources(void);
 
-/* Re-enable interrupts. */
+    /**
+     * @brief Re-enables interrupts. Must match a prior lock call.
+     */
 extern void TI_DccDriver_unlock_shared_resources(void);
 
-/* Return the current time in microseconds from a free-running counter.
- * The counter wraps at ~4295 seconds (32-bit overflow). */
+    /**
+     * @brief Current time in microseconds from the free-running counter.
+     *
+     * @details 16-bit hardware timer plus a software overflow count. Wraps at 2^32 us (~4295 seconds).
+     *
+     * @return Microseconds since TI_DccDriver_initialize().
+     */
 extern uint32_t TI_DccDriver_get_timestamp_usec(void);
 
-/* Blocking microsecond delay for the RailCom Tx bit-bang, accurate at the 4 us
- * bit period via a 20 MHz (50 ns/tick) one-shot timer. */
+    /**
+     * @brief Blocking microsecond delay for the RailCom Tx bit-bang.
+     *
+     * @details Accurate at the 4 us bit period because it spins on a 20 MHz (50 ns per tick)
+     * one-shot timer. Wired to dcc_config_t.railcom_delay_us. See the NOT FINISHED note on the
+     * implementation: this demo's SysConfig has no DELAY_TIMER instance yet.
+     *
+     * @param us Delay in microseconds.
+     */
 extern void TI_DccDriver_railcom_delay_us(uint16_t us);
 
 #ifdef __cplusplus
