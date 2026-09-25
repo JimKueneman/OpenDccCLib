@@ -103,7 +103,7 @@ typedef struct {
          *        module's pulse-width measurement, anything else = no ACK).
          * @param result Result of the primitive operation (passed through from primitive callback).
          */
-    extern void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_t result);
+    extern void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_enum result);
 
 #ifdef __cplusplus
 }

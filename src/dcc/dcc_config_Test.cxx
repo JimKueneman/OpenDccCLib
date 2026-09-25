@@ -1251,8 +1251,8 @@ TEST(DccConfig, railcom_cutout_tags_long_address_packets) {
 #if defined(DCC_COMPILE_COMMAND_STATION) && defined(DCC_COMPILE_SERVICE_MODE_TASK_DIRECT)
 
 static uint32_t task_complete_count;
-static dcc_service_mode_result_t task_complete_result;
-static void mock_task_on_complete(dcc_service_mode_result_t result, uint8_t value) {
+static dcc_service_mode_result_enum task_complete_result;
+static void mock_task_on_complete(dcc_service_mode_result_enum result, uint8_t value) {
     (void)value;
     task_complete_result = result;
     task_complete_count++;

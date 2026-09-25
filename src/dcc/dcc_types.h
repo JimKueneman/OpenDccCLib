@@ -34,7 +34,7 @@
  * All memory is statically allocated at compile time.
  *
  * @author Jim Kueneman
- * @date 28 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_TYPES__
@@ -292,10 +292,10 @@ typedef enum {
     DCC_SERVICE_MODE_ERROR,        /**< General error (e.g., no current sense) */
     DCC_SERVICE_MODE_NOT_IN_SERVICE_MODE /**< Not in service mode */
 
-} dcc_service_mode_result_t;
+} dcc_service_mode_result_enum;
 
     /** @brief Callback for primitive service mode operation step completion. */
-typedef void (*dcc_service_mode_step_callback_t)(dcc_service_mode_result_t result);
+typedef void (*dcc_service_mode_step_callback_t)(dcc_service_mode_result_enum result);
 
 // =============================================================================
 // Service mode task types (task orchestrator layer)
@@ -337,11 +337,11 @@ typedef enum {
 } dcc_task_phase_enum;
 
     /** @brief Callback: task CV operation complete. value = CV byte found or validated. */
-typedef void (*dcc_service_mode_task_on_complete_callback_t)(dcc_service_mode_result_t result, uint8_t value);
+typedef void (*dcc_service_mode_task_on_complete_callback_t)(dcc_service_mode_result_enum result, uint8_t value);
 
     /** @brief Callback: detect_mode complete. supported_modes = bitmask of
      *         DCC_SERVICE_MODE_SUPPORTED_* flags (0 = none detected). */
-typedef void (*dcc_service_mode_task_on_detect_callback_t)(dcc_service_mode_result_t result, uint8_t supported_modes);
+typedef void (*dcc_service_mode_task_on_detect_callback_t)(dcc_service_mode_result_enum result, uint8_t supported_modes);
 
     /** @brief Callback: progress notification during a multi-step task operation. */
 typedef void (*dcc_service_mode_task_on_progress_callback_t)(dcc_task_phase_enum phase, uint8_t current_step, uint8_t estimated_steps);

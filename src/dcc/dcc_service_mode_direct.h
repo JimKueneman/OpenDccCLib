@@ -57,7 +57,7 @@ typedef struct {
     bool (*is_common_idle)(void);
 
         /** @brief User callback: programming operation finished. NULL = no notification. */
-    void (*on_complete)(dcc_service_mode_result_t result);
+    void (*on_complete)(dcc_service_mode_result_enum result);
 
 } interface_dcc_service_mode_direct_t;
 

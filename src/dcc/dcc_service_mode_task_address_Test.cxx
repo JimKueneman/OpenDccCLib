@@ -35,7 +35,7 @@ static bool     address_write_return;
 static bool     is_idle_return;
 static uint32_t on_start_ack_scan_count;
 
-static dcc_service_mode_result_t on_complete_result;
+static dcc_service_mode_result_enum on_complete_result;
 static uint8_t                   on_complete_value;
 static uint32_t                  on_complete_count;
 
@@ -74,7 +74,7 @@ static void mock_on_start_ack_scan(void) {
 
 }
 
-static void mock_on_complete(dcc_service_mode_result_t result, uint8_t value) {
+static void mock_on_complete(dcc_service_mode_result_enum result, uint8_t value) {
 
     on_complete_result = result;
     on_complete_value = value;

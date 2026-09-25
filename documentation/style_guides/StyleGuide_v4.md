@@ -209,7 +209,7 @@ Callback function pointer types use a *trailing _callback_t*:
 
 ~~~
 
-typedef void (*dcc_service_mode_step_callback_t)(dcc_service_mode_result_t result);
+typedef void (*dcc_service_mode_step_callback_t)(dcc_service_mode_result_enum result);
 
 ~~~
 

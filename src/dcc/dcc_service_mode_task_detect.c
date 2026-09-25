@@ -90,7 +90,7 @@ static dcc_service_mode_task_detect_context_t _context;
 
 static void _finish(void) {
 
-    dcc_service_mode_result_t result = _context.supported_modes ? DCC_SERVICE_MODE_SUCCESS : DCC_SERVICE_MODE_NO_ACK;
+    dcc_service_mode_result_enum result = _context.supported_modes ? DCC_SERVICE_MODE_SUCCESS : DCC_SERVICE_MODE_NO_ACK;
 
     _context.state = DCC_TASK_DETECT_STATE_IDLE;
 
@@ -106,7 +106,7 @@ static void _finish(void) {
  * reports the given result (e.g. DCC_SERVICE_MODE_BUSY) instead of deriving
  * SUCCESS/NO_ACK from supported_modes, and always resets to IDLE so a later
  * detect_mode() call isn't permanently locked out. */
-static void _fail(dcc_service_mode_result_t result) {
+static void _fail(dcc_service_mode_result_enum result) {
 
     _context.state = DCC_TASK_DETECT_STATE_IDLE;
 
@@ -340,7 +340,7 @@ static void _scan_address_next(void) {
 
 }
 
-void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_t result) {
+void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_enum result) {
 
     /* The common module measures the ACK pulse width internally and reports the
      * outcome here: SUCCESS = valid ACK detected, anything else = no ACK. */

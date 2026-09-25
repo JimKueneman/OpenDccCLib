@@ -340,7 +340,7 @@ Service mode runs on the dedicated programming track. The command station sends 
 
 Every task takes an `on_complete(result, value)` callback, most take an `on_progress(phase, step, estimated_steps)` callback, and each returns `bool`: false means it could not start, for example because another operation is running. Results arrive later, from `DccConfig_run()`. Call `enter_service_mode()` first and `exit_service_mode()` when done.
 
-| Result (`dcc_service_mode_result_t`) | Meaning |
+| Result (`dcc_service_mode_result_enum`) | Meaning |
 |---|---|
 | `DCC_SERVICE_MODE_SUCCESS` | Completed; `value` holds the byte or bit read |
 | `DCC_SERVICE_MODE_NO_ACK` | No qualifying current pulse; no decoder, or wrong mode |

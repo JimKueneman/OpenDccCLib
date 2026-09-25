@@ -86,9 +86,9 @@ static void _build_register_packet(dcc_packet_t *packet, uint8_t register_number
 }
 
     /* Forward declarations for callback chain */
-static void _on_data_access_complete(dcc_service_mode_result_t result);
+static void _on_data_access_complete(dcc_service_mode_result_enum result);
 
-static void _on_page_select_complete(dcc_service_mode_result_t result) {
+static void _on_page_select_complete(dcc_service_mode_result_enum result) {
 
     dcc_packet_t packet;
     (void)result;
@@ -119,7 +119,7 @@ static void _on_page_select_complete(dcc_service_mode_result_t result) {
 
 }
 
-static void _on_data_access_complete(dcc_service_mode_result_t result) {
+static void _on_data_access_complete(dcc_service_mode_result_enum result) {
 
     _active_context->paged_state = DCC_PAGED_STATE_IDLE;
 

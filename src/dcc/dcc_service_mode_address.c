@@ -79,7 +79,7 @@ static void _build_register_packet(dcc_packet_t *packet, uint8_t register_number
 
 }
 
-static void _on_command_complete(dcc_service_mode_result_t result) {
+static void _on_command_complete(dcc_service_mode_result_enum result) {
 
     _active_context->address_state = DCC_ADDRESS_STATE_IDLE;
 
@@ -94,7 +94,7 @@ static void _on_command_complete(dcc_service_mode_result_t result) {
     /* Page-preset finished. Per S-9.2.3 the address command (CV #1) follows the
      * page-preset unconditionally. A write to CV #1 uses the longer 10-packet
      * recovery. */
-static void _on_preset_complete(dcc_service_mode_result_t result) {
+static void _on_preset_complete(dcc_service_mode_result_enum result) {
 
     dcc_packet_t packet;
     (void)result;

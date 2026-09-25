@@ -23,7 +23,7 @@ static uint32_t begin_operation_count;
 static bool begin_operation_return;
 static bool common_idle_value;
 
-static dcc_service_mode_result_t complete_result;
+static dcc_service_mode_result_enum complete_result;
 static uint32_t complete_count;
 
 static bool last_is_write_operation;
@@ -52,7 +52,7 @@ static bool mock_is_common_idle(void) {
 
 }
 
-static void mock_on_complete(dcc_service_mode_result_t result) {
+static void mock_on_complete(dcc_service_mode_result_enum result) {
 
     complete_result = result;
     complete_count++;

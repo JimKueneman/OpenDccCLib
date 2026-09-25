@@ -774,7 +774,7 @@ static void _cmd_cv(char *tokens[], int count) {
 
 /* Asynchronous result of a service-mode task. The task starts, returns true,
  * and reports the outcome here once the operation (and recovery) completes. */
-static void _svc_on_complete(dcc_service_mode_result_t result, uint8_t value) {
+static void _svc_on_complete(dcc_service_mode_result_enum result, uint8_t value) {
 
     switch (result) {
 
@@ -804,7 +804,7 @@ static void _svc_on_complete(dcc_service_mode_result_t result, uint8_t value) {
 }
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_DETECT
-static void _svc_on_detect(dcc_service_mode_result_t result, uint8_t modes) {
+static void _svc_on_detect(dcc_service_mode_result_enum result, uint8_t modes) {
 
     if (result != DCC_SERVICE_MODE_SUCCESS || modes == 0) {
         _respond("SVC DETECT: none");

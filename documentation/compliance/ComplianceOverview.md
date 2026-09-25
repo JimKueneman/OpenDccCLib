@@ -569,10 +569,10 @@ Implementation and cost differ by mode:
 
 ```c
 // CV operations: value is the CV byte or bit value found/validated
-typedef void (*dcc_service_mode_task_on_complete_callback_t)(dcc_service_mode_result_t result, uint8_t value);
+typedef void (*dcc_service_mode_task_on_complete_callback_t)(dcc_service_mode_result_enum result, uint8_t value);
 
 // Detect operation: supported_modes is a bitmask of ALL supported modes
-typedef void (*dcc_service_mode_task_on_detect_callback_t)(dcc_service_mode_result_t result, uint8_t supported_modes);
+typedef void (*dcc_service_mode_task_on_detect_callback_t)(dcc_service_mode_result_enum result, uint8_t supported_modes);
 
 typedef void (*dcc_service_mode_task_on_progress_callback_t)(dcc_task_phase_enum phase, uint8_t current_step, uint8_t estimated_steps);
 ```
@@ -689,7 +689,7 @@ bool DccServiceModeTaskDirect_read_cv(uint16_t cv, dcc_service_mode_task_on_comp
 bool DccServiceModeTaskDirect_write_cv(uint16_t cv, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 bool DccServiceModeTaskDirect_read_bit(uint16_t cv, uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 bool DccServiceModeTaskDirect_write_bit(uint16_t cv, uint8_t bit, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
-void DccServiceModeTaskDirect_on_primitive_complete(dcc_service_mode_result_t result);
+void DccServiceModeTaskDirect_on_primitive_complete(dcc_service_mode_result_enum result);
 
 // Paged — same shape as Direct
 void DccServiceModeTaskPaged_initialize(const interface_dcc_service_mode_task_paged_t *interface);
@@ -697,7 +697,7 @@ bool DccServiceModeTaskPaged_read_cv(uint16_t cv, dcc_service_mode_task_on_compl
 bool DccServiceModeTaskPaged_write_cv(uint16_t cv, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 bool DccServiceModeTaskPaged_read_bit(uint16_t cv, uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 bool DccServiceModeTaskPaged_write_bit(uint16_t cv, uint8_t bit, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
-void DccServiceModeTaskPaged_on_primitive_complete(dcc_service_mode_result_t result);
+void DccServiceModeTaskPaged_on_primitive_complete(dcc_service_mode_result_enum result);
 
 // Register — decoder_type per-call (user may switch between loco and accessory decoder)
 void DccServiceModeTaskRegister_initialize(const interface_dcc_service_mode_task_register_t *interface);
@@ -705,7 +705,7 @@ bool DccServiceModeTaskRegister_read_cv(uint16_t cv, dcc_decoder_type_enum decod
 bool DccServiceModeTaskRegister_write_cv(uint16_t cv, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 bool DccServiceModeTaskRegister_read_bit(uint16_t cv, uint8_t bit, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 bool DccServiceModeTaskRegister_write_bit(uint16_t cv, uint8_t bit, bool bit_value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
-void DccServiceModeTaskRegister_on_primitive_complete(dcc_service_mode_result_t result);
+void DccServiceModeTaskRegister_on_primitive_complete(dcc_service_mode_result_enum result);
 bool DccServiceModeTaskRegister_factory_reset(dcc_service_mode_task_on_complete_callback_t on_complete);
 
 // Address-Only — CV#1 only; decoder handles CV#29/CV#19 side effects automatically
@@ -714,12 +714,12 @@ bool DccServiceModeTaskAddress_read(dcc_service_mode_task_on_complete_callback_t
 bool DccServiceModeTaskAddress_write(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 bool DccServiceModeTaskAddress_read_bit(uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 bool DccServiceModeTaskAddress_write_bit(uint8_t bit, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
-void DccServiceModeTaskAddress_on_primitive_complete(dcc_service_mode_result_t result);
+void DccServiceModeTaskAddress_on_primitive_complete(dcc_service_mode_result_enum result);
 
 // Detect — own callback type: result is a supported-modes bitmask, not a CV byte
 void DccServiceModeTaskDetect_initialize(const interface_dcc_service_mode_task_detect_t *interface);
 bool DccServiceModeTaskDetect_detect_mode(dcc_service_mode_task_on_detect_callback_t on_detect);
-void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_t result);
+void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_enum result);
 ```
 
 **ACK detection — internal, not the task's concern.** ACK detection lives in the

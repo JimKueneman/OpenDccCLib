@@ -67,10 +67,10 @@ static interface_dcc_service_mode_common_t make_interface(void) {
 // Step callback tracking
 // ============================================================================
 
-static dcc_service_mode_result_t step_result;
+static dcc_service_mode_result_enum step_result;
 static uint32_t step_callback_count;
 
-static void mock_step_callback(dcc_service_mode_result_t result) {
+static void mock_step_callback(dcc_service_mode_result_enum result) {
 
     step_result = result;
     step_callback_count++;

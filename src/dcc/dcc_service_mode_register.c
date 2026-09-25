@@ -76,7 +76,7 @@ static void _build_register_packet(dcc_packet_t *packet, uint8_t register_number
 
 }
 
-static void _on_command_complete(dcc_service_mode_result_t result) {
+static void _on_command_complete(dcc_service_mode_result_enum result) {
 
     _active_context->register_state = DCC_REGISTER_STATE_IDLE;
 
@@ -93,7 +93,7 @@ static void _on_command_complete(dcc_service_mode_result_t result) {
      * register state, so its own ACK result is not required to proceed.
      * Register VERIFY uses 7+ command packets; a write to Register 1 uses the
      * longer 10-packet recovery (both per S-9.2.3). */
-static void _on_preset_complete(dcc_service_mode_result_t result) {
+static void _on_preset_complete(dcc_service_mode_result_enum result) {
 
     dcc_packet_t packet;
     (void)result;

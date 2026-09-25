@@ -73,7 +73,7 @@ typedef struct {
     bool in_service_mode;
     dcc_packet_t command_packet;
     dcc_service_mode_step_callback_t step_callback;
-    dcc_service_mode_result_t result;
+    dcc_service_mode_result_enum result;
     uint8_t packet_count;
     uint8_t retry_count;
     volatile bool ack_detected;

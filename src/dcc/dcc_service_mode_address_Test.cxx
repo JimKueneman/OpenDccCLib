@@ -29,7 +29,7 @@ static bool begin_operation_return;
 static uint32_t begin_operation_fail_on_call;  /* 0 = disabled; N = the Nth call (1-based) returns false */
 static bool common_idle_value;
 
-static dcc_service_mode_result_t complete_result;
+static dcc_service_mode_result_enum complete_result;
 static uint32_t complete_count;
 
 static bool last_is_write_operation;
@@ -65,7 +65,7 @@ static bool mock_is_common_idle(void) {
 
 }
 
-static void mock_on_complete(dcc_service_mode_result_t result) {
+static void mock_on_complete(dcc_service_mode_result_enum result) {
 
     complete_result = result;
     complete_count++;
@@ -134,7 +134,7 @@ static void expect_page_preset_packet(void) {
 }
 
 /* Fire the page-preset's completion so the address command step begins. */
-static void advance_to_command(dcc_service_mode_result_t preset_result) {
+static void advance_to_command(dcc_service_mode_result_enum preset_result) {
 
     ASSERT_NE(last_begin_callback, (dcc_service_mode_step_callback_t)NULL);
     last_begin_callback(preset_result);

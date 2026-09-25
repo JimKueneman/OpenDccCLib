@@ -80,7 +80,7 @@ static void _report_progress(dcc_task_phase_enum phase) {
 
 }
 
-static void _complete(dcc_service_mode_result_t result, uint8_t value) {
+static void _complete(dcc_service_mode_result_enum result, uint8_t value) {
 
     _context.state = DCC_TASK_ADDRESS_STATE_IDLE;
 
@@ -162,7 +162,7 @@ static void _advance_write_verify(void) {
     _context.current_step++;
     _report_progress(DCC_TASK_PHASE_VERIFY);
 
-    dcc_service_mode_result_t result = _context.ack_result ? DCC_SERVICE_MODE_SUCCESS : DCC_SERVICE_MODE_VERIFY_FAIL;
+    dcc_service_mode_result_enum result = _context.ack_result ? DCC_SERVICE_MODE_SUCCESS : DCC_SERVICE_MODE_VERIFY_FAIL;
     _complete(result, _context.value);
 
 }
@@ -176,7 +176,7 @@ static void _advance_write_bit_write(void) {
 
 static void _advance_write_bit_verify(void) {
 
-    dcc_service_mode_result_t result = _context.ack_result ? DCC_SERVICE_MODE_SUCCESS : DCC_SERVICE_MODE_VERIFY_FAIL;
+    dcc_service_mode_result_enum result = _context.ack_result ? DCC_SERVICE_MODE_SUCCESS : DCC_SERVICE_MODE_VERIFY_FAIL;
     uint8_t bit_result = _context.bit_value ? 1u : 0u;
     _complete(result, bit_result);
 
@@ -329,7 +329,7 @@ bool DccServiceModeTaskAddress_write_bit(uint8_t bit_position, bool bit_value, d
 
 }
 
-void DccServiceModeTaskAddress_on_primitive_complete(dcc_service_mode_result_t result) {
+void DccServiceModeTaskAddress_on_primitive_complete(dcc_service_mode_result_enum result) {
 
     /* The common module measures the ACK pulse width internally and reports the
      * outcome here: SUCCESS = valid ACK detected, anything else = no ACK. */

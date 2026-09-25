@@ -54,7 +54,7 @@ static bool     address_verify_return;
 static bool     is_idle_return;
 static uint32_t on_start_ack_scan_count;
 
-static dcc_service_mode_result_t on_detect_result;
+static dcc_service_mode_result_enum on_detect_result;
 static uint8_t                   on_detect_modes;
 static uint32_t                  on_detect_count;
 
@@ -110,7 +110,7 @@ static void mock_on_start_ack_scan(void) {
 
 }
 
-static void mock_on_detect(dcc_service_mode_result_t result, uint8_t supported_modes) {
+static void mock_on_detect(dcc_service_mode_result_enum result, uint8_t supported_modes) {
 
     on_detect_result = result;
     on_detect_modes = supported_modes;

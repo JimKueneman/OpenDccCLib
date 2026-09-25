@@ -63,9 +63,9 @@ static dcc_service_mode_task_on_detect_callback_t   last_on_detect;
 static uint32_t op_count;
 static bool     op_return;
 
-static void dummy_on_complete(dcc_service_mode_result_t r, uint8_t v) { (void)r; (void)v; }
+static void dummy_on_complete(dcc_service_mode_result_enum r, uint8_t v) { (void)r; (void)v; }
 static void dummy_on_progress(dcc_task_phase_enum p, uint8_t c, uint8_t e) { (void)p; (void)c; (void)e; }
-static void dummy_on_detect(dcc_service_mode_result_t r, uint8_t modes) { (void)r; (void)modes; }
+static void dummy_on_detect(dcc_service_mode_result_enum r, uint8_t modes) { (void)r; (void)modes; }
 
 static bool mock_read_cv(uint16_t cv, dcc_service_mode_task_on_complete_callback_t oc, dcc_service_mode_task_on_progress_callback_t op) {
     last_cv = cv; last_on_complete = oc; last_on_progress = op; op_count++; return op_return;

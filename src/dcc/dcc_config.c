@@ -734,7 +734,7 @@ static bool _service_address_verify(uint8_t address) {
  * signal is needed.
  * ========================================================================= */
 
-static void _service_task_primitive_complete(dcc_service_mode_result_t result) {
+static void _service_task_primitive_complete(dcc_service_mode_result_enum result) {
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
     DccServiceModeTaskDirect_on_primitive_complete(result);

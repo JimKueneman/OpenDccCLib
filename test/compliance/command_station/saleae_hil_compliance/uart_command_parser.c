@@ -775,7 +775,7 @@ static void _cmd_cv(char *tokens[], int count) {
 
 /* Asynchronous result of a service-mode task. The task starts, returns true,
  * and reports the outcome here once the operation (and recovery) completes. */
-static void _svc_on_complete(dcc_service_mode_result_t result, uint8_t value) {
+static void _svc_on_complete(dcc_service_mode_result_enum result, uint8_t value) {
 
     switch (result) {
 
@@ -805,7 +805,7 @@ static void _svc_on_complete(dcc_service_mode_result_t result, uint8_t value) {
 }
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_DETECT
-static void _svc_on_detect(dcc_service_mode_result_t result, uint8_t modes) {
+static void _svc_on_detect(dcc_service_mode_result_enum result, uint8_t modes) {
 
     if (result != DCC_SERVICE_MODE_SUCCESS || modes == 0) {
         _respond("SVC DETECT: none");
@@ -882,7 +882,7 @@ static void _cmd_svc_direct(char *tokens[], int count) {
  * 6 ms +/- 1 ms ACK window. read_bit reports value=1 when the width was accepted
  * as an ACK, value=0 when rejected -- a pure electrical test of the ACK width
  * counter with no decoder attached. */
-static void _svc_on_mockack(dcc_service_mode_result_t result, uint8_t value) {
+static void _svc_on_mockack(dcc_service_mode_result_enum result, uint8_t value) {
 
     if (result == DCC_SERVICE_MODE_SUCCESS && value != 0) {
         _respond("SVC MOCKACK: ACK DETECTED");
