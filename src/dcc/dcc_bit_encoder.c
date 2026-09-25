@@ -140,6 +140,12 @@ void DccBitEncoder_start(dcc_bit_encoder_context_t *context) {
      * where it is. A packet in flight is abandoned and packet_loaded is left
      * as is.
      *
+     * @details Also clears toggle_next. The shared-timer ISR fires the pin
+     * toggle for a tick before calling DccBitEncoder_tick_isr() to check
+     * running (see DccConfig_58us_timer_isr), so a toggle_next left set from
+     * the in-flight bit would otherwise survive stop() and fire one more,
+     * unwanted edge on the following tick.
+     *
      * @verbatim
      * @param context Pointer to dcc_bit_encoder_context_t instance.
      * @endverbatim
@@ -149,6 +155,7 @@ void DccBitEncoder_stop(dcc_bit_encoder_context_t *context) {
     context->running = false;
     context->state = DCC_BIT_STATE_IDLE;
     context->railcom_cutout_arm_pending = false;
+    context->toggle_next = false;
 
 }
 
