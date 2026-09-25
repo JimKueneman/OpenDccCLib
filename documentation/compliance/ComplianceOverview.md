@@ -16,7 +16,7 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
 
 - **Roles:** Command Station, Decoder, Accessory Decoder — `DCC_COMPILE_COMMAND_STATION` / `_DECODER` / `_ACCESSORY_DECODER`.
 - **Service modes:** Direct, Paged, Register, Address — all implemented.
-- **Tests:** 29 host unit-test binaries, 1144 tests passing (host, mocked drivers); 95.4% line / 97.7% function / 87.8% branch coverage (gcovr, 2026-09-24). Green host tests inject mock drivers — see **Known defects** (decoder RailCom Tx), which they cannot catch.
+- **Tests:** 28 host unit-test binaries, 1280 tests passing (host, mocked drivers); 99.5% line / 100% function / 97.6% branch coverage (gcovr, 2026-09-25). Green host tests inject mock drivers — see **Known defects** (decoder RailCom Tx), which they cannot catch.
 - **Hardware-in-loop:** Saleae HIL compliance suites — S-9.1 electrical/timing, S-9.2 baseline, S-9.2.1 packets (incl. per-builder repeat counts on the wire), S-9.2.3 service mode (210 checks incl. the mock-ACK loopback), S-9.3.2 RailCom cutout timing + sub-windows + the **receive path via the mock-decoder loopback**, and the scheduler suite (priority, combining, refresh pacing on the wire) — preceded by `bench_preflight.py`, which proves the seven probes and both jumpers before a run. Plus the two-board MSPM0 loopback suite (manual gate, not CI).
 
 ---
@@ -30,12 +30,12 @@ All source paths are under `src/dcc/`. Test files share the source dir (`*_Test.
   - ✅ ACK detection now enforces the upper bound (`DCC_ACK_MAX_SAMPLES`); an over-long pulse is rejected as over-current, not an ACK.
   - ✅ Accessory **extended SRQ** now transmits the full address (basic ≠ extended).
   - ✅ Speed-restriction (`00111110`) **removed** (byte reserved for Zimo East-West).
+  - ✅ RailCom receive **tags bytes by channel window** (issue #7): `uart_read` returns each byte's channel, so a Channel 2-only reply is reported on Channel 2; every channel's outcome (datagram, ACK, NACK or an error code) is reported through `on_railcom_datagram_result`.
   - ✅ RailCom decoder-response **datagram IDs aligned to the 2026 draft**; ACK/NACK now sent as 4/8 special code words; CS-side decode-table bug fixed (`0x0F`→ACK, `0x3C`→NACK).
 - **Top functional gaps (not implemented):**
   - ❌ **XPOM** (S-9.2.1 §2.3.7.4) — no command-station encoder.
   - ❌ **Logon / Data Spaces (S-9.2.1.1)** — absent. *Released standard (2022), not draft-only — the 2026 draft only expands it.* Out of current scope.
   - ⚠️ **Decoder-side RailCom Tx** on the reference board — engine and encoders exist and are unit-tested, but the demo has no current-source circuit, so `railcom_tx_pin_set` is NULL there (see Known defects).
-  - ⚠️ **Channel 2-only RailCom replies** are misread as Channel 1 by the command station (bytes are split by count, not by window) — open issue; the S-9.3.2 HIL suite keeps a deliberately failing case.
   - *Previously listed here and since implemented:* fail-safe / CV11 (`dcc_failsafe`), time/date and system time packets, accessory NOP, indexed CVs (CV31/32 hooks), factory reset on CV8.
 - **Housekeeping:** the pre-refactor modules `dcc_application_service_track` and `dcc_application_main_track` still coexist with the role-first replacements; both are compiled and tested. `dcc_packet_encoder` was removed on 2026-09-23 (uncalled duplicate that had drifted).
 
@@ -1131,21 +1131,19 @@ flushed at cutout begin — and adds a **mock decoder transmitter** (UART on PB6
 jumpered into it, exactly like the service-mode mock-ACK jumper. `RC MOCK <ch1hex> [<ch2hex>]
 [LATE]` arms one reply; the window-open hook plays Channel 1 at T_TS1 and Channel 2 at T_TS2,
 where a decoder transmits; LATE plays at T_CE to prove the gate. The library reports what it
-decoded (`RC RESULT: addr= ch= id= data=`), and Saleae **D6** taps the jumper so the suite checks
+decoded (`RC RESULT: addr= ch= res= id= data=`), and Saleae **D6** taps the jumper so the suite checks
 the bytes, their 250 kbaud framing and their position inside the D5 windows independently of
 the firmware. The host-side 4/8 encoder is transcribed from the draft's Table 2 (the draft
 prints 0x0B as a duplicate of 0x0D — a typesetting error; 0x96 is used).
 
 Bench-verified cases (CS-010..CS-014, `railcom_loopback_tests`): Ch1 and Ch2 datagrams incl. a
-4-byte one; ACK padding in both forms kept; all-ACK and NACK-only yield no data datagram;
-non-4/8 and reserved words rejected; bytes outside every window never become a datagram (and
-are counted as dropped); the reply is tagged with the address of the packet before its cutout,
-under two alternating locomotives (the #1 two-stage address capture, on the wire).
+4-byte one; a Channel 2-only reply (Ch1 silent, as with the CV 28 Ch1 broadcast off) reported
+on Channel 2 with nothing on Channel 1 (issue #7); ACK padding in both forms kept; all-ACK and
+NACK-only reported as ACK / NACK with no datagram; non-4/8 and reserved words reported as
+INVALID_CODEWORD; bytes outside every window never become a datagram (and are counted as
+dropped); the reply is tagged with the address of the packet before its cutout, under two
+alternating locomotives (the #1 two-stage address capture, on the wire).
 
-**Known limitation, kept as an expected FAIL:** `dcc_railcom_command_station.c` splits the raw
-bytes by *count* (first two = Ch1, rest = Ch2), not by window, so a **Channel 2-only reply**
-(CV 28 bit 0 clears the Ch1 broadcast) is misread as a Ch1 datagram. The suite's "Channel 2-only
-reply [known limitation]" case fails on purpose until the receive path tags bytes by window.
 What the loopback still cannot prove is the analog side — a real bridge tri-stating and a real
 detector recovering a decoder's current pulses — which only a real decoder on a real track
 covers. CS-015 (receive ring depth) stays not-bench-observable.

@@ -289,12 +289,21 @@ $(function(){ initResizable(false); });
 <li>DCC_RAILCOM_ID_XPOM_11&#160;:&#160;<a class="el" href="dcc__defines_8h.html#aafa08af27aabd619dfdb23a5a71c5278">dcc_defines.h</a></li>
 <li>DCC_RAILCOM_ID_XPOM_8&#160;:&#160;<a class="el" href="dcc__defines_8h.html#a88c62675d0c6e7c758e888f7973a982b">dcc_defines.h</a></li>
 <li>DCC_RAILCOM_ID_XPOM_9&#160;:&#160;<a class="el" href="dcc__defines_8h.html#a8f5e729bfc093f00f3e6c429b354196d">dcc_defines.h</a></li>
+<li>DCC_RAILCOM_MAX_READS_PER_CUTOUT&#160;:&#160;<a class="el" href="dcc__defines_8h.html#a2c270ef6edbdc07bc0b0204a654897f3">dcc_defines.h</a></li>
 <li>DCC_RAILCOM_REPLY_ACK&#160;:&#160;<a class="el" href="dcc__types_8h.html#a85201881519df5483c2148cd8dd73cebaf0577cb136f95953b219f050275ecfef">dcc_types.h</a></li>
 <li>DCC_RAILCOM_REPLY_BUSY&#160;:&#160;<a class="el" href="dcc__types_8h.html#a85201881519df5483c2148cd8dd73cebac334669b5cf824cf1b97d527f93667af">dcc_types.h</a></li>
 <li>DCC_RAILCOM_REPLY_DATA&#160;:&#160;<a class="el" href="dcc__types_8h.html#a85201881519df5483c2148cd8dd73ceba4278504c7d9d179a18cb7b38095700c8">dcc_types.h</a></li>
 <li>DCC_RAILCOM_REPLY_NACK&#160;:&#160;<a class="el" href="dcc__types_8h.html#a85201881519df5483c2148cd8dd73cebabcb4112877c8d390c77c63e915dcf06f">dcc_types.h</a></li>
 <li>DCC_RAILCOM_REPLY_NONE&#160;:&#160;<a class="el" href="dcc__types_8h.html#a85201881519df5483c2148cd8dd73ceba58fa5b8e79ef5e9161da67174fb2a47b">dcc_types.h</a></li>
 <li>dcc_railcom_reply_status_enum&#160;:&#160;<a class="el" href="dcc__types_8h.html#a85201881519df5483c2148cd8dd73ceb">dcc_types.h</a></li>
+<li>DCC_RAILCOM_RESULT_ACK&#160;:&#160;<a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1ea12e4f3b518386934fa92ff02e73832ee">dcc_types.h</a></li>
+<li>dcc_railcom_result_enum&#160;:&#160;<a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1e">dcc_types.h</a></li>
+<li>DCC_RAILCOM_RESULT_INVALID_CHANNEL&#160;:&#160;<a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1ead70bc290ac7f16aec038a88f3eba9c49">dcc_types.h</a></li>
+<li>DCC_RAILCOM_RESULT_INVALID_CODEWORD&#160;:&#160;<a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1ea697c040043e1656364cdc50154476855">dcc_types.h</a></li>
+<li>DCC_RAILCOM_RESULT_NACK&#160;:&#160;<a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1ea22e9b2ddf2a4f3812131c453fb03877c">dcc_types.h</a></li>
+<li>DCC_RAILCOM_RESULT_OK&#160;:&#160;<a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1ea5f4f5006a373474d9cf1d1088cd52b53">dcc_types.h</a></li>
+<li>DCC_RAILCOM_RESULT_TOO_FEW_BYTES&#160;:&#160;<a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1ea1d35f699bc6ff309e07dbfb8a4f0382d">dcc_types.h</a></li>
+<li>DCC_RAILCOM_RESULT_TOO_MANY_BYTES&#160;:&#160;<a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1ea0448dbc72c5190d361ed334876e71331">dcc_types.h</a></li>
 <li>DCC_RAILCOM_TX_BIT_US&#160;:&#160;<a class="el" href="dcc__defines_8h.html#a415713e29b931c32f882ce1651aac0c3">dcc_defines.h</a></li>
 <li>DCC_RAILCOM_TX_BLANK_US&#160;:&#160;<a class="el" href="dcc__defines_8h.html#adce85cfdfe9c047e38ab76c33e65be90">dcc_defines.h</a></li>
 <li>DCC_RAILCOM_TX_GAP_US&#160;:&#160;<a class="el" href="dcc__defines_8h.html#a947f87ff01920f7139d510f73ab9ca90">dcc_defines.h</a></li>
@@ -591,8 +600,8 @@ $(function(){ initResizable(false); });
 <li>DccRailcomDecoder_set_address()&#160;:&#160;<a class="el" href="dcc__railcom__decoder_8c.html#a54771b6a09406dee7f15cd84587fa822">dcc_railcom_decoder.c</a>, <a class="el" href="dcc__railcom__decoder_8h.html#a54771b6a09406dee7f15cd84587fa822">dcc_railcom_decoder.h</a></li>
 <li>DccRailcomDecoder_transmit()&#160;:&#160;<a class="el" href="dcc__railcom__decoder_8c.html#aad27bcfea2c86de924db0e3b3807f10e">dcc_railcom_decoder.c</a>, <a class="el" href="dcc__railcom__decoder_8h.html#aad27bcfea2c86de924db0e3b3807f10e">dcc_railcom_decoder.h</a></li>
 <li>DccRailcomUtilities_decode_byte()&#160;:&#160;<a class="el" href="dcc__railcom__utilities_8c.html#a4f8a0ba5e0406b933fa06466e2b81cfe">dcc_railcom_utilities.c</a>, <a class="el" href="dcc__railcom__utilities_8h.html#a4f8a0ba5e0406b933fa06466e2b81cfe">dcc_railcom_utilities.h</a></li>
-<li>DccRailcomUtilities_decode_ch1()&#160;:&#160;<a class="el" href="dcc__railcom__utilities_8c.html#a7dbc790f270073ab41eaf3afb21ac632">dcc_railcom_utilities.c</a>, <a class="el" href="dcc__railcom__utilities_8h.html#a7dbc790f270073ab41eaf3afb21ac632">dcc_railcom_utilities.h</a></li>
-<li>DccRailcomUtilities_decode_ch2()&#160;:&#160;<a class="el" href="dcc__railcom__utilities_8c.html#a1f9ed1131fd000ba882639735a82585c">dcc_railcom_utilities.c</a>, <a class="el" href="dcc__railcom__utilities_8h.html#a1f9ed1131fd000ba882639735a82585c">dcc_railcom_utilities.h</a></li>
+<li>DccRailcomUtilities_decode_ch1()&#160;:&#160;<a class="el" href="dcc__railcom__utilities_8c.html#a9c0a58461bb67d86fcb032cbdbe87414">dcc_railcom_utilities.c</a>, <a class="el" href="dcc__railcom__utilities_8h.html#a9c0a58461bb67d86fcb032cbdbe87414">dcc_railcom_utilities.h</a></li>
+<li>DccRailcomUtilities_decode_ch2()&#160;:&#160;<a class="el" href="dcc__railcom__utilities_8c.html#a9ab13ebe579bdeaa52c2855a021538ed">dcc_railcom_utilities.c</a>, <a class="el" href="dcc__railcom__utilities_8h.html#a9ab13ebe579bdeaa52c2855a021538ed">dcc_railcom_utilities.h</a></li>
 <li>DccRailcomUtilities_encode_byte()&#160;:&#160;<a class="el" href="dcc__railcom__utilities_8c.html#acca9bbe3fbc278d61f45e524c35e18b6">dcc_railcom_utilities.c</a>, <a class="el" href="dcc__railcom__utilities_8h.html#acca9bbe3fbc278d61f45e524c35e18b6">dcc_railcom_utilities.h</a></li>
 <li>DccRailcomUtilities_encode_ch1()&#160;:&#160;<a class="el" href="dcc__railcom__utilities_8c.html#a5de415dc698fe709e765f2afa5e37861">dcc_railcom_utilities.c</a>, <a class="el" href="dcc__railcom__utilities_8h.html#a5de415dc698fe709e765f2afa5e37861">dcc_railcom_utilities.h</a></li>
 <li>DccRailcomUtilities_encode_ch2()&#160;:&#160;<a class="el" href="dcc__railcom__utilities_8c.html#a8d24730486834b72907196e9450084d1">dcc_railcom_utilities.c</a>, <a class="el" href="dcc__railcom__utilities_8h.html#a8d24730486834b72907196e9450084d1">dcc_railcom_utilities.h</a></li>

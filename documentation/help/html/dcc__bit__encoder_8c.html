@@ -245,6 +245,7 @@ Functions</h2></td></tr>
 
 <p>Stop the bit encoder. Halts DCC signal generation. </p>
 <p>Clears running and forces IDLE; the next tick leaves the pin where it is. A packet in flight is abandoned and packet_loaded is left as is.</p>
+<p>Also clears toggle_next. The shared-timer ISR fires the pin toggle for a tick before calling <a class="el" href="#a0d4b31b66daad042b600ec4382e90dcb" title="Fixed-period tick ISR entry point — call every 58us from shared timer.">DccBitEncoder_tick_isr()</a> to check running (see DccConfig_58us_timer_isr), so a toggle_next left set from the in-flight bit would otherwise survive stop() and fire one more, unwanted edge on the following tick.</p>
 <pre class="fragment">* @param context Pointer to dcc_bit_encoder_context_t instance.
 * </pre> 
 </div>

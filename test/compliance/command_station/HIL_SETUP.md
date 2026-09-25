@@ -111,8 +111,9 @@ S-9.2.3 service channel (3) and mock-ACK channel (4) in `command_station/s9_2_3_
 > library's own channel-window hooks. A **mock decoder transmitter** on **PB6**
 > (`MOCK_RC_TX`, UART1) is jumpered into it; `RC MOCK <ch1hex> [<ch2hex>] [LATE]` arms one
 > reply that the next cutout plays at T_TS1 (Ch1) and T_TS2 (Ch2), exactly where a decoder
-> transmits. The library decodes it and the firmware prints `RC RESULT: addr=.. ch=.. id=..
-> data=..`. D6 taps PB16 so the suite checks the bytes, their 250 kbaud framing and their
+> transmits. The library decodes it and the firmware prints `RC RESULT: addr=.. ch=.. res=.. id=..
+> data=..` (one line per channel that received bytes; `res` is the decode result, OK / ACK /
+> NACK / an error). The driver tags each accepted byte with the window it arrived in. D6 taps PB16 so the suite checks the bytes, their 250 kbaud framing and their
 > position inside the D5 windows independently of the firmware. No bit-banging: both ends
 > are hardware UARTs. `RC MOCK OFF` disarms and zeroes the counters, `RC STATUS` shows them.
 

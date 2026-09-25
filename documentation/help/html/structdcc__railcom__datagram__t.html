@@ -92,23 +92,55 @@ $(function(){ initResizable(false); });
 </div><!--header-->
 <div class="contents">
 
-<p>A decoded RailCom datagram.  
+<p>A decoded RailCom datagram, or the reason one channel did not decode.  
  <a href="#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
 Data Fields</h2></td></tr>
+<tr class="memitem:a15256d8f1ab3f8296e618da27993ca86" id="r_a15256d8f1ab3f8296e618da27993ca86"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dcc__types_8h.html#a22b37869fafebb7264d4f933c78b973f">dcc_railcom_channel_enum</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a15256d8f1ab3f8296e618da27993ca86">channel</a></td></tr>
+<tr class="separator:a15256d8f1ab3f8296e618da27993ca86"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9cac0f9b36b175176dbf987113357de" id="r_aa9cac0f9b36b175176dbf987113357de"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1e">dcc_railcom_result_enum</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa9cac0f9b36b175176dbf987113357de">result</a></td></tr>
+<tr class="separator:aa9cac0f9b36b175176dbf987113357de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2c72d2e4da697f06b4995818bf43fe74" id="r_a2c72d2e4da697f06b4995818bf43fe74"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2c72d2e4da697f06b4995818bf43fe74">datagram_id</a></td></tr>
 <tr class="separator:a2c72d2e4da697f06b4995818bf43fe74"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a54be60598e36b96e49c68983a4ba10b0" id="r_a54be60598e36b96e49c68983a4ba10b0"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a54be60598e36b96e49c68983a4ba10b0">data</a> [<a class="el" href="dcc__types_8h.html#a25304e51a1e4db05aa97a4688397ad60">DCC_RAILCOM_DATAGRAM_MAX_BYTES</a>]</td></tr>
 <tr class="separator:a54be60598e36b96e49c68983a4ba10b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a20302e2c99a60d3f612dba57e3f6333b" id="r_a20302e2c99a60d3f612dba57e3f6333b"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a20302e2c99a60d3f612dba57e3f6333b">count</a></td></tr>
 <tr class="separator:a20302e2c99a60d3f612dba57e3f6333b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28e3c179a86f337095088b3ca02a2b2a" id="r_a28e3c179a86f337095088b3ca02a2b2a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a28e3c179a86f337095088b3ca02a2b2a">valid</a></td></tr>
-<tr class="separator:a28e3c179a86f337095088b3ca02a2b2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>A decoded RailCom datagram. </p>
+<div class="textblock"><p>A decoded RailCom datagram, or the reason one channel did not decode. </p>
 </div><h2 class="groupheader">Field Documentation</h2>
+<a id="a15256d8f1ab3f8296e618da27993ca86" name="a15256d8f1ab3f8296e618da27993ca86"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a15256d8f1ab3f8296e618da27993ca86">&#9670;&#160;</a></span>channel</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="dcc__types_8h.html#a22b37869fafebb7264d4f933c78b973f">dcc_railcom_channel_enum</a> channel</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Channel the bytes arrived in (the raw tag for DCC_RAILCOM_RESULT_INVALID_CHANNEL) </p>
+
+</div>
+</div>
+<a id="aa9cac0f9b36b175176dbf987113357de" name="aa9cac0f9b36b175176dbf987113357de"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9cac0f9b36b175176dbf987113357de">&#9670;&#160;</a></span>result</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1e">dcc_railcom_result_enum</a> result</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Decode outcome; datagram_id, data and count are meaningful only for DCC_RAILCOM_RESULT_OK </p>
+
+</div>
+</div>
 <a id="a2c72d2e4da697f06b4995818bf43fe74" name="a2c72d2e4da697f06b4995818bf43fe74"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2c72d2e4da697f06b4995818bf43fe74">&#9670;&#160;</a></span>datagram_id</h2>
 
@@ -151,21 +183,6 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <p>Number of valid data bytes </p>
-
-</div>
-</div>
-<a id="a28e3c179a86f337095088b3ca02a2b2a" name="a28e3c179a86f337095088b3ca02a2b2a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a28e3c179a86f337095088b3ca02a2b2a">&#9670;&#160;</a></span>valid</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool valid</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>true if datagram decoded ok </p>
 
 </div>
 </div>

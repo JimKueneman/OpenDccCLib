@@ -31,7 +31,8 @@
  *                                                   ^ Saleae D6 (blue) taps this pin
  *
  * Receive side (what a real station has): a 250 kbaud UART whose bytes the DCC
- * library pulls through its .uart_read hook. The receiver is GATED by the
+ * library pulls through its .uart_read hook, each tagged with the channel window
+ * (Ch1 or Ch2) it arrived in. The receiver is GATED by the
  * library's own channel-window hooks (.uart_rx_enable / .uart_rx_disable): a byte
  * that arrives while no window is open is dropped and counted, and the ring is
  * flushed at every cutout begin, so a byte can never be attributed to the wrong
@@ -55,6 +56,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+
+#include "dcc_lib/dcc_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -85,13 +88,14 @@ typedef struct {
 extern void TI_RailcomLoopback_initialize(void);
 
     /**
-     * @brief The library .uart_read hook: pop one received byte from the ring. Main-loop context.
+     * @brief The library .uart_read hook: pop one received byte and its channel from the ring. Main-loop context.
      *
-     * @param byte  Receives the next byte when one is available.
+     * @param byte     Receives the next byte when one is available.
+     * @param channel  Receives DCC_RAILCOM_CH1 or DCC_RAILCOM_CH2: the window the byte arrived in.
      *
      * @return true when a byte was returned, false when the ring is empty.
      */
-extern bool TI_RailcomLoopback_uart_read(uint8_t *byte);
+extern bool TI_RailcomLoopback_uart_read(uint8_t *byte, dcc_railcom_channel_enum *channel);
 
     /**
      * @brief Cutout timing hook at T_CS (begin_railcom_cutout), from the cutout timer ISR.

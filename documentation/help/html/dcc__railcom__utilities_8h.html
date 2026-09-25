@@ -115,12 +115,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a4f8a0ba5e0406b933fa06466e2b81cfe" id="r_a4f8a0ba5e0406b933fa06466e2b81cfe"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4f8a0ba5e0406b933fa06466e2b81cfe">DccRailcomUtilities_decode_byte</a> (uint8_t encoded)</td></tr>
 <tr class="memdesc:a4f8a0ba5e0406b933fa06466e2b81cfe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode an 8-bit RailCom codeword to its 6-bit value or special token.  <br /></td></tr>
 <tr class="separator:a4f8a0ba5e0406b933fa06466e2b81cfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7dbc790f270073ab41eaf3afb21ac632" id="r_a7dbc790f270073ab41eaf3afb21ac632"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7dbc790f270073ab41eaf3afb21ac632">DccRailcomUtilities_decode_ch1</a> (uint8_t byte0, uint8_t byte1, <a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a> *out)</td></tr>
-<tr class="memdesc:a7dbc790f270073ab41eaf3afb21ac632"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode RailCom Channel 1 (2 codewords) into a 12-bit datagram.  <br /></td></tr>
-<tr class="separator:a7dbc790f270073ab41eaf3afb21ac632"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1f9ed1131fd000ba882639735a82585c" id="r_a1f9ed1131fd000ba882639735a82585c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1f9ed1131fd000ba882639735a82585c">DccRailcomUtilities_decode_ch2</a> (const uint8_t *raw_bytes, uint8_t raw_count, <a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a> *out)</td></tr>
-<tr class="memdesc:a1f9ed1131fd000ba882639735a82585c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode RailCom Channel 2 (up to 6 codewords) into a datagram.  <br /></td></tr>
-<tr class="separator:a1f9ed1131fd000ba882639735a82585c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c0a58461bb67d86fcb032cbdbe87414" id="r_a9c0a58461bb67d86fcb032cbdbe87414"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1e">dcc_railcom_result_enum</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9c0a58461bb67d86fcb032cbdbe87414">DccRailcomUtilities_decode_ch1</a> (const uint8_t *raw_bytes, uint8_t raw_count, <a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a> *out)</td></tr>
+<tr class="memdesc:a9c0a58461bb67d86fcb032cbdbe87414"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode the bytes captured in the Channel 1 window.  <br /></td></tr>
+<tr class="separator:a9c0a58461bb67d86fcb032cbdbe87414"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ab13ebe579bdeaa52c2855a021538ed" id="r_a9ab13ebe579bdeaa52c2855a021538ed"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1e">dcc_railcom_result_enum</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9ab13ebe579bdeaa52c2855a021538ed">DccRailcomUtilities_decode_ch2</a> (const uint8_t *raw_bytes, uint8_t raw_count, <a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a> *out)</td></tr>
+<tr class="memdesc:a9ab13ebe579bdeaa52c2855a021538ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decode the bytes captured in the Channel 2 window.  <br /></td></tr>
+<tr class="separator:a9ab13ebe579bdeaa52c2855a021538ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Pure RailCom helper functions (4/8 codec) shared across roles. </p>
@@ -303,8 +303,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a7dbc790f270073ab41eaf3afb21ac632" name="a7dbc790f270073ab41eaf3afb21ac632"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7dbc790f270073ab41eaf3afb21ac632">&#9670;&#160;</a></span>DccRailcomUtilities_decode_ch1()</h2>
+<a id="a9c0a58461bb67d86fcb032cbdbe87414" name="a9c0a58461bb67d86fcb032cbdbe87414"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c0a58461bb67d86fcb032cbdbe87414">&#9670;&#160;</a></span>DccRailcomUtilities_decode_ch1()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -313,57 +313,7 @@ Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">bool DccRailcomUtilities_decode_ch1 </td>
-          <td>(</td>
-          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>byte0</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>byte1</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a> *</td>          <td class="paramname"><span class="paramname"><em>out</em></span>&#160;)</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Decode RailCom Channel 1 (2 codewords) into a 12-bit datagram. </p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">byte0</td><td>First received codeword. </td></tr>
-    <tr><td class="paramname">byte1</td><td>Second received codeword. </td></tr>
-    <tr><td class="paramname">out</td><td>Out: decoded <a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a> (valid only when true).</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>true if both codewords decoded; false on an invalid codeword.</dd></dl>
-<p>Clears the output first. Both codewords must decode to data values (below 0x40); ACK, NACK and invalid words fail the decode. The 12-bit result is split into datagram_id (upper 4 bits) and data[0], with count 1 and valid set.</p>
-<pre class="fragment">* @param byte0 First received codeword.
-* @param byte1 Second received codeword.
-* @param out Out: decoded dcc_railcom_datagram_t (valid only when true).
-* </pre><dl class="section return"><dt>Returns</dt><dd>true if both codewords decoded; false on an invalid codeword. </dd></dl>
-
-</div>
-</div>
-<a id="a1f9ed1131fd000ba882639735a82585c" name="a1f9ed1131fd000ba882639735a82585c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1f9ed1131fd000ba882639735a82585c">&#9670;&#160;</a></span>DccRailcomUtilities_decode_ch2()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool DccRailcomUtilities_decode_ch2 </td>
+          <td class="memname"><a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1e">dcc_railcom_result_enum</a> DccRailcomUtilities_decode_ch1 </td>
           <td>(</td>
           <td class="paramtype">const uint8_t *</td>          <td class="paramname"><span class="paramname"><em>raw_bytes</em></span>, </td>
         </tr>
@@ -385,28 +335,71 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Decode RailCom Channel 2 (up to 6 codewords) into a datagram. </p>
+<p>Decode the bytes captured in the Channel 1 window. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">raw_bytes</td><td>Received Channel 2 codewords (after the 2 Channel 1 bytes). </td></tr>
-    <tr><td class="paramname">raw_count</td><td>Number of Channel 2 codewords available. </td></tr>
-    <tr><td class="paramname">out</td><td>Out: decoded <a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a> (valid only when true).</td></tr>
+    <tr><td class="paramname">raw_bytes</td><td>Codewords captured in the Channel 1 window. </td></tr>
+    <tr><td class="paramname">raw_count</td><td>Number of codewords captured (more than DCC_RAILCOM_CH1_MAX_BYTES is an error). </td></tr>
+    <tr><td class="paramname">out</td><td>Out: decoded <a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a>; channel and result are always set, datagram_id / data / count only for DCC_RAILCOM_RESULT_OK.</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true if at least two codewords decoded validly; false otherwise.</dd></dl>
-<p>Algorithm:</p><ol type="1">
-<li>Clear the output</li>
-<li>Decode codewords in order, at most DCC_RAILCOM_CH2_MAX_BYTES, stopping at the first ACK / NACK / invalid word (S-9.3.2 allows ACK filler after a short datagram, so what came before is kept)</li>
-<li>Fail if fewer than two data words were decoded</li>
-<li>Split the first two 6-bit values into datagram_id and data[0]</li>
-<li>Append each further value as one data byte, up to DCC_RAILCOM_DATAGRAM_MAX_BYTES</li>
-<li>Set valid and return true</li>
-</ol>
-<pre class="fragment">* @param raw_bytes Received Channel 2 codewords (after the 2 Channel 1 bytes).
-* @param raw_count Number of Channel 2 codewords available.
-* @param out Out: decoded dcc_railcom_datagram_t (valid only when true).
-* </pre><dl class="section return"><dt>Returns</dt><dd>true if at least two codewords decoded validly; false otherwise. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1e">dcc_railcom_result_enum</a> outcome, also stored in out-&gt;result.</dd></dl>
+<p>Channel 1 holds exactly one 12-bit datagram (2 codewords), or ACK filler. See _decode_channel() for the result rules.</p>
+<pre class="fragment">* @param raw_bytes Codewords captured in the Channel 1 window.
+* @param raw_count Number of codewords captured.
+* @param out Out: decoded dcc_railcom_datagram_t; result is always set.
+* </pre><dl class="section return"><dt>Returns</dt><dd>The decode result, also stored in out-&gt;result. </dd></dl>
+
+</div>
+</div>
+<a id="a9ab13ebe579bdeaa52c2855a021538ed" name="a9ab13ebe579bdeaa52c2855a021538ed"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9ab13ebe579bdeaa52c2855a021538ed">&#9670;&#160;</a></span>DccRailcomUtilities_decode_ch2()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1e">dcc_railcom_result_enum</a> DccRailcomUtilities_decode_ch2 </td>
+          <td>(</td>
+          <td class="paramtype">const uint8_t *</td>          <td class="paramname"><span class="paramname"><em>raw_bytes</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>raw_count</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a> *</td>          <td class="paramname"><span class="paramname"><em>out</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Decode the bytes captured in the Channel 2 window. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">raw_bytes</td><td>Codewords captured in the Channel 2 window. </td></tr>
+    <tr><td class="paramname">raw_count</td><td>Number of codewords captured (more than DCC_RAILCOM_CH2_MAX_BYTES is an error). </td></tr>
+    <tr><td class="paramname">out</td><td>Out: decoded <a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a>; channel and result are always set, datagram_id / data / count only for DCC_RAILCOM_RESULT_OK.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The <a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1e">dcc_railcom_result_enum</a> outcome, also stored in out-&gt;result.</dd></dl>
+<p>Channel 2 holds up to 6 codewords: a 12- to 36-bit datagram, optionally followed by ACK filler or a NACK, or control words alone. See _decode_channel() for the result rules.</p>
+<pre class="fragment">* @param raw_bytes Codewords captured in the Channel 2 window.
+* @param raw_count Number of codewords captured.
+* @param out Out: decoded dcc_railcom_datagram_t; result is always set.
+* </pre><dl class="section return"><dt>Returns</dt><dd>The decode result, also stored in out-&gt;result. </dd></dl>
 
 </div>
 </div>

@@ -399,6 +399,9 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
 <tr class="memitem:a35a8cb83fabd02b3554ef9c05795a32a" id="r_a35a8cb83fabd02b3554ef9c05795a32a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a35a8cb83fabd02b3554ef9c05795a32a">DCC_RAILCOM_CH2_MAX_BYTES</a>&#160;&#160;&#160;6</td></tr>
 <tr class="memdesc:a35a8cb83fabd02b3554ef9c05795a32a"><td class="mdescLeft">&#160;</td><td class="mdescRight">RailCom Channel 2 max bytes.  <br /></td></tr>
 <tr class="separator:a35a8cb83fabd02b3554ef9c05795a32a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c270ef6edbdc07bc0b0204a654897f3" id="r_a2c270ef6edbdc07bc0b0204a654897f3"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2c270ef6edbdc07bc0b0204a654897f3">DCC_RAILCOM_MAX_READS_PER_CUTOUT</a>&#160;&#160;&#160;(2 * (<a class="el" href="#af619c392e460995e4fc0d0938871988e">DCC_RAILCOM_CH1_MAX_BYTES</a> + <a class="el" href="#a35a8cb83fabd02b3554ef9c05795a32a">DCC_RAILCOM_CH2_MAX_BYTES</a>))</td></tr>
+<tr class="memdesc:a2c270ef6edbdc07bc0b0204a654897f3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Most uart_read() calls one cutout's decode makes (runaway guard for a hook that never returns false). Twice a full cutout, so a channel that overflows is still counted and reported as DCC_RAILCOM_RESULT_TOO_MANY_BYTES.  <br /></td></tr>
+<tr class="separator:a2c270ef6edbdc07bc0b0204a654897f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a198f3eddc2e2af86b0ca3ec6bca5e659" id="r_a198f3eddc2e2af86b0ca3ec6bca5e659"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a198f3eddc2e2af86b0ca3ec6bca5e659">DCC_RAILCOM_ID_POM</a>&#160;&#160;&#160;0</td></tr>
 <tr class="memdesc:a198f3eddc2e2af86b0ca3ec6bca5e659"><td class="mdescLeft">&#160;</td><td class="mdescRight">POM (programming-on-main) response.  <br /></td></tr>
 <tr class="separator:a198f3eddc2e2af86b0ca3ec6bca5e659"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2362,6 +2365,22 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
 </div><div class="memdoc">
 
 <p>RailCom Channel 2 max bytes. </p>
+
+</div>
+</div>
+<a id="a2c270ef6edbdc07bc0b0204a654897f3" name="a2c270ef6edbdc07bc0b0204a654897f3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c270ef6edbdc07bc0b0204a654897f3">&#9670;&#160;</a></span>DCC_RAILCOM_MAX_READS_PER_CUTOUT</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define DCC_RAILCOM_MAX_READS_PER_CUTOUT&#160;&#160;&#160;(2 * (<a class="el" href="#af619c392e460995e4fc0d0938871988e">DCC_RAILCOM_CH1_MAX_BYTES</a> + <a class="el" href="#a35a8cb83fabd02b3554ef9c05795a32a">DCC_RAILCOM_CH2_MAX_BYTES</a>))</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Most uart_read() calls one cutout's decode makes (runaway guard for a hook that never returns false). Twice a full cutout, so a channel that overflows is still counted and reported as DCC_RAILCOM_RESULT_TOO_MANY_BYTES. </p>
 
 </div>
 </div>

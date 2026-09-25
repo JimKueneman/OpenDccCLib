@@ -590,6 +590,7 @@ def _rc_results(s, quiet=0.25, total=1.5):
                 k, v = kv.split("=", 1)
                 d[k] = v
         d["addr"] = int(d.get("addr", -1)); d["ch"] = int(d.get("ch", 0))
+        d["res"] = d.get("res", "?")
         d["id"] = int(d.get("id", -1)); d["n"] = int(d.get("n", 0))
         data = body.split("data=")[-1].strip() if "data=" in body else ""
         d["data"] = [int(x, 16) for x in data.split()] if data else []
@@ -692,18 +693,32 @@ def _wire_checks(rep, case, clause):
 
 
 def _expect(rep, clause, name, case, ch, dg_id, data, present=True):
-    """Assert the DUT reported (or did not report) a datagram on channel ch."""
+    """Assert the DUT reported a good datagram on channel ch, or (present=False)
+    reported nothing at all on channel ch."""
     hits = [r for r in case["results"] if r["ch"] == ch]
     if not present:
         rep.check(clause, name, not hits,
                   f"ch{ch} results: {len(hits)} (expected none); all: {case['results']}")
         return
-    ok = len(hits) == 1 and hits[0]["id"] == dg_id and hits[0]["data"] == list(data)
+    ok = (len(hits) == 1 and hits[0]["res"] == "OK" and hits[0]["id"] == dg_id
+          and hits[0]["data"] == list(data))
     rep.check(clause, name, ok,
-              f"expected ch{ch} id={dg_id} data={_hex(data)}; got "
-              + (f"id={hits[0]['id']} n={hits[0]['n']} data={_hex(hits[0]['data'])}" if hits
+              f"expected ch{ch} res=OK id={dg_id} data={_hex(data)}; got "
+              + (f"res={hits[0]['res']} id={hits[0]['id']} n={hits[0]['n']} "
+                 f"data={_hex(hits[0]['data'])}" if hits
                  else "no ch%d result" % ch)
               + (f" (+{len(hits) - 1} extra)" if len(hits) > 1 else ""))
+
+
+def _expect_result(rep, clause, name, case, ch, res):
+    """Assert the DUT reported exactly one result on channel ch, with result code
+    res (ACK, NACK or an error) and no data."""
+    hits = [r for r in case["results"] if r["ch"] == ch]
+    ok = len(hits) == 1 and hits[0]["res"] == res and hits[0]["n"] == 0
+    rep.check(clause, name, ok,
+              f"expected one ch{ch} res={res} n=0; got "
+              + (", ".join(f"res={r['res']} n={r['n']}" for r in hits) if hits
+                 else "no ch%d result" % ch))
 
 
 def _address_check(rep, clause, case):
@@ -761,23 +776,25 @@ def railcom_loopback_tests(rep, port):
         _expect(rep, clause, "Ch2 datagram kept when followed by ACK 0x0F 0xF0 padding", c, 2, RC_ID_POM, [pom_val])
         _wire_checks(rep, c, clause)
         c = _rc_case(s, rc_encode12(RC_ID_ADR1, 0x00), [RC_ACK, RC_ACK, RC_ACK_ALT, RC_ACK_ALT])
-        _expect(rep, clause, "all-ACK Channel 2 yields no datagram", c, 2, 0, [], present=False)
+        _expect_result(rep, clause, "all-ACK Channel 2 reported as ACK, no datagram", c, 2, "ACK")
         _expect(rep, clause, "  ...while its Ch1 still decodes", c, 1, RC_ID_ADR1, [0x00])
 
         # --- CS-012: NACK -----------------------------------------------------------
         clause = "S-9.3.2 §3.3 (NACK code word)"
         c = _rc_case(s, rc_encode12(RC_ID_ADR1, 0x00), [RC_NACK, RC_NACK])
         # @compliance DCC-S9.3.2-CS-012
-        _expect(rep, clause, "NACK-only Channel 2 yields no data datagram", c, 2, 0, [], present=False)
+        _expect_result(rep, clause, "NACK-only Channel 2 reported as NACK, no datagram", c, 2, "NACK")
         _expect(rep, clause, "  ...while its Ch1 still decodes", c, 1, RC_ID_ADR1, [0x00])
 
         # --- CS-010: invalid / reserved code words are rejected ----------------------
         clause = "S-9.3.2 §3.1 (4/8 code, invalid words)"
         c = _rc_case(s, [RC_CODE[0x01], 0xFF], rc_encode12(RC_ID_POM, pom_val))
-        _expect(rep, clause, "Ch1 with a non-4/8 byte (0xFF) is rejected", c, 1, 0, [], present=False)
+        _expect_result(rep, clause, "Ch1 with a non-4/8 byte (0xFF) reported as INVALID_CODEWORD",
+                       c, 1, "INVALID_CODEWORD")
         _expect(rep, clause, "  ...Ch2 after it still decodes", c, 2, RC_ID_POM, [pom_val])
         c = _rc_case(s, rc_encode12(RC_ID_ADR1, 0x00), [RC_RESERVED, RC_CODE[0x02]])
-        _expect(rep, clause, "Ch2 starting with reserved 0xE1 yields no datagram", c, 2, 0, [], present=False)
+        _expect_result(rep, clause, "Ch2 starting with reserved 0xE1 reported as INVALID_CODEWORD",
+                       c, 2, "INVALID_CODEWORD")
 
         # --- receive gate: bytes outside every window never become a datagram --------
         clause = "S-9.3.2 §3.2 (receive gated to the channel windows)"
@@ -810,15 +827,15 @@ def railcom_loopback_tests(rep, port):
                   f"(wire addr, DUT tag) per trial: {seen}; addresses exercised: {sorted(addrs_hit)}"
                   + ("" if addrs_hit == {3, 200} else " -- both 3 and 200 must be hit"))
 
-        # --- KNOWN LIMITATION: Channel 2-only reply --------------------------------
-        # The library splits the raw bytes by COUNT (first two = Ch1, rest = Ch2),
-        # not by window. A decoder with Ch1 disabled (CV28 bit 0) sends only Ch2;
-        # its first two bytes are then misread as a Ch1 datagram. Kept as an
-        # EXPECTED FAILURE until the receive path tags bytes by window.
-        clause = "S-9.3.2 §3.4 (Channel 2-only reply) [known limitation]"
+        # --- Channel 2-only reply (issue #7) -----------------------------------------
+        # A decoder with the Ch1 broadcast off (CV28 bit 0, draft 5.2.1) sends only
+        # Ch2. uart_read tags every byte with the window it arrived in, so the
+        # library must report it on Channel 2 and report nothing on Channel 1.
+        clause = "S-9.3.2 §3.4 (Channel 2-only reply)"
         c = _rc_case(s, [], rc_encode12(RC_ID_POM, pom_val))
-        _expect(rep, clause, "Ch2-only reply reported on Channel 2 (EXPECTED TO FAIL: "
-                             "library splits by byte count, not by window)", c, 2, RC_ID_POM, [pom_val])
+        # @compliance DCC-S9.3.2-CS-014
+        _expect(rep, clause, "Ch2-only reply reported on Channel 2", c, 2, RC_ID_POM, [pom_val])
+        _expect(rep, clause, "  ...and nothing reported on Channel 1", c, 1, 0, [], present=False)
         _wire_checks(rep, c, clause)
 
         _rc_cmd(s, "RC MOCK OFF", 0.1)

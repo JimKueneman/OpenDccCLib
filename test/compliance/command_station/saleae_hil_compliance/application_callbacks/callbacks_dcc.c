@@ -390,34 +390,59 @@ void CallbacksDcc_railcom_cancel_tick(void) {
 
 
 // ---------------------------------------------------------------------------
-// RailCom datagram result (HIL loopback). The library decoded a Channel 1 or
-// Channel 2 datagram from the bytes it read through .uart_read during the last
-// cutout; report it with the address it was tagged with so the host can check
-// content, channel AND the two-stage address capture on the wire.
+// RailCom datagram result (HIL loopback). The library decoded one channel of
+// the last cutout from the bytes .uart_read tagged with that channel; report
+// the result (a datagram, ACK/NACK, or an error code) with the address it was
+// tagged with so the host can check content, channel, result AND the two-stage
+// address capture on the wire.
 // ---------------------------------------------------------------------------
 
     /** @brief RC RESULT lines reported since the last RC MOCK OFF. */
 static volatile uint32_t _rc_result_count = 0;
 
     /**
+     * @brief Short name of a RailCom decode result for the RC RESULT line.
+     *
+     * @param result  Library decode result.
+     *
+     * @return The enum name without its DCC_RAILCOM_RESULT_ prefix, or "UNKNOWN".
+     */
+static const char *_railcom_result_name(dcc_railcom_result_enum result) {
+
+    switch (result) {
+        case DCC_RAILCOM_RESULT_OK:               return "OK";
+        case DCC_RAILCOM_RESULT_ACK:              return "ACK";
+        case DCC_RAILCOM_RESULT_NACK:             return "NACK";
+        case DCC_RAILCOM_RESULT_INVALID_CODEWORD: return "INVALID_CODEWORD";
+        case DCC_RAILCOM_RESULT_DATA_AFTER_CONTROL_WORD: return "DATA_AFTER_CONTROL_WORD";
+        case DCC_RAILCOM_RESULT_TOO_FEW_BYTES:    return "TOO_FEW_BYTES";
+        case DCC_RAILCOM_RESULT_TOO_MANY_BYTES:   return "TOO_MANY_BYTES";
+        case DCC_RAILCOM_RESULT_INVALID_CHANNEL:  return "INVALID_CHANNEL";
+        default:                                  return "UNKNOWN";
+    }
+}
+
+    /**
      * @brief Library on_railcom_datagram_result hook: print one RC RESULT line and count it.
      *
-     * @details Formats "RC RESULT: addr=<n> ch=<1|2> id=<n> n=<bytes> data=<hex..>"
+     * @details Formats "RC RESULT: addr=<n> ch=<1|2|0> res=<result> id=<n> n=<bytes> data=<hex..>"
+     * (ch=0 for a bad channel tag; id, n and data are meaningful only for res=OK)
      * into a local buffer, stopping early if the line would overflow, then writes it
      * on the command UART. Runs from DccConfig_run(), so blocking UART output is fine.
      *
      * @verbatim
      * @param address   DCC address the library tagged the datagram with.
-     * @param channel   RailCom channel the datagram was decoded from (DCC_RAILCOM_CH1 or CH2).
-     * @param datagram  Pointer to the decoded dcc_railcom_datagram_t.
+     * @param channel   RailCom channel the bytes arrived in (DCC_RAILCOM_CH1 or CH2; other = bad tag).
+     * @param datagram  Pointer to the decoded dcc_railcom_datagram_t; check its result.
      * @endverbatim
      */
 void CallbacksDcc_on_railcom_datagram(uint16_t address, uint8_t channel,
                                       const dcc_railcom_datagram_t *datagram) {
 
     char line[96];
-    int  n = snprintf(line, sizeof(line), "RC RESULT: addr=%u ch=%u id=%u n=%u data=",
-                      (unsigned)address, (channel == DCC_RAILCOM_CH1) ? 1u : 2u,
+    unsigned ch = (channel == DCC_RAILCOM_CH1) ? 1u : ((channel == DCC_RAILCOM_CH2) ? 2u : 0u);
+    int  n = snprintf(line, sizeof(line), "RC RESULT: addr=%u ch=%u res=%s id=%u n=%u data=",
+                      (unsigned)address, ch, _railcom_result_name(datagram->result),
                       (unsigned)datagram->datagram_id, (unsigned)datagram->count);
 
     for (uint8_t i = 0; i < datagram->count && n > 0 && n < (int)sizeof(line) - 4; i++) {

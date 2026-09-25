@@ -146,12 +146,14 @@ extern void CallbacksDcc_railcom_cancel_tick(void);
      *
      * @details Fires from DccConfig_run() (main loop), so it prints straight to the
      * command UART as
-     *   RC RESULT: addr=<dcc addr> ch=<1|2> id=<datagram id> n=<bytes> data=<hex..>
-     * and bumps the result counter behind RC STATUS.
+     *   RC RESULT: addr=<dcc addr> ch=<1|2|0> res=<result> id=<datagram id> n=<bytes> data=<hex..>
+     * (one line per channel that received bytes; res is the dcc_railcom_result_enum
+     * name without its prefix, ch=0 for a bad channel tag) and bumps the result
+     * counter behind RC STATUS.
      *
      * @param address   DCC address the library tagged the datagram with.
-     * @param channel   RailCom channel the datagram was decoded from (DCC_RAILCOM_CH1 or CH2).
-     * @param datagram  Pointer to the decoded @ref dcc_railcom_datagram_t.
+     * @param channel   RailCom channel the bytes arrived in (DCC_RAILCOM_CH1 or CH2; other = bad tag).
+     * @param datagram  Pointer to the decoded @ref dcc_railcom_datagram_t; check its result.
      */
 extern void CallbacksDcc_on_railcom_datagram(uint16_t address, uint8_t channel,
                                              const dcc_railcom_datagram_t *datagram);

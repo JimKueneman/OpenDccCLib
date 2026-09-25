@@ -27,9 +27,12 @@
  * @file dcc_railcom_command_station.h
  * @brief RailCom 4/8 decoding, cutout management, and receive buffer.
  *
- * @details Decodes RailCom bytes received during cutout windows. Manages
- * a circular buffer of decoded datagrams tagged with the DCC address of the
- * packet that preceded the cutout. Disabled at runtime if the interface's
+ * @details Decodes RailCom bytes received during cutout windows. The
+ * application tags every byte with the channel window it arrived in, and each
+ * channel is decoded from its own bytes, so a Channel 2-only reply is never
+ * read as Channel 1. Every channel that received bytes is reported through
+ * on_datagram with a @ref dcc_railcom_result_enum; good datagrams are also
+ * kept in a circular buffer. Disabled at runtime if the interface's
  * uart_read is NULL (dcc_config.c leaves it NULL when the config has no
  * RailCom UART).
  *
@@ -52,12 +55,18 @@ extern "C" {
     /** @brief Interface struct -- dependencies injected by dcc_config.c */
 typedef struct {
 
-        /** @brief Read one byte from RailCom UART. Returns true if byte available. */
-    bool (*uart_read)(uint8_t *byte);
+        /**
+         * @brief Read one byte from the RailCom UART and the channel window it arrived in.
+         *        Returns true if a byte was available. Main-loop context.
+         */
+    bool (*uart_read)(uint8_t *byte, dcc_railcom_channel_enum *channel);
 
         /**
-         * @brief User callback: RailCom datagram decoded. NULL = no notification.
-         *        Fired from DccRailcomCommandStation_run(), NOT ISR context.
+         * @brief User callback: one channel of a cutout was decoded. NULL = no notification.
+         *        Fired from DccRailcomCommandStation_run(), NOT ISR context, once per
+         *        channel that received bytes (Channel 1 first), plus once with
+         *        DCC_RAILCOM_RESULT_INVALID_CHANNEL if any byte carried a bad tag.
+         *        Check datagram->result before using the data.
          */
     void (*on_datagram)(uint16_t address, uint8_t channel, const dcc_railcom_datagram_t *datagram);
 
@@ -104,10 +113,11 @@ typedef struct {
          * @brief Main loop processing for the RailCom decoder.
          * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
          *
-         * @details When a cutout is pending, drains the UART, decodes Channel 1
-         * and Channel 2, pushes each valid datagram into the buffer and fires
-         * on_datagram for it. Does nothing if uart_read is NULL or no cutout is
-         * pending.
+         * @details When a cutout is pending, drains the UART into per-channel
+         * buffers by each byte's channel tag, decodes each channel that received
+         * bytes, fires on_datagram with the result and pushes each
+         * DCC_RAILCOM_RESULT_OK datagram into the buffer. Does nothing if
+         * uart_read is NULL or no cutout is pending.
          */
     extern void DccRailcomCommandStation_run(dcc_railcom_command_station_context_t *context);
 
@@ -135,6 +145,9 @@ typedef struct {
 
         /**
          * @brief Read the next decoded RailCom datagram from the buffer.
+         *
+         * @details The buffer holds only DCC_RAILCOM_RESULT_OK datagrams; the
+         * channel field says which channel each came from.
          * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
          * @param datagram Pointer to @ref dcc_railcom_datagram_t to fill with decoded data.
          * @return true if a datagram was available, false if buffer empty.

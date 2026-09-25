@@ -34,7 +34,7 @@ var searchData=
   ['register_5fwrite_5fbit_31',['register_write_bit',['../structinterface__dcc__application__command__station__service__track__t.html#af8010cf9fe7c26cc1a0480b572e5651e',1,'interface_dcc_application_command_station_service_track_t']]],
   ['register_5fwrite_5fcv_32',['register_write_cv',['../structinterface__dcc__application__command__station__service__track__t.html#ae73152416800c4c7033e654c6305189f',1,'interface_dcc_application_command_station_service_track_t']]],
   ['repeat_5fcount_33',['repeat_count',['../structdcc__packet__t.html#a9014284606526accc9548d192383b452',1,'dcc_packet_t']]],
-  ['result_34',['result',['../structdcc__service__mode__common__context__t.html#a7603b0ba5434f368e993f0424ff8298d',1,'dcc_service_mode_common_context_t']]],
+  ['result_34',['result',['../structdcc__service__mode__common__context__t.html#a7603b0ba5434f368e993f0424ff8298d',1,'dcc_service_mode_common_context_t::result'],['../structdcc__railcom__datagram__t.html#aa9cac0f9b36b175176dbf987113357de',1,'dcc_railcom_datagram_t::result']]],
   ['retry_5fcount_35',['retry_count',['../structdcc__service__mode__common__context__t.html#ad7f3b7d0c00bba5352cf56e5ecd54519',1,'dcc_service_mode_common_context_t']]],
   ['running_36',['running',['../structdcc__bit__encoder__context__t.html#a36f7b6be7108281af77939ceaec42fd6',1,'dcc_bit_encoder_context_t']]]
 ];

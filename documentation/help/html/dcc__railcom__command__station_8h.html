@@ -141,7 +141,7 @@ Functions</h2></td></tr>
 <li>Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.</li>
 </ul>
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
-<p>Decodes RailCom bytes received during cutout windows. Manages a circular buffer of decoded datagrams tagged with the DCC address of the packet that preceded the cutout. Disabled at runtime if the interface's uart_read is NULL (<a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a> leaves it NULL when the config has no RailCom UART).</p>
+<p>Decodes RailCom bytes received during cutout windows. The application tags every byte with the channel window it arrived in, and each channel is decoded from its own bytes, so a Channel 2-only reply is never read as Channel 1. Every channel that received bytes is reported through on_datagram with a <a class="el" href="dcc__types_8h.html#adc7527260dab57c2d93110859a633b1e">dcc_railcom_result_enum</a>; good datagrams are also kept in a circular buffer. Disabled at runtime if the interface's uart_read is NULL (<a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a> leaves it NULL when the config has no RailCom UART).</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
 </div><h2 class="groupheader">Function Documentation</h2>
@@ -216,7 +216,7 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<p>When a cutout is pending, drains the UART, decodes Channel 1 and Channel 2, pushes each valid datagram into the buffer and fires on_datagram for it. Does nothing if uart_read is NULL or no cutout is pending.</p>
+<p>When a cutout is pending, drains the UART into per-channel buffers by each byte's channel tag, decodes each channel that received bytes, fires on_datagram with the result and pushes each DCC_RAILCOM_RESULT_OK datagram into the buffer. Does nothing if uart_read is NULL or no cutout is pending.</p>
 <p>Returns at once if uart_read is NULL (RailCom disabled) or no cutout is pending. Otherwise clears cutout_pending and processes the cutout's bytes (see _process_cutout()).</p>
 <pre class="fragment">* @param context Pointer to dcc_railcom_command_station_context_t instance.
 * </pre> 
@@ -328,7 +328,7 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Read the next decoded RailCom datagram from the buffer. </p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>The buffer holds only DCC_RAILCOM_RESULT_OK datagrams; the channel field says which channel each came from. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> instance. </td></tr>
     <tr><td class="paramname">datagram</td><td>Pointer to <a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a> to fill with decoded data. </td></tr>
