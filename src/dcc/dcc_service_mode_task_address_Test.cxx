@@ -570,6 +570,121 @@ TEST(DccServiceModeTaskAddress, null_on_progress_read_no_crash) {
 }
 
 // ============================================================================
+// ============================================================================
+// Refused primitive starts: entry points return false and stay idle,
+// continuations complete with BUSY (matches the other four tasks)
+// ============================================================================
+
+TEST(DccServiceModeTaskAddress, read_refused_start_returns_false_and_stays_idle) {
+
+    setup();
+    address_verify_return = false;
+    EXPECT_FALSE(DccServiceModeTaskAddress_read(mock_on_complete, mock_on_progress));
+    EXPECT_EQ(on_complete_count, (uint32_t)0);
+
+    address_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskAddress_read(mock_on_complete, mock_on_progress));   /* was left idle */
+
+}
+
+TEST(DccServiceModeTaskAddress, write_refused_start_returns_false_and_stays_idle) {
+
+    setup();
+    address_write_return = false;
+    EXPECT_FALSE(DccServiceModeTaskAddress_write(5, mock_on_complete, mock_on_progress));
+    EXPECT_EQ(on_complete_count, (uint32_t)0);
+
+    address_write_return = true;
+    EXPECT_TRUE(DccServiceModeTaskAddress_write(5, mock_on_complete, mock_on_progress));
+
+}
+
+TEST(DccServiceModeTaskAddress, verify_refused_start_returns_false_and_stays_idle) {
+
+    setup();
+    address_verify_return = false;
+    EXPECT_FALSE(DccServiceModeTaskAddress_verify(5, mock_on_complete, mock_on_progress));
+
+    address_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskAddress_verify(5, mock_on_complete, mock_on_progress));
+
+}
+
+TEST(DccServiceModeTaskAddress, read_bit_refused_start_returns_false_and_stays_idle) {
+
+    setup();
+    address_verify_return = false;
+    EXPECT_FALSE(DccServiceModeTaskAddress_read_bit(0, mock_on_complete, mock_on_progress));
+
+    address_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskAddress_read_bit(0, mock_on_complete, mock_on_progress));
+
+}
+
+TEST(DccServiceModeTaskAddress, write_bit_refused_start_returns_false_and_stays_idle) {
+
+    setup();
+    address_verify_return = false;
+    EXPECT_FALSE(DccServiceModeTaskAddress_write_bit(0, true, mock_on_complete, mock_on_progress));
+
+    address_verify_return = true;
+    EXPECT_TRUE(DccServiceModeTaskAddress_write_bit(0, true, mock_on_complete, mock_on_progress));
+
+}
+
+TEST(DccServiceModeTaskAddress, write_verify_step_refused_completes_busy) {
+
+    setup();
+    EXPECT_TRUE(DccServiceModeTaskAddress_write(5, mock_on_complete, mock_on_progress));
+
+    address_verify_return = false;                    /* the verify after the write cannot start */
+    DccServiceModeTaskAddress_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);
+
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+
+}
+
+TEST(DccServiceModeTaskAddress, read_scan_next_candidate_refused_completes_busy) {
+
+    setup();
+    EXPECT_TRUE(DccServiceModeTaskAddress_read(mock_on_complete, mock_on_progress));
+
+    address_verify_return = false;                    /* verify of address 1 cannot start */
+    DccServiceModeTaskAddress_on_primitive_complete(DCC_SERVICE_MODE_NO_ACK);
+
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+
+}
+
+TEST(DccServiceModeTaskAddress, write_bit_modified_write_refused_completes_busy) {
+
+    setup();
+    EXPECT_TRUE(DccServiceModeTaskAddress_write_bit(0, true, mock_on_complete, mock_on_progress));
+
+    address_write_return = false;                     /* scan found address 0; the modified write cannot start */
+    DccServiceModeTaskAddress_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);
+
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+
+}
+
+TEST(DccServiceModeTaskAddress, write_bit_verify_after_write_refused_completes_busy) {
+
+    setup();
+    EXPECT_TRUE(DccServiceModeTaskAddress_write_bit(0, true, mock_on_complete, mock_on_progress));
+    DccServiceModeTaskAddress_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);   /* scan hit: modified write issued */
+
+    address_verify_return = false;                    /* the verify of the modified address cannot start */
+    DccServiceModeTaskAddress_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);
+
+    EXPECT_EQ(on_complete_count, (uint32_t)1);
+    EXPECT_EQ(on_complete_result, DCC_SERVICE_MODE_BUSY);
+
+}
+
 // on_primitive_complete when IDLE — no crash
 // ============================================================================
 

@@ -107,7 +107,7 @@ static void _complete(dcc_service_mode_result_enum result, uint8_t value) {
 
 }
 
-    /** @brief write_bit: apply the requested bit to the scanned value and start the write of the modified address. The primitive's start result is not checked. */
+    /** @brief write_bit: apply the requested bit to the scanned value and start the write of the modified address. A refused start completes the operation with BUSY. */
 static void _begin_write_bit(void) {
 
     uint8_t modified = _context.scan_value;
@@ -124,7 +124,11 @@ static void _begin_write_bit(void) {
 
     _context.value = modified;
     _context.state = DCC_TASK_ADDRESS_STATE_WRITE_BIT_WRITE;
-    _context.interface->address_write(modified);
+    if (!_context.interface->address_write(modified)) {
+
+        _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+    }
 
 }
 
@@ -136,7 +140,7 @@ static void _begin_write_bit(void) {
      * -# On ACK the scanned value is the address: hand off to _begin_write_bit() when to_write_bit is set,
      *    report the requested bit of it when in READ_BIT_READ, otherwise report the address itself
      * -# If address 127 has been tried without an ACK, complete with ERROR (no address acknowledged)
-     * -# Otherwise verify the next candidate address; the primitive's start result is not checked
+     * -# Otherwise verify the next candidate address; a refused start completes the operation with BUSY
      *
      * @param to_write_bit true to continue into the write_bit read-modify-write once the address is found.
      */
@@ -169,7 +173,11 @@ static void _advance_scan(bool to_write_bit) {
     } else {
 
         _context.scan_value++;
-        _context.interface->address_verify(_context.scan_value);
+        if (!_context.interface->address_verify(_context.scan_value)) {
+
+            _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+        }
 
     }
 
@@ -179,14 +187,18 @@ static void _advance_scan(bool to_write_bit) {
      * @brief Advances write after the address_write completes: reports progress and issues the address_verify.
      *
      * @details The ACK outcome of the write itself is not evaluated; the verify that follows decides the
-     * result. The primitive's start result is not checked.
+     * result. A refused start completes the operation with BUSY.
      */
 static void _advance_write(void) {
 
     _context.current_step++;
     _report_progress(DCC_TASK_PHASE_WRITE);
     _context.state = DCC_TASK_ADDRESS_STATE_WRITE_VERIFY;
-    _context.interface->address_verify(_context.value);
+    if (!_context.interface->address_verify(_context.value)) {
+
+        _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+    }
 
 }
 
@@ -206,11 +218,15 @@ static void _advance_write_verify(void) {
 
 }
 
-    /** @brief Advances write_bit after the address_write of the modified address: issues its address_verify (start result not checked). */
+    /** @brief Advances write_bit after the address_write of the modified address: issues its address_verify (a refused start puts the task back to IDLE and returns false). */
 static void _advance_write_bit_write(void) {
 
     _context.state = DCC_TASK_ADDRESS_STATE_WRITE_BIT_VERIFY;
-    _context.interface->address_verify(_context.value);
+    if (!_context.interface->address_verify(_context.value)) {
+
+        _complete(DCC_SERVICE_MODE_BUSY, 0);
+
+    }
 
 }
 
@@ -245,7 +261,7 @@ void DccServiceModeTaskAddress_initialize(const interface_dcc_service_mode_task_
      * @details Algorithm:
      * -# Reject if another operation is in progress (state not IDLE)
      * -# Load the context: scan value 0, cleared step count, callbacks
-     * -# Enter READ and issue address_verify for address 0 (start result not checked)
+     * -# Enter READ and issue address_verify for address 0 (a refused start puts the task back to IDLE and returns false)
      * -# The scan continues from DccServiceModeTaskAddress_on_primitive_complete()
      *
      * @verbatim
@@ -270,7 +286,12 @@ bool DccServiceModeTaskAddress_read(dcc_service_mode_task_on_complete_callback_t
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_ADDRESS_STATE_READ;
 
-    _context.interface->address_verify(0);
+    if (!_context.interface->address_verify(0)) {
+
+        _context.state = DCC_TASK_ADDRESS_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -283,7 +304,7 @@ bool DccServiceModeTaskAddress_read(dcc_service_mode_task_on_complete_callback_t
      * -# Reject addresses outside 1-127
      * -# Reject if another operation is in progress (state not IDLE)
      * -# Load the context: address, cleared step count, callbacks
-     * -# Enter WRITE and issue address_write (start result not checked)
+     * -# Enter WRITE and issue address_write (a refused start puts the task back to IDLE and returns false)
      * -# The verify runs from DccServiceModeTaskAddress_on_primitive_complete()
      *
      * @verbatim
@@ -315,7 +336,12 @@ bool DccServiceModeTaskAddress_write(uint8_t address, dcc_service_mode_task_on_c
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_ADDRESS_STATE_WRITE;
 
-    _context.interface->address_write(address);
+    if (!_context.interface->address_write(address)) {
+
+        _context.state = DCC_TASK_ADDRESS_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -337,7 +363,7 @@ static void _advance_verify(void) {
      * -# Reject addresses outside 1-127
      * -# Reject if another operation is in progress (state not IDLE)
      * -# Load the context: address, cleared step count, callbacks
-     * -# Enter VERIFY and issue address_verify for the expected address (start result not checked)
+     * -# Enter VERIFY and issue address_verify for the expected address (a refused start puts the task back to IDLE and returns false)
      * -# The result is reported from DccServiceModeTaskAddress_on_primitive_complete()
      *
      * @verbatim
@@ -369,7 +395,12 @@ bool DccServiceModeTaskAddress_verify(uint8_t address, dcc_service_mode_task_on_
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_ADDRESS_STATE_VERIFY;
 
-    _context.interface->address_verify(address);
+    if (!_context.interface->address_verify(address)) {
+
+        _context.state = DCC_TASK_ADDRESS_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -382,7 +413,7 @@ bool DccServiceModeTaskAddress_verify(uint8_t address, dcc_service_mode_task_on_
      * -# Reject bit positions above 6
      * -# Reject if another operation is in progress (state not IDLE)
      * -# Load the context: bit position, scan value 0, cleared step count, callbacks
-     * -# Enter READ_BIT_READ and issue address_verify for address 0 (start result not checked)
+     * -# Enter READ_BIT_READ and issue address_verify for address 0 (a refused start puts the task back to IDLE and returns false)
      * -# The scan continues from DccServiceModeTaskAddress_on_primitive_complete(); the requested bit is extracted from the address found
      *
      * @verbatim
@@ -415,7 +446,12 @@ bool DccServiceModeTaskAddress_read_bit(uint8_t bit_position, dcc_service_mode_t
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_ADDRESS_STATE_READ_BIT_READ;
 
-    _context.interface->address_verify(0);
+    if (!_context.interface->address_verify(0)) {
+
+        _context.state = DCC_TASK_ADDRESS_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
@@ -428,7 +464,7 @@ bool DccServiceModeTaskAddress_read_bit(uint8_t bit_position, dcc_service_mode_t
      * -# Reject bit positions above 6
      * -# Reject if another operation is in progress (state not IDLE)
      * -# Load the context: bit position, bit value, scan value 0, cleared step count, callbacks
-     * -# Enter WRITE_BIT_READ and issue address_verify for address 0 to start the read scan (start result not checked)
+     * -# Enter WRITE_BIT_READ and issue address_verify for address 0 to start the read scan (a refused start puts the task back to IDLE and returns false)
      * -# From DccServiceModeTaskAddress_on_primitive_complete(): once the address is found, write the modified address, then verify it
      *
      * @verbatim
@@ -463,7 +499,12 @@ bool DccServiceModeTaskAddress_write_bit(uint8_t bit_position, bool bit_value, d
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_ADDRESS_STATE_WRITE_BIT_READ;
 
-    _context.interface->address_verify(0);
+    if (!_context.interface->address_verify(0)) {
+
+        _context.state = DCC_TASK_ADDRESS_STATE_IDLE;
+        return false;
+
+    }
 
     return true;
 
