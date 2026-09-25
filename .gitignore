@@ -10,10 +10,5 @@ test/build/
 __pycache__/
 *.pyc
 
-# Generated documentation (Doxygen output). Source spec PDFs under
-# documentation/specs/ are NOT generated and stay tracked.
-documentation/html/
-documentation/latex/
-
 # Local MCP server config (Saleae Logic 2, localhost-only bench tool)
 .mcp.json

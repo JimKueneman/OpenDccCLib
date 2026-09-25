@@ -52,8 +52,9 @@ in the repo; see [PDF_Regeneration_Guide.md](PDF_Regeneration_Guide.md) for how 
 regenerate them and what to pull from the current source.
 
 API reference is produced by **Doxygen** from the source headers (see `Doxyfile`
-and `../src/mainpage.h`); its output (`documentation/html/`) is git-ignored and
-regenerated locally as needed.
+and `../src/mainpage.h`); run `doxygen Doxyfile` from this folder. The output
+(`help/html/`, entry point `help/html/index.html`) is committed alongside the
+main-page assets in `help/` (footer, licence page, images).
 
 Narrative documentation lives as Markdown in this folder. Structural facts have a
 single source of truth in [ARCHITECTURE.md](ARCHITECTURE.md) and
