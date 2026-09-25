@@ -32,7 +32,7 @@
  * Initialized by dcc_config.c during DccConfig_initialize(). Application code
  * includes this header instead of the internal module headers.
  *
- * Size 2+: This module owns the command-station main-track application layer.
+ * This module owns the command-station main-track application layer.
  * It delegates timer, encoder, and scheduler operations through an interface
  * struct wired at initialization time by dcc_config.c. Two distinct insertion
  * paths are provided: send_packet (fire-and-forget) and add_to_auto_refresh

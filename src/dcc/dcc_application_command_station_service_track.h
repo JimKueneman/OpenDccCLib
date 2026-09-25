@@ -38,7 +38,7 @@
  * Initialized by dcc_config.c during DccConfig_initialize(). Application code
  * includes this header instead of the internal module headers.
  *
- * Size 2+: This module owns the command-station service-track application layer.
+ * This module owns the command-station service-track application layer.
  * It delegates timer, encoder, and programming operations through an interface
  * struct wired at initialization time by dcc_config.c. Service mode must be
  * entered before any programming operation and exited afterward; the module
