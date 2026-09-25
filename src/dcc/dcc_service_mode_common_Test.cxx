@@ -287,6 +287,7 @@ TEST(DccServiceModeCommon, exit_deactivates_service_mode) {
 // begin_operation guard tests
 // ============================================================================
 
+// @compliance DCC-S9.2.3-CS-028
 TEST(DccServiceModeCommon, begin_operation_fails_not_in_service_mode) {
 
     reset_mocks();

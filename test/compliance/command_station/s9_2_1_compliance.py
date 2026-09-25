@@ -177,15 +177,18 @@ def accessory_basic(board, pair, activate, output=0):
     return framed([b1, b2])
 
 
-def accessory_extended(board, aspect):
+def accessory_extended(address, aspect):
     # S-9.2.1 2.4.2 (p.17):  10 A7A6A5A4A3A2  0  0 Ā10Ā9Ā8 0 A1A0 1  DDDDDDDD
-    # 'board' is the 9-bit accessory decoder address (1-511), same address space
-    # as basic. The wire address A10..A0 = board << 2, so the 2 LSBs A1A0 = 00
-    # (extended has no output pair; the aspect byte carries the data). byte1's low
-    # 6 bits ARE A7..A2 because 'board' already sits 2 bits above the wire LSBs.
-    # See project memory "accessory address convention" (board addr, not raw 11-bit).
-    b1 = 0x80 | (board & 0x3F)                  # A7..A2
-    b2 = ((~(board >> 6) & 0x07) << 4) | 0x01   # ~A10..A8 ; A1A0 = 00 ; bit0 = 1
+    # 'address' (0-2047) is the decoder address as the UART/library takes it: bits
+    # 8..0 are the 9-bit board address that sits at wire A10..A2 (2.4.2: user address
+    # 1 = 10000001 01110001, so A1A0 = 00 for 1-511 -- the same address space as
+    # basic; the aspect byte carries the data). For 512-2047 the two extra bits
+    # (address bits 10..9) go to byte 2 bits 2-1, the A1A0 slot 2.4.2 defines there.
+    # byte1's low 6 bits ARE A7..A2 because the board address already sits 2 bits
+    # above the wire LSBs. See project memory "accessory address convention".
+    b1 = 0x80 | (address & 0x3F)                       # A7..A2
+    b2 = (((~(address >> 6) & 0x07) << 4)              # ~A10..A8 (ones' complement)
+          | (((address >> 9) & 0x03) << 1) | 0x01)     # A1A0 = extra bits ; bit0 = 1
     return framed([b1, b2, aspect & 0xFF])
 
 
@@ -325,6 +328,13 @@ EXACT = [
     ("ACCE 256 5",          accessory_extended(256, 5),    "§2.4.2", "accessory extended board 256"),
     # @compliance DCC-S9.2.1-CS-009
     ("ACCE 511 5",          accessory_extended(511, 5),    "§2.4.2", "accessory extended board 511 (9-bit max)"),
+    # Above 511 the two extra address bits land in byte 2 bits 2-1 (the A1A0 slot of
+    # 2.4.2): 512 is the first such address (bits 2-1 = 01), 2047 the 11-bit maximum.
+    ("ACCE 512 5",          accessory_extended(512, 5),    "§2.4.2", "accessory extended 512 (extra bits -> byte2 bits 2-1 = 01)"),
+    # @compliance DCC-S9.2.1-CS-009
+    ("ACCE 2047 5",         accessory_extended(2047, 5),   "§2.4.2", "accessory extended 2047 (11-bit max, byte2 bits 2-1 = 11)"),
+    # @compliance DCC-S9.2.1-CS-008
+    ("ACC 0 0 ON",          accessory_basic(0, 0, True),   "§2.4",   "accessory basic board 0 (low6 = 0, high-3 inv = 111)"),
     ("NOP 64",              accessory_nop(64, False),      "§2.4.6", "accessory NOP basic board 64"),
     ("NOP 256 E",           accessory_nop(256, True),      "§2.4.6", "accessory NOP extended board 256"),
     ("NOP 511 E",           accessory_nop(511, True),      "§2.4.6", "accessory NOP extended board 511"),

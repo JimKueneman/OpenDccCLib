@@ -1214,7 +1214,12 @@ static void _cmd_svc_register(char *tokens[], int count) {
     /* SVC REG BITR  <cv> <bit> [MOBILE|ACC]        */
     /* SVC REG RESET                                */
 
-    if (count >= 2 && strcmp(tokens[2], "RESET") == 0) {
+    if (count < 3) {
+        _respond("ERR: usage: SVC REG WRITE|READ|VERIFY|BITW|BITR|RESET <cv> [value] [MOBILE|ACC]");
+        return;
+    }
+
+    if (strcmp(tokens[2], "RESET") == 0) {
         _svc_report_start(DccApplicationCommandStationServiceTrack_register_factory_reset(_svc_on_complete));
         return;
     }
@@ -1404,7 +1409,7 @@ static void _cmd_trig(char *tokens[], int count) {
     _respond("OK: trigger armed (next non-idle packet pulses PB3)");
 }
 
-#ifdef DCC_COMPILE_COMMAND_STATION
+#if defined(DCC_COMPILE_COMMAND_STATION) && defined(DCC_COMPILE_RAILCOM)
     /**
      * @brief RAILCOM TIMING <delay> <settling> <ch1> <gap> <ch2> | RAILCOM CANCEL: cutout runtime control (HIL, S-9.3.2 CS-007 / CS-008).
      *
@@ -1439,7 +1444,7 @@ static void _cmd_railcom(char *tokens[], int count) {
 
     _respond("ERR: usage: RAILCOM TIMING <delay> <settling> <ch1> <gap> <ch2> | RAILCOM CANCEL");
 }
-#endif /* DCC_COMPILE_COMMAND_STATION */
+#endif /* DCC_COMPILE_COMMAND_STATION && DCC_COMPILE_RAILCOM */
 
 #if defined(DCC_COMPILE_COMMAND_STATION) && defined(DCC_COMPILE_RAILCOM)
     /**
@@ -1912,8 +1917,11 @@ static void _cmd_help(void) {
     _respond("  SVC ADDR WRITE|VERIFY <addr> | READ");
     _respond("  SVC MOCKACK <width_us>  (HIL: inject mock ACK pulse, test width window)");
     _respond("  SVC MOCKCV <cv> <value> | OFF  (HIL: mock decoder for read/write-back)");
+#if defined(DCC_COMPILE_COMMAND_STATION) && defined(DCC_COMPILE_RAILCOM)
+    _respond("  RAILCOM TIMING <delay> <settling> <ch1> <gap> <ch2> | RAILCOM CANCEL  (HIL: cutout control)");
     _respond("  RC MOCK <ch1hex|-> [<ch2hex|->] [LATE]  (HIL: mock RailCom reply on next cutout)");
     _respond("  RC MOCK OFF | RC STATUS  (HIL: disarm + zero counters | loopback counters)");
+#endif
     _respond("  CONSIST <addr> SET <ca> [NORMAL|REVERSE]");
     _respond("  CONSIST <addr> CLEAR");
     _respond("  BSS <addr> <1-127> <ON|OFF>");
@@ -2006,11 +2014,9 @@ void UartCommandParser_process(void) {
         _cmd_mtime(tokens, count);
     else if (strcmp(tokens[0], "MDATE") == 0)
         _cmd_mdate(tokens, count);
-#ifdef DCC_COMPILE_COMMAND_STATION
+#if defined(DCC_COMPILE_COMMAND_STATION) && defined(DCC_COMPILE_RAILCOM)
     else if (strcmp(tokens[0], "RAILCOM") == 0)
         _cmd_railcom(tokens, count);
-#endif
-#if defined(DCC_COMPILE_COMMAND_STATION) && defined(DCC_COMPILE_RAILCOM)
     else if (strcmp(tokens[0], "RC") == 0)
         _cmd_rc(tokens, count);
 #endif

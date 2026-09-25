@@ -91,6 +91,7 @@
 /* both mirror the window to PB18 for the Saleae AND gate the receiver.        */
 /* ========================================================================== */
 
+#if defined(DCC_COMPILE_RAILCOM)
     /** @brief Main-track RailCom hooks: PB2 cutout strobe, PB18 window marker, and the loopback receive path. */
 static const dcc_railcom_hw_t _main_railcom_hw = {
     .begin_railcom_cutout       = &TI_DccDriver_main_cutout_begin,
@@ -105,6 +106,7 @@ static const dcc_railcom_hw_t _main_railcom_hw = {
     .uart_read                  = &TI_RailcomLoopback_uart_read,
     .on_railcom_datagram_result = &CallbacksDcc_on_railcom_datagram,
 };
+#endif /* DCC_COMPILE_RAILCOM */
 
     /** @brief The DCC library configuration: every hardware hook and application callback this bench wires in. */
 static const dcc_config_t dcc_config = {
@@ -119,6 +121,7 @@ static const dcc_config_t dcc_config = {
     .shared_timer_start      = &TI_DccDriver_shared_timer_start,
     .shared_timer_stop       = &TI_DccDriver_shared_timer_stop,
 
+#if defined(DCC_COMPILE_RAILCOM)
     // RailCom cutout one-shot timer drives the cutout state machine
     // via DccConfig_railcom_oneshot_timer_isr().
     .railcom_timer_start     = &TI_DccDriver_railcom_timer_start,
@@ -135,13 +138,16 @@ static const dcc_config_t dcc_config = {
     .railcom_ch1_window_us         = 97,   /* CH1      -> T_TC1                                */
     .railcom_ch1_ch2_gap_us        = 16,   /* GAP      -> T_TS2                                */
     .railcom_ch2_window_us         = 263,  /* CH2      -> T_CE  ~471us (was 261; +2 re-center) */
+#endif /* DCC_COMPILE_RAILCOM */
 
     // Main track hardware -- runs the scheduler (normal DCC operations).
     .main_track = {
         .pin_toggle       = &TI_DccDriver_main_pin_toggle,
         .track_power_set  = &TI_DccDriver_track_power_set,
         .current_sense_read = NULL,  /* no current sensing on main track */
+#if defined(DCC_COMPILE_RAILCOM)
         .railcom          = &_main_railcom_hw,  /* cutout marker on PB2 (DCC_MIRROR) */
+#endif
     },
 
     // Service track hardware -- runs service mode (programming).
@@ -149,7 +155,9 @@ static const dcc_config_t dcc_config = {
         .pin_toggle         = &TI_DccDriver_svc_pin_toggle,
         .track_power_set    = &TI_DccDriver_svc_track_power_set,
         .current_sense_read = &TI_DccDriver_current_sense_read,
+#if defined(DCC_COMPILE_RAILCOM)
         .railcom            = NULL,
+#endif
     },
 
     // OPTIONAL application callbacks.
@@ -180,7 +188,9 @@ void DCC_BIT_TIMER_INST_IRQHandler(void) {
             TI_DccDriver_timestamp_tick();
             TI_DccDriver_mock_ack_tick();   /* drive mock ACK before ack sample */
             DccConfig_58us_timer_isr();
+#if defined(DCC_COMPILE_RAILCOM)
             CallbacksDcc_railcom_cancel_tick();  /* fire an armed mid-cutout cancel (same-priority, no nesting) */
+#endif
             break;
 
         default:
@@ -190,6 +200,7 @@ void DCC_BIT_TIMER_INST_IRQHandler(void) {
     DL_GPIO_clearPins(GPIO_ISR_TIME_PORT, GPIO_ISR_TIME_ISR_TIME_PIN);
 }
 
+#if defined(DCC_COMPILE_RAILCOM)
     /**
      * @brief RailCom cutout one-shot timer ISR (TIMA0).
      *
@@ -209,6 +220,7 @@ void RAILCOM_TIMER_INST_IRQHandler(void) {
             break;
     }
 }
+#endif /* DCC_COMPILE_RAILCOM */
 
     /**
      * @brief SysTick ISR, every 100 ms.
@@ -253,7 +265,9 @@ int main(void) {
     // Initialize hardware drivers before the DCC library
     TI_DccDriver_initialize();
     TI_UartDriver_initialize();
+#if defined(DCC_COMPILE_RAILCOM)
     TI_RailcomLoopback_initialize();   /* RailCom RX + mock decoder TX (HIL loopback) */
+#endif
 
     // Pass our configuration to the DCC library. After this call the library
     // is ready but track power is still off. Call DccApplicationCommandStationMainTrack_power_on()

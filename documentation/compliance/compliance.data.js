@@ -20,8 +20,8 @@ window.COMPLIANCE =
 {
   "meta": {
     "title": "OpenDccCLib — NMRA DCC compliance",
-    "sourceCommit": "c1c6b71",
-    "validated": "2026-06-26",
+    "sourceCommit": "39f7080",
+    "validated": "2026-09-25",
     "roles": {
       "cs": "Command station",
       "dec": "Mobile decoder",
@@ -4130,7 +4130,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Decoder dispatches consist control to the consist callback.",
+            "impl": "Consist set (0x12/0x13) writes CV19 (bit 7 = reversed) through the CV storage path so the decoder lock applies; clear (0x10) or a set with address 0 writes 0; on_consist_command fires only after a successful write.",
             "gtest": "",
             "hil": "Covered by mobile_decoder/s9_2_1_compliance.py: consist-set -> CONSIST consist=5 NORMAL."
           },
@@ -4722,13 +4722,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "no",
+            "state": "planned",
             "note": ""
           },
           "detail": {
             "impl": "_dispatch_instruction: 0x12/0x13 write CV19 = address | (reversed ? 0x80 : 0), 0x10 or address 0 write 0, through _cv_write_and_notify so the decoder lock applies and the address cache refreshes; on_consist_command fires only after a successful write.",
             "gtest": "",
-            "hil": ""
+            "hil": "Checks written 2026-09-25 (mobile_decoder rig); awaiting a bench run on reflashed decoder firmware."
           },
           "refs": {
             "symbols": [
@@ -4769,7 +4769,13 @@ window.COMPLIANCE =
                 "desc": "after a set packet the next speed packet to the consist address is dispatched"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "consist set 5 / set 5 rev / set 0 -> CV19 = 5, 133, 0 + CONSIST lines",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "consist set normal/reversed/clear packets to the decoder; expects RECV CV_WRITE cv=19 with 5, 0x85, 0 and the CONSIST lines"
+              }
+            ]
           }
         },
         {
@@ -4791,13 +4797,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "no",
+            "state": "planned",
             "note": ""
           },
           "detail": {
-            "impl": "process_packet accepts a short-address packet equal to the cached CV19 address when the instruction is 14/28-step speed or 128-step advanced ops (incl. e-stop); functions and CV access to that address are ignored. _effective_direction applies CV29 bit 0 and, for a consist-addressed packet, CV19 bit 7. The cache is refreshed by packet CV writes, by DccApplicationDecoderCv_write, or explicitly.",
+            "impl": "process_packet accepts a short-address packet equal to the cached CV19 address when the instruction is 14/28-step speed or 128-step advanced ops (incl. e-stop); CV access to that address is ignored, and function groups 1-2 are admitted and gated per function by CV21/CV22 (DCC-S9.2.2-DEC-007). _effective_direction applies CV29 bit 0 and, for a consist-addressed packet, CV19 bit 7. The cache is refreshed by packet CV writes, by DccApplicationDecoderCv_write, or explicitly.",
             "gtest": "",
-            "hil": ""
+            "hil": "Checks written 2026-09-25 (mobile_decoder rig); awaiting a bench run on reflashed decoder firmware."
           },
           "refs": {
             "symbols": [
@@ -4878,7 +4884,122 @@ window.COMPLIANCE =
                 "desc": "a CV1 written behind the library is picked up only after DccConfig_reload_address_cvs"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "consist addr 5 answers speed / e-stop / reversed dir; addr 6 and cleared consist silent",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "speed and e-stop to the consist address reach the callbacks with the CV19 direction applied; a neighbouring address and a cleared consist stay silent"
+              }
+            ]
+          }
+        },
+        {
+          "tid": "DCC-S9.2.1-DEC-018",
+          "feature": "Accessory commands matched to the decoder's own address",
+          "role": "dec",
+          "ref": {
+            "spec": "S-9.2.1",
+            "cite": "Section 2.4.1 / 2.4.2: an accessory decoder acts on basic and extended accessory packets addressed to it (board address, or output address when CV541 bit 6 is set); no accessory broadcast is defined",
+            "origin": "released",
+            "draftDelta": null
+          },
+          "supported": {
+            "state": "ok",
+            "note": ""
+          },
+          "gtest": {
+            "state": "ok",
+            "note": ""
+          },
+          "hil": {
+            "state": "planned",
+            "note": ""
+          },
+          "detail": {
+            "impl": "_dispatch_accessory_basic compares the board address, or the 11-bit output address (byte 2 bits 2-1 = A1 A0, bit 0 = R per 2.4.1), with the cached CV513/CV521 address; _dispatch_accessory_extended compares the extended address. Non-matching packets are dropped before any callback.",
+            "gtest": "",
+            "hil": "Checks written 2026-09-25 (mobile_decoder rig); awaiting a bench run on reflashed decoder firmware."
+          },
+          "refs": {
+            "symbols": [
+              "DccPacketDecoder_process_packet"
+            ],
+            "tests": [
+              {
+                "name": "DccPacketDecoder.accessory_basic_other_board_ignored",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "basic command to another board is dropped, own board delivered"
+              },
+              {
+                "name": "DccPacketDecoder.accessory_extended_other_address_ignored",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "extended command to another address is dropped, own address delivered"
+              },
+              {
+                "name": "DccPacketDecoder.output_address_mode_with_r_bit",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "output-address mode reads A1A0 from bits 2-1 and R from bit 0"
+              }
+            ],
+            "hilChecks": [
+              {
+                "label": "accessory addr filter: board 7 basic + ext 7 decode, board/ext 8 silent",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "ADDR 7 ACC/ACCE; packets to 7 produce RECV ACC/ACCE lines, packets to 8 produce nothing"
+              }
+            ]
+          }
+        },
+        {
+          "tid": "DCC-S9.2.1-DEC-019",
+          "feature": "Accessory decoder ignores multifunction packets",
+          "role": "dec",
+          "ref": {
+            "spec": "S-9.2.1",
+            "cite": "Section 2.1 / 2.4: multifunction (locomotive) packets, including the broadcast address, are not addressed to accessory decoders",
+            "origin": "released",
+            "draftDelta": null
+          },
+          "supported": {
+            "state": "ok",
+            "note": ""
+          },
+          "gtest": {
+            "state": "ok",
+            "note": ""
+          },
+          "hil": {
+            "state": "planned",
+            "note": ""
+          },
+          "detail": {
+            "impl": "process_packet returns before the multifunction branch when the cached address type is accessory or extended accessory, so a locomotive packet whose short address equals the board address, or the multifunction broadcast, is never dispatched.",
+            "gtest": "",
+            "hil": "Checks written 2026-09-25 (mobile_decoder rig); awaiting a bench run on reflashed decoder firmware."
+          },
+          "refs": {
+            "symbols": [
+              "DccPacketDecoder_process_packet"
+            ],
+            "tests": [
+              {
+                "name": "DccPacketDecoder.accessory_decoder_ignores_loco_packet_with_same_number",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "speed to short address = board address and broadcast are ignored"
+              },
+              {
+                "name": "DccPacketDecoder.accessory_decoder_ignores_loco_estop_and_functions_with_same_number",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "e-stop and function packets with the board's number are ignored"
+              }
+            ],
+            "hilChecks": [
+              {
+                "label": "accessory-configured decoder ignores speed@7 and broadcast e-stop; ADDR 3 SHORT restores",
+                "file": "mobile_decoder/s9_2_1_compliance.py",
+                "desc": "with ADDR 7 ACC a speed packet to short 7 and a broadcast e-stop produce no RECV line"
+              }
+            ]
           }
         }
       ]
@@ -5328,13 +5449,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "no",
+            "state": "planned",
             "note": ""
           },
           "detail": {
             "impl": "Cached by _update_consist_address on every address-cache refresh; written by the consist control instruction (S-9.2.1 2.3.1.4). Bit 7 is applied by _effective_direction to consist-addressed speed packets.",
             "gtest": "",
-            "hil": ""
+            "hil": "Checks written 2026-09-25 (mobile_decoder rig); awaiting a bench run on reflashed decoder firmware."
           },
           "refs": {
             "symbols": [
@@ -5357,7 +5478,13 @@ window.COMPLIANCE =
                 "desc": "a CV19 written by the application is honoured after on_cv_written"
               }
             ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "CV21/CV22 gate consist-addr functions: none -> F1,F3 -> F9,F12; own addr all",
+                "file": "mobile_decoder/s9_2_2_compliance.py",
+                "desc": "POM-written CV21/CV22 select which functions answer the consist address; own-address function packets are unaffected"
+              }
+            ]
           }
         },
         {
@@ -5379,13 +5506,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "no",
+            "state": "planned",
             "note": ""
           },
           "detail": {
             "impl": "_update_consist_address caches CV21/CV22 with CV19; _is_consist_instruction admits function groups 1 and 2 at the consist address and _consist_function_enabled gates each function: F1-F8 by CV21 bits 0-7, F9-F12 by CV22 bits 2-5, FL by CV22 bit 0 (forward) or bit 1 (reverse) using the direction last reported to on_speed_command. F13+ have no enable bits and stay ignored at the consist address; own-address function packets are unaffected.",
             "gtest": "",
-            "hil": ""
+            "hil": "Checks written 2026-09-25 (mobile_decoder rig); awaiting a bench run on reflashed decoder firmware."
           },
           "refs": {
             "symbols": [
@@ -5432,7 +5559,13 @@ window.COMPLIANCE =
               "desc": "a POM write of CV21 takes effect on the next consist function packet"
             }
           ],
-            "hilChecks": []
+            "hilChecks": [
+              {
+                "label": "CV22.bit0 FL gating on consist addr: FL after forward speed, not after reverse",
+                "file": "mobile_decoder/s9_2_2_compliance.py",
+                "desc": "FL at the consist address follows CV22 bit 0 with the last reported direction"
+              }
+            ]
           }
         }
       ]
@@ -6459,7 +6592,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "The task modules iterate verify 0..N and return the value at the first ACK.",
+            "impl": "The task modules iterate verify over the candidate values and return the value at the first ACK; the address-only scan runs 1..127 (0 is the broadcast address and the primitive rejects it), the paged/register scans 0..255.",
             "gtest": "",
             "hil": "Direct read on the service track (ch3) with the mock decoder holding CV8=0x5A: the per-bit verify packets (verify_bit cv,b,1 for b=0..7) appear on the wire — the iteration is externally visible — and the read returns 0x5A through the real ACK path. (Register/address byte-search iteration stays host-only: the mock decoder only ACKs Direct-format verifies.) (Validated on the bench 2026-06-26.)"
           },
@@ -6481,6 +6614,11 @@ window.COMPLIANCE =
               }
             ],
             "hilChecks": [
+              {
+                "label": "address-only read scan: first verify carries address 1, ACK at 5 -> SUCCESS value=5, no ACK -> ERROR",
+                "file": "command_station/s9_2_3_compliance.py",
+                "desc": "SVC ADDR READ with the mock ACKing only address 5, then with the mock disarmed"
+              },
               {
                 "label": "Direct read: per-bit verify iteration visible + ACK returns the value",
                 "file": "command_station/s9_2_3_compliance.py",
@@ -6733,6 +6871,174 @@ window.COMPLIANCE =
                 "label": "write CV#1 addr=5",
                 "file": "command_station/s9_2_3_compliance.py",
                 "desc": "decodes the Address-Only CV#1 command on the wire"
+              }
+            ]
+          }
+        },
+        {
+          "tid": "DCC-S9.2.3-CS-027",
+          "feature": "Service-track power follows service mode",
+          "role": "cs",
+          "ref": {
+            "spec": "S-9.2.3",
+            "cite": "Section 1: the programming track is energized only while service mode operations are in progress",
+            "origin": "released",
+            "draftDelta": null
+          },
+          "supported": {
+            "state": "ok",
+            "note": ""
+          },
+          "gtest": {
+            "state": "ok",
+            "note": ""
+          },
+          "hil": {
+            "state": "planned",
+            "note": ""
+          },
+          "detail": {
+            "impl": "DccApplicationCommandStationServiceTrack_enter_service_mode/power_on call service_track.track_power_set(true) before starting the timer and encoder; exit_service_mode/power_off stop them and then call track_power_set(false). The bench driver maps power to the idle level of the service DCC pin (no H-bridge on the rig).",
+            "gtest": "",
+            "hil": "Checks written 2026-09-25; awaiting a bench run on firmware rebuilt after the address-scan fix (6fdc418)."
+          },
+          "refs": {
+            "symbols": [
+              "DccApplicationCommandStationServiceTrack_enter_service_mode",
+              "DccApplicationCommandStationServiceTrack_exit_service_mode",
+              "DccApplicationCommandStationServiceTrack_power_on",
+              "DccApplicationCommandStationServiceTrack_power_off"
+            ],
+            "tests": [
+              {
+                "name": "DccApplicationCommandStationServiceTrack.power_on_sequence",
+                "file": "dcc_application_command_station_service_track_Test.cxx",
+                "desc": "power first, then timer, then encoder"
+              },
+              {
+                "name": "DccApplicationCommandStationServiceTrack.exit_service_mode_exits_then_powers_down",
+                "file": "dcc_application_command_station_service_track_Test.cxx",
+                "desc": "exit, encoder stop, timer stop, power off"
+              },
+              {
+                "name": "DccConfig.service_mode_enter_exit_switch_track_power",
+                "file": "dcc_config_Test.cxx",
+                "desc": "enter/exit reach the user's track_power_set through the wiring"
+              }
+            ],
+            "hilChecks": [
+              {
+                "label": "after SVC EXIT: service DCC pin rests LOW with no edges",
+                "file": "command_station/s9_2_3_compliance.py",
+                "desc": "the service track is de-energized and silent after leaving service mode"
+              },
+              {
+                "label": "after SVC ENTER: pin was LOW and the first edge RISES; encoder running",
+                "file": "command_station/s9_2_3_compliance.py",
+                "desc": "power is applied before the encoder's first toggle"
+              }
+            ]
+          }
+        },
+        {
+          "tid": "DCC-S9.2.3-CS-028",
+          "feature": "Service-mode operations refused outside service mode",
+          "role": "cs",
+          "ref": {
+            "spec": "S-9.2.3",
+            "cite": "Section 1 / 3: programming sequences are only issued after entering service mode",
+            "origin": "released",
+            "draftDelta": null
+          },
+          "supported": {
+            "state": "ok",
+            "note": ""
+          },
+          "gtest": {
+            "state": "ok",
+            "note": ""
+          },
+          "hil": {
+            "state": "planned",
+            "note": ""
+          },
+          "detail": {
+            "impl": "DccServiceModeCommon_begin_operation returns false when not in service mode, so every task's start call returns false and nothing is transmitted; the bench firmware replies ERR: service mode operation failed to start.",
+            "gtest": "",
+            "hil": "Checks written 2026-09-25; awaiting a bench run on firmware rebuilt after the address-scan fix (6fdc418)."
+          },
+          "refs": {
+            "symbols": [
+              "DccServiceModeCommon_begin_operation"
+            ],
+            "tests": [
+              {
+                "name": "DccServiceModeCommon.begin_operation_fails_not_in_service_mode",
+                "file": "dcc_service_mode_common_Test.cxx",
+                "desc": "the service-mode core refuses to begin an operation while not in service mode"
+              }
+            ],
+            "hilChecks": [
+              {
+                "label": "SVC DIRECT READ before SVC ENTER is refused; nothing on the service track",
+                "file": "command_station/s9_2_3_compliance.py",
+                "desc": "refused start with no packets on the wire"
+              }
+            ]
+          }
+        },
+        {
+          "tid": "DCC-S9.2.3-CS-029",
+          "feature": "Service-mode method detection",
+          "role": "cs",
+          "ref": {
+            "spec": "S-9.2.3",
+            "cite": "Sections 3-4: a command station may probe which programming methods (direct, paged, register, address-only) a decoder acknowledges",
+            "origin": "released",
+            "draftDelta": null
+          },
+          "supported": {
+            "state": "ok",
+            "note": ""
+          },
+          "gtest": {
+            "state": "ok",
+            "note": ""
+          },
+          "hil": {
+            "state": "planned",
+            "note": ""
+          },
+          "detail": {
+            "impl": "DccServiceModeTaskDetect_detect_mode probes direct (CV8 bit verifies), paged, register and the 1..127 address-only scan in turn and reports a DCC_SERVICE_MODE_SUPPORTED_* bitmask through on_detect; unwired stages are skipped.",
+            "gtest": "",
+            "hil": "Checks written 2026-09-25; awaiting a bench run on firmware rebuilt after the address-scan fix (6fdc418)."
+          },
+          "refs": {
+            "symbols": [
+              "DccServiceModeTaskDetect_detect_mode",
+              "DCC_SERVICE_MODE_SUPPORTED_DIRECT",
+              "DCC_SERVICE_MODE_SUPPORTED_PAGED",
+              "DCC_SERVICE_MODE_SUPPORTED_REGISTER",
+              "DCC_SERVICE_MODE_SUPPORTED_ADDRESS"
+            ],
+            "tests": [
+              {
+                "name": "DccServiceModeTaskDetect.address_scan_starts_at_one",
+                "file": "dcc_service_mode_task_detect_Test.cxx",
+                "desc": "the address-only stage scans from 1"
+              },
+              {
+                "name": "DccServiceModeTaskDetect.address_scans_at_most_127_values",
+                "file": "dcc_service_mode_task_detect_Test.cxx",
+                "desc": "the address-only stage stops after 127 candidates"
+              }
+            ],
+            "hilChecks": [
+              {
+                "label": "SVC DETECT reports every compiled mode (DIRECT PAGED REGISTER ADDRESS)",
+                "file": "command_station/s9_2_3_compliance.py",
+                "desc": "with the mock decoder acknowledging, all four methods are reported"
               }
             ]
           }

@@ -7,8 +7,8 @@ spec modules to SUITES as they are written; they run in order, sharing the same
 bench config in compliance_lib.py.
 
 Run:  .venv/bin/python run_all.py [--preflight]
-      --preflight runs bench_preflight.py first (UART, Saleae, all six probe
-      channels) and aborts with exit 2 if the bench is not wired up.
+      --preflight runs bench_preflight.py first (UART, Saleae, all seven probe
+      channels D0-D6) and aborts with exit 2 if the bench is not wired up.
 Exit: 0 = all specs pass, 1 = at least one fail, 2 = setup/hardware error.
 """
 

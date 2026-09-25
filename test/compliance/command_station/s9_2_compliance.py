@@ -4,9 +4,10 @@ NMRA S-9.2 -- Baseline Packet Format compliance (command-station transmit).
 
 Hardware-in-the-loop: captures the DCC signal on a Saleae (ch0 = DCC out / PB1),
 decodes it, and checks the baseline packet format against the S-9.2 standard.
-This first cut verifies format/structure/error-detection/idle on idle traffic
-(no timing races). Driven baseline packets (reset, broadcast-stop) and the 30 ms
-refresh-timing check need a stimulus-during-capture helper -- reported N/A here.
+Verifies format/structure/error-detection/idle and the 30 ms refresh timing on
+the idle stream, then the driven baseline packets (broadcast e-stop, controlled
+stop, reset) under the hardware trigger, and the S-9.2 Section C fn.11
+same-address spacing rule for short addresses 112-127.
 
 Shared plumbing lives in compliance_lib.py.
 

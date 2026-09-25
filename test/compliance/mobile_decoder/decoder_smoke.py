@@ -13,11 +13,12 @@ player answers `ID?` with 'wfplayer'; the decoder answers `HELP` with its menu).
 
     ../.venv/bin/python decoder_smoke.py
 
-TODO to grow into the real mobile_decoder suites:
-  - an independent DCC instruction encoder (speed/function/accessory/CV/...) so every
-    S-9.2.1-DEC row can be driven, not one hardcoded packet;
-  - acceptance/rejection tests using the player's marginal-timing (P1) + preamble (P2);
-  - `@compliance <tid>` tags + run() -> Report so the DEC rows in compliance.data.js light up.
+This is the 30-second "is the loop alive?" probe: no Saleae, no encoder, no report --
+one hardcoded packet, and a loud FAIL on a wiring fault. The real suites live next to
+it (s9_1_, s9_2_, s9_2_1_, s9_2_2_, s9_2_3_, s9_2_4_compliance.py): they drive every
+instruction type through the independent encoder (dcc_encode.py), carry
+`@compliance <tid>` tags for the DEC rows in compliance.data.js, and write HTML reports.
+Run this first after re-wiring or re-flashing; run those for the evidence.
 """
 import os
 import time

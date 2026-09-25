@@ -249,6 +249,7 @@ TEST(DccConfig, service_track_power_on_off_reach_driver) {
     EXPECT_FALSE(_svc_power_last);
 }
 
+// @compliance DCC-S9.2.3-CS-027
 TEST(DccConfig, service_mode_enter_exit_switch_track_power) {
     dcc_config_t cfg = make_test_config();
     cfg.service_track.track_power_set = mock_svc_power_set_tracking;

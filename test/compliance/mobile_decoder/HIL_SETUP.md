@@ -2,7 +2,11 @@
 
 > **Status: rig live.** DUT firmware built/flashed (`saleae_hil_compliance/`, `DCC_COMPILE_DECODER`).
 > Functional decode + ACK pulse are **hardware-verified** (see *First light* below). RailCom-Tx is
-> pending (decoder-side Tx not yet implemented).
+> pending — three firmware-side gaps, listed under *Observation channels*.
+>
+> The 2026-09-25 suite additions (consist addressing, CV21/CV22 gating, accessory filter/guard,
+> fail-safe re-arm rules) and the `ADDR` command's switch to `DccConfig_reload_address_cvs()` have
+> **not** been bench-run yet: rebuild the DUT in CCS, reflash, run `decoder_smoke.py`, then the suites.
 
 ## Rig (two boards)
 
@@ -52,16 +56,35 @@ answers `ID?` → `OK wfplayer …` (player) or `HELP` → decoder menu (decoder
   needed. ✅ **verified.**
 - **Service-mode CV** (S-9.2.3) — the decoder asserts an **ACK pulse** on `ACK_OUT`/PB3; the Saleae
   measures its width (6 ms ± 1 ms) on D1. ACK path bench-checked via `ACK TEST` (6001 µs). ✅
-- **RailCom-Tx** (S-9.3.2-DEC) — the decoder transmits 4/8 datagrams on `RAILCOM_TX`/PB2; the
-  Saleae captures and the host decodes. ⏳ *Blocked on decoder-side Tx being implemented.*
+- **RailCom-Tx** (S-9.3.2-DEC) — the decoder would transmit its 4/8 datagrams on `RAILCOM_TX`/PB2
+  for the Saleae to capture and the host to decode. ⏳ *Not yet possible; what is missing is all on
+  the firmware side (`saleae_hil_compliance/`), the library's Tx path exists:*
+  1. `decoder.c` wires `dcc_config.railcom_tx_pin_set = NULL` — there is no PB2 GPIO driver — and
+     the library reads a NULL pin driver as "no RailCom Tx" (`railcom_delay_us` is wired but idle).
+  2. `dcc_config.on_railcom_request` is not wired, so even with a pin driver the decoder would send
+     only the Channel-1 ADR datagrams and never a Channel-2 reply.
+  3. the GPIOB edge ISR only stores timestamps in a ring that the main loop later drains into
+     `DccConfig_decoder_edge_isr()`. The library bit-bangs the cutout reply from the end-bit path,
+     so with a deferred drain the reply would start after the cutout window has closed; for Tx the
+     edge ISR has to call `DccConfig_decoder_edge_isr()` directly (and `lock_shared_resources` must
+     then mask that IRQ during the cutout so the decoder's own current pulse cannot re-trigger it).
 
 ## Run
 
 ```bash
 cd test/compliance/mobile_decoder
 ../.venv/bin/python decoder_smoke.py        # auto-discovers ports; sets addr; plays; checks RECV
-../.venv/bin/python s9_2_3_compliance.py    # ACK_OUT pulse on D1: 6 ms ± 1 ms per matching verify
+../.venv/bin/python s9_1_compliance.py      # timing acceptance / rejection (marginal timing, preamble)
+../.venv/bin/python s9_2_compliance.py      # packet accept / reject (idle, reset, broadcast, XOR, address)
+../.venv/bin/python s9_2_1_compliance.py    # instruction decode + consist addressing + accessory filter/guard
+../.venv/bin/python s9_2_2_compliance.py    # CV effects: CV1, lock, CV8 reset, CV29, indexed, CV21/CV22 gating
+../.venv/bin/python s9_2_3_compliance.py    # ACK_OUT pulse on D1: 6 ms ± 1 ms per matching verify (needs Saleae)
+../.venv/bin/python s9_2_4_compliance.py    # CV11 fail-safe: trip time, exit, disable, re-arm rules
 ```
+
+Each suite writes `reports/mobile_decoder_<spec>.html`. Only `s9_2_3` needs the Saleae; the rest use
+the `RECV` oracle alone. The suites leave the DUT at short address 3 with CV19/CV21/CV22 = 0,
+unlocked and CV11 = 0, restoring in a `finally` after a mid-run error.
 
 ## First light (verified)
 

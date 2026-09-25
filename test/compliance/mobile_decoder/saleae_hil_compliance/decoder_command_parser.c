@@ -53,10 +53,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-    /** @brief The @ref dcc_config_t defined in decoder.c; needed to re-initialize the library after CV changes. */
-extern const dcc_config_t dcc_config;
-
-
     /** @brief Maximum command line length including the terminator. */
 #define CMD_LINE_MAX   128
 
@@ -196,7 +192,11 @@ static const char *_type_to_string(dcc_address_type_enum type) {
      *
      * @details Writes CV1 or CV17/CV18 (mobile) or the accessory address LSB/MSB CVs, sets or
      * clears the CV29 extended-address bit and the CV541 accessory bits to match,
-     * then re-initializes the library so it re-reads its address cache.
+     * then asks the library to re-read its address cache. The CVs go straight into
+     * the application's RAM store, not through the library, so the library cannot
+     * see the change on its own; DccConfig_reload_address_cvs() is the documented
+     * route for exactly that case. Nothing else is touched -- the bit decoder, the
+     * packet FIFO and the fail-safe timer keep running across an ADDR command.
      *
      * @param tokens  Uppercased command tokens; tokens[0] is the verb.
      * @param count   Number of tokens.
@@ -267,8 +267,9 @@ static void _cmd_addr(char *tokens[], int count) {
 
     }
 
-    /* Re-initialize so the library re-reads the CV address cache. */
-    DccConfig_initialize(&dcc_config);
+    /* The CVs above bypassed the library (written to the app's RAM store), so
+     * tell it to re-read the address CVs into its match cache. */
+    DccConfig_reload_address_cvs();
 
     _current_addr = addr;
     _current_type = type;

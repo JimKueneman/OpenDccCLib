@@ -51,6 +51,13 @@ LaunchPad flash) and the Python venv (in this repo). To bring it back up:
      sub-window timing (D5/PB18 mirror), the S-9.2.3 interrupted-ACK test (`SVC MOCKACK
      <us> GLITCH <gap>`), and the `SVC REG/PAGED BITW|BITR` commands. CCS regenerates the
      pin/UART config from the SysConfig on build.
+   - **Rebuild + reflash required again (2026-09-25):** the service-track power change
+     (library commit `0217f43` restores `track_power_set` on the service track, so PB4 now
+     idles high only while service mode is entered and rests low after `SVC EXIT` -- the
+     S-9.2.3 CS-027 check), today's address-task change (the Address-Only read /
+     read_bit / write_bit scans start at address 1 and report `SVC RESULT: ERROR` once
+     1..127 is exhausted -- CS-021, ~105 s un-ACKed), the `SVC REG` bounds fix and the
+     `DCC_COMPILE_RAILCOM` guards in the bench firmware.
 5. **Preflight:** `cd test/compliance && .venv/bin/python command_station/bench_preflight.py`
    — checks the DUT UART, the Saleae, and every probe channel, and names the wire colour +
    header pin of anything missing. Fix the bench until it passes.

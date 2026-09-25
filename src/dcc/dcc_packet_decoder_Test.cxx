@@ -2589,6 +2589,7 @@ TEST(DccPacketDecoder, accessory_basic_null_callback) {
 
 }
 
+// @compliance DCC-S9.2.1-DEC-018
 TEST(DccPacketDecoder, accessory_basic_other_board_ignored) {
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
@@ -2608,6 +2609,7 @@ TEST(DccPacketDecoder, accessory_basic_other_board_ignored) {
     EXPECT_EQ(last_acc_board_address, (uint16_t)1);
 }
 
+// @compliance DCC-S9.2.1-DEC-018
 TEST(DccPacketDecoder, accessory_extended_other_address_ignored) {
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
@@ -2627,6 +2629,7 @@ TEST(DccPacketDecoder, accessory_extended_other_address_ignored) {
     EXPECT_EQ(last_acc_ext_aspect, (uint8_t)5);
 }
 
+// @compliance DCC-S9.2.1-DEC-019
 TEST(DccPacketDecoder, accessory_decoder_ignores_loco_packet_with_same_number) {
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
@@ -2647,6 +2650,7 @@ TEST(DccPacketDecoder, accessory_decoder_ignores_loco_packet_with_same_number) {
     EXPECT_EQ(estop_callback_count, (uint32_t)0);
 }
 
+// @compliance DCC-S9.2.1-DEC-019
 TEST(DccPacketDecoder, accessory_decoder_ignores_loco_estop_and_functions_with_same_number) {
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
@@ -3490,6 +3494,7 @@ TEST(DccPacketDecoder, output_address_mode_max_2047) {
 
 }
 
+// @compliance DCC-S9.2.1-DEC-018
 TEST(DccPacketDecoder, output_address_mode_with_r_bit) {
 
     reset_mocks();

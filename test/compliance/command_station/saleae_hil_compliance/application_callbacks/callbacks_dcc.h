@@ -124,6 +124,7 @@ extern void CallbacksDcc_mock_decoder_off(void);
      */
 extern void CallbacksDcc_set_mock_ack_early(bool early);
 
+#if defined(DCC_COMPILE_RAILCOM)
     /**
      * @brief Arm a one-shot cancel of the next in-progress RailCom cutout (HIL only, S-9.3.2 CS-008).
      *
@@ -140,7 +141,6 @@ extern void CallbacksDcc_arm_railcom_cancel(void);
      */
 extern void CallbacksDcc_railcom_cancel_tick(void);
 
-#if defined(DCC_COMPILE_RAILCOM)
     /**
      * @brief Library on_railcom_datagram_result hook: report a decoded RailCom datagram (HIL loopback, S-9.3.2 CS-010..015).
      *

@@ -8,11 +8,17 @@ controlled devices to a stop. CV11 = 0 disables the time-out. This library maps
 CV11 to 0.1 s per LSB (DCC_FAILSAFE_CV11_UNIT_US); the app reports the edges as
 RECV FAILSAFE_ENTER / RECV FAILSAFE_EXIT.
 
-One row:
+One row, two checks:
 
   DEC-001  Packet-timeout fail-safe (CV11)  -- set a short CV11, go silent past it
-           and observe FAILSAFE_ENTER; resume packets and observe FAILSAFE_EXIT;
-           then set CV11=0 and confirm silence no longer trips it.
+           and observe FAILSAFE_ENTER within the CV11 time (+/- TRIP_TOL_S); resume
+           packets and observe FAILSAFE_EXIT; then set CV11=0 and confirm silence no
+           longer trips it.
+           (added 2026-09-25) what re-arms the timer: a continuous stream of packets
+           to ANOTHER address (99) must NOT hold the decoder out of fail-safe -- it
+           enters at the CV11 time counted from the last own-address packet -- while a
+           continuous BROADCAST stream must exit fail-safe and keep it out (S-9.2.4 §4:
+           "no command packet addressed to the decoder"; broadcast is addressed to all).
 
 gTest covers the timer/edge LOGIC on host (dcc_failsafe_Test.cxx, 12 tests); this
 suite proves the timeout fires against a real free-running clock on silicon -- the
@@ -49,6 +55,10 @@ A = enc.short_addr(DEC_ADDR)
 # to clear inter-step packet gaps, short enough to keep the suite quick.
 CV11_TEST = 10
 TIMEOUT_S = CV11_TEST * 0.1
+# Trip-time tolerance: DccFailsafe_run polls from the main loop and the RECV line
+# then crosses a 230400-baud UART; 0.3 s covers both with room, and is still far
+# inside a 1.0 s timeout so an early or late trip cannot hide.
+TRIP_TOL_S = 0.3
 
 
 def _discover():
@@ -140,11 +150,40 @@ def checks(rep, player, dec):
     no_trip_ln, _ = _listen_for(dec, "RECV FAILSAFE_ENTER", TIMEOUT_S + 1.0)
     disabled = no_trip_ln is None
 
+    on_time = entered and (TIMEOUT_S - TRIP_TOL_S) <= enter_dt <= (TIMEOUT_S + TRIP_TOL_S)
+    rep.check("S-9.2.4", "CV11 packet-timeout enters (within CV11 time +/-%.1fs)/exits fail-safe; 0 disables" % TRIP_TOL_S,
+              entered and on_time and exited and disabled,
+              "enter@%ss (expect %.1f+/-%.1f): %s ; exit: %s ; cv11=0 no-trip: %s"
+              % (("%.2f" % enter_dt) if entered else "-", TIMEOUT_S, TRIP_TOL_S,
+                 entered and on_time, exited, disabled))
+
+    # (4) re-arm rules  @compliance DCC-S9.2.4-DEC-001
+    # A stream to short address 99 for longer than the timeout must not re-arm the timer:
+    # FAILSAFE_ENTER at ~TIMEOUT_S counted from the last own-address packet. Then a
+    # broadcast stream (address 0, executed by every decoder) must EXIT fail-safe and,
+    # kept up for longer than the timeout, must not let it re-enter.
+    _pom(player, enc.cv_write_pom(A, 11, CV11_TEST))
+    _arm_then_silence(player, dec)                           # last own-address packet ...
+    t_last_own = time.time()                                 # ... ends here (stream stopped)
+    player.load(wf.compose([enc.speed_128(enc.short_addr(99), 64, True)], lead_idle=0, trail_idle=0))
+    player.play(0)                                           # foreign traffic, continuous
+    foreign_ln, _ = _listen_for(dec, "RECV FAILSAFE_ENTER", TIMEOUT_S + 1.0)
+    foreign_dt = (time.time() - t_last_own) if foreign_ln else None
+    player.stop()
+    foreign_trip = foreign_ln is not None and foreign_dt <= TIMEOUT_S + TRIP_TOL_S
+    _drain(dec)
+    player.load(wf.compose([enc.speed_128(enc.broadcast_addr(), 64, True)], lead_idle=0, trail_idle=0))
+    player.play(0)                                           # broadcast, continuous
+    bexit_ln, _ = _listen_for(dec, "RECV FAILSAFE_EXIT", 1.5)
+    reenter_ln, _ = _listen_for(dec, "RECV FAILSAFE_ENTER", TIMEOUT_S + 0.8)   # still streaming
+    player.stop()
+    broadcast_holds = bexit_ln is not None and reenter_ln is None
     _restore(player, dec)
-    rep.check("S-9.2.4", "CV11 packet-timeout enters/exits fail-safe; 0 disables",
-              entered and exited and disabled,
-              "enter@%ss: %s ; exit: %s ; cv11=0 no-trip: %s"
-              % (("%.2f" % enter_dt) if entered else "-", entered, exited, disabled))
+    rep.check("S-9.2.4", "foreign-address stream does not re-arm (trips on time); broadcast stream exits and holds",
+              foreign_trip and broadcast_holds,
+              "addr99 stream: enter@%ss (limit %.1f): %s ; broadcast: exit %s, re-enter within %.1fs: %s"
+              % (("%.2f" % foreign_dt) if foreign_dt is not None else "-", TIMEOUT_S + TRIP_TOL_S,
+                 foreign_trip, bexit_ln is not None, TIMEOUT_S + 0.8, reenter_ln is not None))
 
 
 def run():

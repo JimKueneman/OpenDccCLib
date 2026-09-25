@@ -123,7 +123,7 @@ Macros</h2></td></tr>
 <tr class="memdesc:a06fa845c4888a1569d6f19de6f2b9797"><td class="mdescLeft">&#160;</td><td class="mdescRight">Last candidate value tried by the Paged and Register 0..255 scans.  <br /></td></tr>
 <tr class="separator:a06fa845c4888a1569d6f19de6f2b9797"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a882c0f90284fbc4bbbd095f588ff566f" id="r_a882c0f90284fbc4bbbd095f588ff566f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a882c0f90284fbc4bbbd095f588ff566f">DCC_DETECT_ADDRESS_MAX</a>&#160;&#160;&#160;127u</td></tr>
-<tr class="memdesc:a882c0f90284fbc4bbbd095f588ff566f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Last candidate address tried by the Address-Only 0..127 scan.  <br /></td></tr>
+<tr class="memdesc:a882c0f90284fbc4bbbd095f588ff566f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Last candidate address tried by the Address-Only 1..127 scan.  <br /></td></tr>
 <tr class="separator:a882c0f90284fbc4bbbd095f588ff566f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
@@ -170,7 +170,7 @@ Functions</h2></td></tr>
 <li>Direct &ndash; spec method (§E lines 95-99): two bit-verifies of CV#8 bit 7, one with value 0 and one with value 1; ACK of either =&gt; Direct supported. If supported, the remaining CV#8 bits are read so the byte value is known.</li>
 <li>Paged &ndash; if the CV#8 value is already known, a single verify; otherwise a 0..255 scan of CV#8 (Manufacturer ID) that also learns the value.</li>
 <li>Register &ndash; same as Paged, against register 8 (= CV#8 mfg ID).</li>
-<li>Address-Only &ndash; separate 0..127 scan of CV#1 (cannot reach CV#8). NOT assumed to be universally supported (the spec mandates it for command stations, not for every decoder). If no stage acknowledges, supported_modes == 0 and result is NO_ACK.</li>
+<li>Address-Only &ndash; separate 1..127 scan of CV#1 (cannot reach CV#8). NOT assumed to be universally supported (the spec mandates it for command stations, not for every decoder). If no stage acknowledges, supported_modes == 0 and result is NO_ACK.</li>
 </ol>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
@@ -251,7 +251,7 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Last candidate address tried by the Address-Only 0..127 scan. </p>
+<p>Last candidate address tried by the Address-Only 1..127 scan. </p>
 
 </div>
 </div>
@@ -286,7 +286,7 @@ Functions</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a70323c37af6fbefdb878c1387f481bbda70ae7e13b742a5a3caf8e49766af0d2e" name="a70323c37af6fbefdb878c1387f481bbda70ae7e13b742a5a3caf8e49766af0d2e"></a>DCC_TASK_DETECT_STATE_PROBE_REGISTER_SCAN&#160;</td><td class="fielddoc"><p>Register: 0..255 scan of register 8 in progress </p>
 </td></tr>
-<tr><td class="fieldname"><a id="a70323c37af6fbefdb878c1387f481bbdaf27d27f6ad7c30f00fe88e4e0c7a0926" name="a70323c37af6fbefdb878c1387f481bbdaf27d27f6ad7c30f00fe88e4e0c7a0926"></a>DCC_TASK_DETECT_STATE_PROBE_ADDRESS_SCAN&#160;</td><td class="fielddoc"><p>Address-Only: 0..127 scan of CV#1 in progress </p>
+<tr><td class="fieldname"><a id="a70323c37af6fbefdb878c1387f481bbdaf27d27f6ad7c30f00fe88e4e0c7a0926" name="a70323c37af6fbefdb878c1387f481bbdaf27d27f6ad7c30f00fe88e4e0c7a0926"></a>DCC_TASK_DETECT_STATE_PROBE_ADDRESS_SCAN&#160;</td><td class="fielddoc"><p>Address-Only: 1..127 scan of CV#1 in progress </p>
 </td></tr>
 </table>
 

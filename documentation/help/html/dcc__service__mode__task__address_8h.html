@@ -114,7 +114,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:a9eae25d47d45ad5dd7751877b2f5deac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the address task module. Call once during <a class="el" href="dcc__config_8c.html#a4e86c59e8b73091bd49e69d4fd66672c" title="Initialize the DCC library with user configuration.">DccConfig_initialize()</a>.  <br /></td></tr>
 <tr class="separator:a9eae25d47d45ad5dd7751877b2f5deac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a97f58d6a9cfca4b13c53a0fa7d45988f" id="r_a97f58d6a9cfca4b13c53a0fa7d45988f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a97f58d6a9cfca4b13c53a0fa7d45988f">DccServiceModeTaskAddress_read</a> (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
-<tr class="memdesc:a97f58d6a9cfca4b13c53a0fa7d45988f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read CV#1 (short address) using address-only mode. Iterates address_verify 0-127 until ACK.  <br /></td></tr>
+<tr class="memdesc:a97f58d6a9cfca4b13c53a0fa7d45988f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read CV#1 (short address) using address-only mode. Iterates address_verify 1-127 until ACK.  <br /></td></tr>
 <tr class="separator:a97f58d6a9cfca4b13c53a0fa7d45988f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab36f69a434b45827f00161eeb2ef9737" id="r_ab36f69a434b45827f00161eeb2ef9737"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab36f69a434b45827f00161eeb2ef9737">DccServiceModeTaskAddress_write</a> (uint8_t address, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
 <tr class="memdesc:ab36f69a434b45827f00161eeb2ef9737"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write CV#1 (short address) then verify. Always 2 operations (write + verify). Decoder automatically clears CV#29 bit 5 and CV#19 on success.  <br /></td></tr>
@@ -141,7 +141,7 @@ Functions</h2></td></tr>
 <li>Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.</li>
 </ul>
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
-<p>Sequences address-only mode primitive operations to implement read (iterate address_verify 0-127) and write (write + verify) of CV#1. The decoder automatically clears CV#29 bit 5 and CV#19 when CV#1 is written — the command station does not need to handle these side effects explicitly. Singleton — only one service track per command station.</p>
+<p>Sequences address-only mode primitive operations to implement read (iterate address_verify 1-127) and write (write + verify) of CV#1. The decoder automatically clears CV#29 bit 5 and CV#19 when CV#1 is written — the command station does not need to handle these side effects explicitly. Singleton — only one service track per command station.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
 </div><h2 class="groupheader">Function Documentation</h2>
@@ -207,10 +207,10 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Read CV#1 (short address) using address-only mode. Iterates address_verify 0-127 until ACK. </p>
+<p>Read CV#1 (short address) using address-only mode. Iterates address_verify 1-127 until ACK. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">on_complete</td><td><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> called when complete: SUCCESS with the address found (0-127); ERROR (value 0) if no address 0-127 was ACKed. </td></tr>
+    <tr><td class="paramname">on_complete</td><td><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> called when complete: SUCCESS with the address found (1-127); ERROR (value 0) if no address 1-127 was ACKed. </td></tr>
     <tr><td class="paramname">on_progress</td><td><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> called after each scan step (nullable); estimated_steps is reported as 0. </td></tr>
   </table>
   </dd>
@@ -219,10 +219,10 @@ Functions</h2></td></tr>
 <p>Algorithm:</p><ol type="1">
 <li>Reject if another operation is in progress (state not IDLE)</li>
 <li>Load the context: scan value 0, cleared step count, callbacks</li>
-<li>Enter READ and issue address_verify for address 0 (a refused start puts the task back to IDLE and returns false)</li>
+<li>Enter READ and issue address_verify for address 1 (a refused start puts the task back to IDLE and returns false)</li>
 <li>The scan continues from <a class="el" href="dcc__service__mode__task__address_8c.html#a5205af54346fb6493b0207dc936761d0" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskAddress_on_primitive_complete()</a></li>
 </ol>
-<pre class="fragment">* @param on_complete Called when complete: SUCCESS with the address found (0-127), or ERROR if no address was ACKed.
+<pre class="fragment">* @param on_complete Called when complete: SUCCESS with the address found (1-127), or ERROR if no address was ACKed.
 * @param on_progress Called after each scan step (nullable).
 * </pre><dl class="section return"><dt>Returns</dt><dd>true if started, false if another operation is running. </dd></dl>
 
@@ -377,7 +377,7 @@ Functions</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">bit_position</td><td>Bit position (0-6; bit 7 is always 0 in 7-bit address). </td></tr>
-    <tr><td class="paramname">on_complete</td><td><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> called when complete: SUCCESS with value 0 or 1; ERROR (value 0) if no address 0-127 was ACKed. </td></tr>
+    <tr><td class="paramname">on_complete</td><td><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> called when complete: SUCCESS with value 0 or 1; ERROR (value 0) if no address 1-127 was ACKed. </td></tr>
     <tr><td class="paramname">on_progress</td><td><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> called after each scan step (nullable); estimated_steps is reported as 0. </td></tr>
   </table>
   </dd>
@@ -387,7 +387,7 @@ Functions</h2></td></tr>
 <li>Reject bit positions above 6</li>
 <li>Reject if another operation is in progress (state not IDLE)</li>
 <li>Load the context: bit position, scan value 0, cleared step count, callbacks</li>
-<li>Enter READ_BIT_READ and issue address_verify for address 0 (a refused start puts the task back to IDLE and returns false)</li>
+<li>Enter READ_BIT_READ and issue address_verify for address 1 (a refused start puts the task back to IDLE and returns false)</li>
 <li>The scan continues from <a class="el" href="dcc__service__mode__task__address_8c.html#a5205af54346fb6493b0207dc936761d0" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskAddress_on_primitive_complete()</a>; the requested bit is extracted from the address found</li>
 </ol>
 <pre class="fragment">* @param bit_position Bit position (0-6).
@@ -449,7 +449,7 @@ Functions</h2></td></tr>
 <li>Reject bit positions above 6</li>
 <li>Reject if another operation is in progress (state not IDLE)</li>
 <li>Load the context: bit position, bit value, scan value 0, cleared step count, callbacks</li>
-<li>Enter WRITE_BIT_READ and issue address_verify for address 0 to start the read scan (a refused start puts the task back to IDLE and returns false)</li>
+<li>Enter WRITE_BIT_READ and issue address_verify for address 1 to start the read scan (a refused start puts the task back to IDLE and returns false)</li>
 <li>From <a class="el" href="dcc__service__mode__task__address_8c.html#a5205af54346fb6493b0207dc936761d0" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskAddress_on_primitive_complete()</a>: once the address is found, write the modified address, then verify it</li>
 </ol>
 <pre class="fragment">* @param bit_position Bit position (0-6).

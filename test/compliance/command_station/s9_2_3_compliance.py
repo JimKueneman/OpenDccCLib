@@ -38,10 +38,22 @@ What this verifies NOW (wire-level, no decoder needed):
     ACK path, via the mock decoder (`SVC MOCKCV <cv> <val>`): a held value is read
     back bit-by-bit, a write updates it (verify confirm succeeds), and with the mock
     OFF the same write/read take the failure path (VERIFY FAIL / value 0)
+  - Address-Only read scan (CS-021): the first verify on the wire carries address 1
+    (0 is broadcast, never scanned); the mock ACKing only address 5 returns value=5;
+    with no ACK the 1..127 scan ends in SVC RESULT: ERROR (~105 s, timeout below)
+  - SVC DETECT with the mock decoder answering every probe reports all four
+    compiled modes (DIRECT PAGED REGISTER ADDRESS)
+  - Refusal outside service mode (CS-028): SVC DIRECT READ before SVC ENTER is
+    answered "ERR: service mode operation failed to start" and puts nothing on
+    the service track
+  - Service-track power (CS-027): after SVC EXIT the service DCC pin (PB4) rests
+    LOW with no edges; SVC ENTER drives it high first (power precedes the
+    encoder start), then the encoder clocks idle one-bits continuously
 
-Host-verified (not on the wire here): register VERIFY's 7+ repeat count, and the
-exact per-op recovery counts (6 / 10) -- there is no bounded single-verify UART
-command, and recovery packets are hard to disambiguate from resets on the wire.
+Also on the wire (once host-only): register VERIFY's 7+ repeat count (SVC REG
+VERIFY in test_register) and the per-op recovery counts, 6 standard / 10 for
+register 1 (recovery_count_tests derives them from the reset runs between
+command groups).
 
 Bench: firmware on the LaunchPad, Logic 2 + Automation API (port 10430),
        MAIN track (PB1) on ch0, SERVICE track (PB4) on ch3, mock-ACK pin on ch4.
@@ -177,6 +189,8 @@ def _wait_result(s, timeout=30.0):
         buf += s.read(256).decode(errors="replace")
         if ("SVC RESULT" in buf or "SVC DETECT" in buf
                 or "failed to start" in buf):
+            time.sleep(0.05)                      # let the rest of the line land
+            buf += s.read(512).decode(errors="replace")
             return buf
     return buf
 
@@ -874,6 +888,206 @@ def recovery_count_tests(rep, s):
 
 
 # ----------------------------------------------------------------------------
+# Address-Only read scan, mode detection, refusal outside service mode, and the
+# service-track power level.
+# ----------------------------------------------------------------------------
+# Service-mode packet wire times, from S-9.1 (one bit 2 x 58 us, zero bit 2 x 116
+# us) and the 20-bit service preamble (S-9.2.3 sec D). Used to size the timeout of
+# the un-ACKed 1..127 address scan.
+ONE_BIT_US  = 2 * 58.0
+ZERO_BIT_US = lib.ZERO_BIT_FULL_US
+
+# Sequencer counts the scan runs through (S-9.2.3 sec E as the library applies
+# them): RESET_PRE 3, COMMAND x5, RECOVERY 6 (writes only), RESET_POST 6, and the
+# bench firmware's USER_DEFINED_DCC_SERVICE_MODE_RETRIES = 3 further full cycles
+# before a step gives up.
+SVC_PRE, SVC_CMD, SVC_REC, SVC_POST = 3, 5, 6, 6
+SVC_RETRIES = 3
+
+
+def _packet_us(data):
+    """Wire time of one service-mode packet: 20-bit preamble, start bit, the data
+    bytes with their separator zero bits, end bit."""
+    ones = sum(bin(b).count("1") for b in data)
+    zeros = 8 * len(data) - ones
+    return (20 * ONE_BIT_US + ZERO_BIT_US + ones * ONE_BIT_US + zeros * ZERO_BIT_US
+            + (len(data) - 1) * ZERO_BIT_US + ONE_BIT_US)
+
+
+def _no_ack_step_us(command, is_write):
+    """Wire time of one un-ACKed sequencer step: (1 + retries) cycles of
+    PRE + COMMAND (+ RECOVERY for a write), then RESET_POST."""
+    cycles = SVC_RETRIES + 1
+    resets = cycles * (SVC_PRE + (SVC_REC if is_write else 0)) + SVC_POST
+    return resets * _packet_us(RESET) + cycles * SVC_CMD * _packet_us(command)
+
+
+def _address_scan_no_ack_us():
+    """One un-ACKed address_verify = page-preset WRITE step + VERIFY step; the read
+    scan runs 127 of them (addresses 1..127) before it reports ERROR. The verify
+    with the fewest one-bits (70 00 70) bounds the packet time from above."""
+    per_address = (_no_ack_step_us(page_preset(1), True)
+                   + _no_ack_step_us(address_cmd(0, write=False), False))
+    return 127 * per_address
+
+
+ADDR_SCAN_EST_SEC     = _address_scan_no_ack_us() / 1e6    # ~105 s on the wire
+ADDR_SCAN_TIMEOUT_SEC = 2.0 * ADDR_SCAN_EST_SEC + 10.0     # ~220 s
+
+
+# @compliance DCC-S9.2.3-CS-021
+def test_address_read_scan(rep, s):
+    """Address-Only read (S-9.2.3 sec E, read via Verify): the task scans CV#1 with
+    address_verify 1..127 -- address 0 is broadcast and is never verified. The mock
+    decoder ACKs a 3-byte verify only when its data byte equals the held value, so
+    with SVC MOCKCV 1 5 the scan stops at address 5 and returns it; with the mock
+    OFF the whole 1..127 scan runs to SVC RESULT: ERROR. The first verify packet is
+    checked on ch3 to carry address 1, not 0."""
+    clause = SPEC_DOC + " sec E (address-only read scan)"
+    first_verify = address_cmd(1, write=False)          # 70 01 71
+
+    # --- mock ACKs address 5 only (the 7D page-preset write is ignored by the mock;
+    # the 0111 0000 0DDDDDDD verify ACKs when DDDDDDD == 5). ~4 s to the result.
+    _send_ok(s, "SVC MOCKCV 1 5")
+    svc_dec, result = _svc_capture_service(s, "SVC ADDR READ", seconds=3.0)
+    last = result.strip().splitlines()[-1] if result.strip() else "(timeout)"
+    verifies = [list(d) for _, d in svc_dec["packets"] if len(d) == 3 and d[0] == 0x70]
+    first = verifies[0] if verifies else None
+
+    rep.check(clause, "first verify of the scan carries address 1, not 0 [%s]" % _hx(first_verify),
+              first == first_verify,
+              f"first address verify on ch3: [{_hx(first)}]; addresses verified in the "
+              f"window: {sorted({v[1] for v in verifies})}")
+    rep.check(clause, "address 0 (broadcast) is never verified",
+              bool(verifies) and all(v[1] != 0 for v in verifies),
+              f"{len(verifies)} address-verify packets in the window, none with DDDDDDD = 0")
+    rep.check(clause, "scan stops at the ACKed address: SVC RESULT: SUCCESS value=5",
+              "SUCCESS value=5 (0x05)" in result, f"result: {last}")
+    _send_ok(s, "SVC MOCKCV OFF")
+    time.sleep(0.3)
+
+    # --- mock OFF: nothing ACKs, the full 1..127 scan ends in ERROR. Long: every
+    # address costs an un-ACKed preset write + verify (~0.83 s), 127 of them.
+    print(f"[svc] un-ACKed address scan: estimate {ADDR_SCAN_EST_SEC:.0f} s, "
+          f"timeout {ADDR_SCAN_TIMEOUT_SEC:.0f} s")
+    t0 = time.time()
+    r = _svc_result(s, "SVC ADDR READ", timeout=ADDR_SCAN_TIMEOUT_SEC)
+    took = time.time() - t0
+    rep.check(clause, "no ACK: the 1..127 scan ends in SVC RESULT: ERROR",
+              "SVC RESULT: ERROR" in r,
+              f"result: {r} after {took:.0f} s (estimate {ADDR_SCAN_EST_SEC:.0f} s, "
+              f"timeout {ADDR_SCAN_TIMEOUT_SEC:.0f} s)")
+    time.sleep(0.3)
+
+
+# @compliance DCC-S9.2.3-CS-029 -- service-mode method detection
+def test_detect_modes(rep, s):
+    """SVC DETECT (detect_mode): with the mock decoder answering every probe -- the
+    Direct bit-verify of CV8, the Paged and Register byte verifies and the
+    Address-Only 1..127 scan all ACK when the verified value equals the held 5 --
+    the DUT must report every compiled service mode. The bench dcc_user_config.h
+    compiles all four, so the expected line is
+    'SVC DETECT: DIRECT PAGED REGISTER ADDRESS' (parser _svc_on_detect format).
+    No compliance.data.js row for detect_mode exists yet (2026-09-25), so this
+    check is not tagged."""
+    clause = SPEC_DOC + " sec E (mode detection)"
+    HELD = 5                     # 1..127 so the Address-Only stage finds it at verify 5
+    _send_ok(s, f"SVC MOCKCV 8 {HELD}")
+    s.reset_input_buffer()
+    s.write(b"SVC DETECT\r")
+    buf = _wait_result(s, timeout=60.0)
+    line = next((l.strip() for l in buf.splitlines() if "SVC DETECT" in l),
+                "(no SVC DETECT line)")
+    modes = line.split(":", 1)[1].split() if ":" in line else []
+    rep.check(clause, "SVC DETECT reports every compiled mode (DIRECT PAGED REGISTER ADDRESS)",
+              set(modes) == {"DIRECT", "PAGED", "REGISTER", "ADDRESS"},
+              f"reported: {line}")
+    _send_ok(s, "SVC MOCKCV OFF")
+    time.sleep(0.3)
+
+
+# @compliance DCC-S9.2.3-CS-028
+def test_refused_outside_service_mode(rep, s):
+    """A service-mode task started outside service mode is refused: before SVC
+    ENTER, SVC DIRECT READ 8 must be answered 'ERR: service mode operation failed
+    to start' and nothing may appear on the service track (ch3/PB4) -- no edges,
+    no packets. Run BEFORE the suite enters service mode."""
+    clause = SPEC_DOC + " (task refused outside service mode)"
+    s.reset_input_buffer()
+
+    def stim():
+        s.write(b"SVC DIRECT READ 8\r")
+
+    with tempfile.TemporaryDirectory() as d:
+        paths = lib.capture_to_csv_multi([SERVICE_CHANNEL], d, stimulus=stim,
+                                         capture_seconds=CAPTURE_SECONDS)
+        rows = lib.read_transitions(paths[SERVICE_CHANNEL])
+    reply = _wait_result(s, timeout=5.0)
+    line = next((l.strip() for l in reply.splitlines() if l.strip().startswith(("ERR", "OK"))),
+                "(no reply)")
+    dec = lib.decode(rows)
+    rep.check(clause, "SVC DIRECT READ before SVC ENTER is refused",
+              "ERR: service mode operation failed to start" in reply, f"reply: {line}")
+    rep.check(clause, "nothing on the service track (no edges, no packets)",
+              len(rows) <= 1 and not dec["packets"],
+              f"{max(len(rows) - 1, 0)} edges, {len(dec['packets'])} packets on "
+              f"ch{SERVICE_CHANNEL} during the {CAPTURE_SECONDS*1e3:.0f} ms capture")
+
+
+# @compliance DCC-S9.2.3-CS-027
+def test_service_track_power(rep, s):
+    """Service-track power follows service mode. The bench has no H-bridge: power
+    is the idle level of the service DCC pin (PB4, ch3). After SVC EXIT the pin
+    must rest LOW with no edges for the whole capture. SVC ENTER drives it HIGH
+    first (the power call precedes the encoder start) and the encoder then clocks
+    idle one-bits continuously. The pre-toggle high lasts at most one 58 us tick,
+    so it is not asserted as a level; what is reliably observable is that the pin
+    was low, the first edge RISES, and continuous one-bit halves (55-61 us) follow.
+    Leaves service mode ENTERED."""
+    clause = SPEC_DOC + " (service-track power follows service mode)"
+    s.reset_input_buffer()
+    s.write(b"SVC EXIT\r"); time.sleep(0.5); s.read(512)
+
+    # --- after EXIT: no edges, resting low ---
+    with tempfile.TemporaryDirectory() as d:
+        paths = lib.capture_to_csv_multi([SERVICE_CHANNEL], d, capture_seconds=CAPTURE_SECONDS)
+        rows = lib.read_transitions(paths[SERVICE_CHANNEL])
+    rep.check(clause, "after SVC EXIT: no edges on the service track",
+              len(rows) <= 1,
+              f"{max(len(rows) - 1, 0)} edges in {CAPTURE_SECONDS*1e3:.0f} ms")
+    if rows:
+        rep.check(clause, "after SVC EXIT: service DCC pin rests LOW", rows[0][1] == 0,
+                  f"level at capture start = {rows[0][1]}")
+    else:
+        rep.na(clause, "after SVC EXIT: service DCC pin rests LOW",
+               "export had no initial-state row (no edges seen); resting level not readable")
+
+    # --- ENTER inside a capture: was low, first edge rises, then the encoder runs ---
+    s.reset_input_buffer()
+
+    def stim():
+        time.sleep(0.05)                 # a little pre-roll of the resting level
+        s.write(b"SVC ENTER\r")
+
+    with tempfile.TemporaryDirectory() as d:
+        paths = lib.capture_to_csv_multi([SERVICE_CHANNEL], d, stimulus=stim,
+                                         capture_seconds=CAPTURE_SECONDS)
+        rows = lib.read_transitions(paths[SERVICE_CHANNEL])
+    time.sleep(0.3)
+    reply = s.read(512).decode(errors="replace")
+    rep.check(clause, "SVC ENTER accepted", "OK: service mode entered" in reply,
+              reply.strip().splitlines()[-1] if reply.strip() else "(no reply)")
+    rep.check(clause, "after SVC ENTER: pin was LOW and the first edge RISES (power before encoder)",
+              len(rows) >= 2 and rows[0][1] == 0 and rows[1][1] == 1,
+              f"{len(rows)} rows; start level {rows[0][1] if rows else '?'}, "
+              f"first edge -> {rows[1][1] if len(rows) > 1 else '?'}")
+    ones = [h for (a, b, bit) in lib.decode(rows)["bit_halves"] if bit == "1" for h in (a, b)]
+    rep.check(clause, "after SVC ENTER: encoder running (>= 100 one-bit halves, 55-61 us)",
+              len(ones) >= 100 and all(ONE_HALF_MIN_US <= h <= ONE_HALF_MAX_US for h in ones),
+              lib.sigma_margin_detail(ones, ONE_HALF_MIN_US, ONE_HALF_MAX_US) + " us")
+
+
+# ----------------------------------------------------------------------------
 # Suite
 # ----------------------------------------------------------------------------
 def run():
@@ -894,6 +1108,15 @@ def run():
 
     try:
         send("POWER ON"); time.sleep(0.5)    # main track streams idle on ch0
+
+        # CS-028 needs service mode NOT entered. If an aborted run left it entered
+        # (STATUS says ACTIVE), exit it first -- a matched EXIT only; an unmatched
+        # one would drop the shared-timer ref count and stop the main track.
+        s.reset_input_buffer(); send("STATUS"); time.sleep(0.3)
+        if "svc_mode=ACTIVE" in s.read(512).decode(errors="replace"):
+            send("SVC EXIT"); time.sleep(0.5); s.read(512)
+        test_refused_outside_service_mode(rep, s)
+
         send("SVC ENTER"); time.sleep(0.5)   # service track active on ch3
 
         # Each mode: exact command encoding + sequence structure (service track)
@@ -927,6 +1150,17 @@ def run():
 
         # Register-to-CV mapping: each CV's mapped register on the wire (no decoder).
         test_register_cv_mapping(rep, s)
+
+        # Address-Only read scan: first verify = address 1, mock-ACKed address 5
+        # returned, then the full un-ACKed 1..127 scan to ERROR (~105 s).
+        test_address_read_scan(rep, s)
+
+        # Mode detection with the mock decoder answering every probe.
+        test_detect_modes(rep, s)
+
+        # Service-track power: EXIT -> pin rests low, ENTER -> rises + encoder runs.
+        # Leaves service mode entered for the final SVC EXIT below.
+        test_service_track_power(rep, s)
 
         send("SVC EXIT"); time.sleep(0.3)
         send("POWER OFF"); time.sleep(0.3)

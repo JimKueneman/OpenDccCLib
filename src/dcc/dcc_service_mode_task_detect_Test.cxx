@@ -565,6 +565,7 @@ TEST(DccServiceModeTaskDetect, register_scan_uses_register_8) {
 
 }
 
+// @compliance DCC-S9.2.3-CS-029
 TEST(DccServiceModeTaskDetect, address_scan_starts_at_one) {
 
     setup();
@@ -578,6 +579,7 @@ TEST(DccServiceModeTaskDetect, address_scan_starts_at_one) {
 
 }
 
+// @compliance DCC-S9.2.3-CS-029
 TEST(DccServiceModeTaskDetect, address_scans_at_most_127_values) {
 
     setup();

@@ -192,6 +192,7 @@ TEST(DccApplicationCommandStationServiceTrack, initialize_does_not_crash) {
 // Power / session
 // ============================================================================
 
+// @compliance DCC-S9.2.3-CS-027
 TEST(DccApplicationCommandStationServiceTrack, power_on_sequence) {
     setup();
     DccApplicationCommandStationServiceTrack_power_on();
@@ -229,6 +230,7 @@ TEST(DccApplicationCommandStationServiceTrack, enter_service_mode_passes_through
     EXPECT_FALSE(DccApplicationCommandStationServiceTrack_enter_service_mode());
 }
 
+// @compliance DCC-S9.2.3-CS-027
 TEST(DccApplicationCommandStationServiceTrack, exit_service_mode_exits_then_powers_down) {
     setup();
     DccApplicationCommandStationServiceTrack_exit_service_mode();

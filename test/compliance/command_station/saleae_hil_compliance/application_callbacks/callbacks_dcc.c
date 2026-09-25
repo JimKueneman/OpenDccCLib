@@ -323,6 +323,8 @@ void CallbacksDcc_on_packet_sent(const dcc_packet_t *packet) {
     _mock_decoder_handle(packet, window_open);
 }
 
+#if defined(DCC_COMPILE_RAILCOM)
+
 // RailCom cutout cancel (HIL only, S-9.3.2 CS-008). `RAILCOM CANCEL` arms this; the
 // 58us bit-timer ISR (same priority as the cutout one-shot ISR, so no nesting) calls
 // cancel_tick() each tick. To make the cancel land deterministically EARLY in a
@@ -393,7 +395,6 @@ void CallbacksDcc_railcom_cancel_tick(void) {
 // cutout; report it with the address it was tagged with so the host can check
 // content, channel AND the two-stage address capture on the wire.
 // ---------------------------------------------------------------------------
-#if defined(DCC_COMPILE_RAILCOM)
 
     /** @brief RC RESULT lines reported since the last RC MOCK OFF. */
 static volatile uint32_t _rc_result_count = 0;

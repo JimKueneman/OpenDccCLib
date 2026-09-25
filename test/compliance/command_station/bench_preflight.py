@@ -11,7 +11,7 @@ Checks each layer in order and stops at the first one that fails:
                   set (distinguishes the CS firmware from the waveform player / example app).
   2. Saleae    -- Logic 2 Automation API reachable on AUTOMATION_PORT, the pinned device
                   attached.
-  3. Wiring    -- two short captures on all six channels while the harness drives the DUT.
+  3. Wiring    -- two short captures on all seven channels (D0-D6) while the harness drives the DUT.
                   Each channel must carry the signal its pin produces, not just "toggle":
                     D0 decodes as main-track DCC packets
                     D1 shows the one TRIG pulse
@@ -414,7 +414,7 @@ def _summary(rep):
 def run():
     rep = lib.Report("BENCH", "Command-station HIL rig preflight",
                      "command_station/HIL_SETUP.md",
-                     "DUT UART, Logic 2 / Saleae, and all six probe channels")
+                     "DUT UART, Logic 2 / Saleae, and all seven probe channels (D0-D6)")
     port = check_dut(rep)          # raises SetupError -> nothing else is meaningful
     check_saleae(rep)              # raises SetupError
     print(f"[uart] {port}: POWER ON")

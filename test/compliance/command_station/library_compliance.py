@@ -14,9 +14,15 @@ scheduler behaviour as it shows up ON THE WIRE (ch0 / PB1):
   - Duplicate combining by (address, tag): two SPEED commands for the SAME address
     overwrite ONE refresh slot -- the wire shows only the latest value, never two
     slots accumulating for that address.                         (DCC-Library-CS-003)
+  - Auto-refresh pacing (issue #5): a fresh slot goes out REFRESH_PROMPT_SENDS
+    times back to back, an idle slot is kept alive once every REFRESH_COLD_CYCLES
+    packets and never later than REFRESH_COLD_MAX_CYCLES, and a speed change is
+    the next packet the scheduler loads after the insert (TRIG INSERT marks the
+    insert on PB3).                                              (DCC-Library-CS-005)
 
-All three are driven with the firmware's existing command set (SPEED / ESTOP /
-REFRESH / CLEAR) and a plain timed capture -- no firmware change, no decoder.
+The first three are driven with the firmware's existing command set (SPEED / ESTOP /
+REFRESH / CLEAR) and a plain timed capture; the pacing checks add hardware-triggered
+captures (TRIG / TRIG INSERT on PB3) -- no decoder needed.
 The scheduler is documented in src/dcc/dcc_scheduler.h (priority selection,
 auto-refresh round-robin, duplicate combining via the (address, tag) key).
 
