@@ -4702,6 +4702,184 @@ window.COMPLIANCE =
               }
             ]
           }
+        },
+        {
+          "tid": "DCC-S9.2.1-DEC-016",
+          "feature": "Consist control: set/clear writes CV19",
+          "role": "dec",
+          "ref": {
+            "spec": "S-9.2.1",
+            "cite": "Section 2.3.1.4 Consist Control (0001001C 0AAAAAAA): C selects normal/reversed direction, AAAAAAA is the consist address, 0 removes the decoder from the consist",
+            "origin": "released",
+            "draftDelta": null
+          },
+          "supported": {
+            "state": "ok",
+            "note": ""
+          },
+          "gtest": {
+            "state": "ok",
+            "note": ""
+          },
+          "hil": {
+            "state": "no",
+            "note": ""
+          },
+          "detail": {
+            "impl": "_dispatch_instruction: 0x12/0x13 write CV19 = address | (reversed ? 0x80 : 0), 0x10 or address 0 write 0, through _cv_write_and_notify so the decoder lock applies and the address cache refreshes; on_consist_command fires only after a successful write.",
+            "gtest": "",
+            "hil": ""
+          },
+          "refs": {
+            "symbols": [
+              "DCC_CONSIST_SET_NORMAL",
+              "DCC_CONSIST_SET_REVERSED",
+              "DCC_CONSIST_CLEAR",
+              "DCC_CV_CONSIST_ADDRESS"
+            ],
+            "tests": [
+              {
+                "name": "DccPacketDecoder.consist_set_normal_writes_cv19",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "0x12 addr 10 stores CV19=10, reports it as a CV write, fires on_consist_command normal"
+              },
+              {
+                "name": "DccPacketDecoder.consist_set_reversed_writes_cv19_bit7",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "0x13 addr 10 stores CV19=0x8A and reports reversed"
+              },
+              {
+                "name": "DccPacketDecoder.consist_clear_instruction_writes_zero",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "0x10 stores CV19=0 and reports consist address 0"
+              },
+              {
+                "name": "DccPacketDecoder.consist_set_with_address_zero_clears",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "a set with address 0 clears CV19"
+              },
+              {
+                "name": "DccPacketDecoder.consist_set_refused_write_leaves_consist_and_is_silent",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "a refused CV19 write (lock) leaves CV19 and fires no callback"
+              },
+              {
+                "name": "DccPacketDecoder.consist_set_by_packet_takes_effect_immediately",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "after a set packet the next speed packet to the consist address is dispatched"
+              }
+            ],
+            "hilChecks": []
+          }
+        },
+        {
+          "tid": "DCC-S9.2.1-DEC-017",
+          "feature": "Consist address answers speed, direction and e-stop",
+          "role": "dec",
+          "ref": {
+            "spec": "S-9.2.1",
+            "cite": "Section 2.3.1.4: a decoder in a consist responds to speed and direction instructions at the consist address; other instructions and CV access remain at its own address",
+            "origin": "released",
+            "draftDelta": null
+          },
+          "supported": {
+            "state": "ok",
+            "note": ""
+          },
+          "gtest": {
+            "state": "ok",
+            "note": ""
+          },
+          "hil": {
+            "state": "no",
+            "note": ""
+          },
+          "detail": {
+            "impl": "process_packet accepts a short-address packet equal to the cached CV19 address when the instruction is 14/28-step speed or 128-step advanced ops (incl. e-stop); functions and CV access to that address are ignored. _effective_direction applies CV29 bit 0 and, for a consist-addressed packet, CV19 bit 7. The cache is refreshed by packet CV writes, by DccApplicationDecoderCv_write, or explicitly.",
+            "gtest": "",
+            "hil": ""
+          },
+          "refs": {
+            "symbols": [
+              "DccPacketDecoder_process_packet",
+              "DccPacketDecoder_reload_address_cache",
+              "DccPacketDecoder_on_cv_written",
+              "DccConfig_reload_address_cvs"
+            ],
+            "tests": [
+              {
+                "name": "DccPacketDecoder.consist_address_speed_128_dispatched",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "128-step speed to the consist address reaches on_speed_command with that address"
+              },
+              {
+                "name": "DccPacketDecoder.consist_address_speed_28_dispatched",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "28-step speed to the consist address is dispatched"
+              },
+              {
+                "name": "DccPacketDecoder.consist_address_estop_dispatched",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "128-step e-stop to the consist address reaches on_emergency_stop_command"
+              },
+              {
+                "name": "DccPacketDecoder.consist_direction_bit_reverses_and_combines_with_cv29",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "CV19 bit 7 reverses a consist-addressed packet only; combined with CV29 bit 0 it inverts twice"
+              },
+              {
+                "name": "DccPacketDecoder.consist_address_function_packet_ignored",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "a function packet to the consist address is ignored"
+              },
+              {
+                "name": "DccPacketDecoder.consist_address_cv_write_ignored",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "a POM CV write to the consist address is ignored"
+              },
+              {
+                "name": "DccPacketDecoder.consist_address_ignored_when_cv19_is_zero",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "with CV19=0 nothing is matched at the former consist address"
+              },
+              {
+                "name": "DccPacketDecoder.consist_address_accepted_with_long_own_address",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "a long-addressed decoder still answers its short consist address"
+              },
+              {
+                "name": "DccPacketDecoder.reload_address_cache_rereads_cv1",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "reload_address_cache picks up a CV1 changed outside the library"
+              },
+              {
+                "name": "DccPacketDecoder.on_cv_written_reloads_only_for_address_cvs",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "on_cv_written reloads for CV1 but not for CV5"
+              },
+              {
+                "name": "DccPacketDecoder.on_cv_written_cv19_enables_consist",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "on_cv_written(19) makes the consist address live"
+              },
+              {
+                "name": "DccConfig.consist_set_through_the_wiring_writes_cv19_and_matches",
+                "file": "dcc_config_Test.cxx",
+                "desc": "through DccConfig_initialize wiring: a consist set packet writes CV19 in the app store and a speed packet to the consist address is dispatched reversed"
+              },
+              {
+                "name": "DccConfig.cv_api_write_of_address_cv_refreshes_the_match_cache",
+                "file": "dcc_config_Test.cxx",
+                "desc": "DccApplicationDecoderCv_write(CV1) moves the decoder to the new address with no reload call"
+              },
+              {
+                "name": "DccConfig.reload_address_cvs_after_a_direct_storage_write",
+                "file": "dcc_config_Test.cxx",
+                "desc": "a CV1 written behind the library is picked up only after DccConfig_reload_address_cvs"
+              }
+            ],
+            "hilChecks": []
+          }
         }
       ]
     },
@@ -5128,6 +5306,91 @@ window.COMPLIANCE =
                 "desc": "asserts CV513 + CV521 combine into the accessory address (CV541 basic mode)"
               }
             ],
+            "hilChecks": []
+          }
+        },
+        {
+          "tid": "DCC-S9.2.2-DEC-006",
+          "feature": "CV19 consist address and direction bit",
+          "role": "dec",
+          "ref": {
+            "spec": "S-9.2.2",
+            "cite": "CV19 Consist Address: bits 0-6 the consist address (0 = not in a consist), bit 7 = direction of travel relative to the consist",
+            "origin": "released",
+            "draftDelta": null
+          },
+          "supported": {
+            "state": "ok",
+            "note": ""
+          },
+          "gtest": {
+            "state": "ok",
+            "note": ""
+          },
+          "hil": {
+            "state": "no",
+            "note": ""
+          },
+          "detail": {
+            "impl": "Cached by _update_consist_address on every address-cache refresh; written by the consist control instruction (S-9.2.1 2.3.1.4). Bit 7 is applied by _effective_direction to consist-addressed speed packets.",
+            "gtest": "",
+            "hil": ""
+          },
+          "refs": {
+            "symbols": [
+              "DCC_CV_CONSIST_ADDRESS"
+            ],
+            "tests": [
+              {
+                "name": "DccPacketDecoder.consist_set_reversed_writes_cv19_bit7",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "reversed set stores bit 7"
+              },
+              {
+                "name": "DccPacketDecoder.consist_direction_bit_reverses_and_combines_with_cv29",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "bit 7 reverses the reported direction for consist-addressed packets"
+              },
+              {
+                "name": "DccPacketDecoder.on_cv_written_cv19_enables_consist",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "a CV19 written by the application is honoured after on_cv_written"
+              }
+            ],
+            "hilChecks": []
+          }
+        },
+        {
+          "tid": "DCC-S9.2.2-DEC-007",
+          "feature": "CV21/CV22 consist function enables",
+          "role": "dec",
+          "ref": {
+            "spec": "S-9.2.2",
+            "cite": "CV21 (F1-F8) and CV22 (FL, F9-F12) select which functions a decoder in a consist takes from the consist address",
+            "origin": "released",
+            "draftDelta": null
+          },
+          "supported": {
+            "state": "no",
+            "note": ""
+          },
+          "gtest": {
+            "state": "no",
+            "note": ""
+          },
+          "hil": {
+            "state": "no",
+            "note": ""
+          },
+          "detail": {
+            "impl": "Not implemented: function packets addressed to the consist address are ignored regardless of CV21/CV22.",
+          "supported": "Deferred; consist functions are ignored",
+            "gtest": "",
+            "hil": ""
+          },
+          "refs": {
+            "symbols": [],
+            "tests": [],
             "hilChecks": []
           }
         }

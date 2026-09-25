@@ -126,6 +126,7 @@ programming from POM.
 - `DccConfig_set_railcom_cutout_timing()`, `DccConfig_cancel_railcom_cutout()`, `DccConfig_railcom_cutout_is_active()` — [CS + RAILCOM] runtime cutout control
 - `DccConfig_100ms_timer_tick()` — [CS] reserved housekeeping hook; does nothing in this release
 - `DccConfig_decoder_edge_isr(uint32_t timestamp_usec)` — [DECODER] input-capture edge
+- `DccConfig_reload_address_cvs()` — [DECODER] re-read the address CVs after the application writes its storage outside the library
 
 ### Application modules (role-first naming)
 
@@ -169,7 +170,7 @@ programming from POM.
 | `dcc_service_mode_{direct,paged,register,address}` | CS | Per-mode programming primitives |
 | `dcc_service_mode_task_{direct,paged,register,address,detect}` | CS + own `TASK_*` flag | Read/write/verify orchestration on the primitives; mode detection |
 | `dcc_bit_decoder` | DECODER | Edge-timestamp → bit classification → byte assembly |
-| `dcc_packet_decoder` | DECODER | Parse bytes → structured commands, XOR, address match, deferred dispatch queue |
+| `dcc_packet_decoder` | DECODER | Parse bytes → structured commands, XOR, address match (own, broadcast, and the CV19 consist address for speed/direction/e-stop), consist set/clear writes CV19, deferred dispatch queue |
 | `dcc_cv_storage` | DECODER | CV abstraction, decoder lock, factory reset, indexed CVs, CV29 feature mask |
 | `dcc_failsafe` | DECODER | S-9.2.4 packet time-out (CV11 in 100 ms units) |
 | `dcc_railcom_decoder` | DECODER + RAILCOM | RailCom transmit engine (bit-bang) and reply arming |

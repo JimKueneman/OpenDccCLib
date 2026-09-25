@@ -103,7 +103,7 @@ while (1) {
 
 - **Edge capture (interrupt).** Every edge on the selected input stores a microsecond timestamp in a 256-entry ring (a full ring drops the edge). Beyond reading the track-select pin and toggling PB3 the interrupt does nothing else, so it stays well under the 58 µs half-bit.
 - **Bit decoding (main loop).** The ring is drained into `DccConfig_decoder_edge_isr()`. An interval under 80 µs is a one-bit half, 80 µs or more a zero-bit half.
-- **Packet decoding.** Ten or more one-bits arm the preamble; bytes follow until the end bit, and the raw packet is queued. The XOR check and the address match (CV 1 or CV 17–18 as CV 29 bit 5 selects; the accessory CVs 513/521/541 when CV 541 bit 7 is set) happen in the main loop.
+- **Packet decoding.** Ten or more one-bits arm the preamble; bytes follow until the end bit, and the raw packet is queued. The XOR check and the address match (CV 1 or CV 17–18 as CV 29 bit 5 selects, plus the consist address in CV 19 for speed packets; the accessory CVs 513/521/541 when CV 541 bit 7 is set) happen in the main loop.
 - **Dispatch.** `DccConfig_run()` takes queued packets and calls your command callbacks, so they never run inside an interrupt. The one exception is `on_railcom_request`, which runs on the edge path so the reply is ready for the cutout.
 
 Every decoded command is echoed on the terminal as a `RECV` line, for example `RECV SPEED addr=3 speed=64 dir=FWD mode=128`.
@@ -131,7 +131,7 @@ void CallbacksDcc_on_function_command(uint16_t address, uint8_t function_number,
 | `on_function_command` | Function on or off, F0–F68 |
 | `on_accessory_basic_command`, `on_accessory_extended_command` | Turnout, signal aspect. Delivered for every accessory packet on the track; compare the address with yours in the callback, the library does not filter accessory addresses |
 | `on_cv_write_command`, `on_cv_verify_command`, `on_cv_bit_command` | Loco CV access, main track (POM) and programming track; the `service_mode` flag tells them apart. Accessory operations-mode CV access is not delivered in this release |
-| `on_consist_command` | Consist set or clear, as a notification only; the library does not store CV 19 or match consist addresses |
+| `on_consist_command` | Consist set or clear. The library has already written CV 19 through your `cv_write`; speed, direction and emergency-stop packets to the consist address then reach the speed callbacks with the consist direction applied |
 | `on_binary_state_short_command`, `on_binary_state_long_command`, `on_analog_function_command` | Binary state (feature expansion) and analog function (advanced operations) |
 | `on_failsafe_entered`, `on_failsafe_exited` | No multifunction packet for this decoder or broadcast within CV 11 × 100 ms; such a packet resumed. Your callbacks stop and restart the outputs |
 | `cv29_apply_supported_features` | Required: clear the CV 29 feature bits this product does not implement |

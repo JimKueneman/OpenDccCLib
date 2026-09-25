@@ -39,8 +39,8 @@ The full NMRA DCC protocol stack, written in plain C, for command stations and d
 | RailCom cutout | DELAY 26, SETTLING 54, CH1 97, GAP 16, CH2 261 µs (454 µs total); each period settable per channel in `dcc_config_t` (0 = spec default) and adjustable at runtime; cancel and status calls |
 | RailCom receive | Window-gated 250 kbaud UART hooks, standard S-9.3.2 4/8 code words, ACK and NACK, Channel 1 and 2 datagram assembly (split by byte count, so a Channel 2-only reply is currently read as Channel 1), tagging with the loco address of the preceding packet, receive ring |
 | Bit decoder | Edge-timing classification with an 80 µs threshold, stretched-zero tolerance, 10 ms no-signal recovery |
-| Packet decoder | Preamble ≥ 10, byte assembly, XOR check, matching for short and long addresses (accessory commands are delivered for the application to match; consist addresses are not matched), deferred dispatch queue so command callbacks never run in an interrupt |
-| CV storage | Function-pointer storage with decoder lock (CV 15/16), factory reset on CV 8, indexed CVs (CV 31/32, 257–512), CV 29 feature mask hook |
+| Packet decoder | Preamble ≥ 10, byte assembly, XOR check, matching for short and long addresses, and the CV 19 consist address for speed, direction and e-stop (accessory commands are delivered for the application to match), deferred dispatch queue so command callbacks never run in an interrupt |
+| CV storage | Function-pointer storage with decoder lock (CV 15/16), factory reset on CV 8, CV 19 consist address written by the consist instruction, indexed CVs (CV 31/32, 257–512), CV 29 feature mask hook |
 | RailCom transmit | Decoder reply engine: automatic Channel 1 address broadcast after this decoder's own commands, application-filled Channel 2 through `on_railcom_request` (called on the edge path), ACK/BUSY/NACK tokens; accessory SRQ and status helpers exist but are not yet wired into the transmit engine |
 | Fail-safe | S-9.2.4 packet time-out from CV 11 in 100 ms units, with enter and exit callbacks |
 
@@ -66,8 +66,8 @@ Two ready-to-run projects ship with the library. Porting to a new platform means
 | Metric | Value, measured at generation (2026-09-25) |
 |---|---|
 | Unit-test binaries | 29 GoogleTest binaries, one per module |
-| Test cases | 1247, all passing, zero warnings |
-| Coverage (gcovr) | 99.7 % lines, 100 % functions, 98.2 % branches |
+| Test cases | 1269, all passing, zero warnings |
+| Coverage (gcovr) | 99.6 % lines, 100 % functions, 98.0 % branches |
 | Compile-gate matrix | Six single-role configurations built and linked on every run |
 | Source | 60 files, 18 399 lines in `src/dcc/` |
 | Hardware-in-the-loop | 6 Saleae suites plus a 14-check bench preflight, 396 on-wire checks: S-9.1, S-9.2, S-9.2.1, S-9.2.3, S-9.3.2, scheduler (incl. refresh pacing); one expected FAIL records the Channel 2-only limitation |

@@ -1395,6 +1395,90 @@ TEST(DccConfig, decoder_edges_dispatch_a_packet_on_run) {
     EXPECT_EQ(cfg_speed_value, (uint8_t)0x10);
 }
 
+// ---- address cache: app writes through the CV API vs. behind the library ----
+
+static uint8_t cfg_cv_store[64];
+static bool cfg_cv_read(uint16_t cv, uint8_t *val) { *val = (cv < 64) ? cfg_cv_store[cv] : 0; return true; }
+static bool cfg_cv_write(uint16_t cv, uint8_t val) { if (cv < 64) cfg_cv_store[cv] = val; return true; }
+static bool cfg_last_direction;
+static void mock_cfg_on_speed_dir(uint16_t address, uint8_t speed, bool direction, dcc_speed_mode_enum mode) {
+    (void)mode; cfg_speed_address = address; cfg_speed_value = speed; cfg_last_direction = direction; cfg_speed_count++;
+}
+
+static void feed_speed_128(uint8_t address, uint8_t speed_byte) {
+    uint8_t data[] = {address, 0x3F, speed_byte, 0x00};
+    data[3] = data[0] ^ data[1] ^ data[2];
+    feed_packet(data, 4);
+    DccConfig_run();
+}
+
+// @compliance DCC-S9.2.1-DEC-017
+TEST(DccConfig, cv_api_write_of_address_cv_refreshes_the_match_cache) {
+    memset(cfg_cv_store, 0, sizeof(cfg_cv_store));
+    cfg_cv_store[DCC_CV_PRIMARY_ADDRESS] = 3;
+    cfg_cv_store[DCC_CV_CONFIG] = DCC_CV29_SPEED_STEPS_BIT;
+    dcc_config_t cfg = make_test_config();
+    cfg.cv_read = cfg_cv_read;
+    cfg.cv_write = cfg_cv_write;
+    cfg.on_speed_command = mock_cfg_on_speed_dir;
+    DccConfig_initialize(&cfg);
+
+    cfg_speed_count = 0;
+    feed_speed_128(3, 0x80 | 20);
+    EXPECT_EQ(cfg_speed_count, (uint32_t)1);
+
+    EXPECT_TRUE(DccApplicationDecoderCv_write(DCC_CV_PRIMARY_ADDRESS, 9));
+    feed_speed_128(9, 0x80 | 20);
+    EXPECT_EQ(cfg_speed_count, (uint32_t)2);        /* new address live, no reload call */
+    feed_speed_128(3, 0x80 | 20);
+    EXPECT_EQ(cfg_speed_count, (uint32_t)2);        /* old address gone */
+}
+
+// @compliance DCC-S9.2.1-DEC-017
+TEST(DccConfig, reload_address_cvs_after_a_direct_storage_write) {
+    memset(cfg_cv_store, 0, sizeof(cfg_cv_store));
+    cfg_cv_store[DCC_CV_PRIMARY_ADDRESS] = 3;
+    cfg_cv_store[DCC_CV_CONFIG] = DCC_CV29_SPEED_STEPS_BIT;
+    dcc_config_t cfg = make_test_config();
+    cfg.cv_read = cfg_cv_read;
+    cfg.cv_write = cfg_cv_write;
+    cfg.on_speed_command = mock_cfg_on_speed_dir;
+    DccConfig_initialize(&cfg);
+
+    cfg_speed_count = 0;
+    cfg_cv_store[DCC_CV_PRIMARY_ADDRESS] = 7;         /* behind the library's back */
+    feed_speed_128(7, 0x80 | 20);
+    EXPECT_EQ(cfg_speed_count, (uint32_t)0);
+
+    DccConfig_reload_address_cvs();
+    feed_speed_128(7, 0x80 | 20);
+    EXPECT_EQ(cfg_speed_count, (uint32_t)1);
+}
+
+// @compliance DCC-S9.2.1-DEC-017
+TEST(DccConfig, consist_set_through_the_wiring_writes_cv19_and_matches) {
+    memset(cfg_cv_store, 0, sizeof(cfg_cv_store));
+    cfg_cv_store[DCC_CV_PRIMARY_ADDRESS] = 3;
+    cfg_cv_store[DCC_CV_CONFIG] = DCC_CV29_SPEED_STEPS_BIT;
+    dcc_config_t cfg = make_test_config();
+    cfg.cv_read = cfg_cv_read;
+    cfg.cv_write = cfg_cv_write;
+    cfg.on_speed_command = mock_cfg_on_speed_dir;
+    DccConfig_initialize(&cfg);
+
+    uint8_t set[] = {0x03, DCC_CONSIST_SET_REVERSED, 10, 0x00};
+    set[3] = set[0] ^ set[1] ^ set[2];
+    feed_packet(set, 4);
+    DccConfig_run();
+    EXPECT_EQ(cfg_cv_store[DCC_CV_CONSIST_ADDRESS], (uint8_t)(0x80 | 10));
+
+    cfg_speed_count = 0;
+    feed_speed_128(10, 0x80 | 20);                    /* forward to the consist address */
+    EXPECT_EQ(cfg_speed_count, (uint32_t)1);
+    EXPECT_EQ(cfg_speed_address, (uint16_t)10);
+    EXPECT_FALSE(cfg_last_direction);                 /* reversed within the consist */
+}
+
 #endif /* DCC_COMPILE_DECODER */
 
 // ============================================================================
