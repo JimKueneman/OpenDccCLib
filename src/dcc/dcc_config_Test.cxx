@@ -997,6 +997,9 @@ TEST(DccConfig, decoder_cv_application_api_is_wired_by_initialize) {
     EXPECT_EQ(_cv_app_last_write_value, 0x42);
 }
 
+static uint32_t _cv_app_reset_calls;
+static void mock_cv_app_factory_reset(void) { _cv_app_reset_calls++; }
+
 TEST(DccConfig, decoder_cv_application_write_honours_decoder_lock) {
     memset(_cv_app_store, 0, sizeof(_cv_app_store));
     _cv_app_store[DCC_CV_DECODER_LOCK_1] = 1;    /* CV 15 != CV 16: locked */
@@ -1008,8 +1011,30 @@ TEST(DccConfig, decoder_cv_application_write_honours_decoder_lock) {
     DccConfig_initialize(&cfg);
 
     EXPECT_TRUE(DccApplicationDecoderCv_is_locked());
-    EXPECT_FALSE(DccApplicationDecoderCv_write(5, 0x42));
+    EXPECT_FALSE(DccApplicationDecoderCv_write(5, 0x42));   /* ordinary CV refused while locked */
     EXPECT_EQ(_cv_app_last_write_cv, 0);
+
+    /* The unlock itself must be reachable through the application API */
+    EXPECT_TRUE(DccApplicationDecoderCv_write(DCC_CV_DECODER_LOCK_2, 1));
+    EXPECT_FALSE(DccApplicationDecoderCv_is_locked());
+    EXPECT_TRUE(DccApplicationDecoderCv_write(5, 0x42));
+    EXPECT_EQ(_cv_app_last_write_cv, 5);
+}
+
+TEST(DccConfig, decoder_cv_application_write_of_8_to_cv8_resets_even_when_locked) {
+    memset(_cv_app_store, 0, sizeof(_cv_app_store));
+    _cv_app_store[DCC_CV_DECODER_LOCK_1] = 1;    /* locked */
+    _cv_app_reset_calls = 0;
+
+    dcc_config_t cfg = make_test_config();
+    cfg.cv_read = mock_cv_app_read;
+    cfg.cv_write = mock_cv_app_write;
+    cfg.factory_reset = mock_cv_app_factory_reset;
+    DccConfig_initialize(&cfg);
+
+    EXPECT_TRUE(DccApplicationDecoderCv_write(DCC_CV_MANUFACTURER_ID, 8));
+    EXPECT_EQ(_cv_app_reset_calls, (uint32_t)1);
+    EXPECT_EQ(_cv_app_store[DCC_CV_MANUFACTURER_ID], (uint8_t)0);   /* the value is not stored */
 }
 
 #endif /* DCC_COMPILE_DECODER */

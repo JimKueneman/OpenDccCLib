@@ -215,18 +215,34 @@ TEST(DccApplicationDecoderCv, write_null_guard) {
 
 }
 
-TEST(DccApplicationDecoderCv, write_locked_returns_false) {
+TEST(DccApplicationDecoderCv, write_leaves_the_lock_decision_to_storage) {
 
     reset_mocks();
     interface_dcc_application_decoder_cv_t iface = make_interface();
-    is_locked_return = true;
+    is_locked_return = true;           /* the module must not consult this for a write */
+    cv_write_return = false;           /* storage refuses: locked */
     DccApplicationDecoderCv_initialize(&iface);
 
     bool result = DccApplicationDecoderCv_write(29, 100);
 
     EXPECT_FALSE(result);
-    EXPECT_EQ(is_locked_count, 1u);
-    EXPECT_EQ(cv_write_count, 0u);
+    EXPECT_EQ(is_locked_count, 0u);
+    EXPECT_EQ(cv_write_count, 1u);
+
+}
+
+TEST(DccApplicationDecoderCv, write_reaches_storage_exceptions_while_locked) {
+
+    reset_mocks();
+    interface_dcc_application_decoder_cv_t iface = make_interface();
+    is_locked_return = true;
+    cv_write_return = true;            /* storage accepts CV 15/16 and the CV 8 reset while locked */
+    DccApplicationDecoderCv_initialize(&iface);
+
+    EXPECT_TRUE(DccApplicationDecoderCv_write(16, 5));
+    EXPECT_EQ(is_locked_count, 0u);
+    EXPECT_EQ(cv_write_count, 1u);
+    EXPECT_EQ(last_cv_number, 16);
 
 }
 
@@ -241,7 +257,7 @@ TEST(DccApplicationDecoderCv, write_unlocked_delegates) {
     bool result = DccApplicationDecoderCv_write(29, 100);
 
     EXPECT_TRUE(result);
-    EXPECT_EQ(is_locked_count, 1u);
+    EXPECT_EQ(is_locked_count, 0u);
     EXPECT_EQ(cv_write_count, 1u);
     EXPECT_EQ(last_cv_number, 29);
     EXPECT_EQ(last_value, 100);
@@ -259,7 +275,7 @@ TEST(DccApplicationDecoderCv, write_unlocked_returns_false_from_backend) {
     bool result = DccApplicationDecoderCv_write(29, 100);
 
     EXPECT_FALSE(result);
-    EXPECT_EQ(is_locked_count, 1u);
+    EXPECT_EQ(is_locked_count, 0u);
     EXPECT_EQ(cv_write_count, 1u);
 
 }

@@ -272,7 +272,7 @@ All CV traffic goes through `dcc_cv_storage`, which wraps your `cv_read` / `cv_w
 - **Indexed CVs.** CVs 257–512 are routed to `cv_read_indexed` / `cv_write_indexed` with the page from CV 31:32, when those hooks are wired.
 - **CV 29 feature mask.** On every CV 29 write the library forces the reserved bit 6 clear, decodes the byte into a `dcc_cv29_flags_t` (direction reversed, 28/128 steps, analog conversion, RailCom, speed table, extended address, accessory), and calls `cv29_apply_supported_features()`. Clear the flags your product does not implement; per S-9.2.2 an unsupported feature bit must never be settable, and only the application knows what it supports.
 
-The application API is `DccApplicationDecoderCv_read`, `_write` and `_is_locked`, wired by `DccConfig_initialize()` onto the storage module, so the decoder lock, the CV 29 filter and the CV 8 reset apply to application writes too. One difference from a write that arrives by DCC packet: the application path refuses every write while the decoder is locked, including the CV 8 reset. Both paths refresh the address cache; for storage written outside the library, call `DccConfig_reload_address_cvs()`.
+The application API is `DccApplicationDecoderCv_read`, `_write` and `_is_locked`, wired by `DccConfig_initialize()` onto the storage module, so the decoder lock, the CV 29 filter and the CV 8 reset apply to application writes too. It behaves exactly like a write arriving by DCC packet: the decoder lock applies with its CV 15/16 and CV 8 exceptions, so a locked decoder can be unlocked or reset through the API, and both paths refresh the address cache. For storage written outside the library, call `DccConfig_reload_address_cvs()`.
 
 ## 11. Service Mode (Decoder Side)
 
@@ -306,7 +306,7 @@ S-9.2.4 requires a decoder to stop everything when no packet addressed to it arr
 
 ## 15. Unit Testing
 
-Decoder-role tests, GoogleTest with mocked drivers, run with the rest of the suite: `cd test && make`. At generation time the whole suite is 28 binaries, 1237 tests, 0 failures, with 99.5 % line coverage.
+Decoder-role tests, GoogleTest with mocked drivers, run with the rest of the suite: `cd test && make`. At generation time the whole suite is 28 binaries, 1249 tests, 0 failures, with 99.5 % line coverage.
 
 | Test file | What it tests |
 |---|---|

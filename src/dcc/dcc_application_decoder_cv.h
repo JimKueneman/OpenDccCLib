@@ -89,18 +89,18 @@ typedef struct {
     extern bool DccApplicationDecoderCv_read(uint16_t cv_number, uint8_t *value);
 
         /**
-         * @brief Write a CV value with decoder lock enforcement.
+         * @brief Write a CV value through the storage rules.
          *
-         * @details Refuses the write while the decoder lock is engaged, then forwards to
-         * the cv_write hook. When wired by dcc_config.c the hook applies the
-         * DccCvStorage_write rules and refreshes the packet decoder's address cache.
-         * Because the lock is checked here first, a locked decoder cannot reach the
-         * storage layer's CV 15/16 and CV 8 exceptions through this function.
+         * @details Forwards to the cv_write hook. When wired by dcc_config.c the hook
+         * applies the DccCvStorage_write rules (the decoder lock with its CV 15/16 and
+         * CV 8 exceptions, the CV 29 feature filter, the indexed window) and refreshes
+         * the packet decoder's address cache, so the application path behaves exactly
+         * like a write arriving by DCC packet.
          *
          * @param cv_number CV number (1-based per NMRA convention).
          * @param value Value to write.
          *
-         * @return true if the write succeeded; false if locked, on error, or when the module is not initialized.
+         * @return true if the write succeeded; false if the storage rules refused it (for example a locked decoder), on error, or when the module is not initialized.
          */
     extern bool DccApplicationDecoderCv_write(uint16_t cv_number, uint8_t value);
 

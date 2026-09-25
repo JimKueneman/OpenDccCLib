@@ -88,31 +88,23 @@ bool DccApplicationDecoderCv_read(uint16_t cv_number, uint8_t *value) {
 }
 
     /**
-     * @brief Write a CV value with decoder lock enforcement.
+     * @brief Write a CV value through the storage rules.
      *
-     * @details Algorithm:
-     * -# Return false when uninitialized.
-     * -# Return false when the is_locked hook reports the lock engaged (this happens
-     *    before the storage layer's own CV 15/16 and CV 8 exceptions).
-     * -# Forward to the cv_write hook; dcc_config.c wires it to a wrapper that applies
-     *    the DccCvStorage_write rules and refreshes the packet decoder's address cache.
+     * @details Forwards to the cv_write hook without a lock check of its own, so the
+     * storage layer decides: it refuses ordinary CVs while the decoder is locked but
+     * still accepts CV 15/16 (the unlock) and the CV 8 factory-reset trigger, exactly
+     * as a write arriving by DCC packet.
      *
      * @verbatim
-     * @param cv_number  CV number (1-based per NMRA convention).
-     * @param value      Value to write.
+     * @param cv_number CV number (1-based per NMRA convention).
+     * @param value Value to write.
      * @endverbatim
      *
-     * @return true if the write succeeded; false if locked, on error, or when the module is not initialized.
+     * @return true if the write succeeded; false if the storage rules refused it, on error, or when the module is not initialized.
      */
 bool DccApplicationDecoderCv_write(uint16_t cv_number, uint8_t value) {
 
     if (!_interface) {
-
-        return false;
-
-    }
-
-    if (_interface->is_locked()) {
 
         return false;
 
