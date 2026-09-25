@@ -29,14 +29,14 @@ OpenDccCLib is a portable C library that implements the protocol: bit encoding, 
 
 ### 2.2 Signal Pins
 
-All signal pins are on port B; they come from the project's SysConfig file.
+The pin assignments come from the project's SysConfig file.
 
 | LaunchPad pin | Function |
 |---|---|
 | PB1 | Main-track DCC signal out (`DCC_SIGNAL`); to the H-bridge input, or to decoder PB1 |
 | PB4 | Service-track DCC signal out; to decoder PB4 |
 | PB12 | ACK current-sense in; from decoder PB12 |
-| PB17 | Track-select out; to decoder PB17 |
+| PB17 | Track-select out; to decoder PB17. Configured, but the firmware never switches it: it stays at its reset level, which selects the main track on the decoder |
 | PB2 | DCC mirror out (scope aid) |
 | PB3 | Debug pulse (scope aid) |
 | PA15 | ISR timing pulse (scope aid) |
@@ -75,16 +75,16 @@ command_station/
 
 ## 4. Understanding dcc_user_config.h
 
-This file tells the library which role to compile and how much memory to reserve. Every constant is mandatory and is checked at compile time.
+This file tells the library which role to compile and how much memory to reserve. Every constant except `USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US` (default 116 µs) is mandatory and is checked at compile time.
 
 ```
 #define DCC_COMPILE_COMMAND_STATION
-#define DCC_COMPILE_RAILCOM                        // cutout + receive
+#define DCC_COMPILE_RAILCOM                        // cutout + receive; comment out to strip all RailCom code
 #define DCC_COMPILE_SERVICE_MODE_DIRECT            // and PAGED, REGISTER, ADDRESS
 #define DCC_COMPILE_SERVICE_MODE_TASK_DIRECT       // ... plus the TASK_* orchestrators and TASK_DETECT
 
 #define USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT     24   // concurrent packets
-#define USER_DEFINED_DCC_PREAMBLE_BITS_OPS        18   // >= 16 with RailCom
+#define USER_DEFINED_DCC_PREAMBLE_BITS_OPS        18   // >= 16 with RailCom; 18 or more avoids a #warning
 #define USER_DEFINED_DCC_MAX_LOCOS                10   // demo loco table
 #define USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH      4
 #define USER_DEFINED_DCC_SERVICE_MODE_RETRIES      3
@@ -94,7 +94,7 @@ This file tells the library which role to compile and how much memory to reserve
 #define USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US 116
 ```
 
-> The service-mode flags require `DCC_COMPILE_COMMAND_STATION`; the compiler stops with a `#error` otherwise.
+> The four primitive flags (`DCC_COMPILE_SERVICE_MODE_DIRECT`, `_PAGED`, `_REGISTER`, `_ADDRESS`) require `DCC_COMPILE_COMMAND_STATION`; the compiler stops with a `#error` otherwise. The `TASK_*` flags are not cross-checked. `DCC_COMPILE_RAILCOM` needs a role flag.
 
 ## 5. Building and Flashing
 
@@ -118,13 +118,13 @@ while (1) {
 
 ## 6. Using the UART Command Interface
 
-Type `HELP` for the full list. Every command answers `OK: ...` or `ERR: ...`.
+Type `HELP` for the full list. Commands answer `OK: ...` or `ERR: ...`; `STATUS` prints a `STATUS:` line and `HELP` prints the list. A service-mode operation answers `OK:` at once and `SVC RESULT: ...` (or `SVC DETECT: ...`) when it finishes.
 
 | Command | Description |
 |---|---|
 | `POWER ON|OFF` | Track power |
-| `SPEED <addr> <speed> <FWD|REV> [14|28|128]` | Speed and direction; auto-refreshed (sent 3 times at once, then kept alive about every 0.4 s) |
-| `ESTOP [addr]` | Emergency stop, one loco or broadcast |
+| `SPEED <addr> <speed> <FWD|REV> [14|28|128]` | Speed and direction. With `REFRESH ON` (the default) the packet is auto-refreshed: three prompt sends on consecutive packet cycles, then a keep-alive every 60 packet cycles and never later than 120. With `REFRESH OFF` it is a one-shot sent twice |
+| `ESTOP [addr]` | Emergency stop, one loco or broadcast. An addressed ESTOP replaces that loco's speed refresh slot with a one-shot, so issue `SPEED` again afterwards |
 | `STOP` | Broadcast controlled stop |
 | `FUNC <addr> <0-68> <ON|OFF>` | Function on or off; auto-refreshed the same way |
 | `ACC <board> <pair> <ON|OFF>` / `ACCE <addr> <aspect>` / `NOP <addr> [E]` | Basic accessory, extended accessory, accessory NOP |
@@ -134,7 +134,7 @@ Type `HELP` for the full list. Every command answers `OK: ...` or `ERR: ...`.
 | `BSS`, `BSL`, `ANALOG` | Binary state short and long, analog function |
 | `SYSTIME <ms>` / `MTIME ...` / `MDATE <d> <m> <y>` | Broadcast time and date |
 | `SVC ENTER` / `SVC EXIT` / `SVC DETECT` | Service mode on the programming track |
-| `SVC DIRECT|PAGED|REG|ADDR ...` | Read, write and verify CVs in each mode |
+| `SVC DIRECT WRITE|READ|BITW|BITR ...` / `SVC PAGED WRITE|READ ...` / `SVC REG WRITE|READ [MOBILE|ACC]|RESET` / `SVC ADDR WRITE|READ` | Read and write CVs in each mode; `HELP` lists the arguments |
 | `REFRESH ON|OFF` / `CLEAR` / `RESET` | Auto-refresh policy, clear the scheduler, broadcast reset |
 | `STATUS` / `HELP` | Status line, command list |
 
@@ -157,7 +157,7 @@ A one-shot command such as `CV WRITE` goes out the number of times the standard 
 
 ## 7. What's Next
 
-- **RailCom detection.** Wire a RailCom detector's UART output to a 250 kbaud UART, fill a `dcc_railcom_hw_t` and point `main_track.railcom` at it. The library runs the cutout, gates the receiver to the reply windows and delivers decoded datagrams to `on_railcom_datagram_result`. The receive hooks in `dcc_config.h` state the gating contract.
-- **Current-sense protection.** Set `main_track.current_sense_read` to an ADC or comparator read.
+- **RailCom detection.** Wire a RailCom detector's UART output to a 250 kbaud UART, fill a `dcc_railcom_hw_t`, point `main_track.railcom` at it and provide `railcom_timer_start/stop`. The library runs the cutout, gates the receiver to the reply windows and delivers decoded datagrams to `on_railcom_datagram_result`, tagged with the loco address of the preceding packet (datagrams after accessory, broadcast or idle packets carry address 0). The receive hooks in `dcc_config.h` state the gating contract.
+- **Current-sense protection.** The library samples only `service_track.current_sense_read`, for ACK detection. Main-track overcurrent protection belongs to your application or the H-bridge board; `main_track.current_sense_read` is not read by the library.
 - **Another MCU.** Copy the project and rewrite the two driver files for your timers and GPIO. The library never touches hardware directly.
 - **Developer Guide.** The companion Developer Guide, Command Station, explains the config struct, scheduler, bit encoder, service mode and RailCom in depth, and the hardware-in-the-loop bench under `test/compliance/` that proves the wire.
