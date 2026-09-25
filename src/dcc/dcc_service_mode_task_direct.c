@@ -190,7 +190,7 @@ static void _advance_read_cv_verify(void) {
 static void _advance_write_cv(void) {
 
     _context.current_step++;
-    _report_progress(DCC_TASK_PHASE_WRITE, 8);
+    _report_progress(DCC_TASK_PHASE_WRITE, 2);
     _context.state = DCC_TASK_DIRECT_STATE_WRITE_CV_VERIFY;
 
     if (!_context.interface->verify_byte(_context.cv_number, _context.value)) {
@@ -210,7 +210,7 @@ static void _advance_write_cv(void) {
 static void _advance_write_cv_verify(void) {
 
     _context.current_step++;
-    _report_progress(DCC_TASK_PHASE_VERIFY, 8);
+    _report_progress(DCC_TASK_PHASE_VERIFY, 2);
 
     dcc_service_mode_result_enum result = _context.ack_result ? DCC_SERVICE_MODE_SUCCESS : DCC_SERVICE_MODE_VERIFY_FAIL;
     _complete(result, _context.value);

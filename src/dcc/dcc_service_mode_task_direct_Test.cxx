@@ -469,6 +469,16 @@ TEST(DccServiceModeTaskDirect, read_cv_progress_uses_verify_phase_last) {
 
 }
 
+TEST(DccServiceModeTaskDirect, write_cv_progress_estimated_steps_is_2) {
+
+    setup();
+    EXPECT_TRUE(DccServiceModeTaskDirect_write_cv(1, 0x55, mock_on_complete, mock_on_progress));
+    DccServiceModeTaskDirect_on_primitive_complete(DCC_SERVICE_MODE_SUCCESS);   /* write done -> verify starts */
+
+    EXPECT_EQ(on_progress_estimated_steps, (uint8_t)2);
+
+}
+
 TEST(DccServiceModeTaskDirect, read_cv_progress_estimated_steps_is_9) {
 
     setup();
