@@ -90,6 +90,9 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_application_command_station_service_track.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -98,6 +101,94 @@ $(function(){ initResizable(false); });
 <a href="#details">More...</a></p>
 
 <p><a href="dcc__application__command__station__service__track_8h_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structinterface__dcc__application__command__station__service__track__t.html">interface_dcc_application_command_station_service_track_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface struct — wired by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a> during initialization.  <a href="structinterface__dcc__application__command__station__service__track__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a18720fa521139b51268f0e432b0ff662" id="r_a18720fa521139b51268f0e432b0ff662"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a18720fa521139b51268f0e432b0ff662">DccApplicationCommandStationServiceTrack_initialize</a> (const <a class="el" href="structinterface__dcc__application__command__station__service__track__t.html">interface_dcc_application_command_station_service_track_t</a> *interface)</td></tr>
+<tr class="memdesc:a18720fa521139b51268f0e432b0ff662"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the command station service track application module.  <br /></td></tr>
+<tr class="separator:a18720fa521139b51268f0e432b0ff662"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acea250de34b17321d10a2fb5579633ba" id="r_acea250de34b17321d10a2fb5579633ba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acea250de34b17321d10a2fb5579633ba">DccApplicationCommandStationServiceTrack_power_on</a> (void)</td></tr>
+<tr class="memdesc:acea250de34b17321d10a2fb5579633ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable service track power output and start DCC signal generation.  <br /></td></tr>
+<tr class="separator:acea250de34b17321d10a2fb5579633ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a873568c1cdc817006a39699d3582adae" id="r_a873568c1cdc817006a39699d3582adae"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a873568c1cdc817006a39699d3582adae">DccApplicationCommandStationServiceTrack_power_off</a> (void)</td></tr>
+<tr class="memdesc:a873568c1cdc817006a39699d3582adae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disable service track power output and stop DCC signal generation.  <br /></td></tr>
+<tr class="separator:a873568c1cdc817006a39699d3582adae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a345eea168dedc19965b5a5613379cb91" id="r_a345eea168dedc19965b5a5613379cb91"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a345eea168dedc19965b5a5613379cb91">DccApplicationCommandStationServiceTrack_enter_service_mode</a> (void)</td></tr>
+<tr class="memdesc:a345eea168dedc19965b5a5613379cb91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enter service mode on the service track.  <br /></td></tr>
+<tr class="separator:a345eea168dedc19965b5a5613379cb91"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1547703784a71441f4638b04142e9949" id="r_a1547703784a71441f4638b04142e9949"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1547703784a71441f4638b04142e9949">DccApplicationCommandStationServiceTrack_exit_service_mode</a> (void)</td></tr>
+<tr class="memdesc:a1547703784a71441f4638b04142e9949"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exit service mode, stop the signal and remove track power.  <br /></td></tr>
+<tr class="separator:a1547703784a71441f4638b04142e9949"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2dc630b95226d754aa83d2a69a39437e" id="r_a2dc630b95226d754aa83d2a69a39437e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2dc630b95226d754aa83d2a69a39437e">DccApplicationCommandStationServiceTrack_is_service_mode_active</a> (void)</td></tr>
+<tr class="memdesc:a2dc630b95226d754aa83d2a69a39437e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if service mode is currently active.  <br /></td></tr>
+<tr class="separator:a2dc630b95226d754aa83d2a69a39437e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abdb402ee24db276dc6b0e9405a93ccd2" id="r_abdb402ee24db276dc6b0e9405a93ccd2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abdb402ee24db276dc6b0e9405a93ccd2">DccApplicationCommandStationServiceTrack_direct_read_cv</a> (uint16_t cv_number, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:abdb402ee24db276dc6b0e9405a93ccd2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Direct mode: read a CV byte (8 bit-verifies, then a confirming byte verify).  <br /></td></tr>
+<tr class="separator:abdb402ee24db276dc6b0e9405a93ccd2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4b6b87663fd3d34ca47ebcef73073c9b" id="r_a4b6b87663fd3d34ca47ebcef73073c9b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4b6b87663fd3d34ca47ebcef73073c9b">DccApplicationCommandStationServiceTrack_direct_write_cv</a> (uint16_t cv_number, uint8_t value, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a4b6b87663fd3d34ca47ebcef73073c9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Direct mode: write a CV byte, then verify it.  <br /></td></tr>
+<tr class="separator:a4b6b87663fd3d34ca47ebcef73073c9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07a934f29b929e13fcb0630a17c1effb" id="r_a07a934f29b929e13fcb0630a17c1effb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a07a934f29b929e13fcb0630a17c1effb">DccApplicationCommandStationServiceTrack_direct_read_bit</a> (uint16_t cv_number, uint8_t bit_position, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a07a934f29b929e13fcb0630a17c1effb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Direct mode: read a single CV bit.  <br /></td></tr>
+<tr class="separator:a07a934f29b929e13fcb0630a17c1effb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acee7a321d0c96edffdeb64fd4a8a2971" id="r_acee7a321d0c96edffdeb64fd4a8a2971"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acee7a321d0c96edffdeb64fd4a8a2971">DccApplicationCommandStationServiceTrack_direct_write_bit</a> (uint16_t cv_number, uint8_t bit_position, bool bit_value, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:acee7a321d0c96edffdeb64fd4a8a2971"><td class="mdescLeft">&#160;</td><td class="mdescRight">Direct mode: write a single CV bit, then verify it.  <br /></td></tr>
+<tr class="separator:acee7a321d0c96edffdeb64fd4a8a2971"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a041be9a7d453acfc00e0ad40f7519c2d" id="r_a041be9a7d453acfc00e0ad40f7519c2d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a041be9a7d453acfc00e0ad40f7519c2d">DccApplicationCommandStationServiceTrack_paged_read_cv</a> (uint16_t cv_number, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a041be9a7d453acfc00e0ad40f7519c2d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Paged mode: read a CV byte by scanning verifies 0-255 until acknowledged.  <br /></td></tr>
+<tr class="separator:a041be9a7d453acfc00e0ad40f7519c2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab9304b8eb88a3e19b432a0f047bb3cf0" id="r_ab9304b8eb88a3e19b432a0f047bb3cf0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab9304b8eb88a3e19b432a0f047bb3cf0">DccApplicationCommandStationServiceTrack_paged_write_cv</a> (uint16_t cv_number, uint8_t value, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:ab9304b8eb88a3e19b432a0f047bb3cf0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Paged mode: write a CV byte, then verify it.  <br /></td></tr>
+<tr class="separator:ab9304b8eb88a3e19b432a0f047bb3cf0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43d4562f92e66aa004fd8fe6f4e8ba32" id="r_a43d4562f92e66aa004fd8fe6f4e8ba32"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a43d4562f92e66aa004fd8fe6f4e8ba32">DccApplicationCommandStationServiceTrack_paged_read_bit</a> (uint16_t cv_number, uint8_t bit_position, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a43d4562f92e66aa004fd8fe6f4e8ba32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Paged mode: read a single CV bit.  <br /></td></tr>
+<tr class="separator:a43d4562f92e66aa004fd8fe6f4e8ba32"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96f4f259e1d2218e6b9bbdc92415d178" id="r_a96f4f259e1d2218e6b9bbdc92415d178"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a96f4f259e1d2218e6b9bbdc92415d178">DccApplicationCommandStationServiceTrack_paged_write_bit</a> (uint16_t cv_number, uint8_t bit_position, bool bit_value, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a96f4f259e1d2218e6b9bbdc92415d178"><td class="mdescLeft">&#160;</td><td class="mdescRight">Paged mode: write a single CV bit, then verify it.  <br /></td></tr>
+<tr class="separator:a96f4f259e1d2218e6b9bbdc92415d178"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af907f1f23d1e3ec7b2b7f4631c367799" id="r_af907f1f23d1e3ec7b2b7f4631c367799"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af907f1f23d1e3ec7b2b7f4631c367799">DccApplicationCommandStationServiceTrack_register_read_cv</a> (uint16_t cv_number, <a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a> decoder_type, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:af907f1f23d1e3ec7b2b7f4631c367799"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register mode: read a CV byte by scanning register verifies 0-255 until acknowledged.  <br /></td></tr>
+<tr class="separator:af907f1f23d1e3ec7b2b7f4631c367799"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a0ed475f144cf14596d2bea71bfb02c" id="r_a9a0ed475f144cf14596d2bea71bfb02c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9a0ed475f144cf14596d2bea71bfb02c">DccApplicationCommandStationServiceTrack_register_write_cv</a> (uint16_t cv_number, uint8_t value, <a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a> decoder_type, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a9a0ed475f144cf14596d2bea71bfb02c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register mode: write a CV byte, then verify it.  <br /></td></tr>
+<tr class="separator:a9a0ed475f144cf14596d2bea71bfb02c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a308d775506a8dad6faa621ab8ac63cba" id="r_a308d775506a8dad6faa621ab8ac63cba"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a308d775506a8dad6faa621ab8ac63cba">DccApplicationCommandStationServiceTrack_register_read_bit</a> (uint16_t cv_number, uint8_t bit_position, <a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a> decoder_type, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a308d775506a8dad6faa621ab8ac63cba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register mode: read a single CV bit.  <br /></td></tr>
+<tr class="separator:a308d775506a8dad6faa621ab8ac63cba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a97798241f93a24c18bc2dccea33b3be4" id="r_a97798241f93a24c18bc2dccea33b3be4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a97798241f93a24c18bc2dccea33b3be4">DccApplicationCommandStationServiceTrack_register_write_bit</a> (uint16_t cv_number, uint8_t bit_position, bool bit_value, <a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a> decoder_type, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a97798241f93a24c18bc2dccea33b3be4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register mode: write a single CV bit, then verify it.  <br /></td></tr>
+<tr class="separator:a97798241f93a24c18bc2dccea33b3be4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1d435cbc06bf0f660dbf7487d66278e6" id="r_a1d435cbc06bf0f660dbf7487d66278e6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1d435cbc06bf0f660dbf7487d66278e6">DccApplicationCommandStationServiceTrack_register_factory_reset</a> (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete)</td></tr>
+<tr class="memdesc:a1d435cbc06bf0f660dbf7487d66278e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register mode: decoder factory reset (write 8 to register 8).  <br /></td></tr>
+<tr class="separator:a1d435cbc06bf0f660dbf7487d66278e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c56e905217b9fad33016c22cb2d4cf0" id="r_a0c56e905217b9fad33016c22cb2d4cf0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0c56e905217b9fad33016c22cb2d4cf0">DccApplicationCommandStationServiceTrack_register_verify_value</a> (uint16_t cv_number, uint8_t value, <a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a> decoder_type, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a0c56e905217b9fad33016c22cb2d4cf0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register mode: verify a single register value (one verify operation).  <br /></td></tr>
+<tr class="separator:a0c56e905217b9fad33016c22cb2d4cf0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e5aca443fe61efbca8efb68811bc3cc" id="r_a8e5aca443fe61efbca8efb68811bc3cc"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8e5aca443fe61efbca8efb68811bc3cc">DccApplicationCommandStationServiceTrack_address_read</a> (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a8e5aca443fe61efbca8efb68811bc3cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Address-only mode: read CV#1 (short address) by scanning verifies 0-127 until acknowledged.  <br /></td></tr>
+<tr class="separator:a8e5aca443fe61efbca8efb68811bc3cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad44426d906cdf21a48b8ca3c0b7079f0" id="r_ad44426d906cdf21a48b8ca3c0b7079f0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad44426d906cdf21a48b8ca3c0b7079f0">DccApplicationCommandStationServiceTrack_address_write</a> (uint8_t address, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:ad44426d906cdf21a48b8ca3c0b7079f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Address-only mode: write CV#1 (short address), then verify it.  <br /></td></tr>
+<tr class="separator:ad44426d906cdf21a48b8ca3c0b7079f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa8fe90f2cc329a49a16a9e46a2352574" id="r_aa8fe90f2cc329a49a16a9e46a2352574"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa8fe90f2cc329a49a16a9e46a2352574">DccApplicationCommandStationServiceTrack_address_verify</a> (uint8_t address, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:aa8fe90f2cc329a49a16a9e46a2352574"><td class="mdescLeft">&#160;</td><td class="mdescRight">Address-only mode: verify CV#1 against a value (one verify operation).  <br /></td></tr>
+<tr class="separator:aa8fe90f2cc329a49a16a9e46a2352574"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0e16db0097735542a3d1ba4049ba70b1" id="r_a0e16db0097735542a3d1ba4049ba70b1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0e16db0097735542a3d1ba4049ba70b1">DccApplicationCommandStationServiceTrack_address_read_bit</a> (uint8_t bit_position, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a0e16db0097735542a3d1ba4049ba70b1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Address-only mode: read a single bit of CV#1.  <br /></td></tr>
+<tr class="separator:a0e16db0097735542a3d1ba4049ba70b1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5e3b562350619f242c5b15ee716d90e2" id="r_a5e3b562350619f242c5b15ee716d90e2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5e3b562350619f242c5b15ee716d90e2">DccApplicationCommandStationServiceTrack_address_write_bit</a> (uint8_t bit_position, bool bit_value, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a5e3b562350619f242c5b15ee716d90e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Address-only mode: write a single bit of CV#1, then verify it.  <br /></td></tr>
+<tr class="separator:a5e3b562350619f242c5b15ee716d90e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48bc1433e4f55bcfa3637a7af79c23e0" id="r_a48bc1433e4f55bcfa3637a7af79c23e0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a48bc1433e4f55bcfa3637a7af79c23e0">DccApplicationCommandStationServiceTrack_detect_mode</a> (<a class="el" href="dcc__types_8h.html#a54f2a3fff93ecacc132165a9981c23d4">dcc_service_mode_task_on_detect_callback_t</a> on_detect)</td></tr>
+<tr class="memdesc:a48bc1433e4f55bcfa3637a7af79c23e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Probe the decoder for every supported service mode.  <br /></td></tr>
+<tr class="separator:a48bc1433e4f55bcfa3637a7af79c23e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Application-layer API for command station service track (programming) operations. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -112,7 +203,1332 @@ $(function(){ initResizable(false); });
 <p>This module owns the command-station service-track application layer. It delegates timer, encoder, and programming operations through an interface struct wired at initialization time by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>. Service mode must be entered before any programming operation and exited afterward; the module manages power sequencing automatically on enter/exit.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="a18720fa521139b51268f0e432b0ff662" name="a18720fa521139b51268f0e432b0ff662"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a18720fa521139b51268f0e432b0ff662">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccApplicationCommandStationServiceTrack_initialize </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__application__command__station__service__track__t.html">interface_dcc_application_command_station_service_track_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initialize the command station service track application module. </p>
+<p>Every other function in this module is a no-op (or returns false) until this has been called.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">interface</td><td>Pointer to populated <a class="el" href="structinterface__dcc__application__command__station__service__track__t.html">interface_dcc_application_command_station_service_track_t</a> struct (wired by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>).</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Stores the interface pointer. Every other function in this module is a no-op (or returns false) until this has been called.</p>
+<pre class="fragment">* @param interface Pointer to populated interface_dcc_application_command_station_service_track_t struct (wired by dcc_config.c).
+* </pre> 
+</div>
+</div>
+<a id="acea250de34b17321d10a2fb5579633ba" name="acea250de34b17321d10a2fb5579633ba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acea250de34b17321d10a2fb5579633ba">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_power_on()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccApplicationCommandStationServiceTrack_power_on </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Enable service track power output and start DCC signal generation. </p>
+<p>Applies track power first, then starts the timer at the DCC one-bit half period and starts the bit encoder. Not needed before enter_service_mode(), which performs the same sequence itself.</p>
+<p>Algorithm:</p><ol type="1">
+<li>Return if the module has not been initialized</li>
+<li>Apply track power (track_power_set(true)) first</li>
+<li>Start the timer at DCC_ONE_BIT_HALF_PERIOD_US</li>
+<li>Start the bit encoder </li>
+</ol>
+
+</div>
+</div>
+<a id="a873568c1cdc817006a39699d3582adae" name="a873568c1cdc817006a39699d3582adae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a873568c1cdc817006a39699d3582adae">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_power_off()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccApplicationCommandStationServiceTrack_power_off </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Disable service track power output and stop DCC signal generation. </p>
+<p>Stops the bit encoder and the timer, then removes track power last.</p>
+<p>Algorithm:</p><ol type="1">
+<li>Return if the module has not been initialized</li>
+<li>Stop the bit encoder</li>
+<li>Stop the timer</li>
+<li>Remove track power (track_power_set(false)) last </li>
+</ol>
+
+</div>
+</div>
+<a id="a345eea168dedc19965b5a5613379cb91" name="a345eea168dedc19965b5a5613379cb91"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a345eea168dedc19965b5a5613379cb91">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_enter_service_mode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_enter_service_mode </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Enter service mode on the service track. </p>
+<p>Applies track power, starts the timer and encoder, then enters the service-mode core; power_on() is not needed first.</p>
+<dl class="section return"><dt>Returns</dt><dd>true if service mode was activated; false if the module is uninitialized or the core refused entry.</dd></dl>
+<p>Algorithm:</p><ol type="1">
+<li>Return false if the module has not been initialized</li>
+<li>Apply track power (track_power_set(true)) first</li>
+<li>Start the timer at DCC_ONE_BIT_HALF_PERIOD_US and start the bit encoder</li>
+<li>Enter the service-mode core and return its verdict</li>
+</ol>
+<dl class="section return"><dt>Returns</dt><dd>true if service mode was activated; false if the module is uninitialized or the core refused entry. </dd></dl>
+
+</div>
+</div>
+<a id="a1547703784a71441f4638b04142e9949" name="a1547703784a71441f4638b04142e9949"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1547703784a71441f4638b04142e9949">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_exit_service_mode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccApplicationCommandStationServiceTrack_exit_service_mode </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Exit service mode, stop the signal and remove track power. </p>
+<p>Leaves the service-mode core first, then stops the encoder and the timer and removes track power last.</p>
+<p>Algorithm:</p><ol type="1">
+<li>Return if the module has not been initialized</li>
+<li>Leave the service-mode core</li>
+<li>Stop the bit encoder, then the timer</li>
+<li>Remove track power (track_power_set(false)) last </li>
+</ol>
+
+</div>
+</div>
+<a id="a2dc630b95226d754aa83d2a69a39437e" name="a2dc630b95226d754aa83d2a69a39437e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2dc630b95226d754aa83d2a69a39437e">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_is_service_mode_active()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_is_service_mode_active </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Check if service mode is currently active. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if service mode is active; false otherwise, including when the module has not been initialized.</dd></dl>
+<p>Forwards to the service-mode core through the interface.</p>
+<dl class="section return"><dt>Returns</dt><dd>true if service mode is active; false otherwise, including when the module has not been initialized. </dd></dl>
+
+</div>
+</div>
+<a id="abdb402ee24db276dc6b0e9405a93ccd2" name="abdb402ee24db276dc6b0e9405a93ccd2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abdb402ee24db276dc6b0e9405a93ccd2">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_direct_read_cv()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_direct_read_cv </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Direct mode: read a CV byte (8 bit-verifies, then a confirming byte verify). </p>
+<p>Starts the task and returns at once; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number (1-1024). </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the CV byte read. </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each of the 9 steps; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or cv_number is out of range.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param cv_number CV number (1-1024).
+* @param on_complete Completion callback; value = the CV byte read.
+* @param on_progress Progress callback, called after each of the 9 steps; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or cv_number is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="a4b6b87663fd3d34ca47ebcef73073c9b" name="a4b6b87663fd3d34ca47ebcef73073c9b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4b6b87663fd3d34ca47ebcef73073c9b">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_direct_write_cv()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_direct_write_cv </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Direct mode: write a CV byte, then verify it. </p>
+<p>Two operations, write then verify; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number (1-1024). </td></tr>
+    <tr><td class="paramname">value</td><td>Byte value to write. </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the byte verified. </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or cv_number is out of range.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param cv_number CV number (1-1024).
+* @param value Byte value to write.
+* @param on_complete Completion callback; value = the byte verified.
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or cv_number is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="a07a934f29b929e13fcb0630a17c1effb" name="a07a934f29b929e13fcb0630a17c1effb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a07a934f29b929e13fcb0630a17c1effb">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_direct_read_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_direct_read_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Direct mode: read a single CV bit. </p>
+<p>Verifies the bit for 1, then for 0 if that is not acknowledged; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number (1-1024). </td></tr>
+    <tr><td class="paramname">bit_position</td><td>Bit position within the CV byte (0-7). </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the bit read (1 or 0). </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>); not used by this task, may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param cv_number CV number (1-1024).
+* @param bit_position Bit position within the CV byte (0-7).
+* @param on_complete Completion callback; value = the bit read (1 or 0).
+* @param on_progress Progress callback; not used by this task, may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="acee7a321d0c96edffdeb64fd4a8a2971" name="acee7a321d0c96edffdeb64fd4a8a2971"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acee7a321d0c96edffdeb64fd4a8a2971">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_direct_write_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_direct_write_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>bit_value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Direct mode: write a single CV bit, then verify it. </p>
+<p>Two operations, write-bit then verify-bit; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number (1-1024). </td></tr>
+    <tr><td class="paramname">bit_position</td><td>Bit position within the CV byte (0-7). </td></tr>
+    <tr><td class="paramname">bit_value</td><td>Bit value to write (true = 1, false = 0). </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the bit value verified (0 or 1). </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param cv_number CV number (1-1024).
+* @param bit_position Bit position within the CV byte (0-7).
+* @param bit_value Bit value to write (true = 1, false = 0).
+* @param on_complete Completion callback; value = the bit value verified (0 or 1).
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="a041be9a7d453acfc00e0ad40f7519c2d" name="a041be9a7d453acfc00e0ad40f7519c2d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a041be9a7d453acfc00e0ad40f7519c2d">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_paged_read_cv()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_paged_read_cv </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Paged mode: read a CV byte by scanning verifies 0-255 until acknowledged. </p>
+<p>Starts the scan and returns at once; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number (1-1024). </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the CV byte found. </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or cv_number is out of range.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param cv_number CV number (1-1024).
+* @param on_complete Completion callback; value = the CV byte found.
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or cv_number is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="ab9304b8eb88a3e19b432a0f047bb3cf0" name="ab9304b8eb88a3e19b432a0f047bb3cf0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab9304b8eb88a3e19b432a0f047bb3cf0">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_paged_write_cv()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_paged_write_cv </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Paged mode: write a CV byte, then verify it. </p>
+<p>Two operations, write then targeted verify; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number (1-1024). </td></tr>
+    <tr><td class="paramname">value</td><td>Byte value to write. </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the byte verified. </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or cv_number is out of range.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param cv_number CV number (1-1024).
+* @param value Byte value to write.
+* @param on_complete Completion callback; value = the byte verified.
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or cv_number is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="a43d4562f92e66aa004fd8fe6f4e8ba32" name="a43d4562f92e66aa004fd8fe6f4e8ba32"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a43d4562f92e66aa004fd8fe6f4e8ba32">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_paged_read_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_paged_read_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Paged mode: read a single CV bit. </p>
+<p>Reads the full byte by scanning and extracts the bit; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number (1-1024). </td></tr>
+    <tr><td class="paramname">bit_position</td><td>Bit position within the CV byte (0-7). </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the bit read (0 or 1). </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param cv_number CV number (1-1024).
+* @param bit_position Bit position within the CV byte (0-7).
+* @param on_complete Completion callback; value = the bit read (0 or 1).
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="a96f4f259e1d2218e6b9bbdc92415d178" name="a96f4f259e1d2218e6b9bbdc92415d178"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a96f4f259e1d2218e6b9bbdc92415d178">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_paged_write_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_paged_write_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>bit_value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Paged mode: write a single CV bit, then verify it. </p>
+<p>Read-modify-write of the whole byte; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number (1-1024). </td></tr>
+    <tr><td class="paramname">bit_position</td><td>Bit position within the CV byte (0-7). </td></tr>
+    <tr><td class="paramname">bit_value</td><td>Bit value to write (true = 1, false = 0). </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the bit value verified (0 or 1). </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param cv_number CV number (1-1024).
+* @param bit_position Bit position within the CV byte (0-7).
+* @param bit_value Bit value to write (true = 1, false = 0).
+* @param on_complete Completion callback; value = the bit value verified (0 or 1).
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="af907f1f23d1e3ec7b2b7f4631c367799" name="af907f1f23d1e3ec7b2b7f4631c367799"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af907f1f23d1e3ec7b2b7f4631c367799">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_register_read_cv()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_register_read_cv </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a></td>          <td class="paramname"><span class="paramname"><em>decoder_type</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Register mode: read a CV byte by scanning register verifies 0-255 until acknowledged. </p>
+<p>The decoder type is given per call because it selects the CV-to-register map; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number, mapped to a physical register for decoder_type. </td></tr>
+    <tr><td class="paramname">decoder_type</td><td>Mobile or accessory, per <a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a>; selects the CV-to-register map. </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the CV byte found. </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or the CV is not accessible in register mode.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param cv_number CV number, mapped to a physical register for decoder_type.
+* @param decoder_type Mobile or accessory (dcc_decoder_type_enum); selects the CV-to-register map.
+* @param on_complete Completion callback; value = the CV byte found.
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or the CV is not accessible in register mode. </dd></dl>
+
+</div>
+</div>
+<a id="a9a0ed475f144cf14596d2bea71bfb02c" name="a9a0ed475f144cf14596d2bea71bfb02c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9a0ed475f144cf14596d2bea71bfb02c">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_register_write_cv()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_register_write_cv </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a></td>          <td class="paramname"><span class="paramname"><em>decoder_type</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Register mode: write a CV byte, then verify it. </p>
+<p>Two operations, write then verify; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number, mapped to a physical register for decoder_type. </td></tr>
+    <tr><td class="paramname">value</td><td>Byte value to write. </td></tr>
+    <tr><td class="paramname">decoder_type</td><td>Mobile or accessory, per <a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a>; selects the CV-to-register map. </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the byte verified. </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or the CV is not accessible in register mode.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param cv_number CV number, mapped to a physical register for decoder_type.
+* @param value Byte value to write.
+* @param decoder_type Mobile or accessory (dcc_decoder_type_enum); selects the CV-to-register map.
+* @param on_complete Completion callback; value = the byte verified.
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or the CV is not accessible in register mode. </dd></dl>
+
+</div>
+</div>
+<a id="a308d775506a8dad6faa621ab8ac63cba" name="a308d775506a8dad6faa621ab8ac63cba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a308d775506a8dad6faa621ab8ac63cba">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_register_read_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_register_read_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a></td>          <td class="paramname"><span class="paramname"><em>decoder_type</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Register mode: read a single CV bit. </p>
+<p>Reads the full byte by scanning and extracts the bit; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number, mapped to a physical register for decoder_type. </td></tr>
+    <tr><td class="paramname">bit_position</td><td>Bit position within the CV byte (0-7). </td></tr>
+    <tr><td class="paramname">decoder_type</td><td>Mobile or accessory, per <a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a>; selects the CV-to-register map. </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the bit read (0 or 1). </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param cv_number CV number, mapped to a physical register for decoder_type.
+* @param bit_position Bit position within the CV byte (0-7).
+* @param decoder_type Mobile or accessory (dcc_decoder_type_enum); selects the CV-to-register map.
+* @param on_complete Completion callback; value = the bit read (0 or 1).
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="a97798241f93a24c18bc2dccea33b3be4" name="a97798241f93a24c18bc2dccea33b3be4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a97798241f93a24c18bc2dccea33b3be4">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_register_write_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_register_write_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>bit_value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a></td>          <td class="paramname"><span class="paramname"><em>decoder_type</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Register mode: write a single CV bit, then verify it. </p>
+<p>Read-modify-write of the whole byte; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number, mapped to a physical register for decoder_type. </td></tr>
+    <tr><td class="paramname">bit_position</td><td>Bit position within the CV byte (0-7). </td></tr>
+    <tr><td class="paramname">bit_value</td><td>Bit value to write (true = 1, false = 0). </td></tr>
+    <tr><td class="paramname">decoder_type</td><td>Mobile or accessory, per <a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a>; selects the CV-to-register map. </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the bit value verified (0 or 1). </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param cv_number CV number, mapped to a physical register for decoder_type.
+* @param bit_position Bit position within the CV byte (0-7).
+* @param bit_value Bit value to write (true = 1, false = 0).
+* @param decoder_type Mobile or accessory (dcc_decoder_type_enum); selects the CV-to-register map.
+* @param on_complete Completion callback; value = the bit value verified (0 or 1).
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or a parameter is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="a1d435cbc06bf0f660dbf7487d66278e6" name="a1d435cbc06bf0f660dbf7487d66278e6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1d435cbc06bf0f660dbf7487d66278e6">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_register_factory_reset()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_register_factory_reset </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Register mode: decoder factory reset (write 8 to register 8). </p>
+<p>Applies to both mobile and accessory decoders. The acknowledgement is optional per S-9.2.3, so the result may be NO_ACK.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); the acknowledgement is optional, so the result may be NO_ACK. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, or the task layer is busy.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param on_complete Completion callback; the acknowledgement is optional, so the result may be NO_ACK.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, or the task layer is busy. </dd></dl>
+
+</div>
+</div>
+<a id="a0c56e905217b9fad33016c22cb2d4cf0" name="a0c56e905217b9fad33016c22cb2d4cf0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c56e905217b9fad33016c22cb2d4cf0">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_register_verify_value()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_register_verify_value </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a></td>          <td class="paramname"><span class="paramname"><em>decoder_type</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Register mode: verify a single register value (one verify operation). </p>
+<p>The result arrives through on_complete: SUCCESS if the value was acknowledged, VERIFY_FAIL otherwise.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number, mapped to a physical register for decoder_type. </td></tr>
+    <tr><td class="paramname">value</td><td>Expected byte value. </td></tr>
+    <tr><td class="paramname">decoder_type</td><td>Mobile or accessory, per <a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a>; selects the CV-to-register map. </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); SUCCESS if acknowledged, VERIFY_FAIL otherwise. </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or the CV is not accessible in register mode.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param cv_number CV number, mapped to a physical register for decoder_type.
+* @param value Expected byte value.
+* @param decoder_type Mobile or accessory (dcc_decoder_type_enum); selects the CV-to-register map.
+* @param on_complete Completion callback; SUCCESS if acknowledged, VERIFY_FAIL otherwise.
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or the CV is not accessible in register mode. </dd></dl>
+
+</div>
+</div>
+<a id="a8e5aca443fe61efbca8efb68811bc3cc" name="a8e5aca443fe61efbca8efb68811bc3cc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8e5aca443fe61efbca8efb68811bc3cc">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_address_read()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_address_read </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Address-only mode: read CV#1 (short address) by scanning verifies 0-127 until acknowledged. </p>
+<p>Starts the scan and returns at once; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the address found (0-127). </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, or the task layer is busy.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param on_complete Completion callback; value = the address found (0-127).
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, or the task layer is busy. </dd></dl>
+
+</div>
+</div>
+<a id="ad44426d906cdf21a48b8ca3c0b7079f0" name="ad44426d906cdf21a48b8ca3c0b7079f0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad44426d906cdf21a48b8ca3c0b7079f0">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_address_write()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_address_write </td>
+          <td>(</td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>address</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Address-only mode: write CV#1 (short address), then verify it. </p>
+<p>Two operations, write then verify; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">address</td><td>Short address to write (1-127). </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the address verified. </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or address is out of range.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param address Short address to write (1-127).
+* @param on_complete Completion callback; value = the address verified.
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or address is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="aa8fe90f2cc329a49a16a9e46a2352574" name="aa8fe90f2cc329a49a16a9e46a2352574"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa8fe90f2cc329a49a16a9e46a2352574">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_address_verify()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_address_verify </td>
+          <td>(</td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>address</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Address-only mode: verify CV#1 against a value (one verify operation). </p>
+<p>The result arrives through on_complete: SUCCESS if the address was acknowledged, VERIFY_FAIL otherwise.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">address</td><td>Expected short address (1-127). </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); SUCCESS if acknowledged, VERIFY_FAIL otherwise. </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or address is out of range.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param address Expected short address (1-127).
+* @param on_complete Completion callback; SUCCESS if acknowledged, VERIFY_FAIL otherwise.
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or address is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="a0e16db0097735542a3d1ba4049ba70b1" name="a0e16db0097735542a3d1ba4049ba70b1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0e16db0097735542a3d1ba4049ba70b1">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_address_read_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_address_read_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Address-only mode: read a single bit of CV#1. </p>
+<p>Reads the full byte by scanning and extracts the bit; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bit_position</td><td>Bit position within CV#1 (0-6; bit 7 of a short address is always 0). </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the bit read (0 or 1). </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or bit_position is out of range.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param bit_position Bit position within CV#1 (0-6; bit 7 of a short address is always 0).
+* @param on_complete Completion callback; value = the bit read (0 or 1).
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or bit_position is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="a5e3b562350619f242c5b15ee716d90e2" name="a5e3b562350619f242c5b15ee716d90e2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5e3b562350619f242c5b15ee716d90e2">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_address_write_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_address_write_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>bit_value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Address-only mode: write a single bit of CV#1, then verify it. </p>
+<p>Read-modify-write of the whole byte; the result arrives through on_complete.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bit_position</td><td>Bit position within CV#1 (0-6; bit 7 of a short address is always 0). </td></tr>
+    <tr><td class="paramname">bit_value</td><td>Bit value to write (true = 1, false = 0). </td></tr>
+    <tr><td class="paramname">on_complete</td><td>Completion callback (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a>); value = the bit value verified (0 or 1). </td></tr>
+    <tr><td class="paramname">on_progress</td><td>Progress callback (<a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>), called after each step; may be NULL. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or bit_position is out of range.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param bit_position Bit position within CV#1 (0-6; bit 7 of a short address is always 0).
+* @param bit_value Bit value to write (true = 1, false = 0).
+* @param on_complete Completion callback; value = the bit value verified (0 or 1).
+* @param on_progress Progress callback, called after each step; may be NULL.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, the task layer is busy, or bit_position is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="a48bc1433e4f55bcfa3637a7af79c23e0" name="a48bc1433e4f55bcfa3637a7af79c23e0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a48bc1433e4f55bcfa3637a7af79c23e0">&#9670;&#160;</a></span>DccApplicationCommandStationServiceTrack_detect_mode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationCommandStationServiceTrack_detect_mode </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a54f2a3fff93ecacc132165a9981c23d4">dcc_service_mode_task_on_detect_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_detect</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Probe the decoder for every supported service mode. </p>
+<p>Runs one detection probe per compiled-in mode and reports the set as a bitmask through on_detect.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">on_detect</td><td>Detection callback (<a class="el" href="dcc__types_8h.html#a54f2a3fff93ecacc132165a9981c23d4">dcc_service_mode_task_on_detect_callback_t</a>); supported_modes = bitmask of DCC_SERVICE_MODE_SUPPORTED_* flags (0 = none detected). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, or the task layer is busy.</dd></dl>
+<p>Forwards to the task layer through the interface after null-guarding the interface pointer and the task hook; the task sequences the primitive operations and reports through the callbacks.</p>
+<pre class="fragment">* @param on_detect Detection callback; supported_modes = bitmask of DCC_SERVICE_MODE_SUPPORTED_* flags (0 = none detected).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the task was started; false if the module is uninitialized, the task hook is not wired, or the task layer is busy. </dd></dl>
+
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

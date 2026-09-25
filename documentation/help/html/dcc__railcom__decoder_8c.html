@@ -90,12 +90,36 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_railcom_decoder.c File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>RailCom decoder-side transmit engine.  
 <a href="#details">More...</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a619181752069d52ca37b872e8ed49f71" id="r_a619181752069d52ca37b872e8ed49f71"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a619181752069d52ca37b872e8ed49f71">DccRailcomDecoder_initialize</a> (const <a class="el" href="structinterface__dcc__railcom__decoder__t.html">interface_dcc_railcom_decoder_t</a> *interface)</td></tr>
+<tr class="memdesc:a619181752069d52ca37b872e8ed49f71"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the RailCom decoder transmit engine.  <br /></td></tr>
+<tr class="separator:a619181752069d52ca37b872e8ed49f71"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54771b6a09406dee7f15cd84587fa822" id="r_a54771b6a09406dee7f15cd84587fa822"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a54771b6a09406dee7f15cd84587fa822">DccRailcomDecoder_set_address</a> (<a class="el" href="dcc__types_8h.html#ab9401618f9347a6ea872c16fdf06afa5">dcc_address_t</a> address, <a class="el" href="dcc__types_8h.html#a0bc29fe57c3b9a2460800b6d74ca4216">dcc_address_type_enum</a> type)</td></tr>
+<tr class="memdesc:a54771b6a09406dee7f15cd84587fa822"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cache this decoder's active address and type for the ADR datagram.  <br /></td></tr>
+<tr class="separator:a54771b6a09406dee7f15cd84587fa822"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95fe0a75a4282728db03c4f6f3562b93" id="r_a95fe0a75a4282728db03c4f6f3562b93"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a95fe0a75a4282728db03c4f6f3562b93">DccRailcomDecoder_packet_length</a> (const uint8_t *data, uint8_t count)</td></tr>
+<tr class="memdesc:a95fe0a75a4282728db03c4f6f3562b93"><td class="mdescLeft">&#160;</td><td class="mdescRight">Total DCC packet length (including XOR) implied by the bytes so far.  <br /></td></tr>
+<tr class="separator:a95fe0a75a4282728db03c4f6f3562b93"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a910a2b5d89e82ee7eb0ee17bcbeea060" id="r_a910a2b5d89e82ee7eb0ee17bcbeea060"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a910a2b5d89e82ee7eb0ee17bcbeea060">DccRailcomDecoder_packet_address</a> (const uint8_t *data, uint8_t count, <a class="el" href="dcc__types_8h.html#ab9401618f9347a6ea872c16fdf06afa5">dcc_address_t</a> *address, <a class="el" href="dcc__types_8h.html#a0bc29fe57c3b9a2460800b6d74ca4216">dcc_address_type_enum</a> *type)</td></tr>
+<tr class="memdesc:a910a2b5d89e82ee7eb0ee17bcbeea060"><td class="mdescLeft">&#160;</td><td class="mdescRight">Extract the multifunction address and its type from a packet's leading bytes.  <br /></td></tr>
+<tr class="separator:a910a2b5d89e82ee7eb0ee17bcbeea060"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a403bae47e1b697fd75665f4f4376683a" id="r_a403bae47e1b697fd75665f4f4376683a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a403bae47e1b697fd75665f4f4376683a">DccRailcomDecoder_on_byte_received</a> (const uint8_t *data, uint8_t count)</td></tr>
+<tr class="memdesc:a403bae47e1b697fd75665f4f4376683a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Feed one assembled packet byte to the RailCom Tx recognizer.  <br /></td></tr>
+<tr class="separator:a403bae47e1b697fd75665f4f4376683a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad27bcfea2c86de924db0e3b3807f10e" id="r_aad27bcfea2c86de924db0e3b3807f10e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aad27bcfea2c86de924db0e3b3807f10e">DccRailcomDecoder_transmit</a> (const uint8_t *data, uint8_t count)</td></tr>
+<tr class="memdesc:aad27bcfea2c86de924db0e3b3807f10e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transmit the armed RailCom reply into the cutout (packet end-bit edge).  <br /></td></tr>
+<tr class="separator:aad27bcfea2c86de924db0e3b3807f10e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>RailCom decoder-side transmit engine. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -107,7 +131,194 @@ $(function(){ initResizable(false); });
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="a619181752069d52ca37b872e8ed49f71" name="a619181752069d52ca37b872e8ed49f71"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a619181752069d52ca37b872e8ed49f71">&#9670;&#160;</a></span>DccRailcomDecoder_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccRailcomDecoder_initialize </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__railcom__decoder__t.html">interface_dcc_railcom_decoder_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize the RailCom decoder transmit engine. </p>
+<p>Stores the interface pointer and clears the ADR alternation, the armed flag and the pending Channel 2 count. The cached address is left for DccRailcomDecoder_set_address.</p>
+<pre class="fragment">* @param interface Pointer to a populated interface_dcc_railcom_decoder_t.
+* </pre> 
+</div>
+</div>
+<a id="a54771b6a09406dee7f15cd84587fa822" name="a54771b6a09406dee7f15cd84587fa822"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a54771b6a09406dee7f15cd84587fa822">&#9670;&#160;</a></span>DccRailcomDecoder_set_address()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccRailcomDecoder_set_address </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#ab9401618f9347a6ea872c16fdf06afa5">dcc_address_t</a></td>          <td class="paramname"><span class="paramname"><em>address</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a0bc29fe57c3b9a2460800b6d74ca4216">dcc_address_type_enum</a></td>          <td class="paramname"><span class="paramname"><em>type</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Cache this decoder's active address and type for the ADR datagram. </p>
+<p>Set this decoder's active address, pushed by the packet decoder whenever it resolves or changes (at init and on address-CV writes).</p>
+<p>Pushed by the packet decoder (via dcc_config) at init and whenever an address-CV write changes the resolved address, so the cutout path never reads CVs.</p>
+<pre class="fragment">* @param address The decoder's resolved address.
+* @param type    The resolved address type (short / long).
+* </pre> 
+</div>
+</div>
+<a id="a95fe0a75a4282728db03c4f6f3562b93" name="a95fe0a75a4282728db03c4f6f3562b93"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a95fe0a75a4282728db03c4f6f3562b93">&#9670;&#160;</a></span>DccRailcomDecoder_packet_length()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t DccRailcomDecoder_packet_length </td>
+          <td>(</td>
+          <td class="paramtype">const uint8_t *</td>          <td class="paramname"><span class="paramname"><em>data</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>count</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Total DCC packet length (including XOR) implied by the bytes so far. </p>
+<p>Total DCC packet length (including the XOR byte) implied by the bytes received so far, from the self-describing multifunction-decoder instruction format (S-9.2.1).</p>
+<p>Algorithm:</p><ol type="1">
+<li>Size the address from byte 0 (1 or 2 bytes); 0 if not a multifunction packet.</li>
+<li>Once the opcode byte is present, size the instruction from it.</li>
+<li>Total = address bytes + instruction bytes + 1 (XOR). Returns 0 while still undeterminable, or for an extended form (XPOM) whose length is not yet grounded.</li>
+</ol>
+<pre class="fragment">* @param data  Packet bytes received so far.
+* @param count Number of bytes in data.
+* </pre><dl class="section return"><dt>Returns</dt><dd>Total packet length including XOR, or 0 if undeterminable. </dd></dl>
+
+</div>
+</div>
+<a id="a910a2b5d89e82ee7eb0ee17bcbeea060" name="a910a2b5d89e82ee7eb0ee17bcbeea060"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a910a2b5d89e82ee7eb0ee17bcbeea060">&#9670;&#160;</a></span>DccRailcomDecoder_packet_address()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccRailcomDecoder_packet_address </td>
+          <td>(</td>
+          <td class="paramtype">const uint8_t *</td>          <td class="paramname"><span class="paramname"><em>data</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>count</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#ab9401618f9347a6ea872c16fdf06afa5">dcc_address_t</a> *</td>          <td class="paramname"><span class="paramname"><em>address</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a0bc29fe57c3b9a2460800b6d74ca4216">dcc_address_type_enum</a> *</td>          <td class="paramname"><span class="paramname"><em>type</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Extract the multifunction address and its type from a packet's leading bytes. </p>
+<p>Algorithm:</p><ol type="1">
+<li>Size the address (1 or 2 bytes); reject accessory/reserved/short-of-bytes.</li>
+<li>Broadcast (0x00) and idle (0xFF) decode to their own types.</li>
+<li>1-byte form is a short address; 2-byte form is a 14-bit long address.</li>
+</ol>
+<pre class="fragment">* @param data    Packet bytes received so far.
+* @param count   Number of bytes in data.
+* @param address Out: decoded address.
+* @param type    Out: decoded address type.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if an address was decoded; false otherwise. </dd></dl>
+
+</div>
+</div>
+<a id="a403bae47e1b697fd75665f4f4376683a" name="a403bae47e1b697fd75665f4f4376683a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a403bae47e1b697fd75665f4f4376683a">&#9670;&#160;</a></span>DccRailcomDecoder_on_byte_received()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccRailcomDecoder_on_byte_received </td>
+          <td>(</td>
+          <td class="paramtype">const uint8_t *</td>          <td class="paramname"><span class="paramname"><em>data</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>count</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Feed one assembled packet byte to the RailCom Tx recognizer. </p>
+<p>Algorithm:</p><ol type="1">
+<li>At count 1 (a new packet) drop any stale armed state.</li>
+<li>If already armed for this packet, wait for the end-bit edge.</li>
+<li>Size the packet from the bytes so far; continue only when the length is exactly count + 1 (the next byte is the XOR). Unsized, accessory and incomplete packets never arm.</li>
+<li>Decode the address; if it matches the cached decoder address and type, fill Channel 1 (ADR), ask the app for Channel 2 through on_railcom_request (edge-ISR path) and arm the reply.</li>
+</ol>
+<pre class="fragment">* @param data  Packet bytes assembled so far.
+* @param count Number of bytes in data.
+* </pre> 
+</div>
+</div>
+<a id="aad27bcfea2c86de924db0e3b3807f10e" name="aad27bcfea2c86de924db0e3b3807f10e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aad27bcfea2c86de924db0e3b3807f10e">&#9670;&#160;</a></span>DccRailcomDecoder_transmit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccRailcomDecoder_transmit </td>
+          <td>(</td>
+          <td class="paramtype">const uint8_t *</td>          <td class="paramname"><span class="paramname"><em>data</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>count</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Transmit the armed RailCom reply into the cutout (packet end-bit edge). </p>
+<p>Transmit the armed RailCom reply into the cutout (call at the packet end-bit edge, from the bit decoder's on_packet_received).</p>
+<p>Algorithm:</p><ol type="1">
+<li>Return unless a command addressed to this decoder was armed before its XOR.</li>
+<li>Disarm (one reply per packet, whatever the outcome).</li>
+<li>Validate the complete packet's XOR; on failure send nothing.</li>
+<li>Bit-bang the pending Channel 1 (ADR) and any Channel 2 bytes.</li>
+</ol>
+<pre class="fragment">* @param data  Complete packet bytes including the trailing XOR byte.
+* @param count Number of bytes in data.
+* </pre> 
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

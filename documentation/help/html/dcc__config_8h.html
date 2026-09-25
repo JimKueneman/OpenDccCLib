@@ -104,6 +104,12 @@ $(function(){ initResizable(false); });
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcc__railcom__hw__t.html">dcc_railcom_hw_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">RailCom detector hardware drivers.  <a href="structdcc__railcom__hw__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcc__output__hw__t.html">dcc_output_hw_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Per-channel DCC output hardware drivers.  <a href="structdcc__output__hw__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcc__config__t.html">dcc_config_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">User configuration for OpenDccCLib.  <a href="structdcc__config__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -116,6 +122,30 @@ Functions</h2></td></tr>
 <tr class="memitem:a6973e4dcdbdf005108c57fb42c9bfd5d" id="r_a6973e4dcdbdf005108c57fb42c9bfd5d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6973e4dcdbdf005108c57fb42c9bfd5d">DccConfig_run</a> (void)</td></tr>
 <tr class="memdesc:a6973e4dcdbdf005108c57fb42c9bfd5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main loop processing. Call repeatedly from your main loop.  <br /></td></tr>
 <tr class="separator:a6973e4dcdbdf005108c57fb42c9bfd5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a53e81fc6c50c782946afd138177a35" id="r_a9a53e81fc6c50c782946afd138177a35"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9a53e81fc6c50c782946afd138177a35">DccConfig_58us_timer_isr</a> (void)</td></tr>
+<tr class="memdesc:a9a53e81fc6c50c782946afd138177a35"><td class="mdescLeft">&#160;</td><td class="mdescRight">Shared fixed-period timer ISR entry point.  <br /></td></tr>
+<tr class="separator:a9a53e81fc6c50c782946afd138177a35"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9cb7b423c45e249ae420e4931bece8f" id="r_aa9cb7b423c45e249ae420e4931bece8f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa9cb7b423c45e249ae420e4931bece8f">DccConfig_railcom_oneshot_timer_isr</a> (void)</td></tr>
+<tr class="memdesc:aa9cb7b423c45e249ae420e4931bece8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">RailCom cutout one-shot timer ISR entry point.  <br /></td></tr>
+<tr class="separator:aa9cb7b423c45e249ae420e4931bece8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2570746b3c910410daf063d995b56bfa" id="r_a2570746b3c910410daf063d995b56bfa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2570746b3c910410daf063d995b56bfa">DccConfig_set_railcom_cutout_timing</a> (uint16_t start_delay_us, uint16_t uart_rx_delay_us, uint16_t ch1_window_us, uint16_t ch1_ch2_gap_us, uint16_t ch2_window_us)</td></tr>
+<tr class="memdesc:a2570746b3c910410daf063d995b56bfa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reconfigure the RailCom cutout per-state timing at runtime.  <br /></td></tr>
+<tr class="separator:a2570746b3c910410daf063d995b56bfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0ebaead97a0f5299c5df37b5989e0a5d" id="r_a0ebaead97a0f5299c5df37b5989e0a5d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0ebaead97a0f5299c5df37b5989e0a5d">DccConfig_cancel_railcom_cutout</a> (void)</td></tr>
+<tr class="memdesc:a0ebaead97a0f5299c5df37b5989e0a5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cancel an in-progress RailCom cutout, restoring the H-bridge.  <br /></td></tr>
+<tr class="separator:a0ebaead97a0f5299c5df37b5989e0a5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acdf270c278131d74c8ea3493df18ee3a" id="r_acdf270c278131d74c8ea3493df18ee3a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acdf270c278131d74c8ea3493df18ee3a">DccConfig_railcom_cutout_is_active</a> (void)</td></tr>
+<tr class="memdesc:acdf270c278131d74c8ea3493df18ee3a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Report whether a RailCom cutout is in progress.  <br /></td></tr>
+<tr class="separator:acdf270c278131d74c8ea3493df18ee3a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a08729b8797b2d38b716a95c5f4e6ca23" id="r_a08729b8797b2d38b716a95c5f4e6ca23"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a08729b8797b2d38b716a95c5f4e6ca23">DccConfig_100ms_timer_tick</a> (void)</td></tr>
+<tr class="memdesc:a08729b8797b2d38b716a95c5f4e6ca23"><td class="mdescLeft">&#160;</td><td class="mdescRight">100ms timer tick. Call from a 100ms periodic timer or main loop.  <br /></td></tr>
+<tr class="separator:a08729b8797b2d38b716a95c5f4e6ca23"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4321d3e6c87631634b6d7f765340101f" id="r_a4321d3e6c87631634b6d7f765340101f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4321d3e6c87631634b6d7f765340101f">DccConfig_decoder_edge_isr</a> (uint32_t timestamp_usec)</td></tr>
+<tr class="memdesc:a4321d3e6c87631634b6d7f765340101f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decoder bit edge detected. Call from input-capture ISR.  <br /></td></tr>
+<tr class="separator:a4321d3e6c87631634b6d7f765340101f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16af6b24620ee7b3794a64f3847310d4" id="r_a16af6b24620ee7b3794a64f3847310d4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a16af6b24620ee7b3794a64f3847310d4">DccConfig_reload_address_cvs</a> (void)</td></tr>
+<tr class="memdesc:a16af6b24620ee7b3794a64f3847310d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Re-read the address CVs into the packet decoder's match cache.  <br /></td></tr>
+<tr class="separator:a16af6b24620ee7b3794a64f3847310d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>User-facing configuration struct and lifecycle API for OpenDccCLib. </p>
@@ -207,6 +237,281 @@ Functions</h2></td></tr>
 <li>Decoder: poll the packet-timeout fail-safe</li>
 <li>Decoder: poll the ACK pulse and stop it once 6 ms have elapsed </li>
 </ol>
+
+</div>
+</div>
+<a id="a9a53e81fc6c50c782946afd138177a35" name="a9a53e81fc6c50c782946afd138177a35"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9a53e81fc6c50c782946afd138177a35">&#9670;&#160;</a></span>DccConfig_58us_timer_isr()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccConfig_58us_timer_isr </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Shared fixed-period timer ISR entry point. </p>
+<p>Call from the 58us shared timer ISR. Drives the tick_isr for both main track and service track bit encoders. Also samples current sense on the service track for ACK detection.</p>
+<p>Algorithm:</p><ol type="1">
+<li>Toggle the main and service track output pins immediately, using the look-ahead flags computed on the previous tick, so the edges are not jittered by the state machine work that follows</li>
+<li>Run the main track and service track bit encoder tick state machines, which compute the toggle flags for the next tick</li>
+<li>Sample the service track current sense (when provided) for ACK detection </li>
+</ol>
+
+</div>
+</div>
+<a id="aa9cb7b423c45e249ae420e4931bece8f" name="aa9cb7b423c45e249ae420e4931bece8f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9cb7b423c45e249ae420e4931bece8f">&#9670;&#160;</a></span>DccConfig_railcom_oneshot_timer_isr()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccConfig_railcom_oneshot_timer_isr </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>RailCom cutout one-shot timer ISR entry point. </p>
+<p>Call from the RailCom one-shot timer ISR. Drives the cutout state machine through DELAY -&gt; SETTLING -&gt; CH1 -&gt; GAP -&gt; CH2 -&gt; IDLE.</p>
+<p>RailCom cutout one-shot timer ISR entry point. </p>
+
+</div>
+</div>
+<a id="a2570746b3c910410daf063d995b56bfa" name="a2570746b3c910410daf063d995b56bfa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2570746b3c910410daf063d995b56bfa">&#9670;&#160;</a></span>DccConfig_set_railcom_cutout_timing()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccConfig_set_railcom_cutout_timing </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>start_delay_us</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>uart_rx_delay_us</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>ch1_window_us</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>ch1_ch2_gap_us</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>ch2_window_us</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Reconfigure the RailCom cutout per-state timing at runtime. </p>
+<p>Overwrites the active cutout context's five period fields; a 0 in any field selects that field's spec default (DCC_RAILCOM_* in <a class="el" href="dcc__defines_8h.html" title="Protocol constants for NMRA DCC (S-9.1, S-9.2, S-9.2.1, S-9.3.2).">dcc_defines.h</a>), matching DccConfig_initialize. State and interface are left untouched, so an in-flight cutout completes on its old timing and the new values take effect from the next cutout. Periods are in microseconds.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">start_delay_us</td><td>DELAY state length (0 = DCC_RAILCOM_CUTOUT_START_DELAY_US). </td></tr>
+    <tr><td class="paramname">uart_rx_delay_us</td><td>SETTLING state length (0 = DCC_RAILCOM_UART_RX_DELAY_US). </td></tr>
+    <tr><td class="paramname">ch1_window_us</td><td>Channel 1 window length (0 = DCC_RAILCOM_CH1_WINDOW_US). </td></tr>
+    <tr><td class="paramname">ch1_ch2_gap_us</td><td>Gap between the channel windows (0 = DCC_RAILCOM_CH1_CH2_GAP_US). </td></tr>
+    <tr><td class="paramname">ch2_window_us</td><td>Channel 2 window length (0 = DCC_RAILCOM_CH2_WINDOW_US).</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Writes the five period fields of the cutout context directly rather than re-initializing it, so the state machine is not reset: an in-flight cutout finishes on its old timing and the new periods apply from the next one. A 0 in any field selects that field's spec default.</p>
+<pre class="fragment">* @param start_delay_us DELAY state length in microseconds (0 = DCC_RAILCOM_CUTOUT_START_DELAY_US).
+* @param uart_rx_delay_us SETTLING state length in microseconds (0 = DCC_RAILCOM_UART_RX_DELAY_US).
+* @param ch1_window_us Channel 1 window length in microseconds (0 = DCC_RAILCOM_CH1_WINDOW_US).
+* @param ch1_ch2_gap_us Gap between the channel windows in microseconds (0 = DCC_RAILCOM_CH1_CH2_GAP_US).
+* @param ch2_window_us Channel 2 window length in microseconds (0 = DCC_RAILCOM_CH2_WINDOW_US).
+* </pre> 
+</div>
+</div>
+<a id="a0ebaead97a0f5299c5df37b5989e0a5d" name="a0ebaead97a0f5299c5df37b5989e0a5d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0ebaead97a0f5299c5df37b5989e0a5d">&#9670;&#160;</a></span>DccConfig_cancel_railcom_cutout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccConfig_cancel_railcom_cutout </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Cancel an in-progress RailCom cutout, restoring the H-bridge. </p>
+<p>Stops the cutout one-shot timer and, if the cutout was active (past DELAY), calls end_railcom_cutout to restore normal drive. No-op when idle. Safe to call from a same-or-lower-priority ISR than the cutout timer.</p>
+<p>Cancel an in-progress RailCom cutout, restoring the H-bridge. </p>
+
+</div>
+</div>
+<a id="acdf270c278131d74c8ea3493df18ee3a" name="acdf270c278131d74c8ea3493df18ee3a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acdf270c278131d74c8ea3493df18ee3a">&#9670;&#160;</a></span>DccConfig_railcom_cutout_is_active()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccConfig_railcom_cutout_is_active </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Report whether a RailCom cutout is in progress. </p>
+<dl class="section return"><dt>Returns</dt><dd>true while the cutout state machine is in any state other than IDLE. </dd></dl>
+
+</div>
+</div>
+<a id="a08729b8797b2d38b716a95c5f4e6ca23" name="a08729b8797b2d38b716a95c5f4e6ca23"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a08729b8797b2d38b716a95c5f4e6ca23">&#9670;&#160;</a></span>DccConfig_100ms_timer_tick()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccConfig_100ms_timer_tick </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>100ms timer tick. Call from a 100ms periodic timer or main loop. </p>
+<p>Reserved for periodic housekeeping. It does nothing in this release; keep the call site so future work (RailCom accessory polling) has a home.</p>
+<p>100ms timer tick. Call from a 100ms periodic timer or main loop. </p>
+
+</div>
+</div>
+<a id="a4321d3e6c87631634b6d7f765340101f" name="a4321d3e6c87631634b6d7f765340101f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4321d3e6c87631634b6d7f765340101f">&#9670;&#160;</a></span>DccConfig_decoder_edge_isr()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccConfig_decoder_edge_isr </td>
+          <td>(</td>
+          <td class="paramtype">uint32_t</td>          <td class="paramname"><span class="paramname"><em>timestamp_usec</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Decoder bit edge detected. Call from input-capture ISR. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">timestamp_usec</td><td>Microsecond timestamp of the signal edge.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>The library classifies one/zero bits from edge timing internally. User ISR only needs to read the timer and call this function on each edge.</p>
+<p>Decoder bit edge detected. Call from input-capture ISR.</p>
+<pre class="fragment">* @param timestamp_usec Microsecond timestamp of the signal edge.
+* </pre> 
+</div>
+</div>
+<a id="a16af6b24620ee7b3794a64f3847310d4" name="a16af6b24620ee7b3794a64f3847310d4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a16af6b24620ee7b3794a64f3847310d4">&#9670;&#160;</a></span>DccConfig_reload_address_cvs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccConfig_reload_address_cvs </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Re-read the address CVs into the packet decoder's match cache. </p>
+<p>Writes made through <a class="el" href="dcc__application__decoder__cv_8c.html#a210cdb654a972f0eeb0fd4fa0fe3bc3f" title="Write a CV value through the storage rules.">DccApplicationDecoderCv_write()</a> or by a DCC packet refresh the cache on their own. Call this after the application changes CV1, 17, 18, 19, 21, 22, 29, 513, 521 or 541 by any other route (writing its storage directly, restoring a backup). </p>
 
 </div>
 </div>

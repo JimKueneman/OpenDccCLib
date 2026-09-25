@@ -90,6 +90,9 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_service_mode_task_address.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -98,6 +101,37 @@ $(function(){ initResizable(false); });
 <a href="#details">More...</a></p>
 
 <p><a href="dcc__service__mode__task__address_8h_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structinterface__dcc__service__mode__task__address__t.html">interface_dcc_service_mode_task_address_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface struct — dependencies injected by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>.  <a href="structinterface__dcc__service__mode__task__address__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a9eae25d47d45ad5dd7751877b2f5deac" id="r_a9eae25d47d45ad5dd7751877b2f5deac"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9eae25d47d45ad5dd7751877b2f5deac">DccServiceModeTaskAddress_initialize</a> (const <a class="el" href="structinterface__dcc__service__mode__task__address__t.html">interface_dcc_service_mode_task_address_t</a> *interface)</td></tr>
+<tr class="memdesc:a9eae25d47d45ad5dd7751877b2f5deac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the address task module. Call once during <a class="el" href="dcc__config_8c.html#a4e86c59e8b73091bd49e69d4fd66672c" title="Initialize the DCC library with user configuration.">DccConfig_initialize()</a>.  <br /></td></tr>
+<tr class="separator:a9eae25d47d45ad5dd7751877b2f5deac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a97f58d6a9cfca4b13c53a0fa7d45988f" id="r_a97f58d6a9cfca4b13c53a0fa7d45988f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a97f58d6a9cfca4b13c53a0fa7d45988f">DccServiceModeTaskAddress_read</a> (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a97f58d6a9cfca4b13c53a0fa7d45988f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read CV#1 (short address) using address-only mode. Iterates address_verify 0-127 until ACK.  <br /></td></tr>
+<tr class="separator:a97f58d6a9cfca4b13c53a0fa7d45988f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab36f69a434b45827f00161eeb2ef9737" id="r_ab36f69a434b45827f00161eeb2ef9737"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab36f69a434b45827f00161eeb2ef9737">DccServiceModeTaskAddress_write</a> (uint8_t address, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:ab36f69a434b45827f00161eeb2ef9737"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write CV#1 (short address) then verify. Always 2 operations (write + verify). Decoder automatically clears CV#29 bit 5 and CV#19 on success.  <br /></td></tr>
+<tr class="separator:ab36f69a434b45827f00161eeb2ef9737"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a88c90e5a3af9e9f686e5c97dddf342f6" id="r_a88c90e5a3af9e9f686e5c97dddf342f6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a88c90e5a3af9e9f686e5c97dddf342f6">DccServiceModeTaskAddress_verify</a> (uint8_t address, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a88c90e5a3af9e9f686e5c97dddf342f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Verify CV#1 (short address) against a value (one verify op).  <br /></td></tr>
+<tr class="separator:a88c90e5a3af9e9f686e5c97dddf342f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad53d910d65feafca52d7dd234a36d652" id="r_ad53d910d65feafca52d7dd234a36d652"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad53d910d65feafca52d7dd234a36d652">DccServiceModeTaskAddress_read_bit</a> (uint8_t bit_position, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:ad53d910d65feafca52d7dd234a36d652"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a single bit from CV#1. Reads full byte via iteration, extracts bit.  <br /></td></tr>
+<tr class="separator:ad53d910d65feafca52d7dd234a36d652"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8c7a034a7f29aafb819cde3fe28502c8" id="r_a8c7a034a7f29aafb819cde3fe28502c8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8c7a034a7f29aafb819cde3fe28502c8">DccServiceModeTaskAddress_write_bit</a> (uint8_t bit_position, bool bit_value, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a8c7a034a7f29aafb819cde3fe28502c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a single bit to CV#1 using read-modify-write. Reads byte first, then writes modified byte.  <br /></td></tr>
+<tr class="separator:a8c7a034a7f29aafb819cde3fe28502c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5205af54346fb6493b0207dc936761d0" id="r_a5205af54346fb6493b0207dc936761d0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5205af54346fb6493b0207dc936761d0">DccServiceModeTaskAddress_on_primitive_complete</a> (<a class="el" href="dcc__types_8h.html#aacb5b6351da94bd651145bb926e34bf3">dcc_service_mode_result_enum</a> result)</td></tr>
+<tr class="memdesc:a5205af54346fb6493b0207dc936761d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Notify the task module that the primitive has finished its full operation (including recovery packets). Wire this into the primitive's on_complete slot via <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>. The task module advances its state machine on this event; the ACK outcome is taken from <code>result</code> (SUCCESS = ACK detected by the common module's pulse-width measurement, anything else = no ACK).  <br /></td></tr>
+<tr class="separator:a5205af54346fb6493b0207dc936761d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Task orchestrator for Address-Only mode CV programming (S-9.2.3 §E). </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -110,7 +144,363 @@ $(function(){ initResizable(false); });
 <p>Sequences address-only mode primitive operations to implement read (iterate address_verify 0-127) and write (write + verify) of CV#1. The decoder automatically clears CV#29 bit 5 and CV#19 when CV#1 is written — the command station does not need to handle these side effects explicitly. Singleton — only one service track per command station.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="a9eae25d47d45ad5dd7751877b2f5deac" name="a9eae25d47d45ad5dd7751877b2f5deac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9eae25d47d45ad5dd7751877b2f5deac">&#9670;&#160;</a></span>DccServiceModeTaskAddress_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeTaskAddress_initialize </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__service__mode__task__address__t.html">interface_dcc_service_mode_task_address_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initialize the address task module. Call once during <a class="el" href="dcc__config_8c.html#a4e86c59e8b73091bd49e69d4fd66672c" title="Initialize the DCC library with user configuration.">DccConfig_initialize()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">interface</td><td>Pointer to populated <a class="el" href="structinterface__dcc__service__mode__task__address__t.html">interface_dcc_service_mode_task_address_t</a> (wired by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>).</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Clears the singleton context (state IDLE, no callbacks) and stores the interface pointer.</p>
+<pre class="fragment">* @param interface Pointer to populated interface_dcc_service_mode_task_address_t (wired by dcc_config.c).
+* </pre> 
+</div>
+</div>
+<a id="a97f58d6a9cfca4b13c53a0fa7d45988f" name="a97f58d6a9cfca4b13c53a0fa7d45988f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a97f58d6a9cfca4b13c53a0fa7d45988f">&#9670;&#160;</a></span>DccServiceModeTaskAddress_read()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskAddress_read </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Read CV#1 (short address) using address-only mode. Iterates address_verify 0-127 until ACK. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">on_complete</td><td><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> called when complete: SUCCESS with the address found (0-127); ERROR (value 0) if no address 0-127 was ACKed. </td></tr>
+    <tr><td class="paramname">on_progress</td><td><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> called after each scan step (nullable); estimated_steps is reported as 0. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if started, false if another operation is running.</dd></dl>
+<p>Algorithm:</p><ol type="1">
+<li>Reject if another operation is in progress (state not IDLE)</li>
+<li>Load the context: scan value 0, cleared step count, callbacks</li>
+<li>Enter READ and issue address_verify for address 0 (a refused start puts the task back to IDLE and returns false)</li>
+<li>The scan continues from <a class="el" href="dcc__service__mode__task__address_8c.html#a5205af54346fb6493b0207dc936761d0" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskAddress_on_primitive_complete()</a></li>
+</ol>
+<pre class="fragment">* @param on_complete Called when complete: SUCCESS with the address found (0-127), or ERROR if no address was ACKed.
+* @param on_progress Called after each scan step (nullable).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started, false if another operation is running. </dd></dl>
+
+</div>
+</div>
+<a id="ab36f69a434b45827f00161eeb2ef9737" name="ab36f69a434b45827f00161eeb2ef9737"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab36f69a434b45827f00161eeb2ef9737">&#9670;&#160;</a></span>DccServiceModeTaskAddress_write()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskAddress_write </td>
+          <td>(</td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>address</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Write CV#1 (short address) then verify. Always 2 operations (write + verify). Decoder automatically clears CV#29 bit 5 and CV#19 on success. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">address</td><td>Address to write (1-127). </td></tr>
+    <tr><td class="paramname">on_complete</td><td><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> called when complete: SUCCESS if the verify was ACKed, VERIFY_FAIL if not; value = the address written either way. </td></tr>
+    <tr><td class="paramname">on_progress</td><td><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> called after each step (nullable); estimated_steps is reported as 0. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if started, false if another operation is running or the address is out of range.</dd></dl>
+<p>Write CV#1 (short address) then verify. Always 2 operations (write + verify). Decoder automatically clears CV#29 bit 5 and CV#19 on success.</p>
+<p>Algorithm:</p><ol type="1">
+<li>Reject addresses outside 1-127</li>
+<li>Reject if another operation is in progress (state not IDLE)</li>
+<li>Load the context: address, cleared step count, callbacks</li>
+<li>Enter WRITE and issue address_write (a refused start puts the task back to IDLE and returns false)</li>
+<li>The verify runs from <a class="el" href="#a5205af54346fb6493b0207dc936761d0" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskAddress_on_primitive_complete()</a></li>
+</ol>
+<pre class="fragment">* @param address Address to write (1-127).
+* @param on_complete Called when complete: SUCCESS or VERIFY_FAIL with the address written.
+* @param on_progress Called after each step (nullable).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started, false if another operation is running or the address is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="a88c90e5a3af9e9f686e5c97dddf342f6" name="a88c90e5a3af9e9f686e5c97dddf342f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a88c90e5a3af9e9f686e5c97dddf342f6">&#9670;&#160;</a></span>DccServiceModeTaskAddress_verify()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskAddress_verify </td>
+          <td>(</td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>address</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Verify CV#1 (short address) against a value (one verify op). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">address</td><td>Expected address value (1-127). </td></tr>
+    <tr><td class="paramname">on_complete</td><td><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> called with SUCCESS if it verified (ACK), VERIFY_FAIL otherwise; value = the expected address. </td></tr>
+    <tr><td class="paramname">on_progress</td><td><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a>; not used by this operation (nullable). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if started, false if another operation is running or the address is out of range.</dd></dl>
+<p>Algorithm:</p><ol type="1">
+<li>Reject addresses outside 1-127</li>
+<li>Reject if another operation is in progress (state not IDLE)</li>
+<li>Load the context: address, cleared step count, callbacks</li>
+<li>Enter VERIFY and issue address_verify for the expected address (a refused start puts the task back to IDLE and returns false)</li>
+<li>The result is reported from <a class="el" href="dcc__service__mode__task__address_8c.html#a5205af54346fb6493b0207dc936761d0" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskAddress_on_primitive_complete()</a></li>
+</ol>
+<pre class="fragment">* @param address Expected address value (1-127).
+* @param on_complete Called with SUCCESS if it verified (ACK), VERIFY_FAIL otherwise.
+* @param on_progress Not used by this operation (nullable).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started, false if another operation is running or the address is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="ad53d910d65feafca52d7dd234a36d652" name="ad53d910d65feafca52d7dd234a36d652"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad53d910d65feafca52d7dd234a36d652">&#9670;&#160;</a></span>DccServiceModeTaskAddress_read_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskAddress_read_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Read a single bit from CV#1. Reads full byte via iteration, extracts bit. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bit_position</td><td>Bit position (0-6; bit 7 is always 0 in 7-bit address). </td></tr>
+    <tr><td class="paramname">on_complete</td><td><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> called when complete: SUCCESS with value 0 or 1; ERROR (value 0) if no address 0-127 was ACKed. </td></tr>
+    <tr><td class="paramname">on_progress</td><td><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> called after each scan step (nullable); estimated_steps is reported as 0. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if started, false if another operation is running or the bit is out of range.</dd></dl>
+<p>Algorithm:</p><ol type="1">
+<li>Reject bit positions above 6</li>
+<li>Reject if another operation is in progress (state not IDLE)</li>
+<li>Load the context: bit position, scan value 0, cleared step count, callbacks</li>
+<li>Enter READ_BIT_READ and issue address_verify for address 0 (a refused start puts the task back to IDLE and returns false)</li>
+<li>The scan continues from <a class="el" href="dcc__service__mode__task__address_8c.html#a5205af54346fb6493b0207dc936761d0" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskAddress_on_primitive_complete()</a>; the requested bit is extracted from the address found</li>
+</ol>
+<pre class="fragment">* @param bit_position Bit position (0-6).
+* @param on_complete Called when complete: SUCCESS with value 0 or 1, or ERROR if no address was ACKed.
+* @param on_progress Called after each scan step (nullable).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started, false if another operation is running or the bit is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="a8c7a034a7f29aafb819cde3fe28502c8" name="a8c7a034a7f29aafb819cde3fe28502c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8c7a034a7f29aafb819cde3fe28502c8">&#9670;&#160;</a></span>DccServiceModeTaskAddress_write_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskAddress_write_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>bit_value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Write a single bit to CV#1 using read-modify-write. Reads byte first, then writes modified byte. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">bit_position</td><td>Bit position (0-6). </td></tr>
+    <tr><td class="paramname">bit_value</td><td>Value to write. </td></tr>
+    <tr><td class="paramname">on_complete</td><td><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> called when complete: SUCCESS if the modified address verified, VERIFY_FAIL if not (value = the bit written, 0 or 1); ERROR (value 0) if the read scan found no ACKed address. </td></tr>
+    <tr><td class="paramname">on_progress</td><td><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> called after each scan step of the read phase only (nullable); estimated_steps is reported as 0. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if started, false if another operation is running or the bit is out of range.</dd></dl>
+<p>Algorithm:</p><ol type="1">
+<li>Reject bit positions above 6</li>
+<li>Reject if another operation is in progress (state not IDLE)</li>
+<li>Load the context: bit position, bit value, scan value 0, cleared step count, callbacks</li>
+<li>Enter WRITE_BIT_READ and issue address_verify for address 0 to start the read scan (a refused start puts the task back to IDLE and returns false)</li>
+<li>From <a class="el" href="dcc__service__mode__task__address_8c.html#a5205af54346fb6493b0207dc936761d0" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskAddress_on_primitive_complete()</a>: once the address is found, write the modified address, then verify it</li>
+</ol>
+<pre class="fragment">* @param bit_position Bit position (0-6).
+* @param bit_value Value to write.
+* @param on_complete Called when complete: SUCCESS or VERIFY_FAIL with the bit written, or ERROR if the read scan found nothing.
+* @param on_progress Called after each scan step of the read phase only (nullable).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started, false if another operation is running or the bit is out of range. </dd></dl>
+
+</div>
+</div>
+<a id="a5205af54346fb6493b0207dc936761d0" name="a5205af54346fb6493b0207dc936761d0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5205af54346fb6493b0207dc936761d0">&#9670;&#160;</a></span>DccServiceModeTaskAddress_on_primitive_complete()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeTaskAddress_on_primitive_complete </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#aacb5b6351da94bd651145bb926e34bf3">dcc_service_mode_result_enum</a></td>          <td class="paramname"><span class="paramname"><em>result</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Notify the task module that the primitive has finished its full operation (including recovery packets). Wire this into the primitive's on_complete slot via <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>. The task module advances its state machine on this event; the ACK outcome is taken from <code>result</code> (SUCCESS = ACK detected by the common module's pulse-width measurement, anything else = no ACK). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">result</td><td><a class="el" href="dcc__types_8h.html#aacb5b6351da94bd651145bb926e34bf3">dcc_service_mode_result_enum</a> of the primitive operation (passed through from primitive callback).</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Notify the task module that the primitive has finished its full operation (including recovery packets). Wire this into the primitive's on_complete slot via <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>. The task module advances its state machine on this event; the ACK outcome is taken from <code>result</code> (SUCCESS = ACK detected by the common module's pulse-width measurement, anything else = no ACK).</p>
+<p>Algorithm:</p><ol type="1">
+<li>Record the ACK outcome: SUCCESS from the primitive means a valid ACK was measured, anything else means no ACK</li>
+<li>Dispatch on the current state: the three scanning states share <em>advance_scan(), the others go to their _advance</em>* handler</li>
+<li>Ignore the event when IDLE (no operation in progress)</li>
+</ol>
+<pre class="fragment">* @param result Result of the primitive operation (passed through from primitive callback).
+* </pre> 
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

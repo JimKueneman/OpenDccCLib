@@ -106,25 +106,27 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span><span class="keyword">extern</span> <span class="stringliteral">&quot;C&quot;</span> {</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span><span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span><span class="preprocessor"></span></div>
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span><span class="keyword">typedef</span> <span class="keyword">struct </span>{</div>
+<div class="foldopen" id="foldopen00061" data-start="{" data-end="};">
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno"><a class="line" href="structinterface__dcc__failsafe__t.html">   61</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span>{</div>
 <div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    bool (*cv_read)(uint16_t cv_number, uint8_t *value);</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno"><a class="line" href="structinterface__dcc__failsafe__t.html#ab476885c247b373184bc53df41d919bf">   64</a></span>    bool (*cv_read)(uint16_t cv_number, uint8_t *value);</div>
 <div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span> </div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    uint32_t (*get_timestamp_usec)(void);</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno"><a class="line" href="structinterface__dcc__failsafe__t.html#ababd5b208d74906b3f4f756b75f370ea">   67</a></span>    uint32_t (*get_timestamp_usec)(void);</div>
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    void (*on_failsafe_entered)(void);</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno"><a class="line" href="structinterface__dcc__failsafe__t.html#acf01936b1afaf92f9b2064acbf2d2c8e">   70</a></span>    void (*on_failsafe_entered)(void);</div>
 <div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span> </div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>    void (*on_failsafe_exited)(void);</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno"><a class="line" href="structinterface__dcc__failsafe__t.html#a553e7da34ead464316f0182540d7328f">   73</a></span>    void (*on_failsafe_exited)(void);</div>
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span> </div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>} interface_dcc_failsafe_t;</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>} <a class="code hl_struct" href="structinterface__dcc__failsafe__t.html">interface_dcc_failsafe_t</a>;</div>
+</div>
 <div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span> </div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> DccFailsafe_initialize(<span class="keyword">const</span> interface_dcc_failsafe_t *interface);</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__failsafe_8h.html#a01ee6643116c9b3db9c3fd7f1c357792">DccFailsafe_initialize</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structinterface__dcc__failsafe__t.html">interface_dcc_failsafe_t</a> *interface);</div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> DccFailsafe_note_valid_packet(<span class="keywordtype">void</span>);</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__failsafe_8h.html#a86123ed6a8789df5d79c306decd7f7fa">DccFailsafe_note_valid_packet</a>(<span class="keywordtype">void</span>);</div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> DccFailsafe_run(<span class="keywordtype">void</span>);</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__failsafe_8h.html#a7d0081dfbd2b82308b8d81ace58b8a92">DccFailsafe_run</a>(<span class="keywordtype">void</span>);</div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span> </div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccFailsafe_is_active(<span class="keywordtype">void</span>);</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="dcc__failsafe_8h.html#af37d453bac095ee1be849733aae23dfd">DccFailsafe_is_active</a>(<span class="keywordtype">void</span>);</div>
 <div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span> </div>
 <div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span><span class="preprocessor">#ifdef __cplusplus</span></div>
 <div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>}</div>
@@ -134,7 +136,12 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span> </div>
 <div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span><span class="preprocessor">#endif </span><span class="comment">/* __DCC_FAILSAFE__ */</span><span class="preprocessor"></span></div>
 <div class="ttc" id="adcc__defines_8h_html"><div class="ttname"><a href="dcc__defines_8h.html">dcc_defines.h</a></div><div class="ttdoc">Protocol constants for NMRA DCC (S-9.1, S-9.2, S-9.2.1, S-9.3.2).</div></div>
+<div class="ttc" id="adcc__failsafe_8h_html_a01ee6643116c9b3db9c3fd7f1c357792"><div class="ttname"><a href="dcc__failsafe_8h.html#a01ee6643116c9b3db9c3fd7f1c357792">DccFailsafe_initialize</a></div><div class="ttdeci">void DccFailsafe_initialize(const interface_dcc_failsafe_t *interface)</div><div class="ttdoc">Initialize the fail-safe module.</div><div class="ttdef"><b>Definition</b> dcc_failsafe.c:67</div></div>
+<div class="ttc" id="adcc__failsafe_8h_html_a7d0081dfbd2b82308b8d81ace58b8a92"><div class="ttname"><a href="dcc__failsafe_8h.html#a7d0081dfbd2b82308b8d81ace58b8a92">DccFailsafe_run</a></div><div class="ttdeci">void DccFailsafe_run(void)</div><div class="ttdoc">Periodic poll. Call from the main loop (DccConfig_run).</div><div class="ttdef"><b>Definition</b> dcc_failsafe.c:127</div></div>
+<div class="ttc" id="adcc__failsafe_8h_html_a86123ed6a8789df5d79c306decd7f7fa"><div class="ttname"><a href="dcc__failsafe_8h.html#a86123ed6a8789df5d79c306decd7f7fa">DccFailsafe_note_valid_packet</a></div><div class="ttdeci">void DccFailsafe_note_valid_packet(void)</div><div class="ttdoc">Note that a command packet addressed to this decoder was received.</div><div class="ttdef"><b>Definition</b> dcc_failsafe.c:86</div></div>
+<div class="ttc" id="adcc__failsafe_8h_html_af37d453bac095ee1be849733aae23dfd"><div class="ttname"><a href="dcc__failsafe_8h.html#af37d453bac095ee1be849733aae23dfd">DccFailsafe_is_active</a></div><div class="ttdeci">bool DccFailsafe_is_active(void)</div><div class="ttdoc">Query whether the decoder is currently in fail-safe.</div><div class="ttdef"><b>Definition</b> dcc_failsafe.c:183</div></div>
 <div class="ttc" id="adcc__types_8h_html"><div class="ttname"><a href="dcc__types_8h.html">dcc_types.h</a></div><div class="ttdoc">Core type definitions, structures, and configuration constants for the OpenDccCLib library.</div></div>
+<div class="ttc" id="astructinterface__dcc__failsafe__t_html"><div class="ttname"><a href="structinterface__dcc__failsafe__t.html">interface_dcc_failsafe_t</a></div><div class="ttdoc">Interface struct – dependencies injected by dcc_config.c.</div><div class="ttdef"><b>Definition</b> dcc_failsafe.h:61</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!doctype html>
 <html>

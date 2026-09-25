@@ -90,12 +90,30 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_application_decoder_cv.c File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>Application-layer implementation for decoder CV access.  
 <a href="#details">More...</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:aa521106135d74fd9329823108decb94a" id="r_aa521106135d74fd9329823108decb94a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa521106135d74fd9329823108decb94a">DccApplicationDecoderCv_initialize</a> (const <a class="el" href="structinterface__dcc__application__decoder__cv__t.html">interface_dcc_application_decoder_cv_t</a> *interface)</td></tr>
+<tr class="memdesc:aa521106135d74fd9329823108decb94a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the decoder CV application module.  <br /></td></tr>
+<tr class="separator:aa521106135d74fd9329823108decb94a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25eed400c5af3120bc8ba83acba4254f" id="r_a25eed400c5af3120bc8ba83acba4254f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a25eed400c5af3120bc8ba83acba4254f">DccApplicationDecoderCv_read</a> (uint16_t cv_number, uint8_t *value)</td></tr>
+<tr class="memdesc:a25eed400c5af3120bc8ba83acba4254f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a CV value.  <br /></td></tr>
+<tr class="separator:a25eed400c5af3120bc8ba83acba4254f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a210cdb654a972f0eeb0fd4fa0fe3bc3f" id="r_a210cdb654a972f0eeb0fd4fa0fe3bc3f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a210cdb654a972f0eeb0fd4fa0fe3bc3f">DccApplicationDecoderCv_write</a> (uint16_t cv_number, uint8_t value)</td></tr>
+<tr class="memdesc:a210cdb654a972f0eeb0fd4fa0fe3bc3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a CV value through the storage rules.  <br /></td></tr>
+<tr class="separator:a210cdb654a972f0eeb0fd4fa0fe3bc3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5fb0908fbfe9a030257dbbcbda2b9f54" id="r_a5fb0908fbfe9a030257dbbcbda2b9f54"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5fb0908fbfe9a030257dbbcbda2b9f54">DccApplicationDecoderCv_is_locked</a> (void)</td></tr>
+<tr class="memdesc:a5fb0908fbfe9a030257dbbcbda2b9f54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the decoder lock is engaged.  <br /></td></tr>
+<tr class="separator:a5fb0908fbfe9a030257dbbcbda2b9f54"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Application-layer implementation for decoder CV access. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -107,7 +125,104 @@ $(function(){ initResizable(false); });
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="aa521106135d74fd9329823108decb94a" name="aa521106135d74fd9329823108decb94a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa521106135d74fd9329823108decb94a">&#9670;&#160;</a></span>DccApplicationDecoderCv_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccApplicationDecoderCv_initialize </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__application__decoder__cv__t.html">interface_dcc_application_decoder_cv_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize the decoder CV application module. </p>
+<p>Stores the interface pointer. Called by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a> during <a class="el" href="dcc__config_8c.html#a4e86c59e8b73091bd49e69d4fd66672c" title="Initialize the DCC library with user configuration.">DccConfig_initialize()</a>.</p>
+<pre class="fragment">* @param interface  Pointer to populated interface struct (wired by dcc_config.c).
+* </pre> 
+</div>
+</div>
+<a id="a25eed400c5af3120bc8ba83acba4254f" name="a25eed400c5af3120bc8ba83acba4254f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a25eed400c5af3120bc8ba83acba4254f">&#9670;&#160;</a></span>DccApplicationDecoderCv_read()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationDecoderCv_read </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t *</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read a CV value. </p>
+<p>Returns false when uninitialized, otherwise forwards to the cv_read hook (DccCvStorage_read when wired by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>).</p>
+<pre class="fragment">* @param cv_number  CV number (1-based per NMRA convention).
+* @param value      Pointer to receive the CV value.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the read succeeded; false on error or when the module is not initialized. </dd></dl>
+
+</div>
+</div>
+<a id="a210cdb654a972f0eeb0fd4fa0fe3bc3f" name="a210cdb654a972f0eeb0fd4fa0fe3bc3f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a210cdb654a972f0eeb0fd4fa0fe3bc3f">&#9670;&#160;</a></span>DccApplicationDecoderCv_write()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationDecoderCv_write </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Write a CV value through the storage rules. </p>
+<p>Forwards to the cv_write hook without a lock check of its own, so the storage layer decides: it refuses ordinary CVs while the decoder is locked but still accepts CV 15/16 (the unlock) and the CV 8 factory-reset trigger, exactly as a write arriving by DCC packet.</p>
+<pre class="fragment">* @param cv_number CV number (1-based per NMRA convention).
+* @param value Value to write.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the write succeeded; false if the storage rules refused it, on error, or when the module is not initialized. </dd></dl>
+
+</div>
+</div>
+<a id="a5fb0908fbfe9a030257dbbcbda2b9f54" name="a5fb0908fbfe9a030257dbbcbda2b9f54"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5fb0908fbfe9a030257dbbcbda2b9f54">&#9670;&#160;</a></span>DccApplicationDecoderCv_is_locked()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationDecoderCv_is_locked </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Check if the decoder lock is engaged. </p>
+<p>Returns false when uninitialized, otherwise forwards to the is_locked hook (DccCvStorage_is_locked when wired).</p>
+<dl class="section return"><dt>Returns</dt><dd>true if locked (CV 15 != CV 16); false if unlocked or when the module is not initialized. </dd></dl>
+
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

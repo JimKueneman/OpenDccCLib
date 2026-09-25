@@ -90,6 +90,9 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_application_service_track.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -98,6 +101,64 @@ $(function(){ initResizable(false); });
 <a href="#details">More...</a></p>
 
 <p><a href="dcc__application__service__track_8h_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structinterface__dcc__application__service__track__t.html">interface_dcc_application_service_track_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface struct &ndash; populated by the caller; <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a> does not wire this legacy module.  <a href="structinterface__dcc__application__service__track__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a1270e1481255775459576b41be994e01" id="r_a1270e1481255775459576b41be994e01"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1270e1481255775459576b41be994e01">DccApplicationServiceTrack_initialize</a> (const <a class="el" href="structinterface__dcc__application__service__track__t.html">interface_dcc_application_service_track_t</a> *interface)</td></tr>
+<tr class="memdesc:a1270e1481255775459576b41be994e01"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the service track application module.  <br /></td></tr>
+<tr class="separator:a1270e1481255775459576b41be994e01"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2e888c1dd797f0fb55d2033ecc0f11c" id="r_ab2e888c1dd797f0fb55d2033ecc0f11c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab2e888c1dd797f0fb55d2033ecc0f11c">DccApplicationServiceTrack_power_on</a> (void)</td></tr>
+<tr class="memdesc:ab2e888c1dd797f0fb55d2033ecc0f11c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable service track power output and start DCC signal generation.  <br /></td></tr>
+<tr class="separator:ab2e888c1dd797f0fb55d2033ecc0f11c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98da10b988dbf26926616ec5cfdd62e2" id="r_a98da10b988dbf26926616ec5cfdd62e2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a98da10b988dbf26926616ec5cfdd62e2">DccApplicationServiceTrack_power_off</a> (void)</td></tr>
+<tr class="memdesc:a98da10b988dbf26926616ec5cfdd62e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disable service track power output and stop DCC signal generation.  <br /></td></tr>
+<tr class="separator:a98da10b988dbf26926616ec5cfdd62e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a33591bccb7643df679ae270311cb41e4" id="r_a33591bccb7643df679ae270311cb41e4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a33591bccb7643df679ae270311cb41e4">DccApplicationServiceTrack_enter</a> (void)</td></tr>
+<tr class="memdesc:a33591bccb7643df679ae270311cb41e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enter service mode on the service track.  <br /></td></tr>
+<tr class="separator:a33591bccb7643df679ae270311cb41e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acd720ab4c744d84e5a104c98c1238f51" id="r_acd720ab4c744d84e5a104c98c1238f51"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acd720ab4c744d84e5a104c98c1238f51">DccApplicationServiceTrack_exit</a> (void)</td></tr>
+<tr class="memdesc:acd720ab4c744d84e5a104c98c1238f51"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exit service mode on the service track.  <br /></td></tr>
+<tr class="separator:acd720ab4c744d84e5a104c98c1238f51"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13317db6d12fcd996e52bd253843cf38" id="r_a13317db6d12fcd996e52bd253843cf38"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a13317db6d12fcd996e52bd253843cf38">DccApplicationServiceTrack_is_active</a> (void)</td></tr>
+<tr class="memdesc:a13317db6d12fcd996e52bd253843cf38"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if service mode is currently active.  <br /></td></tr>
+<tr class="separator:a13317db6d12fcd996e52bd253843cf38"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a298794382d5cc242ecacf4215c026b05" id="r_a298794382d5cc242ecacf4215c026b05"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a298794382d5cc242ecacf4215c026b05">DccApplicationServiceTrack_direct_write_byte</a> (uint16_t cv_number, uint8_t value)</td></tr>
+<tr class="memdesc:a298794382d5cc242ecacf4215c026b05"><td class="mdescLeft">&#160;</td><td class="mdescRight">Direct mode: write a CV byte.  <br /></td></tr>
+<tr class="separator:a298794382d5cc242ecacf4215c026b05"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a65afdb7f4a0324247532fe7e683d3879" id="r_a65afdb7f4a0324247532fe7e683d3879"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a65afdb7f4a0324247532fe7e683d3879">DccApplicationServiceTrack_direct_verify_byte</a> (uint16_t cv_number, uint8_t value)</td></tr>
+<tr class="memdesc:a65afdb7f4a0324247532fe7e683d3879"><td class="mdescLeft">&#160;</td><td class="mdescRight">Direct mode: verify a CV byte.  <br /></td></tr>
+<tr class="separator:a65afdb7f4a0324247532fe7e683d3879"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab6233c723fc2d337f92f24b30fd12085" id="r_ab6233c723fc2d337f92f24b30fd12085"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab6233c723fc2d337f92f24b30fd12085">DccApplicationServiceTrack_direct_write_bit</a> (uint16_t cv_number, uint8_t bit_position, bool bit_value)</td></tr>
+<tr class="memdesc:ab6233c723fc2d337f92f24b30fd12085"><td class="mdescLeft">&#160;</td><td class="mdescRight">Direct mode: write a single CV bit.  <br /></td></tr>
+<tr class="separator:ab6233c723fc2d337f92f24b30fd12085"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a369a75cf5777a3cecb4cbac2d264e4ba" id="r_a369a75cf5777a3cecb4cbac2d264e4ba"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a369a75cf5777a3cecb4cbac2d264e4ba">DccApplicationServiceTrack_direct_verify_bit</a> (uint16_t cv_number, uint8_t bit_position, bool bit_value)</td></tr>
+<tr class="memdesc:a369a75cf5777a3cecb4cbac2d264e4ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Direct mode: verify a single CV bit.  <br /></td></tr>
+<tr class="separator:a369a75cf5777a3cecb4cbac2d264e4ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6881be99b1fb4ecd64a64f32ed7b815c" id="r_a6881be99b1fb4ecd64a64f32ed7b815c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6881be99b1fb4ecd64a64f32ed7b815c">DccApplicationServiceTrack_paged_write</a> (uint16_t cv_number, uint8_t value)</td></tr>
+<tr class="memdesc:a6881be99b1fb4ecd64a64f32ed7b815c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Paged mode: write a CV.  <br /></td></tr>
+<tr class="separator:a6881be99b1fb4ecd64a64f32ed7b815c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7325ef1a8fe3cf47616c5c35cd6f845f" id="r_a7325ef1a8fe3cf47616c5c35cd6f845f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7325ef1a8fe3cf47616c5c35cd6f845f">DccApplicationServiceTrack_paged_verify</a> (uint16_t cv_number, uint8_t value)</td></tr>
+<tr class="memdesc:a7325ef1a8fe3cf47616c5c35cd6f845f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Paged mode: verify a CV.  <br /></td></tr>
+<tr class="separator:a7325ef1a8fe3cf47616c5c35cd6f845f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d18443d3bc870101ef492d72eafa69d" id="r_a4d18443d3bc870101ef492d72eafa69d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4d18443d3bc870101ef492d72eafa69d">DccApplicationServiceTrack_register_write</a> (uint8_t register_number, uint8_t value)</td></tr>
+<tr class="memdesc:a4d18443d3bc870101ef492d72eafa69d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register mode: write a register.  <br /></td></tr>
+<tr class="separator:a4d18443d3bc870101ef492d72eafa69d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac10e3e8481fafcac05e6745733536883" id="r_ac10e3e8481fafcac05e6745733536883"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac10e3e8481fafcac05e6745733536883">DccApplicationServiceTrack_register_verify</a> (uint8_t register_number, uint8_t value)</td></tr>
+<tr class="memdesc:ac10e3e8481fafcac05e6745733536883"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register mode: verify a register.  <br /></td></tr>
+<tr class="separator:ac10e3e8481fafcac05e6745733536883"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af29fc9e94ffd97773187c196c5c85f18" id="r_af29fc9e94ffd97773187c196c5c85f18"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af29fc9e94ffd97773187c196c5c85f18">DccApplicationServiceTrack_address_write</a> (uint8_t address)</td></tr>
+<tr class="memdesc:af29fc9e94ffd97773187c196c5c85f18"><td class="mdescLeft">&#160;</td><td class="mdescRight">Address-only mode: write the short address (CV 1).  <br /></td></tr>
+<tr class="separator:af29fc9e94ffd97773187c196c5c85f18"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a659efa61efe128290a10d8348bb13a4d" id="r_a659efa61efe128290a10d8348bb13a4d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a659efa61efe128290a10d8348bb13a4d">DccApplicationServiceTrack_address_verify</a> (uint8_t address)</td></tr>
+<tr class="memdesc:a659efa61efe128290a10d8348bb13a4d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Address-only mode: verify the short address (CV 1).  <br /></td></tr>
+<tr class="separator:a659efa61efe128290a10d8348bb13a4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Application-layer API for service track (programming) operations. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -110,7 +171,653 @@ $(function(){ initResizable(false); });
 <p>Legacy application layer for the service track (programming) output: power control, service mode entry/exit, and the direct, paged, register and address-only programming operations, forwarded through an interface struct that the application (or test) populates. This module is still compiled and unit-tested but is NOT wired by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>; the current command-station API is dcc_application_command_station_service_track. Every call is a no-op (or returns false) until DccApplicationServiceTrack_initialize has been called.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="a1270e1481255775459576b41be994e01" name="a1270e1481255775459576b41be994e01"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1270e1481255775459576b41be994e01">&#9670;&#160;</a></span>DccApplicationServiceTrack_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccApplicationServiceTrack_initialize </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__application__service__track__t.html">interface_dcc_application_service_track_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initialize the service track application module. </p>
+<p>Stores the interface pointer; nothing is powered and service mode is not entered.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">interface</td><td>Pointer to a populated <a class="el" href="structinterface__dcc__application__service__track__t.html">interface_dcc_application_service_track_t</a>; must remain valid while the module is used.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Stores the interface pointer; nothing is powered and service mode is not entered.</p>
+<pre class="fragment">* @param interface Pointer to a populated interface_dcc_application_service_track_t.
+* </pre> 
+</div>
+</div>
+<a id="ab2e888c1dd797f0fb55d2033ecc0f11c" name="ab2e888c1dd797f0fb55d2033ecc0f11c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab2e888c1dd797f0fb55d2033ecc0f11c">&#9670;&#160;</a></span>DccApplicationServiceTrack_power_on()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccApplicationServiceTrack_power_on </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Enable service track power output and start DCC signal generation. </p>
+<p>Calls track_power_set(true), timer_start with the one-bit half period (DCC_ONE_BIT_HALF_PERIOD_US) and encoder_start, in that order. No-op before initialization.</p>
+<p>Algorithm:</p><ol type="1">
+<li>Return if not initialized.</li>
+<li>track_power_set(true).</li>
+<li>timer_start(DCC_ONE_BIT_HALF_PERIOD_US).</li>
+<li>encoder_start(). </li>
+</ol>
+
+</div>
+</div>
+<a id="a98da10b988dbf26926616ec5cfdd62e2" name="a98da10b988dbf26926616ec5cfdd62e2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a98da10b988dbf26926616ec5cfdd62e2">&#9670;&#160;</a></span>DccApplicationServiceTrack_power_off()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccApplicationServiceTrack_power_off </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Disable service track power output and stop DCC signal generation. </p>
+<p>Calls encoder_stop, timer_stop and track_power_set(false), in that order (the reverse of power-on). No-op before initialization.</p>
+<p>Algorithm:</p><ol type="1">
+<li>Return if not initialized.</li>
+<li>encoder_stop().</li>
+<li>timer_stop().</li>
+<li>track_power_set(false). </li>
+</ol>
+
+</div>
+</div>
+<a id="a33591bccb7643df679ae270311cb41e4" name="a33591bccb7643df679ae270311cb41e4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a33591bccb7643df679ae270311cb41e4">&#9670;&#160;</a></span>DccApplicationServiceTrack_enter()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationServiceTrack_enter </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Enter service mode on the service track. </p>
+<p>Powers the track (track_power_set, timer_start, encoder_start) and then calls the enter_service_mode hook. The track stays powered even when the hook refuses.</p>
+<dl class="section return"><dt>Returns</dt><dd>true if service mode was activated; false if the hook refused (busy) or the module is not initialized.</dd></dl>
+<p>Algorithm:</p><ol type="1">
+<li>Return false if not initialized.</li>
+<li>Power the track: track_power_set(true), timer_start(DCC_ONE_BIT_HALF_PERIOD_US), encoder_start().</li>
+<li>Return the result of the enter_service_mode hook; the track stays powered even when the hook refuses.</li>
+</ol>
+<dl class="section return"><dt>Returns</dt><dd>true if service mode was activated; false if the hook refused or the module is not initialized. </dd></dl>
+
+</div>
+</div>
+<a id="acd720ab4c744d84e5a104c98c1238f51" name="acd720ab4c744d84e5a104c98c1238f51"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acd720ab4c744d84e5a104c98c1238f51">&#9670;&#160;</a></span>DccApplicationServiceTrack_exit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccApplicationServiceTrack_exit </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Exit service mode on the service track. </p>
+<p>Calls the exit_service_mode hook, then stops the encoder and timer and removes track power. No-op before initialization.</p>
+<p>Algorithm:</p><ol type="1">
+<li>Return if not initialized.</li>
+<li>exit_service_mode().</li>
+<li>encoder_stop(), timer_stop(), track_power_set(false). </li>
+</ol>
+
+</div>
+</div>
+<a id="a13317db6d12fcd996e52bd253843cf38" name="a13317db6d12fcd996e52bd253843cf38"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a13317db6d12fcd996e52bd253843cf38">&#9670;&#160;</a></span>DccApplicationServiceTrack_is_active()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationServiceTrack_is_active </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Check if service mode is currently active. </p>
+<p>Forwards to the is_service_mode_active hook.</p>
+<dl class="section return"><dt>Returns</dt><dd>true if service mode is active; false otherwise or when the module is not initialized.</dd></dl>
+<p>Returns false when uninitialized, otherwise forwards to the is_service_mode_active hook.</p>
+<dl class="section return"><dt>Returns</dt><dd>true if service mode is active; false otherwise or when the module is not initialized. </dd></dl>
+
+</div>
+</div>
+<a id="a298794382d5cc242ecacf4215c026b05" name="a298794382d5cc242ecacf4215c026b05"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a298794382d5cc242ecacf4215c026b05">&#9670;&#160;</a></span>DccApplicationServiceTrack_direct_write_byte()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationServiceTrack_direct_write_byte </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Direct mode: write a CV byte. </p>
+<p>Forwards to the direct_write_byte hook (S-9.2.3 direct mode).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number (1-based). </td></tr>
+    <tr><td class="paramname">value</td><td>Byte value to write.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the hook reports success; false otherwise or when the module is not initialized.</dd></dl>
+<p>Returns false when uninitialized, otherwise forwards to the direct_write_byte hook.</p>
+<pre class="fragment">* @param cv_number CV number (1-based).
+* @param value Byte value to write.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the hook reports success; false otherwise or when the module is not initialized. </dd></dl>
+
+</div>
+</div>
+<a id="a65afdb7f4a0324247532fe7e683d3879" name="a65afdb7f4a0324247532fe7e683d3879"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a65afdb7f4a0324247532fe7e683d3879">&#9670;&#160;</a></span>DccApplicationServiceTrack_direct_verify_byte()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationServiceTrack_direct_verify_byte </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Direct mode: verify a CV byte. </p>
+<p>Forwards to the direct_verify_byte hook (S-9.2.3 direct mode).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number (1-based). </td></tr>
+    <tr><td class="paramname">value</td><td>Expected byte value.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the hook reports a match; false otherwise or when the module is not initialized.</dd></dl>
+<p>Returns false when uninitialized, otherwise forwards to the direct_verify_byte hook.</p>
+<pre class="fragment">* @param cv_number CV number (1-based).
+* @param value Expected byte value.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the hook reports a match; false otherwise or when the module is not initialized. </dd></dl>
+
+</div>
+</div>
+<a id="ab6233c723fc2d337f92f24b30fd12085" name="ab6233c723fc2d337f92f24b30fd12085"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab6233c723fc2d337f92f24b30fd12085">&#9670;&#160;</a></span>DccApplicationServiceTrack_direct_write_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationServiceTrack_direct_write_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>bit_value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Direct mode: write a single CV bit. </p>
+<p>Forwards to the direct_write_bit hook (S-9.2.3 direct mode, bit manipulation).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number (1-based). </td></tr>
+    <tr><td class="paramname">bit_position</td><td>Bit position within the CV (0-7). </td></tr>
+    <tr><td class="paramname">bit_value</td><td>Bit value to write.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the hook reports success; false otherwise or when the module is not initialized.</dd></dl>
+<p>Returns false when uninitialized, otherwise forwards to the direct_write_bit hook.</p>
+<pre class="fragment">* @param cv_number CV number (1-based).
+* @param bit_position Bit position within the CV (0-7).
+* @param bit_value Bit value to write.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the hook reports success; false otherwise or when the module is not initialized. </dd></dl>
+
+</div>
+</div>
+<a id="a369a75cf5777a3cecb4cbac2d264e4ba" name="a369a75cf5777a3cecb4cbac2d264e4ba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a369a75cf5777a3cecb4cbac2d264e4ba">&#9670;&#160;</a></span>DccApplicationServiceTrack_direct_verify_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationServiceTrack_direct_verify_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>bit_value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Direct mode: verify a single CV bit. </p>
+<p>Forwards to the direct_verify_bit hook (S-9.2.3 direct mode, bit manipulation).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number (1-based). </td></tr>
+    <tr><td class="paramname">bit_position</td><td>Bit position within the CV (0-7). </td></tr>
+    <tr><td class="paramname">bit_value</td><td>Expected bit value.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the hook reports a match; false otherwise or when the module is not initialized.</dd></dl>
+<p>Returns false when uninitialized, otherwise forwards to the direct_verify_bit hook.</p>
+<pre class="fragment">* @param cv_number CV number (1-based).
+* @param bit_position Bit position within the CV (0-7).
+* @param bit_value Expected bit value.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the hook reports a match; false otherwise or when the module is not initialized. </dd></dl>
+
+</div>
+</div>
+<a id="a6881be99b1fb4ecd64a64f32ed7b815c" name="a6881be99b1fb4ecd64a64f32ed7b815c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6881be99b1fb4ecd64a64f32ed7b815c">&#9670;&#160;</a></span>DccApplicationServiceTrack_paged_write()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationServiceTrack_paged_write </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Paged mode: write a CV. </p>
+<p>Forwards to the paged_write hook (S-9.2.3 paged mode).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number (1-based). </td></tr>
+    <tr><td class="paramname">value</td><td>Byte value to write.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the hook reports success; false otherwise or when the module is not initialized.</dd></dl>
+<p>Returns false when uninitialized, otherwise forwards to the paged_write hook.</p>
+<pre class="fragment">* @param cv_number CV number (1-based).
+* @param value Byte value to write.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the hook reports success; false otherwise or when the module is not initialized. </dd></dl>
+
+</div>
+</div>
+<a id="a7325ef1a8fe3cf47616c5c35cd6f845f" name="a7325ef1a8fe3cf47616c5c35cd6f845f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7325ef1a8fe3cf47616c5c35cd6f845f">&#9670;&#160;</a></span>DccApplicationServiceTrack_paged_verify()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationServiceTrack_paged_verify </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Paged mode: verify a CV. </p>
+<p>Forwards to the paged_verify hook (S-9.2.3 paged mode).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cv_number</td><td>CV number (1-based). </td></tr>
+    <tr><td class="paramname">value</td><td>Expected byte value.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the hook reports a match; false otherwise or when the module is not initialized.</dd></dl>
+<p>Returns false when uninitialized, otherwise forwards to the paged_verify hook.</p>
+<pre class="fragment">* @param cv_number CV number (1-based).
+* @param value Expected byte value.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the hook reports a match; false otherwise or when the module is not initialized. </dd></dl>
+
+</div>
+</div>
+<a id="a4d18443d3bc870101ef492d72eafa69d" name="a4d18443d3bc870101ef492d72eafa69d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4d18443d3bc870101ef492d72eafa69d">&#9670;&#160;</a></span>DccApplicationServiceTrack_register_write()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationServiceTrack_register_write </td>
+          <td>(</td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>register_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Register mode: write a register. </p>
+<p>Forwards to the register_write hook (S-9.2.3 register mode).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">register_number</td><td>Register number as defined by S-9.2.3 register mode. </td></tr>
+    <tr><td class="paramname">value</td><td>Byte value to write.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the hook reports success; false otherwise or when the module is not initialized.</dd></dl>
+<p>Returns false when uninitialized, otherwise forwards to the register_write hook.</p>
+<pre class="fragment">* @param register_number Register number (S-9.2.3 register mode).
+* @param value Byte value to write.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the hook reports success; false otherwise or when the module is not initialized. </dd></dl>
+
+</div>
+</div>
+<a id="ac10e3e8481fafcac05e6745733536883" name="ac10e3e8481fafcac05e6745733536883"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac10e3e8481fafcac05e6745733536883">&#9670;&#160;</a></span>DccApplicationServiceTrack_register_verify()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationServiceTrack_register_verify </td>
+          <td>(</td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>register_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Register mode: verify a register. </p>
+<p>Forwards to the register_verify hook (S-9.2.3 register mode).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">register_number</td><td>Register number as defined by S-9.2.3 register mode. </td></tr>
+    <tr><td class="paramname">value</td><td>Expected byte value.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the hook reports a match; false otherwise or when the module is not initialized.</dd></dl>
+<p>Returns false when uninitialized, otherwise forwards to the register_verify hook.</p>
+<pre class="fragment">* @param register_number Register number (S-9.2.3 register mode).
+* @param value Expected byte value.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the hook reports a match; false otherwise or when the module is not initialized. </dd></dl>
+
+</div>
+</div>
+<a id="af29fc9e94ffd97773187c196c5c85f18" name="af29fc9e94ffd97773187c196c5c85f18"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af29fc9e94ffd97773187c196c5c85f18">&#9670;&#160;</a></span>DccApplicationServiceTrack_address_write()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationServiceTrack_address_write </td>
+          <td>(</td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>address</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Address-only mode: write the short address (CV 1). </p>
+<p>Forwards to the address_write hook (S-9.2.3 address-only mode).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">address</td><td>Short address to program into CV 1.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the hook reports success; false otherwise or when the module is not initialized.</dd></dl>
+<p>Returns false when uninitialized, otherwise forwards to the address_write hook.</p>
+<pre class="fragment">* @param address Short address to program into CV 1.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the hook reports success; false otherwise or when the module is not initialized. </dd></dl>
+
+</div>
+</div>
+<a id="a659efa61efe128290a10d8348bb13a4d" name="a659efa61efe128290a10d8348bb13a4d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a659efa61efe128290a10d8348bb13a4d">&#9670;&#160;</a></span>DccApplicationServiceTrack_address_verify()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationServiceTrack_address_verify </td>
+          <td>(</td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>address</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Address-only mode: verify the short address (CV 1). </p>
+<p>Forwards to the address_verify hook (S-9.2.3 address-only mode).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">address</td><td>Expected short address in CV 1.</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the hook reports a match; false otherwise or when the module is not initialized.</dd></dl>
+<p>Returns false when uninitialized, otherwise forwards to the address_verify hook.</p>
+<pre class="fragment">* @param address Expected short address in CV 1.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the hook reports a match; false otherwise or when the module is not initialized. </dd></dl>
+
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

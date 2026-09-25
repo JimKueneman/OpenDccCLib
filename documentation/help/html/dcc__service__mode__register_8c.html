@@ -90,12 +90,37 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#enum-members">Enumerations</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_service_mode_register.c File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>Physical register mode CV programming (legacy, registers 1-8).  
 <a href="#details">More...</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a9abd66af13d314c68654ea4406e02af1" id="r_a9abd66af13d314c68654ea4406e02af1"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9abd66af13d314c68654ea4406e02af1">register_state_enum</a> { <a class="el" href="#a9abd66af13d314c68654ea4406e02af1acc143268a84c0932bbe4e1fda5ce9119">DCC_REGISTER_STATE_IDLE</a>
+, <a class="el" href="#a9abd66af13d314c68654ea4406e02af1ae02f724ce35e6af3ad967fe6eb923d2b">DCC_REGISTER_STATE_PAGE_PRESET</a>
+, <a class="el" href="#a9abd66af13d314c68654ea4406e02af1ab19b71164ead1d36415241e6f76f5580">DCC_REGISTER_STATE_COMMAND</a>
+ }</td></tr>
+<tr class="memdesc:a9abd66af13d314c68654ea4406e02af1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Step of the two-step register operation (stored in the context register_state field).  <a href="#a9abd66af13d314c68654ea4406e02af1">More...</a><br /></td></tr>
+<tr class="separator:a9abd66af13d314c68654ea4406e02af1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a8d65b1dc6af8ffdbf34d72e24ffb5897" id="r_a8d65b1dc6af8ffdbf34d72e24ffb5897"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8d65b1dc6af8ffdbf34d72e24ffb5897">DccServiceModeRegister_initialize</a> (<a class="el" href="structdcc__service__mode__register__context__t.html">dcc_service_mode_register_context_t</a> *context, const <a class="el" href="structinterface__dcc__service__mode__register__t.html">interface_dcc_service_mode_register_t</a> *interface)</td></tr>
+<tr class="memdesc:a8d65b1dc6af8ffdbf34d72e24ffb5897"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the register service mode module.  <br /></td></tr>
+<tr class="separator:a8d65b1dc6af8ffdbf34d72e24ffb5897"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d71f82d4b6a1a77ec6766412fdb02a7" id="r_a5d71f82d4b6a1a77ec6766412fdb02a7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5d71f82d4b6a1a77ec6766412fdb02a7">DccServiceModeRegister_write</a> (<a class="el" href="structdcc__service__mode__register__context__t.html">dcc_service_mode_register_context_t</a> *context, uint8_t register_number, uint8_t value)</td></tr>
+<tr class="memdesc:a5d71f82d4b6a1a77ec6766412fdb02a7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a register value using register mode.  <br /></td></tr>
+<tr class="separator:a5d71f82d4b6a1a77ec6766412fdb02a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0984ae4c26f46029199b74047703ff7" id="r_ad0984ae4c26f46029199b74047703ff7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad0984ae4c26f46029199b74047703ff7">DccServiceModeRegister_verify</a> (<a class="el" href="structdcc__service__mode__register__context__t.html">dcc_service_mode_register_context_t</a> *context, uint8_t register_number, uint8_t value)</td></tr>
+<tr class="memdesc:ad0984ae4c26f46029199b74047703ff7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Verify a register value using register mode.  <br /></td></tr>
+<tr class="separator:ad0984ae4c26f46029199b74047703ff7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Physical register mode CV programming (legacy, registers 1-8). </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -107,7 +132,124 @@ $(function(){ initResizable(false); });
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="a9abd66af13d314c68654ea4406e02af1" name="a9abd66af13d314c68654ea4406e02af1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9abd66af13d314c68654ea4406e02af1">&#9670;&#160;</a></span>register_state_enum</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="#a9abd66af13d314c68654ea4406e02af1">register_state_enum</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Step of the two-step register operation (stored in the context register_state field). </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a9abd66af13d314c68654ea4406e02af1acc143268a84c0932bbe4e1fda5ce9119" name="a9abd66af13d314c68654ea4406e02af1acc143268a84c0932bbe4e1fda5ce9119"></a>DCC_REGISTER_STATE_IDLE&#160;</td><td class="fielddoc"><p>No operation in progress </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a9abd66af13d314c68654ea4406e02af1ae02f724ce35e6af3ad967fe6eb923d2b" name="a9abd66af13d314c68654ea4406e02af1ae02f724ce35e6af3ad967fe6eb923d2b"></a>DCC_REGISTER_STATE_PAGE_PRESET&#160;</td><td class="fielddoc"><p>Writing page 1 to the page register </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a9abd66af13d314c68654ea4406e02af1ab19b71164ead1d36415241e6f76f5580" name="a9abd66af13d314c68654ea4406e02af1ab19b71164ead1d36415241e6f76f5580"></a>DCC_REGISTER_STATE_COMMAND&#160;</td><td class="fielddoc"><p>Writing or verifying the target register </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="a8d65b1dc6af8ffdbf34d72e24ffb5897" name="a8d65b1dc6af8ffdbf34d72e24ffb5897"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8d65b1dc6af8ffdbf34d72e24ffb5897">&#9670;&#160;</a></span>DccServiceModeRegister_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeRegister_initialize </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__register__context__t.html">dcc_service_mode_register_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__service__mode__register__t.html">interface_dcc_service_mode_register_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize the register service mode module. </p>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_register_context_t instance.
+* @param interface Pointer to populated interface_dcc_service_mode_register_t struct.
+* </pre> 
+</div>
+</div>
+<a id="a5d71f82d4b6a1a77ec6766412fdb02a7" name="a5d71f82d4b6a1a77ec6766412fdb02a7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d71f82d4b6a1a77ec6766412fdb02a7">&#9670;&#160;</a></span>DccServiceModeRegister_write()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeRegister_write </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__register__context__t.html">dcc_service_mode_register_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>register_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Write a register value using register mode. </p>
+<p>Delegates to _begin_with_preset() as a write.</p>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_register_context_t instance.
+* @param register_number Register number to write (1-8).
+* @param value Byte value to write.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if register_number is out of range, the common module is busy, or a register operation is already in progress. </dd></dl>
+
+</div>
+</div>
+<a id="ad0984ae4c26f46029199b74047703ff7" name="ad0984ae4c26f46029199b74047703ff7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad0984ae4c26f46029199b74047703ff7">&#9670;&#160;</a></span>DccServiceModeRegister_verify()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeRegister_verify </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__register__context__t.html">dcc_service_mode_register_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>register_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Verify a register value using register mode. </p>
+<p>Delegates to _begin_with_preset() as a verify.</p>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_register_context_t instance.
+* @param register_number Register number to verify (1-8).
+* @param value Expected byte value.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if register_number is out of range, the common module is busy, or a register operation is already in progress. </dd></dl>
+
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

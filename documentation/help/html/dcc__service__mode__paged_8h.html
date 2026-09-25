@@ -90,6 +90,9 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_service_mode_paged.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -98,6 +101,28 @@ $(function(){ initResizable(false); });
 <a href="#details">More...</a></p>
 
 <p><a href="dcc__service__mode__paged_8h_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structinterface__dcc__service__mode__paged__t.html">interface_dcc_service_mode_paged_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface struct &ndash; dependencies injected by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>.  <a href="structinterface__dcc__service__mode__paged__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcc__service__mode__paged__context__t.html">dcc_service_mode_paged_context_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Instance context for the paged service mode module.  <a href="structdcc__service__mode__paged__context__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:ad04d6b8b2eef05e8f4d88a66d4886fa7" id="r_ad04d6b8b2eef05e8f4d88a66d4886fa7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad04d6b8b2eef05e8f4d88a66d4886fa7">DccServiceModePaged_initialize</a> (<a class="el" href="structdcc__service__mode__paged__context__t.html">dcc_service_mode_paged_context_t</a> *context, const <a class="el" href="structinterface__dcc__service__mode__paged__t.html">interface_dcc_service_mode_paged_t</a> *interface)</td></tr>
+<tr class="memdesc:ad04d6b8b2eef05e8f4d88a66d4886fa7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the paged service mode module.  <br /></td></tr>
+<tr class="separator:ad04d6b8b2eef05e8f4d88a66d4886fa7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e3dcaa0a1c09733fa7411911ccba6c8" id="r_a3e3dcaa0a1c09733fa7411911ccba6c8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3e3dcaa0a1c09733fa7411911ccba6c8">DccServiceModePaged_write</a> (<a class="el" href="structdcc__service__mode__paged__context__t.html">dcc_service_mode_paged_context_t</a> *context, uint16_t cv_number, uint8_t value)</td></tr>
+<tr class="memdesc:a3e3dcaa0a1c09733fa7411911ccba6c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a CV value using paged mode.  <br /></td></tr>
+<tr class="separator:a3e3dcaa0a1c09733fa7411911ccba6c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5c918ac85492a810d5136bd1b154f8e3" id="r_a5c918ac85492a810d5136bd1b154f8e3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5c918ac85492a810d5136bd1b154f8e3">DccServiceModePaged_verify</a> (<a class="el" href="structdcc__service__mode__paged__context__t.html">dcc_service_mode_paged_context_t</a> *context, uint16_t cv_number, uint8_t value)</td></tr>
+<tr class="memdesc:a5c918ac85492a810d5136bd1b154f8e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Verify a CV value using paged mode.  <br /></td></tr>
+<tr class="separator:a5c918ac85492a810d5136bd1b154f8e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Paged mode CV programming via register 6 page pointer. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -110,7 +135,160 @@ $(function(){ initResizable(false); });
 <p>Two-step operation: first writes the page register (register 6), then writes/verifies the data register within that page. CVs are mapped to page and register: page = ((CV-1)/4)+1, register = ((CV-1)%4)+1.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="ad04d6b8b2eef05e8f4d88a66d4886fa7" name="ad04d6b8b2eef05e8f4d88a66d4886fa7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad04d6b8b2eef05e8f4d88a66d4886fa7">&#9670;&#160;</a></span>DccServiceModePaged_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModePaged_initialize </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__paged__context__t.html">dcc_service_mode_paged_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__service__mode__paged__t.html">interface_dcc_service_mode_paged_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initialize the paged service mode module. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__paged__context__t.html">dcc_service_mode_paged_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">interface</td><td>Pointer to populated <a class="el" href="structinterface__dcc__service__mode__paged__t.html">interface_dcc_service_mode_paged_t</a> struct.</td></tr>
+  </table>
+  </dd>
+</dl>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_paged_context_t instance.
+* @param interface Pointer to populated interface_dcc_service_mode_paged_t struct.
+* </pre> 
+</div>
+</div>
+<a id="a3e3dcaa0a1c09733fa7411911ccba6c8" name="a3e3dcaa0a1c09733fa7411911ccba6c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3e3dcaa0a1c09733fa7411911ccba6c8">&#9670;&#160;</a></span>DccServiceModePaged_write()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModePaged_write </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__paged__context__t.html">dcc_service_mode_paged_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Write a CV value using paged mode. </p>
+<p>Two-step: writes the page register (register 6) first, then writes the data register. Per S-9.2.3 the data step follows the page write whether or not it was acknowledged. The result of the data step is delivered through the interface on_complete callback. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__paged__context__t.html">dcc_service_mode_paged_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">cv_number</td><td>CV number to write (1-1024). </td></tr>
+    <tr><td class="paramname">value</td><td>Byte value to write. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if cv_number is out of range, the common module is busy, or a paged operation is already in progress.</dd></dl>
+<p>Algorithm:</p><ol type="1">
+<li>Return false if cv_number is outside 1-1024, the common module is busy, or paged_state is not IDLE</li>
+<li>Map the 0-based CV: page = ((cv_number - 1) / 4) + 1, data register = ((cv_number - 1) % 4) + 1</li>
+<li>Latch the data register, value and write flag; enter PAGE_SELECT and record this context for the callbacks</li>
+<li>Start a write of the page number to DCC_SERVICE_MODE_PAGE_REGISTER with DCC_SERVICE_MODE_COMMAND_REPEAT command packets and DCC_SERVICE_MODE_RECOVERY_COUNT recovery packets; _on_page_select_complete continues</li>
+<li>If the common module refuses to start, return to IDLE and return false</li>
+</ol>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_paged_context_t instance.
+* @param cv_number CV number to write (1-1024).
+* @param value Byte value to write.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if cv_number is out of range, the common module is busy, or a paged operation is already in progress. </dd></dl>
+
+</div>
+</div>
+<a id="a5c918ac85492a810d5136bd1b154f8e3" name="a5c918ac85492a810d5136bd1b154f8e3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5c918ac85492a810d5136bd1b154f8e3">&#9670;&#160;</a></span>DccServiceModePaged_verify()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModePaged_verify </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__paged__context__t.html">dcc_service_mode_paged_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Verify a CV value using paged mode. </p>
+<p>Two-step: writes the page register (register 6) first, then verifies the data register. Per S-9.2.3 the data step follows the page write whether or not it was acknowledged. The result of the data step is delivered through the interface on_complete callback. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__paged__context__t.html">dcc_service_mode_paged_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">cv_number</td><td>CV number to verify (1-1024). </td></tr>
+    <tr><td class="paramname">value</td><td>Expected byte value. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if cv_number is out of range, the common module is busy, or a paged operation is already in progress.</dd></dl>
+<p>Algorithm:</p><ol type="1">
+<li>Return false if cv_number is outside 1-1024, the common module is busy, or paged_state is not IDLE</li>
+<li>Map the 0-based CV: page = ((cv_number - 1) / 4) + 1, data register = ((cv_number - 1) % 4) + 1</li>
+<li>Latch the data register, expected value and verify flag; enter PAGE_SELECT and record this context for the callbacks</li>
+<li>Start a write of the page number to DCC_SERVICE_MODE_PAGE_REGISTER (the page select is always a write) with DCC_SERVICE_MODE_COMMAND_REPEAT command packets and DCC_SERVICE_MODE_RECOVERY_COUNT recovery packets; _on_page_select_complete continues with the verify</li>
+<li>If the common module refuses to start, return to IDLE and return false</li>
+</ol>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_paged_context_t instance.
+* @param cv_number CV number to verify (1-1024).
+* @param value Expected byte value.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if cv_number is out of range, the common module is busy, or a paged operation is already in progress. </dd></dl>
+
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

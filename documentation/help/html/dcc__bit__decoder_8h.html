@@ -90,6 +90,9 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_bit_decoder.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -98,6 +101,22 @@ $(function(){ initResizable(false); });
 <a href="#details">More...</a></p>
 
 <p><a href="dcc__bit__decoder_8h_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structinterface__dcc__bit__decoder__t.html">interface_dcc_bit_decoder_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface struct &ndash; dependencies injected by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>.  <a href="structinterface__dcc__bit__decoder__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a89220dd28c5b4510af965a4f998e8331" id="r_a89220dd28c5b4510af965a4f998e8331"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a89220dd28c5b4510af965a4f998e8331">DccBitDecoder_initialize</a> (const <a class="el" href="structinterface__dcc__bit__decoder__t.html">interface_dcc_bit_decoder_t</a> *interface)</td></tr>
+<tr class="memdesc:a89220dd28c5b4510af965a4f998e8331"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the bit decoder module.  <br /></td></tr>
+<tr class="separator:a89220dd28c5b4510af965a4f998e8331"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a99071bba52c22b0f4515d2a3173c67c8" id="r_a99071bba52c22b0f4515d2a3173c67c8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a99071bba52c22b0f4515d2a3173c67c8">DccBitDecoder_edge</a> (uint32_t timestamp_usec)</td></tr>
+<tr class="memdesc:a99071bba52c22b0f4515d2a3173c67c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process a signal edge from the input-capture ISR.  <br /></td></tr>
+<tr class="separator:a99071bba52c22b0f4515d2a3173c67c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Edge timestamp to bit classification, preamble detection, and byte assembly for DCC decoder. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -110,7 +129,86 @@ $(function(){ initResizable(false); });
 <p>Receives edge timestamps from the input-capture ISR, classifies half-bit periods as one or zero using timing thresholds from S-9.1, pairs half-bits into complete bits, detects preamble sequences, and assembles raw packet bytes. Complete packets are forwarded via callback.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="a89220dd28c5b4510af965a4f998e8331" name="a89220dd28c5b4510af965a4f998e8331"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a89220dd28c5b4510af965a4f998e8331">&#9670;&#160;</a></span>DccBitDecoder_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccBitDecoder_initialize </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__bit__decoder__t.html">interface_dcc_bit_decoder_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initialize the bit decoder module. </p>
+<p>Stores the interface and resets the edge pairing and packet assembler, so the next edge is taken as the timing baseline and a fresh preamble search begins.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">interface</td><td>Pointer to populated <a class="el" href="structinterface__dcc__bit__decoder__t.html">interface_dcc_bit_decoder_t</a> (wired by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>). Must remain valid for the lifetime of the application.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Stores the interface, marks the next edge as the timing baseline, clears the half-bit pairing and resets the assembler to a preamble search.</p>
+<pre class="fragment">* @param interface Pointer to populated interface_dcc_bit_decoder_t.
+* </pre> 
+</div>
+</div>
+<a id="a99071bba52c22b0f4515d2a3173c67c8" name="a99071bba52c22b0f4515d2a3173c67c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a99071bba52c22b0f4515d2a3173c67c8">&#9670;&#160;</a></span>DccBitDecoder_edge()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccBitDecoder_edge </td>
+          <td>(</td>
+          <td class="paramtype">uint32_t</td>          <td class="paramname"><span class="paramname"><em>timestamp_usec</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Process a signal edge from the input-capture ISR. </p>
+<p>Call this from the input-capture ISR on every edge (rising or falling). Each half-period is classified as one or zero against the S-9.1 thresholds and paired with its neighbour to form a bit; a half-period longer than the maximum restarts the preamble search. Complete packets are delivered through on_packet_received at the end bit.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">timestamp_usec</td><td>Microsecond timestamp of the edge from a free-running counter; wraparound between edges is tolerated.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Algorithm:</p><ol type="1">
+<li>First edge after initialize (or after a RailCom end bit): record it as the baseline and return; it yields no half-period.</li>
+<li>Compute the time elapsed since the previous edge (unsigned subtraction, so counter wraparound is tolerated) and record this edge as the new baseline.</li>
+<li>Elapsed at or above DCC_DECODER_HALF_BIT_MAX_US: invalid; drop any pending half and restart the preamble search.</li>
+<li>Classify the half-period: under DCC_DECODER_HALF_BIT_THRESHOLD_US is SHORT (one-bit), otherwise LONG (zero-bit).</li>
+<li>Pair with the pending half: none pending stores this one; a matching pair emits a bit through _on_bit and clears the pending half; a mismatch does NOT restart the preamble search &ndash; this half simply becomes the first half of a new pair.</li>
+</ol>
+<pre class="fragment">* @param timestamp_usec Microsecond timestamp of the edge.
+* </pre> 
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

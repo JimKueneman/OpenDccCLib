@@ -90,12 +90,40 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#enum-members">Enumerations</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_bit_decoder.c File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>Edge timestamp to bit classification, preamble detection, and byte assembly for DCC decoder.  
 <a href="#details">More...</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:ad990996d864f700055e836b25f07c4e6" id="r_ad990996d864f700055e836b25f07c4e6"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad990996d864f700055e836b25f07c4e6">half_type_enum</a> { <a class="el" href="#ad990996d864f700055e836b25f07c4e6a1050e669488810cc28e3eab36a70c510">DCC_HALF_NONE</a>
+, <a class="el" href="#ad990996d864f700055e836b25f07c4e6a713898248b1c8369df175dd0c54ee0e1">DCC_HALF_SHORT</a>
+, <a class="el" href="#ad990996d864f700055e836b25f07c4e6ae38badd62558053ef4878759dc6f5f6c">DCC_HALF_LONG</a>
+ }</td></tr>
+<tr class="memdesc:ad990996d864f700055e836b25f07c4e6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Classification of one half-period (the time between two edges).  <a href="#ad990996d864f700055e836b25f07c4e6">More...</a><br /></td></tr>
+<tr class="separator:ad990996d864f700055e836b25f07c4e6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab4df439b4c8b1d736b1ef5fde2237e4" id="r_aab4df439b4c8b1d736b1ef5fde2237e4"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aab4df439b4c8b1d736b1ef5fde2237e4">decode_state_enum</a> { <a class="el" href="#aab4df439b4c8b1d736b1ef5fde2237e4afdd5a865d185677ef4c454b92d93dbd3">DCC_DECODE_SEEKING_PREAMBLE</a>
+, <a class="el" href="#aab4df439b4c8b1d736b1ef5fde2237e4a9496d5303c983f760aa0a2d71ceb8da8">DCC_DECODE_ACCUMULATING</a>
+, <a class="el" href="#aab4df439b4c8b1d736b1ef5fde2237e4a5515e61c28a10eff0d9241f06d2faa83">DCC_DECODE_SEPARATOR</a>
+ }</td></tr>
+<tr class="memdesc:aab4df439b4c8b1d736b1ef5fde2237e4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Packet assembler state.  <a href="#aab4df439b4c8b1d736b1ef5fde2237e4">More...</a><br /></td></tr>
+<tr class="separator:aab4df439b4c8b1d736b1ef5fde2237e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a89220dd28c5b4510af965a4f998e8331" id="r_a89220dd28c5b4510af965a4f998e8331"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a89220dd28c5b4510af965a4f998e8331">DccBitDecoder_initialize</a> (const <a class="el" href="structinterface__dcc__bit__decoder__t.html">interface_dcc_bit_decoder_t</a> *interface)</td></tr>
+<tr class="memdesc:a89220dd28c5b4510af965a4f998e8331"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the bit decoder module.  <br /></td></tr>
+<tr class="separator:a89220dd28c5b4510af965a4f998e8331"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a99071bba52c22b0f4515d2a3173c67c8" id="r_a99071bba52c22b0f4515d2a3173c67c8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a99071bba52c22b0f4515d2a3173c67c8">DccBitDecoder_edge</a> (uint32_t timestamp_usec)</td></tr>
+<tr class="memdesc:a99071bba52c22b0f4515d2a3173c67c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process a signal edge from the input-capture ISR.  <br /></td></tr>
+<tr class="separator:a99071bba52c22b0f4515d2a3173c67c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Edge timestamp to bit classification, preamble detection, and byte assembly for DCC decoder. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -107,7 +135,105 @@ $(function(){ initResizable(false); });
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="ad990996d864f700055e836b25f07c4e6" name="ad990996d864f700055e836b25f07c4e6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad990996d864f700055e836b25f07c4e6">&#9670;&#160;</a></span>half_type_enum</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="#ad990996d864f700055e836b25f07c4e6">half_type_enum</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Classification of one half-period (the time between two edges). </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ad990996d864f700055e836b25f07c4e6a1050e669488810cc28e3eab36a70c510" name="ad990996d864f700055e836b25f07c4e6a1050e669488810cc28e3eab36a70c510"></a>DCC_HALF_NONE&#160;</td><td class="fielddoc"><p>No half-period pending: the next edge starts a new pair </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad990996d864f700055e836b25f07c4e6a713898248b1c8369df175dd0c54ee0e1" name="ad990996d864f700055e836b25f07c4e6a713898248b1c8369df175dd0c54ee0e1"></a>DCC_HALF_SHORT&#160;</td><td class="fielddoc"><p>Under DCC_DECODER_HALF_BIT_THRESHOLD_US: one half of a one-bit </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ad990996d864f700055e836b25f07c4e6ae38badd62558053ef4878759dc6f5f6c" name="ad990996d864f700055e836b25f07c4e6ae38badd62558053ef4878759dc6f5f6c"></a>DCC_HALF_LONG&#160;</td><td class="fielddoc"><p>At or above the threshold (and under the maximum): one half of a zero-bit </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<a id="aab4df439b4c8b1d736b1ef5fde2237e4" name="aab4df439b4c8b1d736b1ef5fde2237e4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aab4df439b4c8b1d736b1ef5fde2237e4">&#9670;&#160;</a></span>decode_state_enum</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="#aab4df439b4c8b1d736b1ef5fde2237e4">decode_state_enum</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Packet assembler state. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="aab4df439b4c8b1d736b1ef5fde2237e4afdd5a865d185677ef4c454b92d93dbd3" name="aab4df439b4c8b1d736b1ef5fde2237e4afdd5a865d185677ef4c454b92d93dbd3"></a>DCC_DECODE_SEEKING_PREAMBLE&#160;</td><td class="fielddoc"><p>Counting consecutive one-bits until DCC_PREAMBLE_BITS_DECODER_MIN are seen </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aab4df439b4c8b1d736b1ef5fde2237e4a9496d5303c983f760aa0a2d71ceb8da8" name="aab4df439b4c8b1d736b1ef5fde2237e4a9496d5303c983f760aa0a2d71ceb8da8"></a>DCC_DECODE_ACCUMULATING&#160;</td><td class="fielddoc"><p>Shifting the 8 data bits of a byte in, MSB first </p>
+</td></tr>
+<tr><td class="fieldname"><a id="aab4df439b4c8b1d736b1ef5fde2237e4a5515e61c28a10eff0d9241f06d2faa83" name="aab4df439b4c8b1d736b1ef5fde2237e4a5515e61c28a10eff0d9241f06d2faa83"></a>DCC_DECODE_SEPARATOR&#160;</td><td class="fielddoc"><p>Byte stored: a zero is the next start bit, a one is the packet end bit </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="a89220dd28c5b4510af965a4f998e8331" name="a89220dd28c5b4510af965a4f998e8331"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a89220dd28c5b4510af965a4f998e8331">&#9670;&#160;</a></span>DccBitDecoder_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccBitDecoder_initialize </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__bit__decoder__t.html">interface_dcc_bit_decoder_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize the bit decoder module. </p>
+<p>Stores the interface, marks the next edge as the timing baseline, clears the half-bit pairing and resets the assembler to a preamble search.</p>
+<pre class="fragment">* @param interface Pointer to populated interface_dcc_bit_decoder_t.
+* </pre> 
+</div>
+</div>
+<a id="a99071bba52c22b0f4515d2a3173c67c8" name="a99071bba52c22b0f4515d2a3173c67c8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a99071bba52c22b0f4515d2a3173c67c8">&#9670;&#160;</a></span>DccBitDecoder_edge()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccBitDecoder_edge </td>
+          <td>(</td>
+          <td class="paramtype">uint32_t</td>          <td class="paramname"><span class="paramname"><em>timestamp_usec</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Process a signal edge from the input-capture ISR. </p>
+<p>Algorithm:</p><ol type="1">
+<li>First edge after initialize (or after a RailCom end bit): record it as the baseline and return; it yields no half-period.</li>
+<li>Compute the time elapsed since the previous edge (unsigned subtraction, so counter wraparound is tolerated) and record this edge as the new baseline.</li>
+<li>Elapsed at or above DCC_DECODER_HALF_BIT_MAX_US: invalid; drop any pending half and restart the preamble search.</li>
+<li>Classify the half-period: under DCC_DECODER_HALF_BIT_THRESHOLD_US is SHORT (one-bit), otherwise LONG (zero-bit).</li>
+<li>Pair with the pending half: none pending stores this one; a matching pair emits a bit through _on_bit and clears the pending half; a mismatch does NOT restart the preamble search &ndash; this half simply becomes the first half of a new pair.</li>
+</ol>
+<pre class="fragment">* @param timestamp_usec Microsecond timestamp of the edge.
+* </pre> 
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

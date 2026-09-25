@@ -90,12 +90,36 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_application_main_track.c File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>Application-layer implementation for main track operations.  
 <a href="#details">More...</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a73620f06d630d3f68ed99dd50078b93b" id="r_a73620f06d630d3f68ed99dd50078b93b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a73620f06d630d3f68ed99dd50078b93b">DccApplicationMainTrack_initialize</a> (const <a class="el" href="structinterface__dcc__application__main__track__t.html">interface_dcc_application_main_track_t</a> *interface)</td></tr>
+<tr class="memdesc:a73620f06d630d3f68ed99dd50078b93b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the main track application module.  <br /></td></tr>
+<tr class="separator:a73620f06d630d3f68ed99dd50078b93b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58da84cd1300fe6da628eec29626e765" id="r_a58da84cd1300fe6da628eec29626e765"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a58da84cd1300fe6da628eec29626e765">DccApplicationMainTrack_power_on</a> (void)</td></tr>
+<tr class="memdesc:a58da84cd1300fe6da628eec29626e765"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enable main track power output and start DCC signal generation.  <br /></td></tr>
+<tr class="separator:a58da84cd1300fe6da628eec29626e765"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa551be67c5e473e80a6df8315d4d816" id="r_aaa551be67c5e473e80a6df8315d4d816"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aaa551be67c5e473e80a6df8315d4d816">DccApplicationMainTrack_power_off</a> (void)</td></tr>
+<tr class="memdesc:aaa551be67c5e473e80a6df8315d4d816"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disable main track power output and stop DCC signal generation.  <br /></td></tr>
+<tr class="separator:aaa551be67c5e473e80a6df8315d4d816"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3f4372b5fce81e7b005ec4892af55950" id="r_a3f4372b5fce81e7b005ec4892af55950"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3f4372b5fce81e7b005ec4892af55950">DccApplicationMainTrack_insert</a> (const <a class="el" href="structdcc__packet__t.html">dcc_packet_t</a> *packet, <a class="el" href="dcc__types_8h.html#ab9401618f9347a6ea872c16fdf06afa5">dcc_address_t</a> address, <a class="el" href="dcc__types_8h.html#a25bc1ab6fabc48ee3d81cc63308be375">dcc_tag_enum</a> tag, <a class="el" href="dcc__types_8h.html#ace836533608fb1eb2e3c5a69d33ce68f">dcc_priority_enum</a> priority, bool auto_refresh)</td></tr>
+<tr class="memdesc:a3f4372b5fce81e7b005ec4892af55950"><td class="mdescLeft">&#160;</td><td class="mdescRight">Insert a packet into the main track scheduler.  <br /></td></tr>
+<tr class="separator:a3f4372b5fce81e7b005ec4892af55950"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28a53d6e18bd99c96455c9e695e7345e" id="r_a28a53d6e18bd99c96455c9e695e7345e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a28a53d6e18bd99c96455c9e695e7345e">DccApplicationMainTrack_remove_address</a> (<a class="el" href="dcc__types_8h.html#ab9401618f9347a6ea872c16fdf06afa5">dcc_address_t</a> address)</td></tr>
+<tr class="memdesc:a28a53d6e18bd99c96455c9e695e7345e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all scheduler slots for a given address.  <br /></td></tr>
+<tr class="separator:a28a53d6e18bd99c96455c9e695e7345e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a69c59c65496387e3dc490306da7dfa" id="r_a5a69c59c65496387e3dc490306da7dfa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5a69c59c65496387e3dc490306da7dfa">DccApplicationMainTrack_clear</a> (void)</td></tr>
+<tr class="memdesc:a5a69c59c65496387e3dc490306da7dfa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear all active scheduler slots.  <br /></td></tr>
+<tr class="separator:a5a69c59c65496387e3dc490306da7dfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Application-layer implementation for main track operations. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -108,7 +132,165 @@ $(function(){ initResizable(false); });
 <p>Legacy module: still compiled and unit-tested, but not wired by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a> (see dcc_application_command_station_main_track for the current API).</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="a73620f06d630d3f68ed99dd50078b93b" name="a73620f06d630d3f68ed99dd50078b93b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a73620f06d630d3f68ed99dd50078b93b">&#9670;&#160;</a></span>DccApplicationMainTrack_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccApplicationMainTrack_initialize </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__application__main__track__t.html">interface_dcc_application_main_track_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize the main track application module. </p>
+<p>Stores the interface pointer; nothing is powered or scheduled.</p>
+<pre class="fragment">* @param interface Pointer to a populated interface_dcc_application_main_track_t.
+* </pre> 
+</div>
+</div>
+<a id="a58da84cd1300fe6da628eec29626e765" name="a58da84cd1300fe6da628eec29626e765"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58da84cd1300fe6da628eec29626e765">&#9670;&#160;</a></span>DccApplicationMainTrack_power_on()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccApplicationMainTrack_power_on </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Enable main track power output and start DCC signal generation. </p>
+<p>Algorithm:</p><ol type="1">
+<li>Return if not initialized.</li>
+<li>track_power_set(true).</li>
+<li>timer_start(DCC_ONE_BIT_HALF_PERIOD_US).</li>
+<li>encoder_start(). </li>
+</ol>
+
+</div>
+</div>
+<a id="aaa551be67c5e473e80a6df8315d4d816" name="aaa551be67c5e473e80a6df8315d4d816"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaa551be67c5e473e80a6df8315d4d816">&#9670;&#160;</a></span>DccApplicationMainTrack_power_off()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccApplicationMainTrack_power_off </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Disable main track power output and stop DCC signal generation. </p>
+<p>Algorithm:</p><ol type="1">
+<li>Return if not initialized.</li>
+<li>encoder_stop().</li>
+<li>timer_stop().</li>
+<li>track_power_set(false). </li>
+</ol>
+
+</div>
+</div>
+<a id="a3f4372b5fce81e7b005ec4892af55950" name="a3f4372b5fce81e7b005ec4892af55950"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3f4372b5fce81e7b005ec4892af55950">&#9670;&#160;</a></span>DccApplicationMainTrack_insert()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationMainTrack_insert </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structdcc__packet__t.html">dcc_packet_t</a> *</td>          <td class="paramname"><span class="paramname"><em>packet</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#ab9401618f9347a6ea872c16fdf06afa5">dcc_address_t</a></td>          <td class="paramname"><span class="paramname"><em>address</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a25bc1ab6fabc48ee3d81cc63308be375">dcc_tag_enum</a></td>          <td class="paramname"><span class="paramname"><em>tag</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#ace836533608fb1eb2e3c5a69d33ce68f">dcc_priority_enum</a></td>          <td class="paramname"><span class="paramname"><em>priority</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>auto_refresh</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Insert a packet into the main track scheduler. </p>
+<p>Returns false when uninitialized, otherwise forwards every argument to the scheduler_insert hook.</p>
+<pre class="fragment">* @param packet       The packet to schedule.
+* @param address      Address used as the duplicate-combining key.
+* @param tag          Sub-key for duplicate combining.
+* @param priority     Packet priority level.
+* @param auto_refresh true = keep in refresh cycle indefinitely.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the packet was scheduled; false if no free slot or the module is not initialized. </dd></dl>
+
+</div>
+</div>
+<a id="a28a53d6e18bd99c96455c9e695e7345e" name="a28a53d6e18bd99c96455c9e695e7345e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a28a53d6e18bd99c96455c9e695e7345e">&#9670;&#160;</a></span>DccApplicationMainTrack_remove_address()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccApplicationMainTrack_remove_address </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#ab9401618f9347a6ea872c16fdf06afa5">dcc_address_t</a></td>          <td class="paramname"><span class="paramname"><em>address</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Remove all scheduler slots for a given address. </p>
+<p>Returns when uninitialized, otherwise forwards to the scheduler_remove_address hook.</p>
+<pre class="fragment">* @param address The address to purge.
+* </pre> 
+</div>
+</div>
+<a id="a5a69c59c65496387e3dc490306da7dfa" name="a5a69c59c65496387e3dc490306da7dfa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5a69c59c65496387e3dc490306da7dfa">&#9670;&#160;</a></span>DccApplicationMainTrack_clear()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccApplicationMainTrack_clear </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Clear all active scheduler slots. </p>
+<p>Returns when uninitialized, otherwise forwards to the scheduler_clear hook. </p>
+
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

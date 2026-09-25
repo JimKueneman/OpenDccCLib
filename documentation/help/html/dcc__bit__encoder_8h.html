@@ -90,6 +90,9 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_bit_encoder.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -98,6 +101,37 @@ $(function(){ initResizable(false); });
 <a href="#details">More...</a></p>
 
 <p><a href="dcc__bit__encoder_8h_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structinterface__dcc__bit__encoder__t.html">interface_dcc_bit_encoder_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface struct — dependencies injected by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>.  <a href="structinterface__dcc__bit__encoder__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Instance context for the bit encoder module.  <a href="structdcc__bit__encoder__context__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a41cbf8564220bf4ff49dae86ccfeeab7" id="r_a41cbf8564220bf4ff49dae86ccfeeab7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a41cbf8564220bf4ff49dae86ccfeeab7">DccBitEncoder_initialize</a> (<a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *context, const <a class="el" href="structinterface__dcc__bit__encoder__t.html">interface_dcc_bit_encoder_t</a> *interface)</td></tr>
+<tr class="memdesc:a41cbf8564220bf4ff49dae86ccfeeab7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the bit encoder module.  <br /></td></tr>
+<tr class="separator:a41cbf8564220bf4ff49dae86ccfeeab7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d4b31b66daad042b600ec4382e90dcb" id="r_a0d4b31b66daad042b600ec4382e90dcb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0d4b31b66daad042b600ec4382e90dcb">DccBitEncoder_tick_isr</a> (<a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *context)</td></tr>
+<tr class="memdesc:a0d4b31b66daad042b600ec4382e90dcb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fixed-period tick ISR entry point — call every 58us from shared timer.  <br /></td></tr>
+<tr class="separator:a0d4b31b66daad042b600ec4382e90dcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8584dc8493ff58cac67d3184bac7e779" id="r_a8584dc8493ff58cac67d3184bac7e779"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8584dc8493ff58cac67d3184bac7e779">DccBitEncoder_load_packet</a> (<a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *context, const <a class="el" href="structdcc__packet__t.html">dcc_packet_t</a> *packet)</td></tr>
+<tr class="memdesc:a8584dc8493ff58cac67d3184bac7e779"><td class="mdescLeft">&#160;</td><td class="mdescRight">Load a new packet for transmission.  <br /></td></tr>
+<tr class="separator:a8584dc8493ff58cac67d3184bac7e779"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6be438c66b45cb48ff2aeeb0a6e0fa1b" id="r_a6be438c66b45cb48ff2aeeb0a6e0fa1b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6be438c66b45cb48ff2aeeb0a6e0fa1b">DccBitEncoder_is_idle</a> (const <a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *context)</td></tr>
+<tr class="memdesc:a6be438c66b45cb48ff2aeeb0a6e0fa1b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the bit encoder has finished transmitting its current packet.  <br /></td></tr>
+<tr class="separator:a6be438c66b45cb48ff2aeeb0a6e0fa1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d6c642447e1e07180b08d745296ebc0" id="r_a2d6c642447e1e07180b08d745296ebc0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2d6c642447e1e07180b08d745296ebc0">DccBitEncoder_start</a> (<a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *context)</td></tr>
+<tr class="memdesc:a2d6c642447e1e07180b08d745296ebc0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start the bit encoder. Begins generating DCC signal (idle one-bits until a packet is loaded).  <br /></td></tr>
+<tr class="separator:a2d6c642447e1e07180b08d745296ebc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff2d6151714900e676b1485c6c9ca191" id="r_aff2d6151714900e676b1485c6c9ca191"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aff2d6151714900e676b1485c6c9ca191">DccBitEncoder_stop</a> (<a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *context)</td></tr>
+<tr class="memdesc:aff2d6151714900e676b1485c6c9ca191"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop the bit encoder. Halts DCC signal generation.  <br /></td></tr>
+<tr class="separator:aff2d6151714900e676b1485c6c9ca191"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>ISR-level bit encoder for DCC packet transmission. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -107,11 +141,252 @@ $(function(){ initResizable(false); });
 <li>Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.</li>
 </ul>
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
-<p>Serializes a <a class="el" href="structdcc__packet__t.html" title="A single DCC packet ready for transmission.">dcc_packet_t</a> into preamble + framed bytes + end bit on the wire from a fixed-period 58 us tick ISR. The encoder decides on each tick whether the next tick must toggle the DCC output pin (toggle_next); the caller performs that toggle through pin_toggle() before calling DccBitEncoder_tick_isr() again. A one-bit half is one tick (58 us), a zero-bit half is two ticks (116 us).</p>
-<p>The bit encoder holds a single active packet plus a packet_loaded flag: it transmits the active packet, and on completion signals the main loop, which loads the next packet via DccBitEncoder_load_packet(). (There is no separate front/back buffer swap; the reload happens within the inter-packet window.)</p>
+<p>Serializes a <a class="el" href="structdcc__packet__t.html" title="A single DCC packet ready for transmission.">dcc_packet_t</a> into preamble + framed bytes + end bit on the wire from a fixed-period 58 us tick ISR. The encoder decides on each tick whether the next tick must toggle the DCC output pin (toggle_next); the caller performs that toggle through pin_toggle() before calling <a class="el" href="#a0d4b31b66daad042b600ec4382e90dcb" title="Fixed-period tick ISR entry point — call every 58us from shared timer.">DccBitEncoder_tick_isr()</a> again. A one-bit half is one tick (58 us), a zero-bit half is two ticks (116 us).</p>
+<p>The bit encoder holds a single active packet plus a packet_loaded flag: it transmits the active packet, and on completion signals the main loop, which loads the next packet via <a class="el" href="#a8584dc8493ff58cac67d3184bac7e779" title="Load a new packet for transmission.">DccBitEncoder_load_packet()</a>. (There is no separate front/back buffer swap; the reload happens within the inter-packet window.)</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="a41cbf8564220bf4ff49dae86ccfeeab7" name="a41cbf8564220bf4ff49dae86ccfeeab7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a41cbf8564220bf4ff49dae86ccfeeab7">&#9670;&#160;</a></span>DccBitEncoder_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccBitEncoder_initialize </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__bit__encoder__t.html">interface_dcc_bit_encoder_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initialize the bit encoder module. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">interface</td><td>Pointer to populated <a class="el" href="structinterface__dcc__bit__encoder__t.html">interface_dcc_bit_encoder_t</a> struct.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Stores the interface and puts the encoder in IDLE, not running, with no packet loaded and no cutout arm pending. The first bit after <a class="el" href="dcc__bit__encoder_8c.html#a2d6c642447e1e07180b08d745296ebc0" title="Start the bit encoder. Begins generating DCC signal.">DccBitEncoder_start()</a> is treated as a one-bit.</p>
+<pre class="fragment">* @param context Pointer to dcc_bit_encoder_context_t instance.
+* @param interface Pointer to populated interface_dcc_bit_encoder_t struct.
+* </pre> 
+</div>
+</div>
+<a id="a0d4b31b66daad042b600ec4382e90dcb" name="a0d4b31b66daad042b600ec4382e90dcb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0d4b31b66daad042b600ec4382e90dcb">&#9670;&#160;</a></span>DccBitEncoder_tick_isr()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccBitEncoder_tick_isr </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Fixed-period tick ISR entry point — call every 58us from shared timer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> instance.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>The timer period never changes. One-bits toggle every tick (58us half-period), zero-bits skip one tick and toggle on the second (116us half-period). The caller must toggle the pin via pin_toggle() BEFORE this call whenever toggle_next is set; this call then advances the state machine and recomputes toggle_next for the next tick. The RailCom cutout (railcom_cutout_begin) is armed on the tick whose toggle is the end bit's last edge, and on_packet_complete fires when the end bit is done.</p>
+<p>Algorithm:</p><ol type="1">
+<li>If no interface or not running, clear toggle_next and return</li>
+<li>If a cutout arm is pending, clear it and call railcom_cutout_begin(): the toggle the caller just performed was the end bit's last edge, so T_CS is measured from that edge (S-9.3.2 Table 1)</li>
+<li>Count the tick; a one-bit half is 1 tick, a zero-bit half is 2. If the half-bit is not over yet, clear toggle_next and return</li>
+<li>Half-bit over: reset the tick counter. If this was the first half, set toggle_next and return</li>
+<li>Full bit over: advance the state machine<ul>
+<li>IDLE: if packet_loaded (read after a <a class="el" href="dcc__types_8h.html#adbfcbba8d92bfd3124eac2725a8ea15a" title="Compiler-only memory barrier: the stores before it are emitted before the stores after it....">DCC_COMPILER_BARRIER()</a>), load preamble_count and go to PREAMBLE; either way the next bit is a one</li>
+<li>PREAMBLE: count down; at 0 go to START_BIT (a zero) with byte_index 0</li>
+<li>START_BIT: go to DATA at bit 7 of the current byte</li>
+<li>DATA / END_BIT: see _tick_handle_data() / _tick_handle_end_bit()</li>
+</ul>
+</li>
+<li>Set toggle_next: every new bit starts with a first-half toggle</li>
+</ol>
+<pre class="fragment">* @param context Pointer to dcc_bit_encoder_context_t instance.
+* </pre> 
+</div>
+</div>
+<a id="a8584dc8493ff58cac67d3184bac7e779" name="a8584dc8493ff58cac67d3184bac7e779"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8584dc8493ff58cac67d3184bac7e779">&#9670;&#160;</a></span>DccBitEncoder_load_packet()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccBitEncoder_load_packet </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structdcc__packet__t.html">dcc_packet_t</a> *</td>          <td class="paramname"><span class="paramname"><em>packet</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Load a new packet for transmission. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">packet</td><td>Pointer to <a class="el" href="structdcc__packet__t.html">dcc_packet_t</a> to transmit. Contents are copied.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Called from main loop context, only while <a class="el" href="dcc__bit__encoder_8c.html#a6be438c66b45cb48ff2aeeb0a6e0fa1b" title="Check if the bit encoder has finished transmitting its current packet.">DccBitEncoder_is_idle()</a> is true. The copy is published to the ISR as a whole; the encoder begins transmitting the packet, starting with its preamble, at the next full-bit boundary.</p>
+<p>Copies the data bytes (capped at DCC_PACKET_MAX_BYTES), byte_count, preamble_bits and repeat_count into active_packet, then sets packet_loaded behind a <a class="el" href="dcc__types_8h.html#adbfcbba8d92bfd3124eac2725a8ea15a" title="Compiler-only memory barrier: the stores before it are emitted before the stores after it....">DCC_COMPILER_BARRIER()</a> so the ISR can never see the flag before every byte is stored. The IDLE state of the tick ISR picks the packet up at the next full-bit boundary.</p>
+<pre class="fragment">* @param context Pointer to dcc_bit_encoder_context_t instance.
+* @param packet Pointer to dcc_packet_t to transmit. Contents are copied.
+* </pre><dl class="section warning"><dt>Warning</dt><dd>Call only while <a class="el" href="dcc__bit__encoder_8c.html#a6be438c66b45cb48ff2aeeb0a6e0fa1b" title="Check if the bit encoder has finished transmitting its current packet.">DccBitEncoder_is_idle()</a> is true; there is no back buffer. </dd></dl>
+
+</div>
+</div>
+<a id="a6be438c66b45cb48ff2aeeb0a6e0fa1b" name="a6be438c66b45cb48ff2aeeb0a6e0fa1b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6be438c66b45cb48ff2aeeb0a6e0fa1b">&#9670;&#160;</a></span>DccBitEncoder_is_idle()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccBitEncoder_is_idle </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Check if the bit encoder has finished transmitting its current packet. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> instance. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if idle (ready for a new packet), false if transmitting.</dd></dl>
+<pre class="fragment">* @param context Pointer to dcc_bit_encoder_context_t instance.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the state machine is IDLE, false while any part of a packet is being sent. </dd></dl>
+
+</div>
+</div>
+<a id="a2d6c642447e1e07180b08d745296ebc0" name="a2d6c642447e1e07180b08d745296ebc0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d6c642447e1e07180b08d745296ebc0">&#9670;&#160;</a></span>DccBitEncoder_start()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccBitEncoder_start </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Start the bit encoder. Begins generating DCC signal (idle one-bits until a packet is loaded). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> instance.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Start the bit encoder. Begins generating DCC signal (idle one-bits until a packet is loaded).</p>
+<p>Sets running, resets to IDLE at the first half of a bit and requests a toggle on the next tick, so the line clocks idle one-bits until a packet is loaded. Any pending cutout arm is dropped.</p>
+<pre class="fragment">* @param context Pointer to dcc_bit_encoder_context_t instance.
+* </pre> 
+</div>
+</div>
+<a id="aff2d6151714900e676b1485c6c9ca191" name="aff2d6151714900e676b1485c6c9ca191"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aff2d6151714900e676b1485c6c9ca191">&#9670;&#160;</a></span>DccBitEncoder_stop()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccBitEncoder_stop </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Stop the bit encoder. Halts DCC signal generation. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> instance.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Clears running and forces IDLE; the next tick leaves the pin where it is. A packet in flight is abandoned and packet_loaded is left as is.</p>
+<pre class="fragment">* @param context Pointer to dcc_bit_encoder_context_t instance.
+* </pre> 
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

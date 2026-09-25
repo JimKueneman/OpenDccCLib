@@ -90,6 +90,9 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_railcom_command_station.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -98,6 +101,37 @@ $(function(){ initResizable(false); });
 <a href="#details">More...</a></p>
 
 <p><a href="dcc__railcom__command__station_8h_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structinterface__dcc__railcom__command__station__t.html">interface_dcc_railcom_command_station_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface struct &ndash; dependencies injected by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>.  <a href="structinterface__dcc__railcom__command__station__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Instance context for the RailCom decoder module.  <a href="structdcc__railcom__command__station__context__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a776e693a4e8313b27479e82317d660f6" id="r_a776e693a4e8313b27479e82317d660f6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a776e693a4e8313b27479e82317d660f6">DccRailcomCommandStation_initialize</a> (<a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> *context, const <a class="el" href="structinterface__dcc__railcom__command__station__t.html">interface_dcc_railcom_command_station_t</a> *interface)</td></tr>
+<tr class="memdesc:a776e693a4e8313b27479e82317d660f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the RailCom decoder module.  <br /></td></tr>
+<tr class="separator:a776e693a4e8313b27479e82317d660f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac95ba16ba05c0348803ea3c05057b5d7" id="r_ac95ba16ba05c0348803ea3c05057b5d7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac95ba16ba05c0348803ea3c05057b5d7">DccRailcomCommandStation_run</a> (<a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> *context)</td></tr>
+<tr class="memdesc:ac95ba16ba05c0348803ea3c05057b5d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main loop processing for the RailCom decoder.  <br /></td></tr>
+<tr class="separator:ac95ba16ba05c0348803ea3c05057b5d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9bbb255fc79519b1c30026334382ea1" id="r_ac9bbb255fc79519b1c30026334382ea1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac9bbb255fc79519b1c30026334382ea1">DccRailcomCommandStation_begin_cutout</a> (<a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> *context, <a class="el" href="dcc__types_8h.html#ab9401618f9347a6ea872c16fdf06afa5">dcc_address_t</a> address)</td></tr>
+<tr class="memdesc:ac9bbb255fc79519b1c30026334382ea1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Begin a RailCom cutout window for a given address.  <br /></td></tr>
+<tr class="separator:ac9bbb255fc79519b1c30026334382ea1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab89f2a325feb363bb5614ad1c8b2b389" id="r_ab89f2a325feb363bb5614ad1c8b2b389"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab89f2a325feb363bb5614ad1c8b2b389">DccRailcomCommandStation_end_cutout</a> (<a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> *context)</td></tr>
+<tr class="memdesc:ab89f2a325feb363bb5614ad1c8b2b389"><td class="mdescLeft">&#160;</td><td class="mdescRight">End the current RailCom cutout window.  <br /></td></tr>
+<tr class="separator:ab89f2a325feb363bb5614ad1c8b2b389"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3fc70101d9fda012a39d29425f4ef7d4" id="r_a3fc70101d9fda012a39d29425f4ef7d4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3fc70101d9fda012a39d29425f4ef7d4">DccRailcomCommandStation_read</a> (<a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> *context, <a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a> *datagram)</td></tr>
+<tr class="memdesc:a3fc70101d9fda012a39d29425f4ef7d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read the next decoded RailCom datagram from the buffer.  <br /></td></tr>
+<tr class="separator:a3fc70101d9fda012a39d29425f4ef7d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25ae5d2948cb33cace9d3b80a094f6c6" id="r_a25ae5d2948cb33cace9d3b80a094f6c6"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a25ae5d2948cb33cace9d3b80a094f6c6">DccRailcomCommandStation_available</a> (const <a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> *context)</td></tr>
+<tr class="memdesc:a25ae5d2948cb33cace9d3b80a094f6c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the number of decoded datagrams available in the buffer.  <br /></td></tr>
+<tr class="separator:a25ae5d2948cb33cace9d3b80a094f6c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>RailCom 4/8 decoding, cutout management, and receive buffer. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -110,7 +144,242 @@ $(function(){ initResizable(false); });
 <p>Decodes RailCom bytes received during cutout windows. Manages a circular buffer of decoded datagrams tagged with the DCC address of the packet that preceded the cutout. Disabled at runtime if the interface's uart_read is NULL (<a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a> leaves it NULL when the config has no RailCom UART).</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="a776e693a4e8313b27479e82317d660f6" name="a776e693a4e8313b27479e82317d660f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a776e693a4e8313b27479e82317d660f6">&#9670;&#160;</a></span>DccRailcomCommandStation_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccRailcomCommandStation_initialize </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__railcom__command__station__t.html">interface_dcc_railcom_command_station_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initialize the RailCom decoder module. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">interface</td><td>Pointer to populated <a class="el" href="structinterface__dcc__railcom__command__station__t.html">interface_dcc_railcom_command_station_t</a> struct.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Stores the interface and empties the datagram buffer; no cutout is pending and the tag address is 0.</p>
+<pre class="fragment">* @param context Pointer to dcc_railcom_command_station_context_t instance.
+* @param interface Pointer to populated interface_dcc_railcom_command_station_t struct.
+* </pre> 
+</div>
+</div>
+<a id="ac95ba16ba05c0348803ea3c05057b5d7" name="ac95ba16ba05c0348803ea3c05057b5d7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac95ba16ba05c0348803ea3c05057b5d7">&#9670;&#160;</a></span>DccRailcomCommandStation_run()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccRailcomCommandStation_run </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Main loop processing for the RailCom decoder. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> instance.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>When a cutout is pending, drains the UART, decodes Channel 1 and Channel 2, pushes each valid datagram into the buffer and fires on_datagram for it. Does nothing if uart_read is NULL or no cutout is pending.</p>
+<p>Returns at once if uart_read is NULL (RailCom disabled) or no cutout is pending. Otherwise clears cutout_pending and processes the cutout's bytes (see _process_cutout()).</p>
+<pre class="fragment">* @param context Pointer to dcc_railcom_command_station_context_t instance.
+* </pre> 
+</div>
+</div>
+<a id="ac9bbb255fc79519b1c30026334382ea1" name="ac9bbb255fc79519b1c30026334382ea1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac9bbb255fc79519b1c30026334382ea1">&#9670;&#160;</a></span>DccRailcomCommandStation_begin_cutout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccRailcomCommandStation_begin_cutout </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#ab9401618f9347a6ea872c16fdf06afa5">dcc_address_t</a></td>          <td class="paramname"><span class="paramname"><em>address</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Begin a RailCom cutout window for a given address. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">address</td><td>The DCC address associated with this cutout.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Records the address the decoded reply will be tagged with and marks a cutout pending; the UART is read and decoded by the next <a class="el" href="dcc__railcom__command__station_8c.html#ac95ba16ba05c0348803ea3c05057b5d7" title="Main loop processing for the RailCom decoder.">DccRailcomCommandStation_run()</a>. Safe from ISR context. <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a> calls it from the cutout-complete hook, so the bytes are already in the UART when run() reads them.</p>
+<p>Stores the tag address and sets cutout_pending; nothing is read here, <a class="el" href="dcc__railcom__command__station_8c.html#ac95ba16ba05c0348803ea3c05057b5d7" title="Main loop processing for the RailCom decoder.">DccRailcomCommandStation_run()</a> does the work.</p>
+<pre class="fragment">* @param context Pointer to dcc_railcom_command_station_context_t instance.
+* @param address The DCC address associated with this cutout.
+* </pre> 
+</div>
+</div>
+<a id="ab89f2a325feb363bb5614ad1c8b2b389" name="ab89f2a325feb363bb5614ad1c8b2b389"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab89f2a325feb363bb5614ad1c8b2b389">&#9670;&#160;</a></span>DccRailcomCommandStation_end_cutout()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccRailcomCommandStation_end_cutout </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>End the current RailCom cutout window. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> instance.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Currently a no-op kept for API symmetry; all processing happens in <a class="el" href="#ac95ba16ba05c0348803ea3c05057b5d7" title="Main loop processing for the RailCom decoder.">DccRailcomCommandStation_run()</a>.</p>
+<p>End the current RailCom cutout window.</p>
+<pre class="fragment">* @param context Pointer to dcc_railcom_command_station_context_t instance (unused).
+* </pre> 
+</div>
+</div>
+<a id="a3fc70101d9fda012a39d29425f4ef7d4" name="a3fc70101d9fda012a39d29425f4ef7d4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3fc70101d9fda012a39d29425f4ef7d4">&#9670;&#160;</a></span>DccRailcomCommandStation_read()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccRailcomCommandStation_read </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a> *</td>          <td class="paramname"><span class="paramname"><em>datagram</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Read the next decoded RailCom datagram from the buffer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">datagram</td><td>Pointer to <a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a> to fill with decoded data. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if a datagram was available, false if buffer empty.</dd></dl>
+<p>Copies the oldest unread datagram out and advances the tail.</p>
+<pre class="fragment">* @param context Pointer to dcc_railcom_command_station_context_t instance.
+* @param datagram Pointer to dcc_railcom_datagram_t to fill with decoded data.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if a datagram was copied out, false if the buffer was empty. </dd></dl>
+
+</div>
+</div>
+<a id="a25ae5d2948cb33cace9d3b80a094f6c6" name="a25ae5d2948cb33cace9d3b80a094f6c6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a25ae5d2948cb33cace9d3b80a094f6c6">&#9670;&#160;</a></span>DccRailcomCommandStation_available()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint8_t DccRailcomCommandStation_available </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Return the number of decoded datagrams available in the buffer. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__railcom__command__station__context__t.html">dcc_railcom_command_station_context_t</a> instance. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of datagrams waiting to be read.</dd></dl>
+<pre class="fragment">* @param context Pointer to dcc_railcom_command_station_context_t instance.
+* </pre><dl class="section return"><dt>Returns</dt><dd>Number of datagrams waiting to be read. </dd></dl>
+
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

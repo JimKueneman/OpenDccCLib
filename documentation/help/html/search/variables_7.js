@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['lock_5fshared_5fresources_0',['lock_shared_resources',['../structdcc__config__t.html#ad5d977bbc45e071d19d77e261f17b7e7',1,'dcc_config_t']]]
+  ['half_5fbit_0',['half_bit',['../structdcc__bit__encoder__context__t.html#a15f4e96b277f1283d8596adc98deb68d',1,'dcc_bit_encoder_context_t']]]
 ];

@@ -2440,7 +2440,28 @@ INCLUDE_FILE_PATTERNS  =
 # recursively expanded use the := operator instead of the = operator.
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
-PREDEFINED             =
+PREDEFINED             = DCC_COMPILE_COMMAND_STATION \
+                         DCC_COMPILE_DECODER \
+                         DCC_COMPILE_ACCESSORY_DECODER \
+                         DCC_COMPILE_RAILCOM \
+                         DCC_COMPILE_SERVICE_MODE_DIRECT \
+                         DCC_COMPILE_SERVICE_MODE_PAGED \
+                         DCC_COMPILE_SERVICE_MODE_REGISTER \
+                         DCC_COMPILE_SERVICE_MODE_ADDRESS \
+                         DCC_COMPILE_SERVICE_MODE_TASK_DIRECT \
+                         DCC_COMPILE_SERVICE_MODE_TASK_PAGED \
+                         DCC_COMPILE_SERVICE_MODE_TASK_REGISTER \
+                         DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS \
+                         DCC_COMPILE_SERVICE_MODE_TASK_DETECT \
+                         USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT=24 \
+                         USER_DEFINED_DCC_MAX_LOCOS=10 \
+                         USER_DEFINED_DCC_PREAMBLE_BITS_OPS=18 \
+                         USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH=4 \
+                         USER_DEFINED_DCC_SERVICE_MODE_RETRIES=3 \
+                         USER_DEFINED_DCC_ACK_THRESHOLD_MA=60 \
+                         USER_DEFINED_DCC_ACK_MIN_DURATION_US=5000 \
+                         USER_DEFINED_DCC_ACK_MAX_DURATION_US=7000 \
+                         USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH=8
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The

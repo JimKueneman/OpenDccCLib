@@ -1,10 +1,26 @@
 var searchData=
 [
-  ['dcc_5fconfig_5ft_0',['dcc_config_t',['../structdcc__config__t.html',1,'']]],
-  ['dcc_5fcv29_5fflags_5ft_1',['dcc_cv29_flags_t',['../structdcc__cv29__flags__t.html',1,'']]],
-  ['dcc_5fdecoded_5fpacket_5ft_2',['dcc_decoded_packet_t',['../structdcc__decoded__packet__t.html',1,'']]],
-  ['dcc_5fpacket_5ft_3',['dcc_packet_t',['../structdcc__packet__t.html',1,'']]],
-  ['dcc_5frailcom_5fdatagram_5ft_4',['dcc_railcom_datagram_t',['../structdcc__railcom__datagram__t.html',1,'']]],
-  ['dcc_5frailcom_5fresponse_5ft_5',['dcc_railcom_response_t',['../structdcc__railcom__response__t.html',1,'']]],
-  ['dcc_5fscheduler_5fslot_5ft_6',['dcc_scheduler_slot_t',['../structdcc__scheduler__slot__t.html',1,'']]]
+  ['dcc_5fbit_5fencoder_5fcontext_5ft_0',['dcc_bit_encoder_context_t',['../structdcc__bit__encoder__context__t.html',1,'']]],
+  ['dcc_5fconfig_5ft_1',['dcc_config_t',['../structdcc__config__t.html',1,'']]],
+  ['dcc_5fcv29_5fflags_5ft_2',['dcc_cv29_flags_t',['../structdcc__cv29__flags__t.html',1,'']]],
+  ['dcc_5fdecoded_5fpacket_5ft_3',['dcc_decoded_packet_t',['../structdcc__decoded__packet__t.html',1,'']]],
+  ['dcc_5foutput_5fhw_5ft_4',['dcc_output_hw_t',['../structdcc__output__hw__t.html',1,'']]],
+  ['dcc_5fpacket_5ft_5',['dcc_packet_t',['../structdcc__packet__t.html',1,'']]],
+  ['dcc_5frailcom_5fcommand_5fstation_5fcontext_5ft_6',['dcc_railcom_command_station_context_t',['../structdcc__railcom__command__station__context__t.html',1,'']]],
+  ['dcc_5frailcom_5fcutout_5fcontext_5ft_7',['dcc_railcom_cutout_context_t',['../structdcc__railcom__cutout__context__t.html',1,'']]],
+  ['dcc_5frailcom_5fdatagram_5ft_8',['dcc_railcom_datagram_t',['../structdcc__railcom__datagram__t.html',1,'']]],
+  ['dcc_5frailcom_5fhw_5ft_9',['dcc_railcom_hw_t',['../structdcc__railcom__hw__t.html',1,'']]],
+  ['dcc_5frailcom_5fresponse_5ft_10',['dcc_railcom_response_t',['../structdcc__railcom__response__t.html',1,'']]],
+  ['dcc_5fscheduler_5fcontext_5ft_11',['dcc_scheduler_context_t',['../structdcc__scheduler__context__t.html',1,'']]],
+  ['dcc_5fscheduler_5fslot_5ft_12',['dcc_scheduler_slot_t',['../structdcc__scheduler__slot__t.html',1,'']]],
+  ['dcc_5fservice_5fmode_5faddress_5fcontext_5ft_13',['dcc_service_mode_address_context_t',['../structdcc__service__mode__address__context__t.html',1,'']]],
+  ['dcc_5fservice_5fmode_5fcommon_5fcontext_5ft_14',['dcc_service_mode_common_context_t',['../structdcc__service__mode__common__context__t.html',1,'']]],
+  ['dcc_5fservice_5fmode_5fdirect_5fcontext_5ft_15',['dcc_service_mode_direct_context_t',['../structdcc__service__mode__direct__context__t.html',1,'']]],
+  ['dcc_5fservice_5fmode_5fpaged_5fcontext_5ft_16',['dcc_service_mode_paged_context_t',['../structdcc__service__mode__paged__context__t.html',1,'']]],
+  ['dcc_5fservice_5fmode_5fregister_5fcontext_5ft_17',['dcc_service_mode_register_context_t',['../structdcc__service__mode__register__context__t.html',1,'']]],
+  ['dcc_5fservice_5fmode_5ftask_5faddress_5fcontext_5ft_18',['dcc_service_mode_task_address_context_t',['../structdcc__service__mode__task__address__context__t.html',1,'']]],
+  ['dcc_5fservice_5fmode_5ftask_5fdetect_5fcontext_5ft_19',['dcc_service_mode_task_detect_context_t',['../structdcc__service__mode__task__detect__context__t.html',1,'']]],
+  ['dcc_5fservice_5fmode_5ftask_5fdirect_5fcontext_5ft_20',['dcc_service_mode_task_direct_context_t',['../structdcc__service__mode__task__direct__context__t.html',1,'']]],
+  ['dcc_5fservice_5fmode_5ftask_5fpaged_5fcontext_5ft_21',['dcc_service_mode_task_paged_context_t',['../structdcc__service__mode__task__paged__context__t.html',1,'']]],
+  ['dcc_5fservice_5fmode_5ftask_5fregister_5fcontext_5ft_22',['dcc_service_mode_task_register_context_t',['../structdcc__service__mode__task__register__context__t.html',1,'']]]
 ];

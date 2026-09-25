@@ -90,6 +90,9 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_service_mode_task_detect.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -98,6 +101,25 @@ $(function(){ initResizable(false); });
 <a href="#details">More...</a></p>
 
 <p><a href="dcc__service__mode__task__detect_8h_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structinterface__dcc__service__mode__task__detect__t.html">interface_dcc_service_mode_task_detect_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface struct — dependencies injected by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>.  <a href="structinterface__dcc__service__mode__task__detect__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:ace5ff6c09ba909d8a792914f0dc7c06d" id="r_ace5ff6c09ba909d8a792914f0dc7c06d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ace5ff6c09ba909d8a792914f0dc7c06d">DccServiceModeTaskDetect_initialize</a> (const <a class="el" href="structinterface__dcc__service__mode__task__detect__t.html">interface_dcc_service_mode_task_detect_t</a> *interface)</td></tr>
+<tr class="memdesc:ace5ff6c09ba909d8a792914f0dc7c06d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the detect task module. Call once during <a class="el" href="dcc__config_8c.html#a4e86c59e8b73091bd49e69d4fd66672c" title="Initialize the DCC library with user configuration.">DccConfig_initialize()</a>.  <br /></td></tr>
+<tr class="separator:ace5ff6c09ba909d8a792914f0dc7c06d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a5541e07befadddd9e980cd940fb8e1" id="r_a9a5541e07befadddd9e980cd940fb8e1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9a5541e07befadddd9e980cd940fb8e1">DccServiceModeTaskDetect_detect_mode</a> (<a class="el" href="dcc__types_8h.html#a54f2a3fff93ecacc132165a9981c23d4">dcc_service_mode_task_on_detect_callback_t</a> on_detect)</td></tr>
+<tr class="memdesc:a9a5541e07befadddd9e980cd940fb8e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Probe the decoder for ALL supported service modes. Runs Direct → Paged → Register → Address-Only, accumulating a DCC_SERVICE_MODE_SUPPORTED_* bitmask. If none acknowledge, the bitmask is 0 and result is DCC_SERVICE_MODE_NO_ACK; otherwise SUCCESS. A stage whose primitive is not wired (NULL) is skipped.  <br /></td></tr>
+<tr class="separator:a9a5541e07befadddd9e980cd940fb8e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f56b67a96f7a1dc7ea54051d8912d1e" id="r_a8f56b67a96f7a1dc7ea54051d8912d1e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8f56b67a96f7a1dc7ea54051d8912d1e">DccServiceModeTaskDetect_on_primitive_complete</a> (<a class="el" href="dcc__types_8h.html#aacb5b6351da94bd651145bb926e34bf3">dcc_service_mode_result_enum</a> result)</td></tr>
+<tr class="memdesc:a8f56b67a96f7a1dc7ea54051d8912d1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Notify the task module that the primitive has finished its full operation (including recovery packets). Wire this into the primitive's on_complete slot via <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>. The task module advances its state machine on this event; the ACK outcome is taken from <code>result</code> (SUCCESS = ACK detected by the common module's pulse-width measurement, anything else = no ACK).  <br /></td></tr>
+<tr class="separator:a8f56b67a96f7a1dc7ea54051d8912d1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Task orchestrator for service mode decoder detection (S-9.2.3 Appendix A/B). </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -110,7 +132,139 @@ $(function(){ initResizable(false); });
 <p>Probes the decoder to determine ALL supported service modes, returned as a DCC_SERVICE_MODE_SUPPORTED_* bitmask. Stages run in order: Direct, Paged, Register (all addressing CV#8 / register 8 = Manufacturer ID), then Address-Only (CV#1). Direct uses the spec bit-verify method (§E lines 95-99); if Direct is supported its full CV#8 byte is read so the Paged and Register stages reduce to a single value-verify instead of a 0..255 scan. Whichever of Paged/Register scans first also learns the CV#8 value for the other. Address-Only is probed separately (CV#1, 0..127) since it cannot reach CV#8. Address-Only is NOT assumed to be universally supported (the spec mandates it for command stations, not for every decoder). If nothing acknowledges, supported_modes == 0 and result is NO_ACK. Singleton — only one service track per command station.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="ace5ff6c09ba909d8a792914f0dc7c06d" name="ace5ff6c09ba909d8a792914f0dc7c06d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ace5ff6c09ba909d8a792914f0dc7c06d">&#9670;&#160;</a></span>DccServiceModeTaskDetect_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeTaskDetect_initialize </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__service__mode__task__detect__t.html">interface_dcc_service_mode_task_detect_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initialize the detect task module. Call once during <a class="el" href="dcc__config_8c.html#a4e86c59e8b73091bd49e69d4fd66672c" title="Initialize the DCC library with user configuration.">DccConfig_initialize()</a>. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">interface</td><td>Pointer to populated <a class="el" href="structinterface__dcc__service__mode__task__detect__t.html">interface_dcc_service_mode_task_detect_t</a> (wired by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>).</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Clears the singleton context (state IDLE, no callback) and stores the interface pointer.</p>
+<pre class="fragment">* @param interface Pointer to populated interface_dcc_service_mode_task_detect_t (wired by dcc_config.c).
+* </pre> 
+</div>
+</div>
+<a id="a9a5541e07befadddd9e980cd940fb8e1" name="a9a5541e07befadddd9e980cd940fb8e1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9a5541e07befadddd9e980cd940fb8e1">&#9670;&#160;</a></span>DccServiceModeTaskDetect_detect_mode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskDetect_detect_mode </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a54f2a3fff93ecacc132165a9981c23d4">dcc_service_mode_task_on_detect_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_detect</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Probe the decoder for ALL supported service modes. Runs Direct → Paged → Register → Address-Only, accumulating a DCC_SERVICE_MODE_SUPPORTED_* bitmask. If none acknowledge, the bitmask is 0 and result is DCC_SERVICE_MODE_NO_ACK; otherwise SUCCESS. A stage whose primitive is not wired (NULL) is skipped. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">on_detect</td><td><a class="el" href="dcc__types_8h.html#a54f2a3fff93ecacc132165a9981c23d4">dcc_service_mode_task_on_detect_callback_t</a> called when detection completes; supported_modes = capability bitmask. Reports BUSY (with the modes found so far) if a later stage's primitive could not be started. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if started; false if another detection is running, or if the Direct primitive is wired and refuses to start.</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>When the Direct primitive is not wired, the remaining stages are started from inside this call and it returns true unconditionally; if that cascade fails to start or has nothing left to probe, on_detect fires synchronously before this call returns. See the .c file for the reasoning behind the asymmetry.</dd></dl>
+<p>Probe the decoder for ALL supported service modes. Runs Direct → Paged → Register → Address-Only, accumulating a DCC_SERVICE_MODE_SUPPORTED_* bitmask. If none acknowledge, the bitmask is 0 and result is DCC_SERVICE_MODE_NO_ACK; otherwise SUCCESS. A stage whose primitive is not wired (NULL) is skipped.</p>
+<p>Algorithm:</p><ol type="1">
+<li>Reject if a detection is already in progress (state not IDLE)</li>
+<li>Clear the accumulated modes, CV#8 value, scan state and store the callback</li>
+<li>If direct_verify_bit is not wired, skip straight to _begin_paged() and return true</li>
+<li>Otherwise enter PROBE_DIRECT_0 and issue a Direct verify of CV#8 bit 7 == 0</li>
+<li>If that primitive refuses to start, return to IDLE and report failure to the caller</li>
+<li>The remaining stages run from <a class="el" href="#a8f56b67a96f7a1dc7ea54051d8912d1e" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskDetect_on_primitive_complete()</a></li>
+</ol>
+<p>Return value and on_detect timing are NOT symmetric across the two ways this can fail to really start, by design choice, not oversight &ndash; flagged in Jim Kueneman's review of upstream PR #2 (2026-09-23), documented here rather than unified (see that PR's discussion for why: unifying would mean propagating a start/fail result up through the whole _begin_paged() -&gt; _begin_register() -&gt; _begin_address() cascade, each of which can also legitimately complete synchronously with a genuine "no modes supported" result, not just fail to start).</p>
+<ul>
+<li>Direct wired, direct_verify_bit() fails to start: returns false, on_detect is NOT called. The false return is the only signal.</li>
+<li>Direct not wired (or every mode unwired, cascading all the way through _begin_paged()/ _begin_register()/_begin_address()): this function calls the next stage and returns true UNCONDITIONALLY. If that stage's own probe then fails to start &ndash; or there is nothing left to probe at all &ndash; the resulting _fail()/_finish() call fires on_detect SYNCHRONOUSLY, before this function has returned to its own caller.</li>
+</ul>
+<p>A caller that assumes "true means wait for the callback" can therefore see on_detect fire before it has finished handling this call. See dcc_service_mode_task_detect_Test.cxx's "Synchronous-callback asymmetry" tests, which pin down both sides so a future change that unifies this does not silently change behavior.</p>
+<pre class="fragment">* @param on_detect Called when detection completes; supported_modes = capability bitmask.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started; false if another detection is running, or if the Direct primitive is wired and refuses to start. </dd></dl>
+
+</div>
+</div>
+<a id="a8f56b67a96f7a1dc7ea54051d8912d1e" name="a8f56b67a96f7a1dc7ea54051d8912d1e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f56b67a96f7a1dc7ea54051d8912d1e">&#9670;&#160;</a></span>DccServiceModeTaskDetect_on_primitive_complete()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeTaskDetect_on_primitive_complete </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#aacb5b6351da94bd651145bb926e34bf3">dcc_service_mode_result_enum</a></td>          <td class="paramname"><span class="paramname"><em>result</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Notify the task module that the primitive has finished its full operation (including recovery packets). Wire this into the primitive's on_complete slot via <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>. The task module advances its state machine on this event; the ACK outcome is taken from <code>result</code> (SUCCESS = ACK detected by the common module's pulse-width measurement, anything else = no ACK). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">result</td><td><a class="el" href="dcc__types_8h.html#aacb5b6351da94bd651145bb926e34bf3">dcc_service_mode_result_enum</a> of the primitive operation (passed through from primitive callback).</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Notify the task module that the primitive has finished its full operation (including recovery packets). Wire this into the primitive's on_complete slot via <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>. The task module advances its state machine on this event; the ACK outcome is taken from <code>result</code> (SUCCESS = ACK detected by the common module's pulse-width measurement, anything else = no ACK).</p>
+<p>Algorithm:</p><ol type="1">
+<li>Record the ACK outcome: SUCCESS from the primitive means a valid ACK was measured, anything else means no ACK</li>
+<li>PROBE_DIRECT_0 / PROBE_DIRECT_1: an ACK marks Direct supported, fixes CV#8 bit 7 and starts the Direct read of bits 6..0; no ACK on bit 7 == 0 tries bit 7 == 1, no ACK on that moves on to Paged with the value unknown</li>
+<li>READ_DIRECT: record the bit, then verify the next lower bit or, after bit 0, mark the value known and start Paged</li>
+<li>PROBE_PAGED_VERIFY / PROBE_REGISTER_VERIFY: an ACK marks that mode supported; either way move to the next stage</li>
+<li>PROBE_PAGED_SCAN / PROBE_REGISTER_SCAN: an ACK marks the mode supported and learns the value; an exhausted scan moves on without it; otherwise verify the next candidate</li>
+<li>PROBE_ADDRESS_SCAN: an ACK marks Address-Only supported; an ACK or an exhausted scan finishes detection</li>
+<li>Ignore the event when IDLE</li>
+</ol>
+<pre class="fragment">* @param result Result of the primitive operation (passed through from primitive callback).
+* </pre> 
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

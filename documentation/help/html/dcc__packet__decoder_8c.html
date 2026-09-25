@@ -90,12 +90,46 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#define-members">Macros</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_packet_decoder.c File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>DCC packet parsing, XOR validation, address matching, and callback dispatch for decoders.  
 <a href="#details">More...</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:a868a683b250d195620c31af7778d1cf3" id="r_a868a683b250d195620c31af7778d1cf3"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a868a683b250d195620c31af7778d1cf3">DCC_SPEED_28_STOP</a>&#160;&#160;&#160;0</td></tr>
+<tr class="memdesc:a868a683b250d195620c31af7778d1cf3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Table value for the 28-step stop entries (encoded 0-1).  <br /></td></tr>
+<tr class="separator:a868a683b250d195620c31af7778d1cf3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0fcdfbb67392e13e59406e49842b5b3" id="r_ad0fcdfbb67392e13e59406e49842b5b3"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad0fcdfbb67392e13e59406e49842b5b3">DCC_SPEED_28_ESTOP</a>&#160;&#160;&#160;0xFF</td></tr>
+<tr class="memdesc:ad0fcdfbb67392e13e59406e49842b5b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Table value for the 28-step e-stop entries (encoded 2-3).  <br /></td></tr>
+<tr class="separator:ad0fcdfbb67392e13e59406e49842b5b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:ada46e9cf2a43ceb498e1fedb12832bd3" id="r_ada46e9cf2a43ceb498e1fedb12832bd3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ada46e9cf2a43ceb498e1fedb12832bd3">DccPacketDecoder_initialize</a> (const <a class="el" href="structinterface__dcc__packet__decoder__t.html">interface_dcc_packet_decoder_t</a> *interface)</td></tr>
+<tr class="memdesc:ada46e9cf2a43ceb498e1fedb12832bd3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the packet decoder module.  <br /></td></tr>
+<tr class="separator:ada46e9cf2a43ceb498e1fedb12832bd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a599e66ca2972eaecef3c05d91b204605" id="r_a599e66ca2972eaecef3c05d91b204605"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a599e66ca2972eaecef3c05d91b204605">DccPacketDecoder_reload_address_cache</a> (void)</td></tr>
+<tr class="memdesc:a599e66ca2972eaecef3c05d91b204605"><td class="mdescLeft">&#160;</td><td class="mdescRight">Re-read the address CVs into the match cache.  <br /></td></tr>
+<tr class="separator:a599e66ca2972eaecef3c05d91b204605"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a437a44cac72f43f0bf5822e52d46843b" id="r_a437a44cac72f43f0bf5822e52d46843b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a437a44cac72f43f0bf5822e52d46843b">DccPacketDecoder_on_cv_written</a> (uint16_t cv_number)</td></tr>
+<tr class="memdesc:a437a44cac72f43f0bf5822e52d46843b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Note that the application wrote a CV; reload the address cache when it is one the cache depends on.  <br /></td></tr>
+<tr class="separator:a437a44cac72f43f0bf5822e52d46843b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0a838336f401ee3f4c79fd307e8dd226" id="r_a0a838336f401ee3f4c79fd307e8dd226"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0a838336f401ee3f4c79fd307e8dd226">DccPacketDecoder_process_packet</a> (const uint8_t *data, uint8_t byte_count)</td></tr>
+<tr class="memdesc:a0a838336f401ee3f4c79fd307e8dd226"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process a complete raw packet from the bit decoder.  <br /></td></tr>
+<tr class="separator:a0a838336f401ee3f4c79fd307e8dd226"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0db55ae53cb3175bd765ba31a217ec18" id="r_a0db55ae53cb3175bd765ba31a217ec18"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0db55ae53cb3175bd765ba31a217ec18">DccPacketDecoder_enqueue</a> (const uint8_t *data, uint8_t byte_count)</td></tr>
+<tr class="memdesc:a0db55ae53cb3175bd765ba31a217ec18"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enqueue a raw decoded packet for deferred dispatch (called at the end bit).  <br /></td></tr>
+<tr class="separator:a0db55ae53cb3175bd765ba31a217ec18"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a612419610193ecf64fb339193771635c" id="r_a612419610193ecf64fb339193771635c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a612419610193ecf64fb339193771635c">DccPacketDecoder_run</a> (void)</td></tr>
+<tr class="memdesc:a612419610193ecf64fb339193771635c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drain the packet FIFO, dispatching each queued packet (poll context).  <br /></td></tr>
+<tr class="separator:a612419610193ecf64fb339193771635c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>DCC packet parsing, XOR validation, address matching, and callback dispatch for decoders. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -107,7 +141,193 @@ $(function(){ initResizable(false); });
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="a868a683b250d195620c31af7778d1cf3" name="a868a683b250d195620c31af7778d1cf3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a868a683b250d195620c31af7778d1cf3">&#9670;&#160;</a></span>DCC_SPEED_28_STOP</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define DCC_SPEED_28_STOP&#160;&#160;&#160;0</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Table value for the 28-step stop entries (encoded 0-1). </p>
+
+</div>
+</div>
+<a id="ad0fcdfbb67392e13e59406e49842b5b3" name="ad0fcdfbb67392e13e59406e49842b5b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad0fcdfbb67392e13e59406e49842b5b3">&#9670;&#160;</a></span>DCC_SPEED_28_ESTOP</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define DCC_SPEED_28_ESTOP&#160;&#160;&#160;0xFF</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Table value for the 28-step e-stop entries (encoded 2-3). </p>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="ada46e9cf2a43ceb498e1fedb12832bd3" name="ada46e9cf2a43ceb498e1fedb12832bd3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ada46e9cf2a43ceb498e1fedb12832bd3">&#9670;&#160;</a></span>DccPacketDecoder_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccPacketDecoder_initialize </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__packet__decoder__t.html">interface_dcc_packet_decoder_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize the packet decoder module. </p>
+<p>Stores the interface, clears the address cache, consist state, service mode tracking and the packet FIFO, then loads the address CVs through _update_address_cv_cache.</p>
+<pre class="fragment">* @param interface Pointer to populated interface_dcc_packet_decoder_t.
+* </pre> 
+</div>
+</div>
+<a id="a599e66ca2972eaecef3c05d91b204605" name="a599e66ca2972eaecef3c05d91b204605"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a599e66ca2972eaecef3c05d91b204605">&#9670;&#160;</a></span>DccPacketDecoder_reload_address_cache()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccPacketDecoder_reload_address_cache </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Re-read the address CVs into the match cache. </p>
+<p>Re-read the address CVs (CV1, 17, 18, 19, 29 or 513, 521, 541) into the match cache. Call after the application changes any of them outside the library's own CV write path.</p>
+<p>Does nothing before initialize (NULL interface). </p>
+
+</div>
+</div>
+<a id="a437a44cac72f43f0bf5822e52d46843b" name="a437a44cac72f43f0bf5822e52d46843b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a437a44cac72f43f0bf5822e52d46843b">&#9670;&#160;</a></span>DccPacketDecoder_on_cv_written()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccPacketDecoder_on_cv_written </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Note that the application wrote a CV; reload the address cache when it is one the cache depends on. </p>
+<p>Note that the application wrote a CV; reloads the address cache when the CV is one the cache depends on, otherwise does nothing.</p>
+<p>Does nothing before initialize or for CVs outside _is_address_cv.</p>
+<pre class="fragment">* @param cv_number CV number (1-based) that was written.
+* </pre> 
+</div>
+</div>
+<a id="a0a838336f401ee3f4c79fd307e8dd226" name="a0a838336f401ee3f4c79fd307e8dd226"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0a838336f401ee3f4c79fd307e8dd226">&#9670;&#160;</a></span>DccPacketDecoder_process_packet()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccPacketDecoder_process_packet </td>
+          <td>(</td>
+          <td class="paramtype">const uint8_t *</td>          <td class="paramname"><span class="paramname"><em>data</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>byte_count</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Process a complete raw packet from the bit decoder. </p>
+<p>Algorithm:</p><ol type="1">
+<li>Drop the packet if the XOR byte does not check.</li>
+<li>Idle packet (0xFF): ignore without touching the reset counter.</li>
+<li>Broadcast reset (00 00): count it; DCC_SERVICE_MODE_RESET_PRE_COUNT consecutive resets arm service mode. Return.</li>
+<li>Byte 0 in 0x70-0x7F while service mode is armed: _dispatch_service_mode. Return.</li>
+<li>Any other packet clears the reset counter and disarms service mode.</li>
+<li>Accessory packet (10xxxxxx): _dispatch_accessory (only an accessory decoder answers). Return.</li>
+<li>An accessory decoder ignores every multifunction packet, including broadcast.</li>
+<li>Short address (0x00-0x7F): accept if ours or broadcast, or if it is the CV19 consist address, this is a short/long decoder and the instruction is one a consist answers (_via_consist is set for the dispatch).</li>
+<li>Long address (0xC0-0xE7, 4+ bytes): accept only when our address is long and equal.</li>
+<li>Fire on_addressed_packet, dispatch the instruction bytes (address and XOR excluded), then clear _via_consist.</li>
+</ol>
+<pre class="fragment">* @param data Raw packet bytes (including XOR byte).
+* @param byte_count Number of bytes in the packet.
+* </pre> 
+</div>
+</div>
+<a id="a0db55ae53cb3175bd765ba31a217ec18" name="a0db55ae53cb3175bd765ba31a217ec18"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0db55ae53cb3175bd765ba31a217ec18">&#9670;&#160;</a></span>DccPacketDecoder_enqueue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccPacketDecoder_enqueue </td>
+          <td>(</td>
+          <td class="paramtype">const uint8_t *</td>          <td class="paramname"><span class="paramname"><em>data</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>byte_count</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Enqueue a raw decoded packet for deferred dispatch (called at the end bit). </p>
+<p>Enqueue a raw decoded packet for deferred dispatch.</p>
+<p>Algorithm:</p><ol type="1">
+<li>Compute the next tail; if it meets head the FIFO is full &ndash; drop the packet (the command station resends).</li>
+<li>Copy up to DCC_PACKET_MAX_BYTES into the tail slot, then publish the new tail.</li>
+</ol>
+<pre class="fragment">* @param data Raw packet bytes (including XOR).
+* @param byte_count Number of bytes in data.
+* </pre> 
+</div>
+</div>
+<a id="a612419610193ecf64fb339193771635c" name="a612419610193ecf64fb339193771635c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a612419610193ecf64fb339193771635c">&#9670;&#160;</a></span>DccPacketDecoder_run()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccPacketDecoder_run </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Drain the packet FIFO, dispatching each queued packet (poll context). </p>
+<p>Drain the packet FIFO, dispatching each queued packet.</p>
+<p>Runs the instruction callbacks for every packet queued since the last call, outside the edge ISR. Call from the main loop (DccConfig_run). </p>
+
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

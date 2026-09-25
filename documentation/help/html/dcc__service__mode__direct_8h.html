@@ -90,6 +90,9 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_service_mode_direct.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -98,6 +101,34 @@ $(function(){ initResizable(false); });
 <a href="#details">More...</a></p>
 
 <p><a href="dcc__service__mode__direct_8h_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structinterface__dcc__service__mode__direct__t.html">interface_dcc_service_mode_direct_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface struct &ndash; dependencies injected by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>.  <a href="structinterface__dcc__service__mode__direct__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Instance context for the direct service mode module.  <a href="structdcc__service__mode__direct__context__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a932b409a8db77ee4cca3ef367721c7f6" id="r_a932b409a8db77ee4cca3ef367721c7f6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a932b409a8db77ee4cca3ef367721c7f6">DccServiceModeDirect_initialize</a> (<a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a> *context, const <a class="el" href="structinterface__dcc__service__mode__direct__t.html">interface_dcc_service_mode_direct_t</a> *interface)</td></tr>
+<tr class="memdesc:a932b409a8db77ee4cca3ef367721c7f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the direct service mode module.  <br /></td></tr>
+<tr class="separator:a932b409a8db77ee4cca3ef367721c7f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2077cdcbf2026ebac288258f3a3c78c6" id="r_a2077cdcbf2026ebac288258f3a3c78c6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2077cdcbf2026ebac288258f3a3c78c6">DccServiceModeDirect_write_byte</a> (<a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a> *context, uint16_t cv_number, uint8_t value)</td></tr>
+<tr class="memdesc:a2077cdcbf2026ebac288258f3a3c78c6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a byte to a CV using direct mode.  <br /></td></tr>
+<tr class="separator:a2077cdcbf2026ebac288258f3a3c78c6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a562bc1fc4500d5f2fff21beace6ddf8d" id="r_a562bc1fc4500d5f2fff21beace6ddf8d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a562bc1fc4500d5f2fff21beace6ddf8d">DccServiceModeDirect_verify_byte</a> (<a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a> *context, uint16_t cv_number, uint8_t value)</td></tr>
+<tr class="memdesc:a562bc1fc4500d5f2fff21beace6ddf8d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Verify a CV byte value using direct mode.  <br /></td></tr>
+<tr class="separator:a562bc1fc4500d5f2fff21beace6ddf8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac8ac649cc43ce918205b6e733a48da16" id="r_ac8ac649cc43ce918205b6e733a48da16"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac8ac649cc43ce918205b6e733a48da16">DccServiceModeDirect_write_bit</a> (<a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a> *context, uint16_t cv_number, uint8_t bit_position, bool bit_value)</td></tr>
+<tr class="memdesc:ac8ac649cc43ce918205b6e733a48da16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a single bit to a CV using direct mode.  <br /></td></tr>
+<tr class="separator:ac8ac649cc43ce918205b6e733a48da16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad63f152f9192b9c606fa076786a4b67b" id="r_ad63f152f9192b9c606fa076786a4b67b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad63f152f9192b9c606fa076786a4b67b">DccServiceModeDirect_verify_bit</a> (<a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a> *context, uint16_t cv_number, uint8_t bit_position, bool bit_value)</td></tr>
+<tr class="memdesc:ad63f152f9192b9c606fa076786a4b67b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Verify a single bit in a CV using direct mode.  <br /></td></tr>
+<tr class="separator:ad63f152f9192b9c606fa076786a4b67b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Direct mode CV programming (byte write/verify, bit write/verify). </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -110,7 +141,278 @@ $(function(){ initResizable(false); });
 <p>The modern preferred service mode. Supports direct byte write, direct byte verify, direct bit write, and direct bit verify operations. Each operation is single-step (one call to the common module).</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="a932b409a8db77ee4cca3ef367721c7f6" name="a932b409a8db77ee4cca3ef367721c7f6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a932b409a8db77ee4cca3ef367721c7f6">&#9670;&#160;</a></span>DccServiceModeDirect_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeDirect_initialize </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__service__mode__direct__t.html">interface_dcc_service_mode_direct_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initialize the direct service mode module. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">interface</td><td>Pointer to populated <a class="el" href="structinterface__dcc__service__mode__direct__t.html">interface_dcc_service_mode_direct_t</a> struct.</td></tr>
+  </table>
+  </dd>
+</dl>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_direct_context_t instance.
+* @param interface Pointer to populated interface_dcc_service_mode_direct_t struct.
+* </pre> 
+</div>
+</div>
+<a id="a2077cdcbf2026ebac288258f3a3c78c6" name="a2077cdcbf2026ebac288258f3a3c78c6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2077cdcbf2026ebac288258f3a3c78c6">&#9670;&#160;</a></span>DccServiceModeDirect_write_byte()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeDirect_write_byte </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Write a byte to a CV using direct mode. </p>
+<p>Single-step write with a recovery phase; the result is delivered through the interface on_complete callback. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">cv_number</td><td>CV number to write (1-1024). </td></tr>
+    <tr><td class="paramname">value</td><td>Byte value to write. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if cv_number is out of range or the common module is busy.</dd></dl>
+<p>Algorithm:</p><ol type="1">
+<li>Return false if cv_number is outside 1-1024 or the common module is busy</li>
+<li>Encode the 0-based wire CV (cv_number - 1): data[0] = DCC_SERVICE_DIRECT_WRITE_PREFIX | CV bits 9-8, data[1] = CV bits 7-0, data[2] = value, then the XOR byte</li>
+<li>Latch this context for the callback and start a write operation with DCC_SERVICE_MODE_COMMAND_REPEAT command packets and DCC_SERVICE_MODE_RECOVERY_COUNT recovery packets</li>
+</ol>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_direct_context_t instance.
+* @param cv_number CV number to write (1-1024).
+* @param value Byte value to write.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if cv_number is out of range or the common module is busy. </dd></dl>
+
+</div>
+</div>
+<a id="a562bc1fc4500d5f2fff21beace6ddf8d" name="a562bc1fc4500d5f2fff21beace6ddf8d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a562bc1fc4500d5f2fff21beace6ddf8d">&#9670;&#160;</a></span>DccServiceModeDirect_verify_byte()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeDirect_verify_byte </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Verify a CV byte value using direct mode. </p>
+<p>Single-step verify (no recovery phase); the decoder ACKs only if the CV matches. Result via on_complete. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">cv_number</td><td>CV number to verify (1-1024). </td></tr>
+    <tr><td class="paramname">value</td><td>Expected byte value. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if cv_number is out of range or the common module is busy.</dd></dl>
+<p>Algorithm:</p><ol type="1">
+<li>Return false if cv_number is outside 1-1024 or the common module is busy</li>
+<li>Encode the 0-based wire CV (cv_number - 1): data[0] = DCC_SERVICE_DIRECT_VERIFY_PREFIX | CV bits 9-8, data[1] = CV bits 7-0, data[2] = value, then the XOR byte</li>
+<li>Latch this context for the callback and start a verify operation with DCC_SERVICE_MODE_COMMAND_REPEAT command packets and no recovery packets</li>
+</ol>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_direct_context_t instance.
+* @param cv_number CV number to verify (1-1024).
+* @param value Expected byte value.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if cv_number is out of range or the common module is busy. </dd></dl>
+
+</div>
+</div>
+<a id="ac8ac649cc43ce918205b6e733a48da16" name="ac8ac649cc43ce918205b6e733a48da16"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac8ac649cc43ce918205b6e733a48da16">&#9670;&#160;</a></span>DccServiceModeDirect_write_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeDirect_write_bit </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>bit_value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Write a single bit to a CV using direct mode. </p>
+<p>Single-step bit-manipulation write with a recovery phase. Result via on_complete. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">cv_number</td><td>CV number to write (1-1024). </td></tr>
+    <tr><td class="paramname">bit_position</td><td>Bit position within the CV (0-7). </td></tr>
+    <tr><td class="paramname">bit_value</td><td>Value to write (true = 1, false = 0). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if cv_number or bit_position is out of range or the common module is busy.</dd></dl>
+<p>Algorithm:</p><ol type="1">
+<li>Return false if cv_number is outside 1-1024, bit_position is above 7, or the common module is busy</li>
+<li>Encode the 0-based wire CV (cv_number - 1): data[0] = DCC_SERVICE_DIRECT_BIT_PREFIX | CV bits 9-8, data[1] = CV bits 7-0, data[2] = 1111DBBB (D = bit_value, BBB = bit_position), then the XOR byte</li>
+<li>Latch this context for the callback and start a write operation with DCC_SERVICE_MODE_COMMAND_REPEAT command packets and DCC_SERVICE_MODE_RECOVERY_COUNT recovery packets</li>
+</ol>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_direct_context_t instance.
+* @param cv_number CV number to write (1-1024).
+* @param bit_position Bit position within the CV (0-7).
+* @param bit_value Value to write (true = 1, false = 0).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if cv_number or bit_position is out of range or the common module is busy. </dd></dl>
+
+</div>
+</div>
+<a id="ad63f152f9192b9c606fa076786a4b67b" name="ad63f152f9192b9c606fa076786a4b67b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad63f152f9192b9c606fa076786a4b67b">&#9670;&#160;</a></span>DccServiceModeDirect_verify_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeDirect_verify_bit </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>bit_value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Verify a single bit in a CV using direct mode. </p>
+<p>Single-step bit-manipulation verify (no recovery phase); the decoder ACKs only if the bit matches. Result via on_complete. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__direct__context__t.html">dcc_service_mode_direct_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">cv_number</td><td>CV number to verify (1-1024). </td></tr>
+    <tr><td class="paramname">bit_position</td><td>Bit position within the CV (0-7). </td></tr>
+    <tr><td class="paramname">bit_value</td><td>Expected bit value (true = 1, false = 0). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if cv_number or bit_position is out of range or the common module is busy.</dd></dl>
+<p>Algorithm:</p><ol type="1">
+<li>Return false if cv_number is outside 1-1024, bit_position is above 7, or the common module is busy</li>
+<li>Encode the 0-based wire CV (cv_number - 1): data[0] = DCC_SERVICE_DIRECT_BIT_PREFIX | CV bits 9-8, data[1] = CV bits 7-0, data[2] = 1110DBBB (D = bit_value, BBB = bit_position), then the XOR byte</li>
+<li>Latch this context for the callback and start a verify operation with DCC_SERVICE_MODE_COMMAND_REPEAT command packets and no recovery packets</li>
+</ol>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_direct_context_t instance.
+* @param cv_number CV number to verify (1-1024).
+* @param bit_position Bit position within the CV (0-7).
+* @param bit_value Expected bit value (true = 1, false = 0).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if cv_number or bit_position is out of range or the common module is busy. </dd></dl>
+
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

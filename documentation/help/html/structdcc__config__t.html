@@ -106,11 +106,122 @@ Data Fields</h2></td></tr>
 <tr class="memitem:ababd5b208d74906b3f4f756b75f370ea" id="r_ababd5b208d74906b3f4f756b75f370ea"><td class="memItemLeft" align="right" valign="top">uint32_t(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ababd5b208d74906b3f4f756b75f370ea">get_timestamp_usec</a> )(void)</td></tr>
 <tr class="memdesc:ababd5b208d74906b3f4f756b75f370ea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return current time in microseconds. REQUIRED.  <br /></td></tr>
 <tr class="separator:ababd5b208d74906b3f4f756b75f370ea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a29f14d198b5fb55d496ded4a9d50ffa7" id="r_a29f14d198b5fb55d496ded4a9d50ffa7"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a29f14d198b5fb55d496ded4a9d50ffa7">shared_timer_start</a> )(uint16_t period_usec)</td></tr>
+<tr class="memdesc:a29f14d198b5fb55d496ded4a9d50ffa7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start the shared fixed-period DCC timer. Both main track and service track are clocked from this single timer via tick_isr. Called with DCC_ONE_BIT_HALF_PERIOD_US (58us). REQUIRED.  <br /></td></tr>
+<tr class="separator:a29f14d198b5fb55d496ded4a9d50ffa7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af67077f96d8c6934b45f1c16c5e381bf" id="r_af67077f96d8c6934b45f1c16c5e381bf"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af67077f96d8c6934b45f1c16c5e381bf">shared_timer_stop</a> )(void)</td></tr>
+<tr class="memdesc:af67077f96d8c6934b45f1c16c5e381bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop the shared fixed-period DCC timer.  <br /></td></tr>
+<tr class="separator:af67077f96d8c6934b45f1c16c5e381bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a1841bb6f5a9ef3ee7a1c83c3a9e915" id="r_a6a1841bb6f5a9ef3ee7a1c83c3a9e915"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6a1841bb6f5a9ef3ee7a1c83c3a9e915">railcom_timer_start</a> )(uint16_t period_usec)</td></tr>
+<tr class="memdesc:a6a1841bb6f5a9ef3ee7a1c83c3a9e915"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start the RailCom cutout one-shot timer with the given period in microseconds. NULL = no RailCom cutout timing.  <br /></td></tr>
+<tr class="separator:a6a1841bb6f5a9ef3ee7a1c83c3a9e915"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd5e524a2599420ae6846565c2994445" id="r_abd5e524a2599420ae6846565c2994445"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abd5e524a2599420ae6846565c2994445">railcom_timer_stop</a> )(void)</td></tr>
+<tr class="memdesc:abd5e524a2599420ae6846565c2994445"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop the RailCom cutout one-shot timer.  <br /></td></tr>
+<tr class="separator:abd5e524a2599420ae6846565c2994445"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a03302f6140f3ee6f64e2d991e1494256" id="r_a03302f6140f3ee6f64e2d991e1494256"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a03302f6140f3ee6f64e2d991e1494256">railcom_cutout_start_delay_us</a></td></tr>
+<tr class="memdesc:a03302f6140f3ee6f64e2d991e1494256"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cutout DELAY duration before tristating the H-bridge at T_CS = 26us after the packet end bit. 0 = use spec default.  <br /></td></tr>
+<tr class="separator:a03302f6140f3ee6f64e2d991e1494256"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11dcdb40b91abe55070a8204aa31e99a" id="r_a11dcdb40b91abe55070a8204aa31e99a"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a11dcdb40b91abe55070a8204aa31e99a">railcom_uart_rx_delay_us</a></td></tr>
+<tr class="memdesc:a11dcdb40b91abe55070a8204aa31e99a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cutout SETTLING duration before enabling UART Rx at T_TS1 = 80us (cumulative). 0 = use spec default.  <br /></td></tr>
+<tr class="separator:a11dcdb40b91abe55070a8204aa31e99a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a635cc481678657f7e853d158404c3423" id="r_a635cc481678657f7e853d158404c3423"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a635cc481678657f7e853d158404c3423">railcom_ch1_window_us</a></td></tr>
+<tr class="memdesc:a635cc481678657f7e853d158404c3423"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cutout CH1 window before disabling UART Rx at T_TC1 = 177us (cumulative). 0 = use spec default.  <br /></td></tr>
+<tr class="separator:a635cc481678657f7e853d158404c3423"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aec2edd990956edbb1e0d802f6ef01123" id="r_aec2edd990956edbb1e0d802f6ef01123"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aec2edd990956edbb1e0d802f6ef01123">railcom_ch1_ch2_gap_us</a></td></tr>
+<tr class="memdesc:aec2edd990956edbb1e0d802f6ef01123"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cutout GAP between Ch1 and Ch2 before re-enabling UART Rx at T_TS2 = 193us (cumulative). 0 = use spec default.  <br /></td></tr>
+<tr class="separator:aec2edd990956edbb1e0d802f6ef01123"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a547b0760679cdfef0cfa8bc112a6d7d3" id="r_a547b0760679cdfef0cfa8bc112a6d7d3"><td class="memItemLeft" align="right" valign="top">uint16_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a547b0760679cdfef0cfa8bc112a6d7d3">railcom_ch2_window_us</a></td></tr>
+<tr class="memdesc:a547b0760679cdfef0cfa8bc112a6d7d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cutout CH2 window before disabling UART Rx and restoring the H-bridge at T_CE = 454us (cumulative). 0 = use spec default.  <br /></td></tr>
+<tr class="separator:a547b0760679cdfef0cfa8bc112a6d7d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae8f748596ad34d764e82e572251b0b9e" id="r_ae8f748596ad34d764e82e572251b0b9e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structdcc__output__hw__t.html">dcc_output_hw_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae8f748596ad34d764e82e572251b0b9e">main_track</a></td></tr>
+<tr class="memdesc:ae8f748596ad34d764e82e572251b0b9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main track output hardware. Runs the scheduler (normal DCC).  <br /></td></tr>
+<tr class="separator:ae8f748596ad34d764e82e572251b0b9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af2fd7842c3df0d9a284dffef270b3b7a" id="r_af2fd7842c3df0d9a284dffef270b3b7a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structdcc__output__hw__t.html">dcc_output_hw_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af2fd7842c3df0d9a284dffef270b3b7a">service_track</a></td></tr>
+<tr class="memdesc:af2fd7842c3df0d9a284dffef270b3b7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Service track output hardware. Runs service mode (programming).  <br /></td></tr>
+<tr class="separator:af2fd7842c3df0d9a284dffef270b3b7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a724a199573711ebe9b8f3bb3818e43aa" id="r_a724a199573711ebe9b8f3bb3818e43aa"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a724a199573711ebe9b8f3bb3818e43aa">on_packet_sent</a> )(const <a class="el" href="structdcc__packet__t.html">dcc_packet_t</a> *packet)</td></tr>
+<tr class="memdesc:a724a199573711ebe9b8f3bb3818e43aa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Packet dispatched to the encoder (transmit start), from either track. Fires when the packet is handed to the bit encoder, not after it is on the wire. Fired from <a class="el" href="dcc__config_8c.html#a6973e4dcdbdf005108c57fb42c9bfd5d" title="Main loop processing.">DccConfig_run()</a>, NOT ISR.  <br /></td></tr>
+<tr class="separator:a724a199573711ebe9b8f3bb3818e43aa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab476885c247b373184bc53df41d919bf" id="r_ab476885c247b373184bc53df41d919bf"><td class="memItemLeft" align="right" valign="top">bool(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab476885c247b373184bc53df41d919bf">cv_read</a> )(uint16_t cv_number, uint8_t *value)</td></tr>
+<tr class="memdesc:ab476885c247b373184bc53df41d919bf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read CV from persistent storage. Returns true on success. REQUIRED.  <br /></td></tr>
+<tr class="separator:ab476885c247b373184bc53df41d919bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afcf6c208dd4c29c8f4bc4bc942f6d9af" id="r_afcf6c208dd4c29c8f4bc4bc942f6d9af"><td class="memItemLeft" align="right" valign="top">bool(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afcf6c208dd4c29c8f4bc4bc942f6d9af">cv_write</a> )(uint16_t cv_number, uint8_t value)</td></tr>
+<tr class="memdesc:afcf6c208dd4c29c8f4bc4bc942f6d9af"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write CV to persistent storage. Returns true on success. REQUIRED.  <br /></td></tr>
+<tr class="separator:afcf6c208dd4c29c8f4bc4bc942f6d9af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0e1bb7811ebcf2e23b4e086fe2d120e8" id="r_a0e1bb7811ebcf2e23b4e086fe2d120e8"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0e1bb7811ebcf2e23b4e086fe2d120e8">cv29_apply_supported_features</a> )(<a class="el" href="structdcc__cv29__flags__t.html">dcc_cv29_flags_t</a> *flags)</td></tr>
+<tr class="memdesc:a0e1bb7811ebcf2e23b4e086fe2d120e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Reduce a CV29 write to the features this decoder actually supports. REQUIRED. On any CV29 write the library forces reserved bit 6, decodes the requested config, and calls this with a mutable <a class="el" href="structdcc__cv29__flags__t.html">dcc_cv29_flags_t</a>. Set to false every feature this product does NOT implement &ndash; RailCom (railcom_enabled), analog conversion (power_source_conversion), speed table (speed_table_enabled), and so on. The library re-encodes whatever you leave set and stores that as CV29. Per S-9.2.2 an unsupported feature bit must never be settable, and only your app knows what it supports &ndash; so clearing those bits is your responsibility, not the library's.  <br /></td></tr>
+<tr class="separator:a0e1bb7811ebcf2e23b4e086fe2d120e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af354708426a6fd7ecc9e906573b8fe9c" id="r_af354708426a6fd7ecc9e906573b8fe9c"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af354708426a6fd7ecc9e906573b8fe9c">factory_reset</a> )(void)</td></tr>
+<tr class="memdesc:af354708426a6fd7ecc9e906573b8fe9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Restore CVs to factory defaults. OPTIONAL (NULL = no reset). Invoked when a write command targets CV8 (read-only Manufacturer ID, S-9.2.2).  <br /></td></tr>
+<tr class="separator:af354708426a6fd7ecc9e906573b8fe9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af90f12b0a096a43ad4abc31b3fb89230" id="r_af90f12b0a096a43ad4abc31b3fb89230"><td class="memItemLeft" align="right" valign="top">bool(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af90f12b0a096a43ad4abc31b3fb89230">cv_read_indexed</a> )(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t *value)</td></tr>
+<tr class="memdesc:af90f12b0a096a43ad4abc31b3fb89230"><td class="mdescLeft">&#160;</td><td class="mdescRight">Indexed CV read (CV257-512 window into the page selected by CV31/CV32). OPTIONAL (NULL = no indexed support). page = CV31:CV32, offset = cv# - 257.  <br /></td></tr>
+<tr class="separator:af90f12b0a096a43ad4abc31b3fb89230"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66af166430080427dbd6dbc1a4d108b4" id="r_a66af166430080427dbd6dbc1a4d108b4"><td class="memItemLeft" align="right" valign="top">bool(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a66af166430080427dbd6dbc1a4d108b4">cv_write_indexed</a> )(uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t value)</td></tr>
+<tr class="memdesc:a66af166430080427dbd6dbc1a4d108b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Indexed CV write, same page/offset convention as cv_read_indexed. OPTIONAL (NULL or a false return = page not supported -&gt; NACK).  <br /></td></tr>
+<tr class="separator:a66af166430080427dbd6dbc1a4d108b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade6a4fff3fc62be043c2087cb06840a0" id="r_ade6a4fff3fc62be043c2087cb06840a0"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ade6a4fff3fc62be043c2087cb06840a0">railcom_tx_pin_set</a> )(bool high)</td></tr>
+<tr class="memdesc:ade6a4fff3fc62be043c2087cb06840a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the RailCom Tx GPIO high or low. Library bit-bangs 4/8 encoded bytes at 4us intervals from ISR context. No UART hardware needed. NULL = no RailCom responses.  <br /></td></tr>
+<tr class="separator:ade6a4fff3fc62be043c2087cb06840a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a030084b7490807c41c6bb11a497aaf22" id="r_a030084b7490807c41c6bb11a497aaf22"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a030084b7490807c41c6bb11a497aaf22">railcom_delay_us</a> )(uint16_t microseconds)</td></tr>
+<tr class="memdesc:a030084b7490807c41c6bb11a497aaf22"><td class="mdescLeft">&#160;</td><td class="mdescRight">Busy-wait the given microseconds for the RailCom Tx bit-bang. Must be accurate at the 4us bit period &ndash; a cycle-accurate spin (e.g. a DWT cycle counter), NOT a microsecond-granular timer (its +-1us rounding is +-25% on a 4us bit and the detector UART will not lock). REQUIRED when railcom_tx_pin_set is set; NULL = no RailCom Tx.  <br /></td></tr>
+<tr class="separator:a030084b7490807c41c6bb11a497aaf22"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afeb2fb64c896407f68b1d3ba04c3d473" id="r_afeb2fb64c896407f68b1d3ba04c3d473"><td class="memItemLeft" align="right" valign="top"><a class="el" href="dcc__types_8h.html#a85201881519df5483c2148cd8dd73ceb">dcc_railcom_reply_status_enum</a>(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afeb2fb64c896407f68b1d3ba04c3d473">on_railcom_request</a> )(const uint8_t *instruction, uint8_t instruction_count, <a class="el" href="structdcc__railcom__response__t.html">dcc_railcom_response_t</a> *out)</td></tr>
+<tr class="memdesc:afeb2fb64c896407f68b1d3ba04c3d473"><td class="mdescLeft">&#160;</td><td class="mdescRight">App hook: a command addressed to this decoder was recognized before the XOR. Fill <code>out</code> for Channel 2 and return the reply status (DATA / ACK / BUSY / NACK / NONE). NULL = ADR only, no Channel 2. Must be fast/non-blocking.  <br /></td></tr>
+<tr class="separator:afeb2fb64c896407f68b1d3ba04c3d473"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a802343c7cb8da7591a3d7293a28859da" id="r_a802343c7cb8da7591a3d7293a28859da"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a802343c7cb8da7591a3d7293a28859da">start_ack_pulse</a> )(void)</td></tr>
+<tr class="memdesc:a802343c7cb8da7591a3d7293a28859da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Turn on the ACK current load. Library handles 6ms timing and calls stop_ack_pulse automatically from <a class="el" href="dcc__config_8c.html#a6973e4dcdbdf005108c57fb42c9bfd5d" title="Main loop processing.">DccConfig_run()</a>. NULL = no ACK hardware.  <br /></td></tr>
+<tr class="separator:a802343c7cb8da7591a3d7293a28859da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8983854f92b308ee9075a6a866b1a272" id="r_a8983854f92b308ee9075a6a866b1a272"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8983854f92b308ee9075a6a866b1a272">stop_ack_pulse</a> )(void)</td></tr>
+<tr class="memdesc:a8983854f92b308ee9075a6a866b1a272"><td class="mdescLeft">&#160;</td><td class="mdescRight">Turn off the ACK current load. Called by the library after 6ms. NULL = no ACK hardware.  <br /></td></tr>
+<tr class="separator:a8983854f92b308ee9075a6a866b1a272"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a3d82ea705ef1eece74f39af096baad" id="r_a2a3d82ea705ef1eece74f39af096baad"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2a3d82ea705ef1eece74f39af096baad">on_speed_command</a> )(uint16_t address, uint8_t speed, bool direction, <a class="el" href="dcc__types_8h.html#aa09095b957e76dce7242e5949a59b6bf">dcc_speed_mode_enum</a> mode)</td></tr>
+<tr class="memdesc:a2a3d82ea705ef1eece74f39af096baad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Speed command received.  <br /></td></tr>
+<tr class="separator:a2a3d82ea705ef1eece74f39af096baad"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a630cf1dadf7603acdbc2d15723b7d2c2" id="r_a630cf1dadf7603acdbc2d15723b7d2c2"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a630cf1dadf7603acdbc2d15723b7d2c2">on_emergency_stop_command</a> )(uint16_t address)</td></tr>
+<tr class="memdesc:a630cf1dadf7603acdbc2d15723b7d2c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Emergency stop received for specific address.  <br /></td></tr>
+<tr class="separator:a630cf1dadf7603acdbc2d15723b7d2c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2ca0788b361eaa0b5b4d356a846ea57b" id="r_a2ca0788b361eaa0b5b4d356a846ea57b"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2ca0788b361eaa0b5b4d356a846ea57b">on_function_command</a> )(uint16_t address, uint8_t function_number, bool state)</td></tr>
+<tr class="memdesc:a2ca0788b361eaa0b5b4d356a846ea57b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function command received.  <br /></td></tr>
+<tr class="separator:a2ca0788b361eaa0b5b4d356a846ea57b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae4018b83f2702680069412deefc8635" id="r_aae4018b83f2702680069412deefc8635"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aae4018b83f2702680069412deefc8635">on_accessory_basic_command</a> )(uint16_t board_address, uint8_t output_pair, bool activate)</td></tr>
+<tr class="memdesc:aae4018b83f2702680069412deefc8635"><td class="mdescLeft">&#160;</td><td class="mdescRight">Basic accessory command received. In decoder-address mode (CV541 bit 6 = 0): board_address is 9-bit board address, output_pair is the 3-bit DDD field. In output-address mode (CV541 bit 6 = 1): board_address is the 11-bit flat output address, output_pair is the R bit (0 or 1).  <br /></td></tr>
+<tr class="separator:aae4018b83f2702680069412deefc8635"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adadfdeb49a5fbbb65d3070b66e78d497" id="r_adadfdeb49a5fbbb65d3070b66e78d497"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adadfdeb49a5fbbb65d3070b66e78d497">on_accessory_extended_command</a> )(uint16_t address, uint8_t aspect)</td></tr>
+<tr class="memdesc:adadfdeb49a5fbbb65d3070b66e78d497"><td class="mdescLeft">&#160;</td><td class="mdescRight">Extended accessory (signal aspect) command received.  <br /></td></tr>
+<tr class="separator:adadfdeb49a5fbbb65d3070b66e78d497"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17ef2dbbd6cbbe99db8094c8011b8939" id="r_a17ef2dbbd6cbbe99db8094c8011b8939"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a17ef2dbbd6cbbe99db8094c8011b8939">on_cv_write_command</a> )(uint16_t cv_number, uint8_t value, bool service_mode)</td></tr>
+<tr class="memdesc:a17ef2dbbd6cbbe99db8094c8011b8939"><td class="mdescLeft">&#160;</td><td class="mdescRight">CV write command received on this decoder.  <br /></td></tr>
+<tr class="separator:a17ef2dbbd6cbbe99db8094c8011b8939"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a508d616d3e39568d395ff57660c77c53" id="r_a508d616d3e39568d395ff57660c77c53"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a508d616d3e39568d395ff57660c77c53">on_cv_verify_command</a> )(uint16_t cv_number, uint8_t value, bool service_mode)</td></tr>
+<tr class="memdesc:a508d616d3e39568d395ff57660c77c53"><td class="mdescLeft">&#160;</td><td class="mdescRight">CV verify command received on this decoder.  <br /></td></tr>
+<tr class="separator:a508d616d3e39568d395ff57660c77c53"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae71892931733c35f76d0ad8c4e8fe41e" id="r_ae71892931733c35f76d0ad8c4e8fe41e"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae71892931733c35f76d0ad8c4e8fe41e">on_cv_bit_command</a> )(uint16_t cv_number, uint8_t bit_position, bool bit_value, bool service_mode)</td></tr>
+<tr class="memdesc:ae71892931733c35f76d0ad8c4e8fe41e"><td class="mdescLeft">&#160;</td><td class="mdescRight">CV bit manipulation command received on this decoder.  <br /></td></tr>
+<tr class="separator:ae71892931733c35f76d0ad8c4e8fe41e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a65ae87e53393ad50050e32ff15b88c86" id="r_a65ae87e53393ad50050e32ff15b88c86"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a65ae87e53393ad50050e32ff15b88c86">on_consist_command</a> )(uint16_t address, uint8_t consist_address, bool direction_normal)</td></tr>
+<tr class="memdesc:a65ae87e53393ad50050e32ff15b88c86"><td class="mdescLeft">&#160;</td><td class="mdescRight">Consist control command received.  <br /></td></tr>
+<tr class="separator:a65ae87e53393ad50050e32ff15b88c86"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab88ebd6f8ed51caf3be0775a7a83c80d" id="r_ab88ebd6f8ed51caf3be0775a7a83c80d"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab88ebd6f8ed51caf3be0775a7a83c80d">on_binary_state_short_command</a> )(uint16_t address, uint8_t state_number, bool active)</td></tr>
+<tr class="memdesc:ab88ebd6f8ed51caf3be0775a7a83c80d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Binary state short (1-127) command received.  <br /></td></tr>
+<tr class="separator:ab88ebd6f8ed51caf3be0775a7a83c80d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0faa2d7fc9040e74103508d0b9080fbf" id="r_a0faa2d7fc9040e74103508d0b9080fbf"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0faa2d7fc9040e74103508d0b9080fbf">on_binary_state_long_command</a> )(uint16_t address, uint16_t state_number, bool active)</td></tr>
+<tr class="memdesc:a0faa2d7fc9040e74103508d0b9080fbf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Binary state long (1-32767) command received.  <br /></td></tr>
+<tr class="separator:a0faa2d7fc9040e74103508d0b9080fbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c1c368f8cda531b9195775bb2659dab" id="r_a1c1c368f8cda531b9195775bb2659dab"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1c1c368f8cda531b9195775bb2659dab">on_analog_function_command</a> )(uint16_t address, uint8_t output_number, uint8_t value)</td></tr>
+<tr class="memdesc:a1c1c368f8cda531b9195775bb2659dab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Analog function output command received.  <br /></td></tr>
+<tr class="separator:a1c1c368f8cda531b9195775bb2659dab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acf01936b1afaf92f9b2064acbf2d2c8e" id="r_acf01936b1afaf92f9b2064acbf2d2c8e"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acf01936b1afaf92f9b2064acbf2d2c8e">on_failsafe_entered</a> )(void)</td></tr>
+<tr class="memdesc:acf01936b1afaf92f9b2064acbf2d2c8e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decoder entered fail-safe mode (no valid packet timeout).  <br /></td></tr>
+<tr class="separator:acf01936b1afaf92f9b2064acbf2d2c8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a553e7da34ead464316f0182540d7328f" id="r_a553e7da34ead464316f0182540d7328f"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a553e7da34ead464316f0182540d7328f">on_failsafe_exited</a> )(void)</td></tr>
+<tr class="memdesc:a553e7da34ead464316f0182540d7328f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Decoder exited fail-safe mode (valid packet received).  <br /></td></tr>
+<tr class="separator:a553e7da34ead464316f0182540d7328f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>User configuration for OpenDccCLib. </p>
 <p>Populate this struct with hardware driver functions and optional application callbacks, then pass it to <a class="el" href="dcc__config_8c.html#a4e86c59e8b73091bd49e69d4fd66672c" title="Initialize the DCC library with user configuration.">DccConfig_initialize()</a>. Required fields are marked REQUIRED and must be non-NULL. NULL-optional fields disable the associated feature at runtime.</p>
-<div class="fragment"><div class="line"><span class="keyword">static</span> <span class="keyword">const</span> dcc_railcom_hw_t my_railcom = {</div>
+<div class="fragment"><div class="line"><span class="keyword">static</span> <span class="keyword">const</span> <a class="code hl_struct" href="structdcc__railcom__hw__t.html">dcc_railcom_hw_t</a> my_railcom = {</div>
 <div class="line">    .begin_railcom_cutout = &amp;MyDriver_hbridge_disable,</div>
 <div class="line">    .end_railcom_cutout   = &amp;MyDriver_hbridge_enable,</div>
 <div class="line">    .uart_rx_enable       = &amp;MyDriver_uart_rx_enable,</div>
@@ -140,6 +251,7 @@ Data Fields</h2></td></tr>
 <div class="line"><a class="code hl_function" href="dcc__config_8h.html#a4e86c59e8b73091bd49e69d4fd66672c">DccConfig_initialize</a>(&amp;my_config);</div>
 <div class="ttc" id="adcc__config_8h_html_a4e86c59e8b73091bd49e69d4fd66672c"><div class="ttname"><a href="dcc__config_8h.html#a4e86c59e8b73091bd49e69d4fd66672c">DccConfig_initialize</a></div><div class="ttdeci">void DccConfig_initialize(const dcc_config_t *config)</div><div class="ttdoc">Initialize the DCC library with user configuration.</div><div class="ttdef"><b>Definition</b> dcc_config.c:1000</div></div>
 <div class="ttc" id="astructdcc__config__t_html"><div class="ttname"><a href="structdcc__config__t.html">dcc_config_t</a></div><div class="ttdoc">User configuration for OpenDccCLib.</div><div class="ttdef"><b>Definition</b> dcc_config.h:212</div></div>
+<div class="ttc" id="astructdcc__railcom__hw__t_html"><div class="ttname"><a href="structdcc__railcom__hw__t.html">dcc_railcom_hw_t</a></div><div class="ttdoc">RailCom detector hardware drivers.</div><div class="ttdef"><b>Definition</b> dcc_config.h:89</div></div>
 </div><!-- fragment --> </div><h2 class="groupheader">Field Documentation</h2>
 <a id="ad5d977bbc45e071d19d77e261f17b7e7" name="ad5d977bbc45e071d19d77e261f17b7e7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad5d977bbc45e071d19d77e261f17b7e7">&#9670;&#160;</a></span>lock_shared_resources</h2>
@@ -186,6 +298,598 @@ Data Fields</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Return current time in microseconds. REQUIRED. </p>
+
+</div>
+</div>
+<a id="a29f14d198b5fb55d496ded4a9d50ffa7" name="a29f14d198b5fb55d496ded4a9d50ffa7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a29f14d198b5fb55d496ded4a9d50ffa7">&#9670;&#160;</a></span>shared_timer_start</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* shared_timer_start) (uint16_t period_usec)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Start the shared fixed-period DCC timer. Both main track and service track are clocked from this single timer via tick_isr. Called with DCC_ONE_BIT_HALF_PERIOD_US (58us). REQUIRED. </p>
+
+</div>
+</div>
+<a id="af67077f96d8c6934b45f1c16c5e381bf" name="af67077f96d8c6934b45f1c16c5e381bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af67077f96d8c6934b45f1c16c5e381bf">&#9670;&#160;</a></span>shared_timer_stop</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* shared_timer_stop) (void)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Stop the shared fixed-period DCC timer. </p>
+
+</div>
+</div>
+<a id="a6a1841bb6f5a9ef3ee7a1c83c3a9e915" name="a6a1841bb6f5a9ef3ee7a1c83c3a9e915"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6a1841bb6f5a9ef3ee7a1c83c3a9e915">&#9670;&#160;</a></span>railcom_timer_start</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* railcom_timer_start) (uint16_t period_usec)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Start the RailCom cutout one-shot timer with the given period in microseconds. NULL = no RailCom cutout timing. </p>
+
+</div>
+</div>
+<a id="abd5e524a2599420ae6846565c2994445" name="abd5e524a2599420ae6846565c2994445"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd5e524a2599420ae6846565c2994445">&#9670;&#160;</a></span>railcom_timer_stop</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* railcom_timer_stop) (void)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Stop the RailCom cutout one-shot timer. </p>
+
+</div>
+</div>
+<a id="a03302f6140f3ee6f64e2d991e1494256" name="a03302f6140f3ee6f64e2d991e1494256"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a03302f6140f3ee6f64e2d991e1494256">&#9670;&#160;</a></span>railcom_cutout_start_delay_us</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint16_t railcom_cutout_start_delay_us</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Cutout DELAY duration before tristating the H-bridge at T_CS = 26us after the packet end bit. 0 = use spec default. </p>
+
+</div>
+</div>
+<a id="a11dcdb40b91abe55070a8204aa31e99a" name="a11dcdb40b91abe55070a8204aa31e99a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a11dcdb40b91abe55070a8204aa31e99a">&#9670;&#160;</a></span>railcom_uart_rx_delay_us</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint16_t railcom_uart_rx_delay_us</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Cutout SETTLING duration before enabling UART Rx at T_TS1 = 80us (cumulative). 0 = use spec default. </p>
+
+</div>
+</div>
+<a id="a635cc481678657f7e853d158404c3423" name="a635cc481678657f7e853d158404c3423"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a635cc481678657f7e853d158404c3423">&#9670;&#160;</a></span>railcom_ch1_window_us</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint16_t railcom_ch1_window_us</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Cutout CH1 window before disabling UART Rx at T_TC1 = 177us (cumulative). 0 = use spec default. </p>
+
+</div>
+</div>
+<a id="aec2edd990956edbb1e0d802f6ef01123" name="aec2edd990956edbb1e0d802f6ef01123"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aec2edd990956edbb1e0d802f6ef01123">&#9670;&#160;</a></span>railcom_ch1_ch2_gap_us</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint16_t railcom_ch1_ch2_gap_us</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Cutout GAP between Ch1 and Ch2 before re-enabling UART Rx at T_TS2 = 193us (cumulative). 0 = use spec default. </p>
+
+</div>
+</div>
+<a id="a547b0760679cdfef0cfa8bc112a6d7d3" name="a547b0760679cdfef0cfa8bc112a6d7d3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a547b0760679cdfef0cfa8bc112a6d7d3">&#9670;&#160;</a></span>railcom_ch2_window_us</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">uint16_t railcom_ch2_window_us</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Cutout CH2 window before disabling UART Rx and restoring the H-bridge at T_CE = 454us (cumulative). 0 = use spec default. </p>
+
+</div>
+</div>
+<a id="ae8f748596ad34d764e82e572251b0b9e" name="ae8f748596ad34d764e82e572251b0b9e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae8f748596ad34d764e82e572251b0b9e">&#9670;&#160;</a></span>main_track</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structdcc__output__hw__t.html">dcc_output_hw_t</a> main_track</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Main track output hardware. Runs the scheduler (normal DCC). </p>
+
+</div>
+</div>
+<a id="af2fd7842c3df0d9a284dffef270b3b7a" name="af2fd7842c3df0d9a284dffef270b3b7a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af2fd7842c3df0d9a284dffef270b3b7a">&#9670;&#160;</a></span>service_track</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="structdcc__output__hw__t.html">dcc_output_hw_t</a> service_track</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Service track output hardware. Runs service mode (programming). </p>
+
+</div>
+</div>
+<a id="a724a199573711ebe9b8f3bb3818e43aa" name="a724a199573711ebe9b8f3bb3818e43aa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a724a199573711ebe9b8f3bb3818e43aa">&#9670;&#160;</a></span>on_packet_sent</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* on_packet_sent) (const <a class="el" href="structdcc__packet__t.html">dcc_packet_t</a> *packet)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Packet dispatched to the encoder (transmit start), from either track. Fires when the packet is handed to the bit encoder, not after it is on the wire. Fired from <a class="el" href="dcc__config_8c.html#a6973e4dcdbdf005108c57fb42c9bfd5d" title="Main loop processing.">DccConfig_run()</a>, NOT ISR. </p>
+
+</div>
+</div>
+<a id="ab476885c247b373184bc53df41d919bf" name="ab476885c247b373184bc53df41d919bf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab476885c247b373184bc53df41d919bf">&#9670;&#160;</a></span>cv_read</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool(* cv_read) (uint16_t cv_number, uint8_t *value)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read CV from persistent storage. Returns true on success. REQUIRED. </p>
+
+</div>
+</div>
+<a id="afcf6c208dd4c29c8f4bc4bc942f6d9af" name="afcf6c208dd4c29c8f4bc4bc942f6d9af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afcf6c208dd4c29c8f4bc4bc942f6d9af">&#9670;&#160;</a></span>cv_write</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool(* cv_write) (uint16_t cv_number, uint8_t value)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Write CV to persistent storage. Returns true on success. REQUIRED. </p>
+
+</div>
+</div>
+<a id="a0e1bb7811ebcf2e23b4e086fe2d120e8" name="a0e1bb7811ebcf2e23b4e086fe2d120e8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0e1bb7811ebcf2e23b4e086fe2d120e8">&#9670;&#160;</a></span>cv29_apply_supported_features</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* cv29_apply_supported_features) (<a class="el" href="structdcc__cv29__flags__t.html">dcc_cv29_flags_t</a> *flags)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Reduce a CV29 write to the features this decoder actually supports. REQUIRED. On any CV29 write the library forces reserved bit 6, decodes the requested config, and calls this with a mutable <a class="el" href="structdcc__cv29__flags__t.html">dcc_cv29_flags_t</a>. Set to false every feature this product does NOT implement &ndash; RailCom (railcom_enabled), analog conversion (power_source_conversion), speed table (speed_table_enabled), and so on. The library re-encodes whatever you leave set and stores that as CV29. Per S-9.2.2 an unsupported feature bit must never be settable, and only your app knows what it supports &ndash; so clearing those bits is your responsibility, not the library's. </p>
+
+</div>
+</div>
+<a id="af354708426a6fd7ecc9e906573b8fe9c" name="af354708426a6fd7ecc9e906573b8fe9c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af354708426a6fd7ecc9e906573b8fe9c">&#9670;&#160;</a></span>factory_reset</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* factory_reset) (void)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Restore CVs to factory defaults. OPTIONAL (NULL = no reset). Invoked when a write command targets CV8 (read-only Manufacturer ID, S-9.2.2). </p>
+
+</div>
+</div>
+<a id="af90f12b0a096a43ad4abc31b3fb89230" name="af90f12b0a096a43ad4abc31b3fb89230"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af90f12b0a096a43ad4abc31b3fb89230">&#9670;&#160;</a></span>cv_read_indexed</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool(* cv_read_indexed) (uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t *value)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Indexed CV read (CV257-512 window into the page selected by CV31/CV32). OPTIONAL (NULL = no indexed support). page = CV31:CV32, offset = cv# - 257. </p>
+
+</div>
+</div>
+<a id="a66af166430080427dbd6dbc1a4d108b4" name="a66af166430080427dbd6dbc1a4d108b4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a66af166430080427dbd6dbc1a4d108b4">&#9670;&#160;</a></span>cv_write_indexed</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool(* cv_write_indexed) (uint8_t page_hi, uint8_t page_lo, uint8_t offset, uint8_t value)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Indexed CV write, same page/offset convention as cv_read_indexed. OPTIONAL (NULL or a false return = page not supported -&gt; NACK). </p>
+
+</div>
+</div>
+<a id="ade6a4fff3fc62be043c2087cb06840a0" name="ade6a4fff3fc62be043c2087cb06840a0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade6a4fff3fc62be043c2087cb06840a0">&#9670;&#160;</a></span>railcom_tx_pin_set</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* railcom_tx_pin_set) (bool high)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the RailCom Tx GPIO high or low. Library bit-bangs 4/8 encoded bytes at 4us intervals from ISR context. No UART hardware needed. NULL = no RailCom responses. </p>
+
+</div>
+</div>
+<a id="a030084b7490807c41c6bb11a497aaf22" name="a030084b7490807c41c6bb11a497aaf22"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a030084b7490807c41c6bb11a497aaf22">&#9670;&#160;</a></span>railcom_delay_us</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* railcom_delay_us) (uint16_t microseconds)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Busy-wait the given microseconds for the RailCom Tx bit-bang. Must be accurate at the 4us bit period &ndash; a cycle-accurate spin (e.g. a DWT cycle counter), NOT a microsecond-granular timer (its +-1us rounding is +-25% on a 4us bit and the detector UART will not lock). REQUIRED when railcom_tx_pin_set is set; NULL = no RailCom Tx. </p>
+
+</div>
+</div>
+<a id="afeb2fb64c896407f68b1d3ba04c3d473" name="afeb2fb64c896407f68b1d3ba04c3d473"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afeb2fb64c896407f68b1d3ba04c3d473">&#9670;&#160;</a></span>on_railcom_request</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="dcc__types_8h.html#a85201881519df5483c2148cd8dd73ceb">dcc_railcom_reply_status_enum</a>(* on_railcom_request) (const uint8_t *instruction, uint8_t instruction_count, <a class="el" href="structdcc__railcom__response__t.html">dcc_railcom_response_t</a> *out)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>App hook: a command addressed to this decoder was recognized before the XOR. Fill <code>out</code> for Channel 2 and return the reply status (DATA / ACK / BUSY / NACK / NONE). NULL = ADR only, no Channel 2. Must be fast/non-blocking. </p>
+
+</div>
+</div>
+<a id="a802343c7cb8da7591a3d7293a28859da" name="a802343c7cb8da7591a3d7293a28859da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a802343c7cb8da7591a3d7293a28859da">&#9670;&#160;</a></span>start_ack_pulse</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* start_ack_pulse) (void)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Turn on the ACK current load. Library handles 6ms timing and calls stop_ack_pulse automatically from <a class="el" href="dcc__config_8c.html#a6973e4dcdbdf005108c57fb42c9bfd5d" title="Main loop processing.">DccConfig_run()</a>. NULL = no ACK hardware. </p>
+
+</div>
+</div>
+<a id="a8983854f92b308ee9075a6a866b1a272" name="a8983854f92b308ee9075a6a866b1a272"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8983854f92b308ee9075a6a866b1a272">&#9670;&#160;</a></span>stop_ack_pulse</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* stop_ack_pulse) (void)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Turn off the ACK current load. Called by the library after 6ms. NULL = no ACK hardware. </p>
+
+</div>
+</div>
+<a id="a2a3d82ea705ef1eece74f39af096baad" name="a2a3d82ea705ef1eece74f39af096baad"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2a3d82ea705ef1eece74f39af096baad">&#9670;&#160;</a></span>on_speed_command</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* on_speed_command) (uint16_t address, uint8_t speed, bool direction, <a class="el" href="dcc__types_8h.html#aa09095b957e76dce7242e5949a59b6bf">dcc_speed_mode_enum</a> mode)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Speed command received. </p>
+
+</div>
+</div>
+<a id="a630cf1dadf7603acdbc2d15723b7d2c2" name="a630cf1dadf7603acdbc2d15723b7d2c2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a630cf1dadf7603acdbc2d15723b7d2c2">&#9670;&#160;</a></span>on_emergency_stop_command</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* on_emergency_stop_command) (uint16_t address)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Emergency stop received for specific address. </p>
+
+</div>
+</div>
+<a id="a2ca0788b361eaa0b5b4d356a846ea57b" name="a2ca0788b361eaa0b5b4d356a846ea57b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2ca0788b361eaa0b5b4d356a846ea57b">&#9670;&#160;</a></span>on_function_command</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* on_function_command) (uint16_t address, uint8_t function_number, bool state)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Function command received. </p>
+
+</div>
+</div>
+<a id="aae4018b83f2702680069412deefc8635" name="aae4018b83f2702680069412deefc8635"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aae4018b83f2702680069412deefc8635">&#9670;&#160;</a></span>on_accessory_basic_command</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* on_accessory_basic_command) (uint16_t board_address, uint8_t output_pair, bool activate)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Basic accessory command received. In decoder-address mode (CV541 bit 6 = 0): board_address is 9-bit board address, output_pair is the 3-bit DDD field. In output-address mode (CV541 bit 6 = 1): board_address is the 11-bit flat output address, output_pair is the R bit (0 or 1). </p>
+
+</div>
+</div>
+<a id="adadfdeb49a5fbbb65d3070b66e78d497" name="adadfdeb49a5fbbb65d3070b66e78d497"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adadfdeb49a5fbbb65d3070b66e78d497">&#9670;&#160;</a></span>on_accessory_extended_command</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* on_accessory_extended_command) (uint16_t address, uint8_t aspect)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Extended accessory (signal aspect) command received. </p>
+
+</div>
+</div>
+<a id="a17ef2dbbd6cbbe99db8094c8011b8939" name="a17ef2dbbd6cbbe99db8094c8011b8939"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a17ef2dbbd6cbbe99db8094c8011b8939">&#9670;&#160;</a></span>on_cv_write_command</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* on_cv_write_command) (uint16_t cv_number, uint8_t value, bool service_mode)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>CV write command received on this decoder. </p>
+
+</div>
+</div>
+<a id="a508d616d3e39568d395ff57660c77c53" name="a508d616d3e39568d395ff57660c77c53"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a508d616d3e39568d395ff57660c77c53">&#9670;&#160;</a></span>on_cv_verify_command</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* on_cv_verify_command) (uint16_t cv_number, uint8_t value, bool service_mode)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>CV verify command received on this decoder. </p>
+
+</div>
+</div>
+<a id="ae71892931733c35f76d0ad8c4e8fe41e" name="ae71892931733c35f76d0ad8c4e8fe41e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae71892931733c35f76d0ad8c4e8fe41e">&#9670;&#160;</a></span>on_cv_bit_command</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* on_cv_bit_command) (uint16_t cv_number, uint8_t bit_position, bool bit_value, bool service_mode)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>CV bit manipulation command received on this decoder. </p>
+
+</div>
+</div>
+<a id="a65ae87e53393ad50050e32ff15b88c86" name="a65ae87e53393ad50050e32ff15b88c86"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a65ae87e53393ad50050e32ff15b88c86">&#9670;&#160;</a></span>on_consist_command</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* on_consist_command) (uint16_t address, uint8_t consist_address, bool direction_normal)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Consist control command received. </p>
+
+</div>
+</div>
+<a id="ab88ebd6f8ed51caf3be0775a7a83c80d" name="ab88ebd6f8ed51caf3be0775a7a83c80d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab88ebd6f8ed51caf3be0775a7a83c80d">&#9670;&#160;</a></span>on_binary_state_short_command</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* on_binary_state_short_command) (uint16_t address, uint8_t state_number, bool active)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Binary state short (1-127) command received. </p>
+
+</div>
+</div>
+<a id="a0faa2d7fc9040e74103508d0b9080fbf" name="a0faa2d7fc9040e74103508d0b9080fbf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0faa2d7fc9040e74103508d0b9080fbf">&#9670;&#160;</a></span>on_binary_state_long_command</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* on_binary_state_long_command) (uint16_t address, uint16_t state_number, bool active)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Binary state long (1-32767) command received. </p>
+
+</div>
+</div>
+<a id="a1c1c368f8cda531b9195775bb2659dab" name="a1c1c368f8cda531b9195775bb2659dab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1c1c368f8cda531b9195775bb2659dab">&#9670;&#160;</a></span>on_analog_function_command</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* on_analog_function_command) (uint16_t address, uint8_t output_number, uint8_t value)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Analog function output command received. </p>
+
+</div>
+</div>
+<a id="acf01936b1afaf92f9b2064acbf2d2c8e" name="acf01936b1afaf92f9b2064acbf2d2c8e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acf01936b1afaf92f9b2064acbf2d2c8e">&#9670;&#160;</a></span>on_failsafe_entered</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* on_failsafe_entered) (void)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Decoder entered fail-safe mode (no valid packet timeout). </p>
+
+</div>
+</div>
+<a id="a553e7da34ead464316f0182540d7328f" name="a553e7da34ead464316f0182540d7328f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a553e7da34ead464316f0182540d7328f">&#9670;&#160;</a></span>on_failsafe_exited</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void(* on_failsafe_exited) (void)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Decoder exited fail-safe mode (valid packet received). </p>
 
 </div>
 </div>

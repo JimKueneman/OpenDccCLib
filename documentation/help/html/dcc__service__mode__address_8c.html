@@ -90,12 +90,37 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#enum-members">Enumerations</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_service_mode_address.c File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>Address-only mode programming (CV 1 write and verify).  
 <a href="#details">More...</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a920cb81fe7153237c99f8c0349a8f846" id="r_a920cb81fe7153237c99f8c0349a8f846"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a920cb81fe7153237c99f8c0349a8f846">address_state_enum</a> { <a class="el" href="#a920cb81fe7153237c99f8c0349a8f846acc6bf132adc8138e4f1221cd7156b976">DCC_ADDRESS_STATE_IDLE</a>
+, <a class="el" href="#a920cb81fe7153237c99f8c0349a8f846a102b08135f1a8198523131566de0ddee">DCC_ADDRESS_STATE_PAGE_PRESET</a>
+, <a class="el" href="#a920cb81fe7153237c99f8c0349a8f846acbd8dab33cbde817bd23aa42350f9f6a">DCC_ADDRESS_STATE_COMMAND</a>
+ }</td></tr>
+<tr class="memdesc:a920cb81fe7153237c99f8c0349a8f846"><td class="mdescLeft">&#160;</td><td class="mdescRight">Step of the two-step address-only operation (stored in the context address_state field).  <a href="#a920cb81fe7153237c99f8c0349a8f846">More...</a><br /></td></tr>
+<tr class="separator:a920cb81fe7153237c99f8c0349a8f846"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:ad902df85e859bde82107dc6a926c61b3" id="r_ad902df85e859bde82107dc6a926c61b3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad902df85e859bde82107dc6a926c61b3">DccServiceModeAddress_initialize</a> (<a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a> *context, const <a class="el" href="structinterface__dcc__service__mode__address__t.html">interface_dcc_service_mode_address_t</a> *interface)</td></tr>
+<tr class="memdesc:ad902df85e859bde82107dc6a926c61b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the address-only service mode module.  <br /></td></tr>
+<tr class="separator:ad902df85e859bde82107dc6a926c61b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54a481570c4d6d253d98f2e358f84c71" id="r_a54a481570c4d6d253d98f2e358f84c71"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a54a481570c4d6d253d98f2e358f84c71">DccServiceModeAddress_write</a> (<a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a> *context, uint8_t address)</td></tr>
+<tr class="memdesc:a54a481570c4d6d253d98f2e358f84c71"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the short address (CV 1) using address-only mode.  <br /></td></tr>
+<tr class="separator:a54a481570c4d6d253d98f2e358f84c71"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a29679bc1522d20a1caef017645b6faf6" id="r_a29679bc1522d20a1caef017645b6faf6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a29679bc1522d20a1caef017645b6faf6">DccServiceModeAddress_verify</a> (<a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a> *context, uint8_t address)</td></tr>
+<tr class="memdesc:a29679bc1522d20a1caef017645b6faf6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Verify the short address (CV 1) using address-only mode.  <br /></td></tr>
+<tr class="separator:a29679bc1522d20a1caef017645b6faf6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Address-only mode programming (CV 1 write and verify). </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -107,7 +132,112 @@ $(function(){ initResizable(false); });
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="a920cb81fe7153237c99f8c0349a8f846" name="a920cb81fe7153237c99f8c0349a8f846"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a920cb81fe7153237c99f8c0349a8f846">&#9670;&#160;</a></span>address_state_enum</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="#a920cb81fe7153237c99f8c0349a8f846">address_state_enum</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Step of the two-step address-only operation (stored in the context address_state field). </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a920cb81fe7153237c99f8c0349a8f846acc6bf132adc8138e4f1221cd7156b976" name="a920cb81fe7153237c99f8c0349a8f846acc6bf132adc8138e4f1221cd7156b976"></a>DCC_ADDRESS_STATE_IDLE&#160;</td><td class="fielddoc"><p>No operation in progress </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a920cb81fe7153237c99f8c0349a8f846a102b08135f1a8198523131566de0ddee" name="a920cb81fe7153237c99f8c0349a8f846a102b08135f1a8198523131566de0ddee"></a>DCC_ADDRESS_STATE_PAGE_PRESET&#160;</td><td class="fielddoc"><p>Writing page 1 to the page register </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a920cb81fe7153237c99f8c0349a8f846acbd8dab33cbde817bd23aa42350f9f6a" name="a920cb81fe7153237c99f8c0349a8f846acbd8dab33cbde817bd23aa42350f9f6a"></a>DCC_ADDRESS_STATE_COMMAND&#160;</td><td class="fielddoc"><p>Writing or verifying CV 1 via register 1 </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="ad902df85e859bde82107dc6a926c61b3" name="ad902df85e859bde82107dc6a926c61b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad902df85e859bde82107dc6a926c61b3">&#9670;&#160;</a></span>DccServiceModeAddress_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeAddress_initialize </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__service__mode__address__t.html">interface_dcc_service_mode_address_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize the address-only service mode module. </p>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_address_context_t instance.
+* @param interface Pointer to populated interface_dcc_service_mode_address_t struct.
+* </pre> 
+</div>
+</div>
+<a id="a54a481570c4d6d253d98f2e358f84c71" name="a54a481570c4d6d253d98f2e358f84c71"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a54a481570c4d6d253d98f2e358f84c71">&#9670;&#160;</a></span>DccServiceModeAddress_write()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeAddress_write </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>address</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Write the short address (CV 1) using address-only mode. </p>
+<p>Delegates to _begin_with_preset() as a write.</p>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_address_context_t instance.
+* @param address The short address to write (1-127).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if address is out of range, the common module is busy, or an address operation is already in progress. </dd></dl>
+
+</div>
+</div>
+<a id="a29679bc1522d20a1caef017645b6faf6" name="a29679bc1522d20a1caef017645b6faf6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a29679bc1522d20a1caef017645b6faf6">&#9670;&#160;</a></span>DccServiceModeAddress_verify()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeAddress_verify </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>address</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Verify the short address (CV 1) using address-only mode. </p>
+<p>Delegates to _begin_with_preset() as a verify.</p>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_address_context_t instance.
+* @param address The short address to verify (1-127).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if address is out of range, the common module is busy, or an address operation is already in progress. </dd></dl>
+
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

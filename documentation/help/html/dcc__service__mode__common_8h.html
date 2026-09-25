@@ -90,6 +90,9 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_service_mode_common.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -98,6 +101,46 @@ $(function(){ initResizable(false); });
 <a href="#details">More...</a></p>
 
 <p><a href="dcc__service__mode__common_8h_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structinterface__dcc__service__mode__common__t.html">interface_dcc_service_mode_common_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface struct &ndash; dependencies injected by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>.  <a href="structinterface__dcc__service__mode__common__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Instance context for the service mode common module.  <a href="structdcc__service__mode__common__context__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a94e59bf10985fbf45281c99d97074f69" id="r_a94e59bf10985fbf45281c99d97074f69"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a94e59bf10985fbf45281c99d97074f69">DccServiceModeCommon_initialize</a> (<a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *context, const <a class="el" href="structinterface__dcc__service__mode__common__t.html">interface_dcc_service_mode_common_t</a> *interface)</td></tr>
+<tr class="memdesc:a94e59bf10985fbf45281c99d97074f69"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the service mode common module.  <br /></td></tr>
+<tr class="separator:a94e59bf10985fbf45281c99d97074f69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1058492b17c7f3183ebcdd4f47a6abf" id="r_ad1058492b17c7f3183ebcdd4f47a6abf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad1058492b17c7f3183ebcdd4f47a6abf">DccServiceModeCommon_run</a> (<a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *context)</td></tr>
+<tr class="memdesc:ad1058492b17c7f3183ebcdd4f47a6abf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main loop processing for service mode state machine.  <br /></td></tr>
+<tr class="separator:ad1058492b17c7f3183ebcdd4f47a6abf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad657d2ababd994685ae449ff0cff0830" id="r_ad657d2ababd994685ae449ff0cff0830"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad657d2ababd994685ae449ff0cff0830">DccServiceModeCommon_ack_sample</a> (<a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *context, uint16_t sense_value)</td></tr>
+<tr class="memdesc:ad657d2ababd994685ae449ff0cff0830"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sample the current sense input from the timer ISR.  <br /></td></tr>
+<tr class="separator:ad657d2ababd994685ae449ff0cff0830"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a35263ca7dfa36e097a9e16a274a41f5d" id="r_a35263ca7dfa36e097a9e16a274a41f5d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a35263ca7dfa36e097a9e16a274a41f5d">DccServiceModeCommon_on_packet_complete</a> (<a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *context)</td></tr>
+<tr class="memdesc:a35263ca7dfa36e097a9e16a274a41f5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Notify that the encoder has finished transmitting a packet.  <br /></td></tr>
+<tr class="separator:a35263ca7dfa36e097a9e16a274a41f5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aee3acad31de505aefb4ef80dd1bdecca" id="r_aee3acad31de505aefb4ef80dd1bdecca"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aee3acad31de505aefb4ef80dd1bdecca">DccServiceModeCommon_is_idle</a> (const <a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *context)</td></tr>
+<tr class="memdesc:aee3acad31de505aefb4ef80dd1bdecca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the common module is idle (no operation in progress).  <br /></td></tr>
+<tr class="separator:aee3acad31de505aefb4ef80dd1bdecca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a101a73b9826f40f035b9599dd9fb364d" id="r_a101a73b9826f40f035b9599dd9fb364d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a101a73b9826f40f035b9599dd9fb364d">DccServiceModeCommon_is_active</a> (const <a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *context)</td></tr>
+<tr class="memdesc:a101a73b9826f40f035b9599dd9fb364d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if currently in service mode.  <br /></td></tr>
+<tr class="separator:a101a73b9826f40f035b9599dd9fb364d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0973bb9481a6d3001f96710f45f8e934" id="r_a0973bb9481a6d3001f96710f45f8e934"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0973bb9481a6d3001f96710f45f8e934">DccServiceModeCommon_enter</a> (<a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *context)</td></tr>
+<tr class="memdesc:a0973bb9481a6d3001f96710f45f8e934"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enter service mode.  <br /></td></tr>
+<tr class="separator:a0973bb9481a6d3001f96710f45f8e934"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19c422df4eab4861de0f1d3fafe21788" id="r_a19c422df4eab4861de0f1d3fafe21788"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a19c422df4eab4861de0f1d3fafe21788">DccServiceModeCommon_exit</a> (<a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *context)</td></tr>
+<tr class="memdesc:a19c422df4eab4861de0f1d3fafe21788"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exit service mode.  <br /></td></tr>
+<tr class="separator:a19c422df4eab4861de0f1d3fafe21788"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac91024bd1bace0df35c43ff330713b22" id="r_ac91024bd1bace0df35c43ff330713b22"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac91024bd1bace0df35c43ff330713b22">DccServiceModeCommon_begin_operation</a> (<a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *context, const <a class="el" href="structdcc__packet__t.html">dcc_packet_t</a> *command_packet, <a class="el" href="dcc__types_8h.html#a10087a262ba226b611af83e1f0d63a46">dcc_service_mode_step_callback_t</a> on_step_complete, bool is_write_operation, uint8_t command_repeat, uint8_t recovery_count)</td></tr>
+<tr class="memdesc:ac91024bd1bace0df35c43ff330713b22"><td class="mdescLeft">&#160;</td><td class="mdescRight">Start a single service mode operation.  <br /></td></tr>
+<tr class="separator:ac91024bd1bace0df35c43ff330713b22"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Shared service mode infrastructure: ACK detection, reset packet sequencing, and retry logic. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -107,10 +150,396 @@ $(function(){ initResizable(false); });
 <li>Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.</li>
 </ul>
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
-<p>Provides the low-level state machine that all service mode modules (direct, paged, register, address) use to execute programming operations. Each operation consists of: reset packets -&gt; command packets -&gt; ACK detection -&gt; post-reset packets. ACK is detected by ISR-rate sampling of the current sense input via DccServiceModeCommon_ack_sample().</p>
+<p>Provides the low-level state machine that all service mode modules (direct, paged, register, address) use to execute programming operations. Each operation consists of: reset packets -&gt; command packets -&gt; ACK detection -&gt; post-reset packets. ACK is detected by ISR-rate sampling of the current sense input via <a class="el" href="#ad657d2ababd994685ae449ff0cff0830" title="Sample the current sense input from the timer ISR.">DccServiceModeCommon_ack_sample()</a>.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="a94e59bf10985fbf45281c99d97074f69" name="a94e59bf10985fbf45281c99d97074f69"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a94e59bf10985fbf45281c99d97074f69">&#9670;&#160;</a></span>DccServiceModeCommon_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeCommon_initialize </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__service__mode__common__t.html">interface_dcc_service_mode_common_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initialize the service mode common module. </p>
+<p>Stores the interface and resets the state machine to idle with service mode inactive. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">interface</td><td>Pointer to populated <a class="el" href="structinterface__dcc__service__mode__common__t.html">interface_dcc_service_mode_common_t</a> struct.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Stores the interface and resets the state machine to idle with service mode inactive. The per-operation fields not cleared here are set by <a class="el" href="dcc__service__mode__common_8c.html#ac91024bd1bace0df35c43ff330713b22" title="Start a single service mode operation.">DccServiceModeCommon_begin_operation()</a>.</p>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_common_context_t instance.
+* @param interface Pointer to populated interface_dcc_service_mode_common_t struct.
+* </pre> 
+</div>
+</div>
+<a id="ad1058492b17c7f3183ebcdd4f47a6abf" name="ad1058492b17c7f3183ebcdd4f47a6abf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad1058492b17c7f3183ebcdd4f47a6abf">&#9670;&#160;</a></span>DccServiceModeCommon_run()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeCommon_run </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Main loop processing for service mode state machine. </p>
+<p>Call repeatedly from the main loop. Does nothing unless service mode is active. Waits for the previous packet to finish and the encoder to go idle, then advances the reset -&gt; command -&gt; recovery -&gt; post-reset sequence one packet per call and fires the step callback when the operation returns to idle. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> instance.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Algorithm:</p><ol type="1">
+<li>Return unless service mode is active</li>
+<li>If a packet has been loaded, return until the ISR has flagged it complete, then clear both flags</li>
+<li>Return unless the encoder reports idle (belt-and-suspenders)</li>
+<li>RESET_PRE: load a reset packet until DCC_SERVICE_MODE_RESET_PRE_COUNT have been sent, then clear the ACK detector state and enter COMMAND</li>
+<li>COMMAND, RECOVERY, RESET_POST: delegate to the per-state helper</li>
+</ol>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_common_context_t instance.
+* </pre> 
+</div>
+</div>
+<a id="ad657d2ababd994685ae449ff0cff0830" name="ad657d2ababd994685ae449ff0cff0830"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad657d2ababd994685ae449ff0cff0830">&#9670;&#160;</a></span>DccServiceModeCommon_ack_sample()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeCommon_ack_sample </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>sense_value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sample the current sense input from the timer ISR. </p>
+<p>Call once per 58 us half-bit tick. Samples are ignored unless an operation is in its command or recovery phase and the ACK blanking window (the first DCC_SERVICE_MODE_ACK_BLANK_PACKETS command packets) has passed. A reading at or above USER_DEFINED_DCC_ACK_THRESHOLD_MA extends the current elevated span; a low run longer than the dropout tolerance closes the span, which counts as an ACK only if its length is within the 5-7 ms window (USER_DEFINED_DCC_ACK_MIN_DURATION_US .. USER_DEFINED_DCC_ACK_MAX_DURATION_US). </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">sense_value</td><td>Raw reading from current sense hardware, in the same units as USER_DEFINED_DCC_ACK_THRESHOLD_MA.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Algorithm:</p><ol type="1">
+<li>Return once an ACK has already been latched for this operation</li>
+<li>Return unless the state is COMMAND or RECOVERY</li>
+<li>Return while the ACK window is blanked (S-9.2.3 line 55: the first DCC_SERVICE_MODE_ACK_BLANK_PACKETS command packets mask the decoder mode-switch transient)</li>
+<li>Reading &gt;= USER_DEFINED_DCC_ACK_THRESHOLD_MA: extend the span (_ack_sample_elevated)</li>
+<li>Reading below threshold inside a span: treat as a dropout (_ack_sample_dropout); below threshold with no span open: ignore</li>
+</ol>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_common_context_t instance.
+* @param sense_value Raw reading from current sense hardware.
+* </pre> 
+</div>
+</div>
+<a id="a35263ca7dfa36e097a9e16a274a41f5d" name="a35263ca7dfa36e097a9e16a274a41f5d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a35263ca7dfa36e097a9e16a274a41f5d">&#9670;&#160;</a></span>DccServiceModeCommon_on_packet_complete()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeCommon_on_packet_complete </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Notify that the encoder has finished transmitting a packet. </p>
+<p>Called from ISR context (via on_packet_complete callback). Only sets a flag; the state machine advances on the next <a class="el" href="dcc__service__mode__common_8c.html#ad1058492b17c7f3183ebcdd4f47a6abf" title="Main loop processing for service mode state machine.">DccServiceModeCommon_run()</a> call. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> instance.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>ISR context. Only sets packet_complete_flag; <a class="el" href="dcc__service__mode__common_8c.html#ad1058492b17c7f3183ebcdd4f47a6abf" title="Main loop processing for service mode state machine.">DccServiceModeCommon_run()</a> consumes it.</p>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_common_context_t instance.
+* </pre> 
+</div>
+</div>
+<a id="aee3acad31de505aefb4ef80dd1bdecca" name="aee3acad31de505aefb4ef80dd1bdecca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aee3acad31de505aefb4ef80dd1bdecca">&#9670;&#160;</a></span>DccServiceModeCommon_is_idle()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeCommon_is_idle </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Check if the common module is idle (no operation in progress). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> instance. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if idle and ready for a new operation.</dd></dl>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_common_context_t instance.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if idle and ready for a new operation. </dd></dl>
+
+</div>
+</div>
+<a id="a101a73b9826f40f035b9599dd9fb364d" name="a101a73b9826f40f035b9599dd9fb364d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a101a73b9826f40f035b9599dd9fb364d">&#9670;&#160;</a></span>DccServiceModeCommon_is_active()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeCommon_is_active </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Check if currently in service mode. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> instance. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if service mode is active.</dd></dl>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_common_context_t instance.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if service mode is active. </dd></dl>
+
+</div>
+</div>
+<a id="a0973bb9481a6d3001f96710f45f8e934" name="a0973bb9481a6d3001f96710f45f8e934"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0973bb9481a6d3001f96710f45f8e934">&#9670;&#160;</a></span>DccServiceModeCommon_enter()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeCommon_enter </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Enter service mode. </p>
+<p>Marks service mode active so <a class="el" href="dcc__service__mode__common_8c.html#ad1058492b17c7f3183ebcdd4f47a6abf" title="Main loop processing for service mode state machine.">DccServiceModeCommon_run()</a> will process operations. Sends nothing on the track by itself. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> instance. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Always true.</dd></dl>
+<p>Sets in_service_mode; sends nothing on the track by itself.</p>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_common_context_t instance.
+* </pre><dl class="section return"><dt>Returns</dt><dd>Always true. </dd></dl>
+
+</div>
+</div>
+<a id="a19c422df4eab4861de0f1d3fafe21788" name="a19c422df4eab4861de0f1d3fafe21788"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a19c422df4eab4861de0f1d3fafe21788">&#9670;&#160;</a></span>DccServiceModeCommon_exit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeCommon_exit </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Exit service mode. </p>
+<p>Ignored while an operation is in progress; call again once <a class="el" href="dcc__service__mode__common_8c.html#aee3acad31de505aefb4ef80dd1bdecca" title="Check if the common module is idle (no operation in progress).">DccServiceModeCommon_is_idle()</a> returns true. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> instance.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Ignored while the state is not IDLE, so an operation in progress always runs to completion.</p>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_common_context_t instance.
+* </pre> 
+</div>
+</div>
+<a id="ac91024bd1bace0df35c43ff330713b22" name="ac91024bd1bace0df35c43ff330713b22"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac91024bd1bace0df35c43ff330713b22">&#9670;&#160;</a></span>DccServiceModeCommon_begin_operation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeCommon_begin_operation </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structdcc__packet__t.html">dcc_packet_t</a> *</td>          <td class="paramname"><span class="paramname"><em>command_packet</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a10087a262ba226b611af83e1f0d63a46">dcc_service_mode_step_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_step_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>is_write_operation</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>command_repeat</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>recovery_count</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Start a single service mode operation. </p>
+<p>Copies the command packet and runs the S-9.2.3 sequence: reset packets, command packets, recovery (reset) packets for writes only, then post-reset packets. A detected ACK ends the command phase early. With no ACK the whole sequence is retried up to USER_DEFINED_DCC_SERVICE_MODE_RETRIES times before on_step_complete reports DCC_SERVICE_MODE_NO_ACK. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">command_packet</td><td>Pointer to <a class="el" href="structdcc__packet__t.html">dcc_packet_t</a> to send during the command phase. </td></tr>
+    <tr><td class="paramname">on_step_complete</td><td>Callback fired when the operation completes (<a class="el" href="dcc__types_8h.html#a10087a262ba226b611af83e1f0d63a46">dcc_service_mode_step_callback_t</a>). </td></tr>
+    <tr><td class="paramname">is_write_operation</td><td>true for write operations (adds the recovery phase), false for verify. </td></tr>
+    <tr><td class="paramname">command_repeat</td><td>Number of command packets to send (S-9.2.3 minimum varies by mode). </td></tr>
+    <tr><td class="paramname">recovery_count</td><td>Number of recovery packets to send after the command phase (writes only; ignored for verify). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if service mode is not active or an operation is already in progress.</dd></dl>
+<p>Algorithm:</p><ol type="1">
+<li>Refuse (return false) when service mode is not active</li>
+<li>Refuse (return false) when the state is not IDLE</li>
+<li>Copy the command packet into the context and latch the callback, write flag, repeat and recovery counts</li>
+<li>Reset the counters, the ACK detector (window closed, no span) and the result to NO_ACK</li>
+<li>Enter RESET_PRE; <a class="el" href="dcc__service__mode__common_8c.html#ad1058492b17c7f3183ebcdd4f47a6abf" title="Main loop processing for service mode state machine.">DccServiceModeCommon_run()</a> sends the packets from here on</li>
+</ol>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_common_context_t instance.
+* @param command_packet Pointer to dcc_packet_t to send during the command phase.
+* @param on_step_complete Callback fired when the operation completes (dcc_service_mode_step_callback_t).
+* @param is_write_operation true for write operations (adds the recovery phase), false for verify.
+* @param command_repeat Number of command packets to send.
+* @param recovery_count Number of recovery packets to send after the command phase (writes only).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if service mode is not active or an operation is already in progress. </dd></dl>
+
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

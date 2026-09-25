@@ -90,12 +90,73 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#define-members">Macros</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_service_mode_task_detect.c File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>Task orchestrator for service mode decoder detection (S-9.2.3 Appendix A/B).  
 <a href="#details">More...</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcc__service__mode__task__detect__context__t.html">dcc_service_mode_task_detect_context_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Singleton context for the detection task.  <a href="structdcc__service__mode__task__detect__context__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
+Macros</h2></td></tr>
+<tr class="memitem:a7001b2d7aa43c3440f8948f476519c11" id="r_a7001b2d7aa43c3440f8948f476519c11"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7001b2d7aa43c3440f8948f476519c11">DCC_DETECT_CV</a>&#160;&#160;&#160;8u</td></tr>
+<tr class="memdesc:a7001b2d7aa43c3440f8948f476519c11"><td class="mdescLeft">&#160;</td><td class="mdescRight">CV probed by the Direct and Paged stages: CV#8 (Manufacturer ID) is a known-populated CV, the same one the spec uses for Direct detection.  <br /></td></tr>
+<tr class="separator:a7001b2d7aa43c3440f8948f476519c11"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8468c57cdb454f43812eab96431a5a3d" id="r_a8468c57cdb454f43812eab96431a5a3d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8468c57cdb454f43812eab96431a5a3d">DCC_DETECT_BIT</a>&#160;&#160;&#160;7u</td></tr>
+<tr class="memdesc:a8468c57cdb454f43812eab96431a5a3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">CV#8 bit the Direct stage verifies first (spec §E lines 95-99).  <br /></td></tr>
+<tr class="separator:a8468c57cdb454f43812eab96431a5a3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aafdaf2026a02e89747a760ecadaa389c" id="r_aafdaf2026a02e89747a760ecadaa389c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aafdaf2026a02e89747a760ecadaa389c">DCC_DETECT_REGISTER</a>&#160;&#160;&#160;8u</td></tr>
+<tr class="memdesc:aafdaf2026a02e89747a760ecadaa389c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Register probed by the Register stage; register 8 maps to CV#8 (Mobile) / CV#520 (Accessory).  <br /></td></tr>
+<tr class="separator:aafdaf2026a02e89747a760ecadaa389c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a06fa845c4888a1569d6f19de6f2b9797" id="r_a06fa845c4888a1569d6f19de6f2b9797"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a06fa845c4888a1569d6f19de6f2b9797">DCC_DETECT_SCAN_MAX</a>&#160;&#160;&#160;255u</td></tr>
+<tr class="memdesc:a06fa845c4888a1569d6f19de6f2b9797"><td class="mdescLeft">&#160;</td><td class="mdescRight">Last candidate value tried by the Paged and Register 0..255 scans.  <br /></td></tr>
+<tr class="separator:a06fa845c4888a1569d6f19de6f2b9797"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a882c0f90284fbc4bbbd095f588ff566f" id="r_a882c0f90284fbc4bbbd095f588ff566f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a882c0f90284fbc4bbbd095f588ff566f">DCC_DETECT_ADDRESS_MAX</a>&#160;&#160;&#160;127u</td></tr>
+<tr class="memdesc:a882c0f90284fbc4bbbd095f588ff566f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Last candidate address tried by the Address-Only 0..127 scan.  <br /></td></tr>
+<tr class="separator:a882c0f90284fbc4bbbd095f588ff566f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a70323c37af6fbefdb878c1387f481bbd" id="r_a70323c37af6fbefdb878c1387f481bbd"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a70323c37af6fbefdb878c1387f481bbd">dcc_task_detect_state_enum</a> { <br />
+&#160;&#160;<a class="el" href="#a70323c37af6fbefdb878c1387f481bbdab4e1ff7b20d6b9383dc239cb79534e2e">DCC_TASK_DETECT_STATE_IDLE</a>
+, <a class="el" href="#a70323c37af6fbefdb878c1387f481bbda82bc19f4bddd901e31c8d83644e4fc19">DCC_TASK_DETECT_STATE_PROBE_DIRECT_0</a>
+, <a class="el" href="#a70323c37af6fbefdb878c1387f481bbdaed8b7163cafdc019f57105675ade4930">DCC_TASK_DETECT_STATE_PROBE_DIRECT_1</a>
+, <a class="el" href="#a70323c37af6fbefdb878c1387f481bbda2f1298b769e42e48196202385bcaf316">DCC_TASK_DETECT_STATE_READ_DIRECT</a>
+, <br />
+&#160;&#160;<a class="el" href="#a70323c37af6fbefdb878c1387f481bbda8002b198121ed5d4c566a594e619b976">DCC_TASK_DETECT_STATE_PROBE_PAGED_VERIFY</a>
+, <a class="el" href="#a70323c37af6fbefdb878c1387f481bbda1d96494bcfa41ebf3221d4f2795b242d">DCC_TASK_DETECT_STATE_PROBE_PAGED_SCAN</a>
+, <a class="el" href="#a70323c37af6fbefdb878c1387f481bbdab7b02f819e5dc131debe39732ab39478">DCC_TASK_DETECT_STATE_PROBE_REGISTER_VERIFY</a>
+, <a class="el" href="#a70323c37af6fbefdb878c1387f481bbda70ae7e13b742a5a3caf8e49766af0d2e">DCC_TASK_DETECT_STATE_PROBE_REGISTER_SCAN</a>
+, <br />
+&#160;&#160;<a class="el" href="#a70323c37af6fbefdb878c1387f481bbdaf27d27f6ad7c30f00fe88e4e0c7a0926">DCC_TASK_DETECT_STATE_PROBE_ADDRESS_SCAN</a>
+<br />
+ }</td></tr>
+<tr class="memdesc:a70323c37af6fbefdb878c1387f481bbd"><td class="mdescLeft">&#160;</td><td class="mdescRight">States of the detection task state machine.  <a href="#a70323c37af6fbefdb878c1387f481bbd">More...</a><br /></td></tr>
+<tr class="separator:a70323c37af6fbefdb878c1387f481bbd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:ace5ff6c09ba909d8a792914f0dc7c06d" id="r_ace5ff6c09ba909d8a792914f0dc7c06d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ace5ff6c09ba909d8a792914f0dc7c06d">DccServiceModeTaskDetect_initialize</a> (const <a class="el" href="structinterface__dcc__service__mode__task__detect__t.html">interface_dcc_service_mode_task_detect_t</a> *interface)</td></tr>
+<tr class="memdesc:ace5ff6c09ba909d8a792914f0dc7c06d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the detect task module. Call once during <a class="el" href="dcc__config_8c.html#a4e86c59e8b73091bd49e69d4fd66672c" title="Initialize the DCC library with user configuration.">DccConfig_initialize()</a>.  <br /></td></tr>
+<tr class="separator:ace5ff6c09ba909d8a792914f0dc7c06d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a5541e07befadddd9e980cd940fb8e1" id="r_a9a5541e07befadddd9e980cd940fb8e1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9a5541e07befadddd9e980cd940fb8e1">DccServiceModeTaskDetect_detect_mode</a> (<a class="el" href="dcc__types_8h.html#a54f2a3fff93ecacc132165a9981c23d4">dcc_service_mode_task_on_detect_callback_t</a> on_detect)</td></tr>
+<tr class="memdesc:a9a5541e07befadddd9e980cd940fb8e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Probe the decoder for ALL supported service modes (Direct, Paged, Register, Address-Only).  <br /></td></tr>
+<tr class="separator:a9a5541e07befadddd9e980cd940fb8e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f56b67a96f7a1dc7ea54051d8912d1e" id="r_a8f56b67a96f7a1dc7ea54051d8912d1e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8f56b67a96f7a1dc7ea54051d8912d1e">DccServiceModeTaskDetect_on_primitive_complete</a> (<a class="el" href="dcc__types_8h.html#aacb5b6351da94bd651145bb926e34bf3">dcc_service_mode_result_enum</a> result)</td></tr>
+<tr class="memdesc:a8f56b67a96f7a1dc7ea54051d8912d1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Notify the task module that the primitive has finished its full operation (including recovery packets).  <br /></td></tr>
+<tr class="separator:a8f56b67a96f7a1dc7ea54051d8912d1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Task orchestrator for service mode decoder detection (S-9.2.3 Appendix A/B). </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -113,7 +174,213 @@ $(function(){ initResizable(false); });
 </ol>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="a7001b2d7aa43c3440f8948f476519c11" name="a7001b2d7aa43c3440f8948f476519c11"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7001b2d7aa43c3440f8948f476519c11">&#9670;&#160;</a></span>DCC_DETECT_CV</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define DCC_DETECT_CV&#160;&#160;&#160;8u</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>CV probed by the Direct and Paged stages: CV#8 (Manufacturer ID) is a known-populated CV, the same one the spec uses for Direct detection. </p>
+
+</div>
+</div>
+<a id="a8468c57cdb454f43812eab96431a5a3d" name="a8468c57cdb454f43812eab96431a5a3d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8468c57cdb454f43812eab96431a5a3d">&#9670;&#160;</a></span>DCC_DETECT_BIT</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define DCC_DETECT_BIT&#160;&#160;&#160;7u</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>CV#8 bit the Direct stage verifies first (spec §E lines 95-99). </p>
+
+</div>
+</div>
+<a id="aafdaf2026a02e89747a760ecadaa389c" name="aafdaf2026a02e89747a760ecadaa389c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aafdaf2026a02e89747a760ecadaa389c">&#9670;&#160;</a></span>DCC_DETECT_REGISTER</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define DCC_DETECT_REGISTER&#160;&#160;&#160;8u</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Register probed by the Register stage; register 8 maps to CV#8 (Mobile) / CV#520 (Accessory). </p>
+
+</div>
+</div>
+<a id="a06fa845c4888a1569d6f19de6f2b9797" name="a06fa845c4888a1569d6f19de6f2b9797"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a06fa845c4888a1569d6f19de6f2b9797">&#9670;&#160;</a></span>DCC_DETECT_SCAN_MAX</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define DCC_DETECT_SCAN_MAX&#160;&#160;&#160;255u</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Last candidate value tried by the Paged and Register 0..255 scans. </p>
+
+</div>
+</div>
+<a id="a882c0f90284fbc4bbbd095f588ff566f" name="a882c0f90284fbc4bbbd095f588ff566f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a882c0f90284fbc4bbbd095f588ff566f">&#9670;&#160;</a></span>DCC_DETECT_ADDRESS_MAX</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define DCC_DETECT_ADDRESS_MAX&#160;&#160;&#160;127u</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Last candidate address tried by the Address-Only 0..127 scan. </p>
+
+</div>
+</div>
+<h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="a70323c37af6fbefdb878c1387f481bbd" name="a70323c37af6fbefdb878c1387f481bbd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a70323c37af6fbefdb878c1387f481bbd">&#9670;&#160;</a></span>dcc_task_detect_state_enum</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="#a70323c37af6fbefdb878c1387f481bbd">dcc_task_detect_state_enum</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>States of the detection task state machine. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a70323c37af6fbefdb878c1387f481bbdab4e1ff7b20d6b9383dc239cb79534e2e" name="a70323c37af6fbefdb878c1387f481bbdab4e1ff7b20d6b9383dc239cb79534e2e"></a>DCC_TASK_DETECT_STATE_IDLE&#160;</td><td class="fielddoc"><p>No detection in progress </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a70323c37af6fbefdb878c1387f481bbda82bc19f4bddd901e31c8d83644e4fc19" name="a70323c37af6fbefdb878c1387f481bbda82bc19f4bddd901e31c8d83644e4fc19"></a>DCC_TASK_DETECT_STATE_PROBE_DIRECT_0&#160;</td><td class="fielddoc"><p>Direct: verify of CV#8 bit 7 == 0 outstanding </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a70323c37af6fbefdb878c1387f481bbdaed8b7163cafdc019f57105675ade4930" name="a70323c37af6fbefdb878c1387f481bbdaed8b7163cafdc019f57105675ade4930"></a>DCC_TASK_DETECT_STATE_PROBE_DIRECT_1&#160;</td><td class="fielddoc"><p>Direct: verify of CV#8 bit 7 == 1 outstanding </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a70323c37af6fbefdb878c1387f481bbda2f1298b769e42e48196202385bcaf316" name="a70323c37af6fbefdb878c1387f481bbda2f1298b769e42e48196202385bcaf316"></a>DCC_TASK_DETECT_STATE_READ_DIRECT&#160;</td><td class="fielddoc"><p>Direct supported: reading CV#8 bits 6..0 to learn the byte </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a70323c37af6fbefdb878c1387f481bbda8002b198121ed5d4c566a594e619b976" name="a70323c37af6fbefdb878c1387f481bbda8002b198121ed5d4c566a594e619b976"></a>DCC_TASK_DETECT_STATE_PROBE_PAGED_VERIFY&#160;</td><td class="fielddoc"><p>Paged: single verify of the known CV#8 value outstanding </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a70323c37af6fbefdb878c1387f481bbda1d96494bcfa41ebf3221d4f2795b242d" name="a70323c37af6fbefdb878c1387f481bbda1d96494bcfa41ebf3221d4f2795b242d"></a>DCC_TASK_DETECT_STATE_PROBE_PAGED_SCAN&#160;</td><td class="fielddoc"><p>Paged: 0..255 scan of CV#8 in progress </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a70323c37af6fbefdb878c1387f481bbdab7b02f819e5dc131debe39732ab39478" name="a70323c37af6fbefdb878c1387f481bbdab7b02f819e5dc131debe39732ab39478"></a>DCC_TASK_DETECT_STATE_PROBE_REGISTER_VERIFY&#160;</td><td class="fielddoc"><p>Register: single verify of the known register 8 value outstanding </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a70323c37af6fbefdb878c1387f481bbda70ae7e13b742a5a3caf8e49766af0d2e" name="a70323c37af6fbefdb878c1387f481bbda70ae7e13b742a5a3caf8e49766af0d2e"></a>DCC_TASK_DETECT_STATE_PROBE_REGISTER_SCAN&#160;</td><td class="fielddoc"><p>Register: 0..255 scan of register 8 in progress </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a70323c37af6fbefdb878c1387f481bbdaf27d27f6ad7c30f00fe88e4e0c7a0926" name="a70323c37af6fbefdb878c1387f481bbdaf27d27f6ad7c30f00fe88e4e0c7a0926"></a>DCC_TASK_DETECT_STATE_PROBE_ADDRESS_SCAN&#160;</td><td class="fielddoc"><p>Address-Only: 0..127 scan of CV#1 in progress </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="ace5ff6c09ba909d8a792914f0dc7c06d" name="ace5ff6c09ba909d8a792914f0dc7c06d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ace5ff6c09ba909d8a792914f0dc7c06d">&#9670;&#160;</a></span>DccServiceModeTaskDetect_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeTaskDetect_initialize </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__service__mode__task__detect__t.html">interface_dcc_service_mode_task_detect_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize the detect task module. Call once during <a class="el" href="dcc__config_8c.html#a4e86c59e8b73091bd49e69d4fd66672c" title="Initialize the DCC library with user configuration.">DccConfig_initialize()</a>. </p>
+<p>Clears the singleton context (state IDLE, no callback) and stores the interface pointer.</p>
+<pre class="fragment">* @param interface Pointer to populated interface_dcc_service_mode_task_detect_t (wired by dcc_config.c).
+* </pre> 
+</div>
+</div>
+<a id="a9a5541e07befadddd9e980cd940fb8e1" name="a9a5541e07befadddd9e980cd940fb8e1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9a5541e07befadddd9e980cd940fb8e1">&#9670;&#160;</a></span>DccServiceModeTaskDetect_detect_mode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskDetect_detect_mode </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a54f2a3fff93ecacc132165a9981c23d4">dcc_service_mode_task_on_detect_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_detect</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Probe the decoder for ALL supported service modes (Direct, Paged, Register, Address-Only). </p>
+<p>Probe the decoder for ALL supported service modes. Runs Direct → Paged → Register → Address-Only, accumulating a DCC_SERVICE_MODE_SUPPORTED_* bitmask. If none acknowledge, the bitmask is 0 and result is DCC_SERVICE_MODE_NO_ACK; otherwise SUCCESS. A stage whose primitive is not wired (NULL) is skipped.</p>
+<p>Algorithm:</p><ol type="1">
+<li>Reject if a detection is already in progress (state not IDLE)</li>
+<li>Clear the accumulated modes, CV#8 value, scan state and store the callback</li>
+<li>If direct_verify_bit is not wired, skip straight to _begin_paged() and return true</li>
+<li>Otherwise enter PROBE_DIRECT_0 and issue a Direct verify of CV#8 bit 7 == 0</li>
+<li>If that primitive refuses to start, return to IDLE and report failure to the caller</li>
+<li>The remaining stages run from <a class="el" href="dcc__service__mode__task__detect_8h.html#a8f56b67a96f7a1dc7ea54051d8912d1e" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskDetect_on_primitive_complete()</a></li>
+</ol>
+<p>Return value and on_detect timing are NOT symmetric across the two ways this can fail to really start, by design choice, not oversight &ndash; flagged in Jim Kueneman's review of upstream PR #2 (2026-09-23), documented here rather than unified (see that PR's discussion for why: unifying would mean propagating a start/fail result up through the whole _begin_paged() -&gt; _begin_register() -&gt; _begin_address() cascade, each of which can also legitimately complete synchronously with a genuine "no modes supported" result, not just fail to start).</p>
+<ul>
+<li>Direct wired, direct_verify_bit() fails to start: returns false, on_detect is NOT called. The false return is the only signal.</li>
+<li>Direct not wired (or every mode unwired, cascading all the way through _begin_paged()/ _begin_register()/_begin_address()): this function calls the next stage and returns true UNCONDITIONALLY. If that stage's own probe then fails to start &ndash; or there is nothing left to probe at all &ndash; the resulting _fail()/_finish() call fires on_detect SYNCHRONOUSLY, before this function has returned to its own caller.</li>
+</ul>
+<p>A caller that assumes "true means wait for the callback" can therefore see on_detect fire before it has finished handling this call. See dcc_service_mode_task_detect_Test.cxx's "Synchronous-callback asymmetry" tests, which pin down both sides so a future change that unifies this does not silently change behavior.</p>
+<pre class="fragment">* @param on_detect Called when detection completes; supported_modes = capability bitmask.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started; false if another detection is running, or if the Direct primitive is wired and refuses to start. </dd></dl>
+
+</div>
+</div>
+<a id="a8f56b67a96f7a1dc7ea54051d8912d1e" name="a8f56b67a96f7a1dc7ea54051d8912d1e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f56b67a96f7a1dc7ea54051d8912d1e">&#9670;&#160;</a></span>DccServiceModeTaskDetect_on_primitive_complete()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeTaskDetect_on_primitive_complete </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#aacb5b6351da94bd651145bb926e34bf3">dcc_service_mode_result_enum</a></td>          <td class="paramname"><span class="paramname"><em>result</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Notify the task module that the primitive has finished its full operation (including recovery packets). </p>
+<p>Notify the task module that the primitive has finished its full operation (including recovery packets). Wire this into the primitive's on_complete slot via <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>. The task module advances its state machine on this event; the ACK outcome is taken from <code>result</code> (SUCCESS = ACK detected by the common module's pulse-width measurement, anything else = no ACK).</p>
+<p>Algorithm:</p><ol type="1">
+<li>Record the ACK outcome: SUCCESS from the primitive means a valid ACK was measured, anything else means no ACK</li>
+<li>PROBE_DIRECT_0 / PROBE_DIRECT_1: an ACK marks Direct supported, fixes CV#8 bit 7 and starts the Direct read of bits 6..0; no ACK on bit 7 == 0 tries bit 7 == 1, no ACK on that moves on to Paged with the value unknown</li>
+<li>READ_DIRECT: record the bit, then verify the next lower bit or, after bit 0, mark the value known and start Paged</li>
+<li>PROBE_PAGED_VERIFY / PROBE_REGISTER_VERIFY: an ACK marks that mode supported; either way move to the next stage</li>
+<li>PROBE_PAGED_SCAN / PROBE_REGISTER_SCAN: an ACK marks the mode supported and learns the value; an exhausted scan moves on without it; otherwise verify the next candidate</li>
+<li>PROBE_ADDRESS_SCAN: an ACK marks Address-Only supported; an ACK or an exhausted scan finishes detection</li>
+<li>Ignore the event when IDLE</li>
+</ol>
+<pre class="fragment">* @param result Result of the primitive operation (passed through from primitive callback).
+* </pre> 
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

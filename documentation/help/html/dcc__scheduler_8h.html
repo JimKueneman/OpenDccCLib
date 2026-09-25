@@ -90,6 +90,9 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_scheduler.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -98,6 +101,37 @@ $(function(){ initResizable(false); });
 <a href="#details">More...</a></p>
 
 <p><a href="dcc__scheduler_8h_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structinterface__dcc__scheduler__t.html">interface_dcc_scheduler_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface struct — dependencies injected by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>.  <a href="structinterface__dcc__scheduler__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Instance context for the scheduler module.  <a href="structdcc__scheduler__context__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a80b456b54e48dbdf96f342161111120c" id="r_a80b456b54e48dbdf96f342161111120c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a80b456b54e48dbdf96f342161111120c">DccScheduler_initialize</a> (<a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *context, const <a class="el" href="structinterface__dcc__scheduler__t.html">interface_dcc_scheduler_t</a> *interface)</td></tr>
+<tr class="memdesc:a80b456b54e48dbdf96f342161111120c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the scheduler module.  <br /></td></tr>
+<tr class="separator:a80b456b54e48dbdf96f342161111120c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aff5c8bfa16df3996ed7a481da02393d5" id="r_aff5c8bfa16df3996ed7a481da02393d5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aff5c8bfa16df3996ed7a481da02393d5">DccScheduler_run</a> (<a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *context)</td></tr>
+<tr class="memdesc:aff5c8bfa16df3996ed7a481da02393d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main loop processing. Selects next packet and feeds to bit encoder.  <br /></td></tr>
+<tr class="separator:aff5c8bfa16df3996ed7a481da02393d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae6f3a287ef8d5d9b2f64c8b3bf212f16" id="r_ae6f3a287ef8d5d9b2f64c8b3bf212f16"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae6f3a287ef8d5d9b2f64c8b3bf212f16">DccScheduler_insert</a> (<a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *context, const <a class="el" href="structdcc__packet__t.html">dcc_packet_t</a> *packet, <a class="el" href="dcc__types_8h.html#ab9401618f9347a6ea872c16fdf06afa5">dcc_address_t</a> address, <a class="el" href="dcc__types_8h.html#a25bc1ab6fabc48ee3d81cc63308be375">dcc_tag_enum</a> tag, <a class="el" href="dcc__types_8h.html#ace836533608fb1eb2e3c5a69d33ce68f">dcc_priority_enum</a> priority, bool auto_refresh)</td></tr>
+<tr class="memdesc:ae6f3a287ef8d5d9b2f64c8b3bf212f16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Insert or update a packet in the scheduler.  <br /></td></tr>
+<tr class="separator:ae6f3a287ef8d5d9b2f64c8b3bf212f16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a837144dca194cfa4e606e6b2d867082e" id="r_a837144dca194cfa4e606e6b2d867082e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a837144dca194cfa4e606e6b2d867082e">DccScheduler_remove_address</a> (<a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *context, <a class="el" href="dcc__types_8h.html#ab9401618f9347a6ea872c16fdf06afa5">dcc_address_t</a> address)</td></tr>
+<tr class="memdesc:a837144dca194cfa4e606e6b2d867082e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all slots for a given address.  <br /></td></tr>
+<tr class="separator:a837144dca194cfa4e606e6b2d867082e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a187339bfc669394eb9303717cbc90fa5" id="r_a187339bfc669394eb9303717cbc90fa5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a187339bfc669394eb9303717cbc90fa5">DccScheduler_clear</a> (<a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *context)</td></tr>
+<tr class="memdesc:a187339bfc669394eb9303717cbc90fa5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all active slots (clear the scheduler).  <br /></td></tr>
+<tr class="separator:a187339bfc669394eb9303717cbc90fa5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0c05e32e078c061010295f17639909a6" id="r_a0c05e32e078c061010295f17639909a6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0c05e32e078c061010295f17639909a6">DccScheduler_on_packet_complete</a> (<a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *context)</td></tr>
+<tr class="memdesc:a0c05e32e078c061010295f17639909a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Notify the scheduler that the bit encoder finished a packet.  <br /></td></tr>
+<tr class="separator:a0c05e32e078c061010295f17639909a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Packet scheduler with duplicate combining and auto-refresh. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -115,7 +149,300 @@ $(function(){ initResizable(false); });
 </ul>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="a80b456b54e48dbdf96f342161111120c" name="a80b456b54e48dbdf96f342161111120c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a80b456b54e48dbdf96f342161111120c">&#9670;&#160;</a></span>DccScheduler_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccScheduler_initialize </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__scheduler__t.html">interface_dcc_scheduler_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initialize the scheduler module. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">interface</td><td>Pointer to populated <a class="el" href="structinterface__dcc__scheduler__t.html">interface_dcc_scheduler_t</a> struct.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Stores the interface, marks every slot inactive with zeroed pacing counters, resets both round-robin cursors and loads the refresh pacing from DCC_REFRESH_PROMPT_SENDS, DCC_REFRESH_COLD_CYCLES and DCC_REFRESH_COLD_MAX_CYCLES.</p>
+<pre class="fragment">* @param context Pointer to dcc_scheduler_context_t instance.
+* @param interface Pointer to populated interface_dcc_scheduler_t struct.
+* </pre> 
+</div>
+</div>
+<a id="aff5c8bfa16df3996ed7a481da02393d5" name="aff5c8bfa16df3996ed7a481da02393d5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aff5c8bfa16df3996ed7a481da02393d5">&#9670;&#160;</a></span>DccScheduler_run()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccScheduler_run </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Main loop processing. Selects next packet and feeds to bit encoder. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> instance.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Called from <a class="el" href="dcc__config_8c.html#a6973e4dcdbdf005108c57fb42c9bfd5d" title="Main loop processing.">DccConfig_run()</a>. Does nothing until the bit encoder has finished the previous packet and reports idle. Then sends the highest-priority pending one-shot if there is one, otherwise the next auto-refresh slot in round-robin order, otherwise an idle packet. Two consecutive packets to the same short address 112-127 are separated by an idle packet (S-9.2 Section C footnote 11).</p>
+<p>Algorithm:</p><ol type="1">
+<li>Return if no interface is wired</li>
+<li>After the first packet, return until packet_complete_flag is set, then clear it</li>
+<li>Return if the bit encoder does not report idle (belt and suspenders)</li>
+<li>Age every refresh slot by one packet cycle</li>
+<li>Pick the highest-priority one-shot; if found:<ul>
+<li>If its first byte is 0x70-0x7F and equals last_addr_byte, load an idle spacer instead (S-9.2 Section C footnote 11 5 ms gap) and retry next cycle</li>
+<li>Otherwise load it, record last_addr_byte, fire on_packet_sent, decrement repeat_count and free the slot when it reaches 0</li>
+</ul>
+</li>
+<li>Else pick the next refresh slot; if found, apply the same same-address guard, load it, fire on_packet_sent, spend one burst send and zero unsent_cycles</li>
+<li>Else load an idle packet</li>
+</ol>
+<pre class="fragment">* @param context Pointer to dcc_scheduler_context_t instance.
+* </pre> 
+</div>
+</div>
+<a id="ae6f3a287ef8d5d9b2f64c8b3bf212f16" name="ae6f3a287ef8d5d9b2f64c8b3bf212f16"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae6f3a287ef8d5d9b2f64c8b3bf212f16">&#9670;&#160;</a></span>DccScheduler_insert()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccScheduler_insert </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structdcc__packet__t.html">dcc_packet_t</a> *</td>          <td class="paramname"><span class="paramname"><em>packet</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#ab9401618f9347a6ea872c16fdf06afa5">dcc_address_t</a></td>          <td class="paramname"><span class="paramname"><em>address</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a25bc1ab6fabc48ee3d81cc63308be375">dcc_tag_enum</a></td>          <td class="paramname"><span class="paramname"><em>tag</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#ace836533608fb1eb2e3c5a69d33ce68f">dcc_priority_enum</a></td>          <td class="paramname"><span class="paramname"><em>priority</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>auto_refresh</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Insert or update a packet in the scheduler. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> instance.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>If a slot with matching (address, tag) exists and is active, its packet data is overwritten (duplicate combining). Otherwise a new slot is allocated. Every insert re-arms the refresh slot's prompt burst (refresh_prompt_sends full-rate sends before it drops to the keep-alive).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">packet</td><td>Pointer to <a class="el" href="structdcc__packet__t.html">dcc_packet_t</a> to schedule. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section note"><dt>Note</dt><dd>Contents of the packet are copied; the caller's copy may be reused after the call. </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">address</td><td>DCC address for duplicate combining key. </td></tr>
+    <tr><td class="paramname">tag</td><td>Sub-key for duplicate combining (<a class="el" href="dcc__types_8h.html#a25bc1ab6fabc48ee3d81cc63308be375">dcc_tag_enum</a>). </td></tr>
+    <tr><td class="paramname">priority</td><td>Packet priority level (<a class="el" href="dcc__types_8h.html#ace836533608fb1eb2e3c5a69d33ce68f">dcc_priority_enum</a>). </td></tr>
+    <tr><td class="paramname">auto_refresh</td><td>true = keep in refresh cycle indefinitely. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if packet was scheduled, false if no free slots or if a one-shot was handed over with repeat_count 0 (it would never be sent).</dd></dl>
+<p>Algorithm:</p><ol type="1">
+<li>Refuse a one-shot whose repeat_count is 0 (it would never be sent and never freed)</li>
+<li>Look for an active slot with the same (address, tag)</li>
+<li>If none, take a free slot (fail if there is none) and zero its unsent_cycles</li>
+<li>If one exists, it is an auto-refresh slot and the cold tier is off, move refresh_index to it so the changed command takes the next refresh turn</li>
+<li>Copy the packet bytes, byte_count, preamble_bits and repeat_count into the slot</li>
+<li>Store address, tag, priority and auto_refresh, and mark the slot active</li>
+<li>Re-arm the prompt burst (prompt_sends_left = refresh_prompt_sends); unsent_cycles is left alone because an insert is not a send</li>
+</ol>
+<pre class="fragment">* @param context Pointer to dcc_scheduler_context_t instance.
+* @param packet Pointer to dcc_packet_t to schedule (contents are copied).
+* @param address DCC address for duplicate combining key.
+* @param tag Sub-key for duplicate combining.
+* @param priority Packet priority level (ranks one-shots only).
+* @param auto_refresh true = keep in refresh cycle indefinitely.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the packet was scheduled, false if no free slot or if a one-shot was handed over with repeat_count 0. </dd></dl>
+
+</div>
+</div>
+<a id="a837144dca194cfa4e606e6b2d867082e" name="a837144dca194cfa4e606e6b2d867082e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a837144dca194cfa4e606e6b2d867082e">&#9670;&#160;</a></span>DccScheduler_remove_address()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccScheduler_remove_address </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#ab9401618f9347a6ea872c16fdf06afa5">dcc_address_t</a></td>          <td class="paramname"><span class="paramname"><em>address</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Remove all slots for a given address. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">address</td><td>The address to purge.</td></tr>
+  </table>
+  </dd>
+</dl>
+<pre class="fragment">* @param context Pointer to dcc_scheduler_context_t instance.
+* @param address The address to purge.
+* </pre> 
+</div>
+</div>
+<a id="a187339bfc669394eb9303717cbc90fa5" name="a187339bfc669394eb9303717cbc90fa5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a187339bfc669394eb9303717cbc90fa5">&#9670;&#160;</a></span>DccScheduler_clear()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccScheduler_clear </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Remove all active slots (clear the scheduler). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> instance.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Remove all active slots (clear the scheduler).</p>
+<pre class="fragment">* @param context Pointer to dcc_scheduler_context_t instance.
+* </pre> 
+</div>
+</div>
+<a id="a0c05e32e078c061010295f17639909a6" name="a0c05e32e078c061010295f17639909a6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0c05e32e078c061010295f17639909a6">&#9670;&#160;</a></span>DccScheduler_on_packet_complete()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccScheduler_on_packet_complete </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Notify the scheduler that the bit encoder finished a packet. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> instance.</td></tr>
+  </table>
+  </dd>
+</dl>
+<p>Called from ISR context (via on_packet_complete callback) when a packet has FINISHED transmitting. Sets a flag that <a class="el" href="#aff5c8bfa16df3996ed7a481da02393d5" title="Main loop processing. Selects next packet and feeds to bit encoder.">DccScheduler_run()</a> will process. This is the "packet finished" counterpart to the on_packet_sent dispatch notification (see <a class="el" href="structinterface__dcc__scheduler__t.html#a724a199573711ebe9b8f3bb3818e43aa">interface_dcc_scheduler_t::on_packet_sent</a>).</p>
+<p>Notify the scheduler that the bit encoder finished a packet.</p>
+<p>Only sets packet_complete_flag; <a class="el" href="#aff5c8bfa16df3996ed7a481da02393d5" title="Main loop processing. Selects next packet and feeds to bit encoder.">DccScheduler_run()</a> consumes it.</p>
+<pre class="fragment">* @param context Pointer to dcc_scheduler_context_t instance.
+* </pre> 
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

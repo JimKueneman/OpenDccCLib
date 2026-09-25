@@ -90,12 +90,70 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_service_mode_task_register.c File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>Task orchestrator for Register mode CV programming (S-9.2.3 §E).  
 <a href="#details">More...</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcc__service__mode__task__register__context__t.html">dcc_service_mode_task_register_context_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Singleton context for the register mode task.  <a href="structdcc__service__mode__task__register__context__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:a61b2d7d2dc7a495fd2b5ef3b5bf418d1" id="r_a61b2d7d2dc7a495fd2b5ef3b5bf418d1"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a61b2d7d2dc7a495fd2b5ef3b5bf418d1">dcc_task_register_state_enum</a> { <br />
+&#160;&#160;<a class="el" href="#a61b2d7d2dc7a495fd2b5ef3b5bf418d1a02e44ca720f6637445582d1f5355472e">DCC_TASK_REGISTER_STATE_IDLE</a>
+, <a class="el" href="#a61b2d7d2dc7a495fd2b5ef3b5bf418d1aafdc0a8e3c58fb8cbd62a5c2b92788b9">DCC_TASK_REGISTER_STATE_READ_CV</a>
+, <a class="el" href="#a61b2d7d2dc7a495fd2b5ef3b5bf418d1a8cc6585fa1dda4fc2ec19e19b7db4a5a">DCC_TASK_REGISTER_STATE_WRITE_CV</a>
+, <a class="el" href="#a61b2d7d2dc7a495fd2b5ef3b5bf418d1a87aec8a27f4421c2ade5542b30851419">DCC_TASK_REGISTER_STATE_WRITE_CV_VERIFY</a>
+, <br />
+&#160;&#160;<a class="el" href="#a61b2d7d2dc7a495fd2b5ef3b5bf418d1abdb14636aa25d53abe1608a7f7fd8331">DCC_TASK_REGISTER_STATE_READ_BIT_READ_BYTE</a>
+, <a class="el" href="#a61b2d7d2dc7a495fd2b5ef3b5bf418d1a7e61f4816f973bdefcfea7fbb1f23b75">DCC_TASK_REGISTER_STATE_WRITE_BIT_READ_BYTE</a>
+, <a class="el" href="#a61b2d7d2dc7a495fd2b5ef3b5bf418d1ae3554c3bf30a99b03b736042262d67d5">DCC_TASK_REGISTER_STATE_WRITE_BIT_WRITE</a>
+, <a class="el" href="#a61b2d7d2dc7a495fd2b5ef3b5bf418d1a4da16aec1e2621e999362191fa81ee4f">DCC_TASK_REGISTER_STATE_WRITE_BIT_VERIFY</a>
+, <br />
+&#160;&#160;<a class="el" href="#a61b2d7d2dc7a495fd2b5ef3b5bf418d1a27c563138941ae3e0c071a1be80cdbd0">DCC_TASK_REGISTER_STATE_FACTORY_RESET</a>
+, <a class="el" href="#a61b2d7d2dc7a495fd2b5ef3b5bf418d1a1ca52e6eea1adeb551791337f14fd404">DCC_TASK_REGISTER_STATE_VERIFY_VALUE</a>
+<br />
+ }</td></tr>
+<tr class="memdesc:a61b2d7d2dc7a495fd2b5ef3b5bf418d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">States of the register mode task state machine.  <a href="#a61b2d7d2dc7a495fd2b5ef3b5bf418d1">More...</a><br /></td></tr>
+<tr class="separator:a61b2d7d2dc7a495fd2b5ef3b5bf418d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a43c50e1cf1c2aa973069044f15593b98" id="r_a43c50e1cf1c2aa973069044f15593b98"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a43c50e1cf1c2aa973069044f15593b98">DccServiceModeTaskRegister_initialize</a> (const <a class="el" href="structinterface__dcc__service__mode__task__register__t.html">interface_dcc_service_mode_task_register_t</a> *interface)</td></tr>
+<tr class="memdesc:a43c50e1cf1c2aa973069044f15593b98"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the register task module. Call once during <a class="el" href="dcc__config_8c.html#a4e86c59e8b73091bd49e69d4fd66672c" title="Initialize the DCC library with user configuration.">DccConfig_initialize()</a>.  <br /></td></tr>
+<tr class="separator:a43c50e1cf1c2aa973069044f15593b98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a736bf2c2f39c989d3e797255333c144e" id="r_a736bf2c2f39c989d3e797255333c144e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a736bf2c2f39c989d3e797255333c144e">DccServiceModeTaskRegister_read_cv</a> (uint16_t cv_number, <a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a> decoder_type, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a736bf2c2f39c989d3e797255333c144e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a CV byte using register mode. Iterates register_verify 0-255 until ACK.  <br /></td></tr>
+<tr class="separator:a736bf2c2f39c989d3e797255333c144e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6e82453ea7d87bf2a8d8d6812631eb69" id="r_a6e82453ea7d87bf2a8d8d6812631eb69"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6e82453ea7d87bf2a8d8d6812631eb69">DccServiceModeTaskRegister_write_cv</a> (uint16_t cv_number, uint8_t value, <a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a> decoder_type, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a6e82453ea7d87bf2a8d8d6812631eb69"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a CV byte then verify using register mode. Always 2 operations.  <br /></td></tr>
+<tr class="separator:a6e82453ea7d87bf2a8d8d6812631eb69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7920d720b4347a6a7bcbe153fc3ffe9c" id="r_a7920d720b4347a6a7bcbe153fc3ffe9c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7920d720b4347a6a7bcbe153fc3ffe9c">DccServiceModeTaskRegister_read_bit</a> (uint16_t cv_number, uint8_t bit_position, <a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a> decoder_type, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a7920d720b4347a6a7bcbe153fc3ffe9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a single CV bit using register mode. Reads full byte, extracts bit.  <br /></td></tr>
+<tr class="separator:a7920d720b4347a6a7bcbe153fc3ffe9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acd946e349c71df2902caf8dc3bae879a" id="r_acd946e349c71df2902caf8dc3bae879a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acd946e349c71df2902caf8dc3bae879a">DccServiceModeTaskRegister_write_bit</a> (uint16_t cv_number, uint8_t bit_position, bool bit_value, <a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a> decoder_type, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:acd946e349c71df2902caf8dc3bae879a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a single CV bit using register mode. Read-modify-write sequence.  <br /></td></tr>
+<tr class="separator:acd946e349c71df2902caf8dc3bae879a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e9ff0b8ddad273d31a85d25fa655776" id="r_a7e9ff0b8ddad273d31a85d25fa655776"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7e9ff0b8ddad273d31a85d25fa655776">DccServiceModeTaskRegister_verify_value</a> (uint16_t cv_number, uint8_t value, <a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a> decoder_type, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a7e9ff0b8ddad273d31a85d25fa655776"><td class="mdescLeft">&#160;</td><td class="mdescRight">Verify a single register value (one register-verify op).  <br /></td></tr>
+<tr class="separator:a7e9ff0b8ddad273d31a85d25fa655776"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5f34ef03ed02c0ed3ac150742e20d189" id="r_a5f34ef03ed02c0ed3ac150742e20d189"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5f34ef03ed02c0ed3ac150742e20d189">DccServiceModeTaskRegister_factory_reset</a> (<a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete)</td></tr>
+<tr class="memdesc:a5f34ef03ed02c0ed3ac150742e20d189"><td class="mdescLeft">&#160;</td><td class="mdescRight">Issue a factory reset (write 8 to register 8). Applies to both Mobile and Accessory.  <br /></td></tr>
+<tr class="separator:a5f34ef03ed02c0ed3ac150742e20d189"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab5eadf7980e6c28e7e7b513432c6085b" id="r_ab5eadf7980e6c28e7e7b513432c6085b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab5eadf7980e6c28e7e7b513432c6085b">DccServiceModeTaskRegister_on_primitive_complete</a> (<a class="el" href="dcc__types_8h.html#aacb5b6351da94bd651145bb926e34bf3">dcc_service_mode_result_enum</a> result)</td></tr>
+<tr class="memdesc:ab5eadf7980e6c28e7e7b513432c6085b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Notify the task module that the primitive has finished its full operation (including recovery packets).  <br /></td></tr>
+<tr class="separator:ab5eadf7980e6c28e7e7b513432c6085b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Task orchestrator for Register mode CV programming (S-9.2.3 §E). </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -107,7 +165,384 @@ $(function(){ initResizable(false); });
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="a61b2d7d2dc7a495fd2b5ef3b5bf418d1" name="a61b2d7d2dc7a495fd2b5ef3b5bf418d1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a61b2d7d2dc7a495fd2b5ef3b5bf418d1">&#9670;&#160;</a></span>dcc_task_register_state_enum</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="#a61b2d7d2dc7a495fd2b5ef3b5bf418d1">dcc_task_register_state_enum</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>States of the register mode task state machine. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a61b2d7d2dc7a495fd2b5ef3b5bf418d1a02e44ca720f6637445582d1f5355472e" name="a61b2d7d2dc7a495fd2b5ef3b5bf418d1a02e44ca720f6637445582d1f5355472e"></a>DCC_TASK_REGISTER_STATE_IDLE&#160;</td><td class="fielddoc"><p>No operation in progress </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a61b2d7d2dc7a495fd2b5ef3b5bf418d1aafdc0a8e3c58fb8cbd62a5c2b92788b9" name="a61b2d7d2dc7a495fd2b5ef3b5bf418d1aafdc0a8e3c58fb8cbd62a5c2b92788b9"></a>DCC_TASK_REGISTER_STATE_READ_CV&#160;</td><td class="fielddoc"><p>read_cv: register_verify of the current scan value outstanding </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a61b2d7d2dc7a495fd2b5ef3b5bf418d1a8cc6585fa1dda4fc2ec19e19b7db4a5a" name="a61b2d7d2dc7a495fd2b5ef3b5bf418d1a8cc6585fa1dda4fc2ec19e19b7db4a5a"></a>DCC_TASK_REGISTER_STATE_WRITE_CV&#160;</td><td class="fielddoc"><p>write_cv: register_write outstanding </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a61b2d7d2dc7a495fd2b5ef3b5bf418d1a87aec8a27f4421c2ade5542b30851419" name="a61b2d7d2dc7a495fd2b5ef3b5bf418d1a87aec8a27f4421c2ade5542b30851419"></a>DCC_TASK_REGISTER_STATE_WRITE_CV_VERIFY&#160;</td><td class="fielddoc"><p>write_cv: register_verify of the written value outstanding </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a61b2d7d2dc7a495fd2b5ef3b5bf418d1abdb14636aa25d53abe1608a7f7fd8331" name="a61b2d7d2dc7a495fd2b5ef3b5bf418d1abdb14636aa25d53abe1608a7f7fd8331"></a>DCC_TASK_REGISTER_STATE_READ_BIT_READ_BYTE&#160;</td><td class="fielddoc"><p>read_bit: scanning for the full byte </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a61b2d7d2dc7a495fd2b5ef3b5bf418d1a7e61f4816f973bdefcfea7fbb1f23b75" name="a61b2d7d2dc7a495fd2b5ef3b5bf418d1a7e61f4816f973bdefcfea7fbb1f23b75"></a>DCC_TASK_REGISTER_STATE_WRITE_BIT_READ_BYTE&#160;</td><td class="fielddoc"><p>write_bit: scanning for the current byte before modifying it </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a61b2d7d2dc7a495fd2b5ef3b5bf418d1ae3554c3bf30a99b03b736042262d67d5" name="a61b2d7d2dc7a495fd2b5ef3b5bf418d1ae3554c3bf30a99b03b736042262d67d5"></a>DCC_TASK_REGISTER_STATE_WRITE_BIT_WRITE&#160;</td><td class="fielddoc"><p>write_bit: register_write of the modified byte outstanding </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a61b2d7d2dc7a495fd2b5ef3b5bf418d1a4da16aec1e2621e999362191fa81ee4f" name="a61b2d7d2dc7a495fd2b5ef3b5bf418d1a4da16aec1e2621e999362191fa81ee4f"></a>DCC_TASK_REGISTER_STATE_WRITE_BIT_VERIFY&#160;</td><td class="fielddoc"><p>write_bit: register_verify of the modified byte outstanding </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a61b2d7d2dc7a495fd2b5ef3b5bf418d1a27c563138941ae3e0c071a1be80cdbd0" name="a61b2d7d2dc7a495fd2b5ef3b5bf418d1a27c563138941ae3e0c071a1be80cdbd0"></a>DCC_TASK_REGISTER_STATE_FACTORY_RESET&#160;</td><td class="fielddoc"><p>factory_reset: register_write of 8 to register 8 outstanding </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a61b2d7d2dc7a495fd2b5ef3b5bf418d1a1ca52e6eea1adeb551791337f14fd404" name="a61b2d7d2dc7a495fd2b5ef3b5bf418d1a1ca52e6eea1adeb551791337f14fd404"></a>DCC_TASK_REGISTER_STATE_VERIFY_VALUE&#160;</td><td class="fielddoc"><p>verify_value: single register_verify outstanding </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="a43c50e1cf1c2aa973069044f15593b98" name="a43c50e1cf1c2aa973069044f15593b98"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a43c50e1cf1c2aa973069044f15593b98">&#9670;&#160;</a></span>DccServiceModeTaskRegister_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeTaskRegister_initialize </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__service__mode__task__register__t.html">interface_dcc_service_mode_task_register_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize the register task module. Call once during <a class="el" href="dcc__config_8c.html#a4e86c59e8b73091bd49e69d4fd66672c" title="Initialize the DCC library with user configuration.">DccConfig_initialize()</a>. </p>
+<p>Clears the singleton context (state IDLE, no callbacks) and stores the interface pointer.</p>
+<pre class="fragment">* @param interface Pointer to populated interface_dcc_service_mode_task_register_t (wired by dcc_config.c).
+* </pre> 
+</div>
+</div>
+<a id="a736bf2c2f39c989d3e797255333c144e" name="a736bf2c2f39c989d3e797255333c144e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a736bf2c2f39c989d3e797255333c144e">&#9670;&#160;</a></span>DccServiceModeTaskRegister_read_cv()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskRegister_read_cv </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a></td>          <td class="paramname"><span class="paramname"><em>decoder_type</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read a CV byte using register mode. Iterates register_verify 0-255 until ACK. </p>
+<p>Algorithm:</p><ol type="1">
+<li>Map the CV to a register for decoder_type; reject if the CV is not register-accessible</li>
+<li>Reject if another operation is in progress (state not IDLE)</li>
+<li>Load the context: register, decoder type, scan value 0, cleared step count, callbacks</li>
+<li>Enter READ_CV and issue register_verify for value 0</li>
+<li>If the primitive refuses to start, return to IDLE and report failure to the caller</li>
+<li>The scan continues from <a class="el" href="#ab5eadf7980e6c28e7e7b513432c6085b" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskRegister_on_primitive_complete()</a></li>
+</ol>
+<pre class="fragment">* @param cv_number CV number to read (mapped to register via decoder_type).
+* @param decoder_type Mobile or Accessory - determines CV-to-register mapping.
+* @param on_complete Called when complete: SUCCESS with the CV byte found, ERROR if no value was ACKed, or BUSY.
+* @param on_progress Called after each scan step (nullable).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started; false if another operation is running, the CV is not accessible in register mode, or the first verify could not start. </dd></dl>
+
+</div>
+</div>
+<a id="a6e82453ea7d87bf2a8d8d6812631eb69" name="a6e82453ea7d87bf2a8d8d6812631eb69"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6e82453ea7d87bf2a8d8d6812631eb69">&#9670;&#160;</a></span>DccServiceModeTaskRegister_write_cv()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskRegister_write_cv </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a></td>          <td class="paramname"><span class="paramname"><em>decoder_type</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Write a CV byte then verify using register mode. Always 2 operations. </p>
+<p>Algorithm:</p><ol type="1">
+<li>Map the CV to a register for decoder_type; reject if the CV is not register-accessible</li>
+<li>Reject if another operation is in progress (state not IDLE)</li>
+<li>Load the context: register, decoder type, value, cleared step count, callbacks</li>
+<li>Enter WRITE_CV and issue register_write</li>
+<li>If the primitive refuses to start, return to IDLE and report failure to the caller</li>
+<li>The verify runs from <a class="el" href="#ab5eadf7980e6c28e7e7b513432c6085b" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskRegister_on_primitive_complete()</a></li>
+</ol>
+<pre class="fragment">* @param cv_number CV number to write (mapped to register via decoder_type).
+* @param value Byte to write.
+* @param decoder_type Mobile or Accessory - determines CV-to-register mapping.
+* @param on_complete Called when complete: SUCCESS or VERIFY_FAIL with the byte written, or BUSY.
+* @param on_progress Called after each step (nullable).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started; false if another operation is running, the CV is not accessible in register mode, or the write could not start. </dd></dl>
+
+</div>
+</div>
+<a id="a7920d720b4347a6a7bcbe153fc3ffe9c" name="a7920d720b4347a6a7bcbe153fc3ffe9c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7920d720b4347a6a7bcbe153fc3ffe9c">&#9670;&#160;</a></span>DccServiceModeTaskRegister_read_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskRegister_read_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a></td>          <td class="paramname"><span class="paramname"><em>decoder_type</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read a single CV bit using register mode. Reads full byte, extracts bit. </p>
+<p>Algorithm:</p><ol type="1">
+<li>Reject bit positions above 7</li>
+<li>Map the CV to a register for decoder_type; reject if the CV is not register-accessible</li>
+<li>Reject if another operation is in progress (state not IDLE)</li>
+<li>Load the context: register, decoder type, bit position, scan value 0, cleared step count, callbacks</li>
+<li>Enter READ_BIT_READ_BYTE and issue register_verify for value 0</li>
+<li>If the primitive refuses to start, return to IDLE and report failure to the caller</li>
+<li>The scan continues from <a class="el" href="#ab5eadf7980e6c28e7e7b513432c6085b" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskRegister_on_primitive_complete()</a>; the requested bit is extracted from the value found</li>
+</ol>
+<pre class="fragment">* @param cv_number CV number (mapped to register via decoder_type).
+* @param bit_position Bit position (0-7).
+* @param decoder_type Mobile or Accessory - determines CV-to-register mapping.
+* @param on_complete Called when complete: SUCCESS with value 0 or 1, ERROR if no byte value was ACKed, or BUSY.
+* @param on_progress Called after each scan step (nullable).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started; false if another operation is running, the bit is above 7, the CV is not register-accessible, or the first verify could not start. </dd></dl>
+
+</div>
+</div>
+<a id="acd946e349c71df2902caf8dc3bae879a" name="acd946e349c71df2902caf8dc3bae879a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acd946e349c71df2902caf8dc3bae879a">&#9670;&#160;</a></span>DccServiceModeTaskRegister_write_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskRegister_write_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>bit_value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a></td>          <td class="paramname"><span class="paramname"><em>decoder_type</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Write a single CV bit using register mode. Read-modify-write sequence. </p>
+<p>Algorithm:</p><ol type="1">
+<li>Reject bit positions above 7</li>
+<li>Map the CV to a register for decoder_type; reject if the CV is not register-accessible</li>
+<li>Reject if another operation is in progress (state not IDLE)</li>
+<li>Load the context: register, decoder type, bit position, bit value, scan value 0, cleared step count, callbacks</li>
+<li>Enter WRITE_BIT_READ_BYTE and issue register_verify for value 0 to start the read scan</li>
+<li>If the primitive refuses to start, return to IDLE and report failure to the caller</li>
+<li>From <a class="el" href="#ab5eadf7980e6c28e7e7b513432c6085b" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskRegister_on_primitive_complete()</a>: once the byte is found, write the modified byte, then verify it</li>
+</ol>
+<pre class="fragment">* @param cv_number CV number (mapped to register via decoder_type).
+* @param bit_position Bit position (0-7).
+* @param bit_value Value to write.
+* @param decoder_type Mobile or Accessory - determines CV-to-register mapping.
+* @param on_complete Called when complete: SUCCESS or VERIFY_FAIL with the bit written, ERROR if the read scan found nothing, or BUSY.
+* @param on_progress Called after each scan step of the read phase only (nullable).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started; false if another operation is running, the bit is above 7, the CV is not register-accessible, or the first verify could not start. </dd></dl>
+
+</div>
+</div>
+<a id="a7e9ff0b8ddad273d31a85d25fa655776" name="a7e9ff0b8ddad273d31a85d25fa655776"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e9ff0b8ddad273d31a85d25fa655776">&#9670;&#160;</a></span>DccServiceModeTaskRegister_verify_value()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskRegister_verify_value </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a9f0df025a0cfd50248bf44bed321d570">dcc_decoder_type_enum</a></td>          <td class="paramname"><span class="paramname"><em>decoder_type</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Verify a single register value (one register-verify op). </p>
+<p>Algorithm:</p><ol type="1">
+<li>Map the CV to a register for decoder_type; reject if the CV is not register-accessible</li>
+<li>Reject if another operation is in progress (state not IDLE)</li>
+<li>Load the context: register, value, decoder type, cleared step count, callbacks</li>
+<li>Enter VERIFY_VALUE and issue register_verify for the expected value</li>
+<li>If the primitive refuses to start, return to IDLE and report failure to the caller</li>
+<li>The result is reported from <a class="el" href="#ab5eadf7980e6c28e7e7b513432c6085b" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskRegister_on_primitive_complete()</a></li>
+</ol>
+<pre class="fragment">* @param cv_number CV number (mapped to a physical register for decoder_type).
+* @param value Expected byte value.
+* @param decoder_type Mobile or Accessory (selects the CV-&gt;register map).
+* @param on_complete Called with SUCCESS if the value verified (ACK), VERIFY_FAIL otherwise.
+* @param on_progress Not used by this operation (nullable).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started; false if another operation is running, the CV is not register-accessible, or the verify could not start. </dd></dl>
+
+</div>
+</div>
+<a id="a5f34ef03ed02c0ed3ac150742e20d189" name="a5f34ef03ed02c0ed3ac150742e20d189"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5f34ef03ed02c0ed3ac150742e20d189">&#9670;&#160;</a></span>DccServiceModeTaskRegister_factory_reset()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskRegister_factory_reset </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Issue a factory reset (write 8 to register 8). Applies to both Mobile and Accessory. </p>
+<p>Algorithm:</p><ol type="1">
+<li>Reject if another operation is in progress (state not IDLE)</li>
+<li>Load the context: cleared step count, completion callback, no progress callback</li>
+<li>Enter FACTORY_RESET and issue register_write(8, 8)</li>
+<li>If the primitive refuses to start, return to IDLE and report failure to the caller</li>
+<li>The result (SUCCESS on ACK, otherwise NO_ACK) is reported from <a class="el" href="#ab5eadf7980e6c28e7e7b513432c6085b" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskRegister_on_primitive_complete()</a></li>
+</ol>
+<pre class="fragment">* @param on_complete Called when the write completes: SUCCESS if ACKed, NO_ACK otherwise; value 0.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started; false if another operation is running or the write could not start. </dd></dl>
+
+</div>
+</div>
+<a id="ab5eadf7980e6c28e7e7b513432c6085b" name="ab5eadf7980e6c28e7e7b513432c6085b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab5eadf7980e6c28e7e7b513432c6085b">&#9670;&#160;</a></span>DccServiceModeTaskRegister_on_primitive_complete()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeTaskRegister_on_primitive_complete </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#aacb5b6351da94bd651145bb926e34bf3">dcc_service_mode_result_enum</a></td>          <td class="paramname"><span class="paramname"><em>result</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Notify the task module that the primitive has finished its full operation (including recovery packets). </p>
+<p>Notify the task module that the primitive has finished its full operation (including recovery packets). Wire this into the primitive's on_complete slot via <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>. The task module advances its state machine on this event; the ACK outcome is taken from <code>result</code> (SUCCESS = ACK detected by the common module's pulse-width measurement, anything else = no ACK).</p>
+<p>Algorithm:</p><ol type="1">
+<li>Record the ACK outcome: SUCCESS from the primitive means a valid ACK was measured, anything else means no ACK</li>
+<li>Dispatch on the current state: the three scanning states share <em>advance_scan(), the others go to their _advance</em>* handler</li>
+<li>Ignore the event when IDLE (no operation in progress)</li>
+</ol>
+<pre class="fragment">* @param result Result of the primitive operation (passed through from primitive callback).
+* </pre> 
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

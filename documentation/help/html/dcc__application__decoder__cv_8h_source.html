@@ -105,23 +105,25 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="keyword">extern</span> <span class="stringliteral">&quot;C&quot;</span> {</div>
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span><span class="preprocessor"></span></div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span><span class="keyword">typedef</span> <span class="keyword">struct </span>{</div>
+<div class="foldopen" id="foldopen00054" data-start="{" data-end="};">
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno"><a class="line" href="structinterface__dcc__application__decoder__cv__t.html">   54</a></span><span class="keyword">typedef</span> <span class="keyword">struct </span>{</div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span> </div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    bool (*cv_read)(uint16_t cv_number, uint8_t *value);</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno"><a class="line" href="structinterface__dcc__application__decoder__cv__t.html#ab476885c247b373184bc53df41d919bf">   57</a></span>    bool (*cv_read)(uint16_t cv_number, uint8_t *value);</div>
 <div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span> </div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    bool (*cv_write)(uint16_t cv_number, uint8_t value);</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno"><a class="line" href="structinterface__dcc__application__decoder__cv__t.html#afcf6c208dd4c29c8f4bc4bc942f6d9af">   60</a></span>    bool (*cv_write)(uint16_t cv_number, uint8_t value);</div>
 <div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span> </div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    bool (*is_locked)(void);</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno"><a class="line" href="structinterface__dcc__application__decoder__cv__t.html#a8d9a16a5400226aac28192f8f85667bc">   63</a></span>    bool (*is_locked)(void);</div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>} interface_dcc_application_decoder_cv_t;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>} <a class="code hl_struct" href="structinterface__dcc__application__decoder__cv__t.html">interface_dcc_application_decoder_cv_t</a>;</div>
+</div>
 <div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> DccApplicationDecoderCv_initialize(<span class="keyword">const</span> interface_dcc_application_decoder_cv_t *interface);</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__application__decoder__cv_8h.html#aa521106135d74fd9329823108decb94a">DccApplicationDecoderCv_initialize</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structinterface__dcc__application__decoder__cv__t.html">interface_dcc_application_decoder_cv_t</a> *interface);</div>
 <div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccApplicationDecoderCv_read(uint16_t cv_number, uint8_t *value);</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="dcc__application__decoder__cv_8h.html#a25eed400c5af3120bc8ba83acba4254f">DccApplicationDecoderCv_read</a>(uint16_t cv_number, uint8_t *value);</div>
 <div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span> </div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccApplicationDecoderCv_write(uint16_t cv_number, uint8_t value);</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="dcc__application__decoder__cv_8h.html#a210cdb654a972f0eeb0fd4fa0fe3bc3f">DccApplicationDecoderCv_write</a>(uint16_t cv_number, uint8_t value);</div>
 <div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> DccApplicationDecoderCv_is_locked(<span class="keywordtype">void</span>);</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="dcc__application__decoder__cv_8h.html#a5fb0908fbfe9a030257dbbcbda2b9f54">DccApplicationDecoderCv_is_locked</a>(<span class="keywordtype">void</span>);</div>
 <div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span> </div>
 <div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span><span class="preprocessor">#ifdef __cplusplus</span></div>
 <div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>}</div>
@@ -130,7 +132,12 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span><span class="preprocessor">#endif </span><span class="comment">/* DCC_COMPILE_DECODER */</span><span class="preprocessor"></span></div>
 <div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
 <div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span><span class="preprocessor">#endif </span><span class="comment">/* __DCC_APPLICATION_DECODER_CV__ */</span><span class="preprocessor"></span></div>
+<div class="ttc" id="adcc__application__decoder__cv_8h_html_a210cdb654a972f0eeb0fd4fa0fe3bc3f"><div class="ttname"><a href="dcc__application__decoder__cv_8h.html#a210cdb654a972f0eeb0fd4fa0fe3bc3f">DccApplicationDecoderCv_write</a></div><div class="ttdeci">bool DccApplicationDecoderCv_write(uint16_t cv_number, uint8_t value)</div><div class="ttdoc">Write a CV value through the storage rules.</div><div class="ttdef"><b>Definition</b> dcc_application_decoder_cv.c:105</div></div>
+<div class="ttc" id="adcc__application__decoder__cv_8h_html_a25eed400c5af3120bc8ba83acba4254f"><div class="ttname"><a href="dcc__application__decoder__cv_8h.html#a25eed400c5af3120bc8ba83acba4254f">DccApplicationDecoderCv_read</a></div><div class="ttdeci">bool DccApplicationDecoderCv_read(uint16_t cv_number, uint8_t *value)</div><div class="ttdoc">Read a CV value.</div><div class="ttdef"><b>Definition</b> dcc_application_decoder_cv.c:78</div></div>
+<div class="ttc" id="adcc__application__decoder__cv_8h_html_a5fb0908fbfe9a030257dbbcbda2b9f54"><div class="ttname"><a href="dcc__application__decoder__cv_8h.html#a5fb0908fbfe9a030257dbbcbda2b9f54">DccApplicationDecoderCv_is_locked</a></div><div class="ttdeci">bool DccApplicationDecoderCv_is_locked(void)</div><div class="ttdoc">Check if the decoder lock is engaged.</div><div class="ttdef"><b>Definition</b> dcc_application_decoder_cv.c:125</div></div>
+<div class="ttc" id="adcc__application__decoder__cv_8h_html_aa521106135d74fd9329823108decb94a"><div class="ttname"><a href="dcc__application__decoder__cv_8h.html#aa521106135d74fd9329823108decb94a">DccApplicationDecoderCv_initialize</a></div><div class="ttdeci">void DccApplicationDecoderCv_initialize(const interface_dcc_application_decoder_cv_t *interface)</div><div class="ttdoc">Initialize the decoder CV application module.</div><div class="ttdef"><b>Definition</b> dcc_application_decoder_cv.c:59</div></div>
 <div class="ttc" id="adcc__types_8h_html"><div class="ttname"><a href="dcc__types_8h.html">dcc_types.h</a></div><div class="ttdoc">Core type definitions, structures, and configuration constants for the OpenDccCLib library.</div></div>
+<div class="ttc" id="astructinterface__dcc__application__decoder__cv__t_html"><div class="ttname"><a href="structinterface__dcc__application__decoder__cv__t.html">interface_dcc_application_decoder_cv_t</a></div><div class="ttdoc">Interface struct — wired by dcc_config.c during initialization.</div><div class="ttdef"><b>Definition</b> dcc_application_decoder_cv.h:54</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!doctype html>
 <html>

@@ -90,6 +90,8 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_application_decoder_railcom.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -98,6 +100,22 @@ $(function(){ initResizable(false); });
 <a href="#details">More...</a></p>
 
 <p><a href="dcc__application__decoder__railcom_8h_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:ab18907471c8fd433e1e2ae5a37ee4d15" id="r_ab18907471c8fd433e1e2ae5a37ee4d15"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab18907471c8fd433e1e2ae5a37ee4d15">DccApplicationDecoderRailcom_pom_response</a> (<a class="el" href="structdcc__railcom__response__t.html">dcc_railcom_response_t</a> *response, uint16_t cv_address, uint8_t value)</td></tr>
+<tr class="memdesc:ab18907471c8fd433e1e2ae5a37ee4d15"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fill a POM reply (ID 0): the CV address low byte and the CV value.  <br /></td></tr>
+<tr class="separator:ab18907471c8fd433e1e2ae5a37ee4d15"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f75bc83b84f10ba4f13b451169c9a47" id="r_a7f75bc83b84f10ba4f13b451169c9a47"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7f75bc83b84f10ba4f13b451169c9a47">DccApplicationDecoderRailcom_dynamic_data</a> (<a class="el" href="structdcc__railcom__response__t.html">dcc_railcom_response_t</a> *response, uint8_t subid, uint8_t value)</td></tr>
+<tr class="memdesc:a7f75bc83b84f10ba4f13b451169c9a47"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fill a dynamic-data reply (ID 7): a DV sub-index and its value.  <br /></td></tr>
+<tr class="separator:a7f75bc83b84f10ba4f13b451169c9a47"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a41c5fe50a412a1a9e28e1203b00b8aa8" id="r_a41c5fe50a412a1a9e28e1203b00b8aa8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a41c5fe50a412a1a9e28e1203b00b8aa8">DccApplicationDecoderRailcom_cv_auto_transfer</a> (<a class="el" href="structdcc__railcom__response__t.html">dcc_railcom_response_t</a> *response, uint32_t indexed_cv_address, uint8_t value)</td></tr>
+<tr class="memdesc:a41c5fe50a412a1a9e28e1203b00b8aa8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fill a CV automatic-transfer reply (ID 12): 24-bit indexed CV address and value.  <br /></td></tr>
+<tr class="separator:a41c5fe50a412a1a9e28e1203b00b8aa8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acaf273347437d9504a1512473a03c1c7" id="r_acaf273347437d9504a1512473a03c1c7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acaf273347437d9504a1512473a03c1c7">DccApplicationDecoderRailcom_raw</a> (<a class="el" href="structdcc__railcom__response__t.html">dcc_railcom_response_t</a> *response, uint8_t datagram_id, const uint8_t *data, uint8_t count)</td></tr>
+<tr class="memdesc:acaf273347437d9504a1512473a03c1c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fill an arbitrary reply: escape hatch for XPOM and other datagram ids.  <br /></td></tr>
+<tr class="separator:acaf273347437d9504a1512473a03c1c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Channel 2 reply builders for the decoder's RailCom callback. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -110,7 +128,223 @@ $(function(){ initResizable(false); });
 <p>Fills a <a class="el" href="structdcc__railcom__response__t.html" title="RailCom datagram for encoder (decoder-side response)">dcc_railcom_response_t</a> with the datagram id and byte layout of the common Channel 2 replies, for use inside on_railcom_request(): the application calls one builder on the callback's out response and returns DCC_RAILCOM_REPLY_DATA; the dcc_railcom_decoder engine encodes and transmits it in the cutout. Channel 1 (the address broadcast) and the ACK, NACK and BUSY code words are produced by the engine from the reply status, so they have no builders here. Stateless: nothing to initialize or wire.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="ab18907471c8fd433e1e2ae5a37ee4d15" name="ab18907471c8fd433e1e2ae5a37ee4d15"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab18907471c8fd433e1e2ae5a37ee4d15">&#9670;&#160;</a></span>DccApplicationDecoderRailcom_pom_response()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationDecoderRailcom_pom_response </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__railcom__response__t.html">dcc_railcom_response_t</a> *</td>          <td class="paramname"><span class="paramname"><em>response</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_address</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Fill a POM reply (ID 0): the CV address low byte and the CV value. </p>
+<p>Answers a POM read or write. Sets the datagram id and a two-byte payload; the engine 4/8-encodes it into Channel 2 when the callback returns DCC_RAILCOM_REPLY_DATA.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">response</td><td>Pointer to the <a class="el" href="structdcc__railcom__response__t.html">dcc_railcom_response_t</a> to fill (the callback's out). </td></tr>
+    <tr><td class="paramname">cv_address</td><td>CV address (1-based); the low 8 bits are sent. </td></tr>
+    <tr><td class="paramname">value</td><td>CV value read or written. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if filled, false if response is NULL.</dd></dl>
+<p>Fill a POM reply (ID 0): the CV address low byte and the CV value.</p>
+<p>Sets the datagram id, data[0] = CV address low byte, data[1] = value, count = 2.</p>
+<pre class="fragment">* @param response Response to fill.
+* @param cv_address CV address; the low 8 bits are sent.
+* @param value CV value.
+* </pre> <dl class="section return"><dt>Returns</dt><dd>true if filled, false if response is NULL. </dd></dl>
+
+</div>
+</div>
+<a id="a7f75bc83b84f10ba4f13b451169c9a47" name="a7f75bc83b84f10ba4f13b451169c9a47"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7f75bc83b84f10ba4f13b451169c9a47">&#9670;&#160;</a></span>DccApplicationDecoderRailcom_dynamic_data()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationDecoderRailcom_dynamic_data </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__railcom__response__t.html">dcc_railcom_response_t</a> *</td>          <td class="paramname"><span class="paramname"><em>response</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>subid</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Fill a dynamic-data reply (ID 7): a DV sub-index and its value. </p>
+<p>Reports one dynamic variable (speed, load, fuel, ...). Sets the datagram id and a two-byte payload: sub-index then value.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">response</td><td>Pointer to the <a class="el" href="structdcc__railcom__response__t.html">dcc_railcom_response_t</a> to fill. </td></tr>
+    <tr><td class="paramname">subid</td><td>Dynamic variable sub-index (0-63). </td></tr>
+    <tr><td class="paramname">value</td><td>Variable value. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if filled, false if response is NULL.</dd></dl>
+<p>Fill a dynamic-data reply (ID 7): a DV sub-index and its value.</p>
+<p>Sets the datagram id, data[0] = sub-index, data[1] = value, count = 2.</p>
+<pre class="fragment">* @param response Response to fill.
+* @param subid Dynamic variable sub-index.
+* @param value Variable value.
+* </pre> <dl class="section return"><dt>Returns</dt><dd>true if filled, false if response is NULL. </dd></dl>
+
+</div>
+</div>
+<a id="a41c5fe50a412a1a9e28e1203b00b8aa8" name="a41c5fe50a412a1a9e28e1203b00b8aa8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a41c5fe50a412a1a9e28e1203b00b8aa8">&#9670;&#160;</a></span>DccApplicationDecoderRailcom_cv_auto_transfer()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationDecoderRailcom_cv_auto_transfer </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__railcom__response__t.html">dcc_railcom_response_t</a> *</td>          <td class="paramname"><span class="paramname"><em>response</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint32_t</td>          <td class="paramname"><span class="paramname"><em>indexed_cv_address</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Fill a CV automatic-transfer reply (ID 12): 24-bit indexed CV address and value. </p>
+<p>Sets the datagram id and a four-byte payload: the three address bytes low byte first, then the value.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">response</td><td>Pointer to the <a class="el" href="structdcc__railcom__response__t.html">dcc_railcom_response_t</a> to fill. </td></tr>
+    <tr><td class="paramname">indexed_cv_address</td><td>Indexed CV address (page index and offset), low byte first. </td></tr>
+    <tr><td class="paramname">value</td><td>CV value. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if filled, false if response is NULL.</dd></dl>
+<p>Fill a CV automatic-transfer reply (ID 12): 24-bit indexed CV address and value.</p>
+<p>Sets the datagram id, data[0..2] = address bytes (low, mid, high), data[3] = value, count = 4.</p>
+<pre class="fragment">* @param response Response to fill.
+* @param indexed_cv_address Indexed CV address (page index and offset).
+* @param value CV value.
+* </pre> <dl class="section return"><dt>Returns</dt><dd>true if filled, false if response is NULL. </dd></dl>
+
+</div>
+</div>
+<a id="acaf273347437d9504a1512473a03c1c7" name="acaf273347437d9504a1512473a03c1c7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acaf273347437d9504a1512473a03c1c7">&#9670;&#160;</a></span>DccApplicationDecoderRailcom_raw()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccApplicationDecoderRailcom_raw </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__railcom__response__t.html">dcc_railcom_response_t</a> *</td>          <td class="paramname"><span class="paramname"><em>response</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>datagram_id</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const uint8_t *</td>          <td class="paramname"><span class="paramname"><em>data</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>count</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Fill an arbitrary reply: escape hatch for XPOM and other datagram ids. </p>
+<p>Copies the bytes as given; the id is masked to its low 4 bits. A zero count produces an id-only datagram. On any argument failure the response is left untouched.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">response</td><td>Pointer to the <a class="el" href="structdcc__railcom__response__t.html">dcc_railcom_response_t</a> to fill. </td></tr>
+    <tr><td class="paramname">datagram_id</td><td>4-bit datagram id (DCC_RAILCOM_ID_*). </td></tr>
+    <tr><td class="paramname">data</td><td>Data bytes to copy; may be NULL when count is 0. </td></tr>
+    <tr><td class="paramname">count</td><td>Number of data bytes, at most DCC_RAILCOM_DATAGRAM_MAX_BYTES. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if filled, false if response is NULL, data is NULL with a non-zero count, or count exceeds the maximum (response is left untouched).</dd></dl>
+<p>Fill an arbitrary reply: escape hatch for XPOM and other datagram ids.</p>
+<p>Validates the arguments first so a rejected call leaves the response untouched, then stores the id masked to 4 bits, the count, and copies the bytes.</p>
+<pre class="fragment">* @param response Response to fill.
+* @param datagram_id 4-bit datagram id.
+* @param data Data bytes to copy; may be NULL when count is 0.
+* @param count Number of data bytes.
+* </pre> <dl class="section return"><dt>Returns</dt><dd>true if filled; false (response untouched) if response is NULL, data is NULL with a non-zero count, or count exceeds DCC_RAILCOM_DATAGRAM_MAX_BYTES. </dd></dl>
+
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

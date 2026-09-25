@@ -90,12 +90,33 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_railcom_cutout.c File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>RailCom cutout timer state machine for the command station.  
 <a href="#details">More...</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:aaa55fa6f8d99cdff46a0f89a30b0e52f" id="r_aaa55fa6f8d99cdff46a0f89a30b0e52f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aaa55fa6f8d99cdff46a0f89a30b0e52f">DccRailcomCutout_initialize</a> (<a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *context, const <a class="el" href="structinterface__dcc__railcom__cutout__t.html">interface_dcc_railcom_cutout_t</a> *interface, uint16_t start_delay, uint16_t uart_rx_delay, uint16_t ch1, uint16_t gap, uint16_t ch2)</td></tr>
+<tr class="memdesc:aaa55fa6f8d99cdff46a0f89a30b0e52f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the RailCom cutout module.  <br /></td></tr>
+<tr class="separator:aaa55fa6f8d99cdff46a0f89a30b0e52f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2decea107226d69c2d5f662246d4b21f" id="r_a2decea107226d69c2d5f662246d4b21f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2decea107226d69c2d5f662246d4b21f">DccRailcomCutout_begin</a> (<a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *context)</td></tr>
+<tr class="memdesc:a2decea107226d69c2d5f662246d4b21f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Begin the cutout sequence. Called at the end bit's last edge.  <br /></td></tr>
+<tr class="separator:a2decea107226d69c2d5f662246d4b21f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a892f38fa631962328f459673999e7b43" id="r_a892f38fa631962328f459673999e7b43"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a892f38fa631962328f459673999e7b43">DccRailcomCutout_cancel</a> (<a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *context)</td></tr>
+<tr class="memdesc:a892f38fa631962328f459673999e7b43"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cancel the cutout sequence. Called on power-off or error.  <br /></td></tr>
+<tr class="separator:a892f38fa631962328f459673999e7b43"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a26bb5c72d9ed137df0092afd80bc42bb" id="r_a26bb5c72d9ed137df0092afd80bc42bb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a26bb5c72d9ed137df0092afd80bc42bb">DccRailcomCutout_timer_isr</a> (<a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *context)</td></tr>
+<tr class="memdesc:a26bb5c72d9ed137df0092afd80bc42bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Timer 2 ISR entry point. Call from the one-shot timer ISR.  <br /></td></tr>
+<tr class="separator:a26bb5c72d9ed137df0092afd80bc42bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a915559a4fb60ff21ef079a3f64a69653" id="r_a915559a4fb60ff21ef079a3f64a69653"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a915559a4fb60ff21ef079a3f64a69653">DccRailcomCutout_is_idle</a> (const <a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *context)</td></tr>
+<tr class="memdesc:a915559a4fb60ff21ef079a3f64a69653"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the cutout is idle (no cutout in progress).  <br /></td></tr>
+<tr class="separator:a915559a4fb60ff21ef079a3f64a69653"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>RailCom cutout timer state machine for the command station. </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -107,7 +128,161 @@ $(function(){ initResizable(false); });
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="aaa55fa6f8d99cdff46a0f89a30b0e52f" name="aaa55fa6f8d99cdff46a0f89a30b0e52f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaa55fa6f8d99cdff46a0f89a30b0e52f">&#9670;&#160;</a></span>DccRailcomCutout_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccRailcomCutout_initialize </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__railcom__cutout__t.html">interface_dcc_railcom_cutout_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>start_delay</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>uart_rx_delay</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>ch1</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>gap</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>ch2</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize the RailCom cutout module. </p>
+<p>Stores the interface and the five phase durations and puts the state machine in IDLE. No timer is started.</p>
+<pre class="fragment">* @param context Pointer to dcc_railcom_cutout_context_t instance.
+* @param interface Pointer to populated interface_dcc_railcom_cutout_t struct.
+* @param start_delay DELAY duration (us).
+* @param uart_rx_delay SETTLING duration (us).
+* @param ch1 CH1 window duration (us).
+* @param gap GAP duration (us).
+* @param ch2 CH2 window duration (us).
+* </pre> 
+</div>
+</div>
+<a id="a2decea107226d69c2d5f662246d4b21f" name="a2decea107226d69c2d5f662246d4b21f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2decea107226d69c2d5f662246d4b21f">&#9670;&#160;</a></span>DccRailcomCutout_begin()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccRailcomCutout_begin </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Begin the cutout sequence. Called at the end bit's last edge. </p>
+<p>Enters DELAY and starts the one-shot timer with start_delay_us; the H-bridge is tristated when it expires (T_CS). Returns without doing anything if no interface is wired.</p>
+<pre class="fragment">* @param context Pointer to dcc_railcom_cutout_context_t instance.
+* </pre> 
+</div>
+</div>
+<a id="a892f38fa631962328f459673999e7b43" name="a892f38fa631962328f459673999e7b43"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a892f38fa631962328f459673999e7b43">&#9670;&#160;</a></span>DccRailcomCutout_cancel()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccRailcomCutout_cancel </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Cancel the cutout sequence. Called on power-off or error. </p>
+<p>Algorithm:</p><ol type="1">
+<li>Return if no interface is wired or the state machine is IDLE</li>
+<li>Stop the one-shot timer</li>
+<li>If the state is SETTLING, CH1, GAP or CH2 (H-bridge already tristated), disable UART Rx and restore the H-bridge</li>
+<li>Return to IDLE without firing on_cutout_complete</li>
+</ol>
+<pre class="fragment">* @param context Pointer to dcc_railcom_cutout_context_t instance.
+* </pre> 
+</div>
+</div>
+<a id="a26bb5c72d9ed137df0092afd80bc42bb" name="a26bb5c72d9ed137df0092afd80bc42bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a26bb5c72d9ed137df0092afd80bc42bb">&#9670;&#160;</a></span>DccRailcomCutout_timer_isr()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccRailcomCutout_timer_isr </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Timer 2 ISR entry point. Call from the one-shot timer ISR. </p>
+<p>Algorithm (each case is the phase whose duration just expired):</p><ol type="1">
+<li>DELAY (T_CS): begin_railcom_cutout(), enter SETTLING, start uart_rx_delay_us</li>
+<li>SETTLING (T_TS1): uart_rx_enable(), enter CH1, start ch1_window_us</li>
+<li>CH1 (T_TC1): uart_rx_disable(), enter GAP, start ch1_ch2_gap_us</li>
+<li>GAP (T_TS2): uart_rx_enable(), enter CH2, start ch2_window_us</li>
+<li>CH2 (T_CE): uart_rx_disable(), end_railcom_cutout(), enter IDLE, fire on_cutout_complete()</li>
+<li>IDLE or unknown: spurious interrupt, ignored</li>
+</ol>
+<p>Every interface hook is optional (NULL is skipped). Returns immediately if no interface is wired.</p>
+<pre class="fragment">* @param context Pointer to dcc_railcom_cutout_context_t instance.
+* </pre> 
+</div>
+</div>
+<a id="a915559a4fb60ff21ef079a3f64a69653" name="a915559a4fb60ff21ef079a3f64a69653"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a915559a4fb60ff21ef079a3f64a69653">&#9670;&#160;</a></span>DccRailcomCutout_is_idle()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccRailcomCutout_is_idle </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Check if the cutout is idle (no cutout in progress). </p>
+<pre class="fragment">* @param context Pointer to dcc_railcom_cutout_context_t instance.
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if idle, false if a cutout is in progress. </dd></dl>
+
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

@@ -90,12 +90,61 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#enum-members">Enumerations</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_service_mode_task_paged.c File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>Task orchestrator for Paged mode CV programming (S-9.2.3 §E).  
 <a href="#details">More...</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcc__service__mode__task__paged__context__t.html">dcc_service_mode_task_paged_context_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Singleton context for the paged mode task.  <a href="structdcc__service__mode__task__paged__context__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
+Enumerations</h2></td></tr>
+<tr class="memitem:ae483528f273528dffc2dfe6064825e15" id="r_ae483528f273528dffc2dfe6064825e15"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae483528f273528dffc2dfe6064825e15">dcc_task_paged_state_enum</a> { <br />
+&#160;&#160;<a class="el" href="#ae483528f273528dffc2dfe6064825e15a73f17501853ac6e4fcc3c6d8d3089e46">DCC_TASK_PAGED_STATE_IDLE</a>
+, <a class="el" href="#ae483528f273528dffc2dfe6064825e15a8ddfbf87ef6f3733820c4ca5b89b4910">DCC_TASK_PAGED_STATE_READ_CV</a>
+, <a class="el" href="#ae483528f273528dffc2dfe6064825e15a7c33e271ce472b1a1df6d63ad9df9bab">DCC_TASK_PAGED_STATE_WRITE_CV</a>
+, <a class="el" href="#ae483528f273528dffc2dfe6064825e15ab0ffa5d305308b60bd3ee30616fbc865">DCC_TASK_PAGED_STATE_WRITE_CV_VERIFY</a>
+, <br />
+&#160;&#160;<a class="el" href="#ae483528f273528dffc2dfe6064825e15ade935486fa56ef6cd05777f5d67ed017">DCC_TASK_PAGED_STATE_READ_BIT_READ_BYTE</a>
+, <a class="el" href="#ae483528f273528dffc2dfe6064825e15a6865f71e5b3afee436385f34d1de52cb">DCC_TASK_PAGED_STATE_WRITE_BIT_READ_BYTE</a>
+, <a class="el" href="#ae483528f273528dffc2dfe6064825e15aad4af807e8a126ac7b1777110b060ef9">DCC_TASK_PAGED_STATE_WRITE_BIT_WRITE</a>
+, <a class="el" href="#ae483528f273528dffc2dfe6064825e15a407cfce3fd132753855bf19cc0807b34">DCC_TASK_PAGED_STATE_WRITE_BIT_VERIFY</a>
+<br />
+ }</td></tr>
+<tr class="memdesc:ae483528f273528dffc2dfe6064825e15"><td class="mdescLeft">&#160;</td><td class="mdescRight">States of the paged mode task state machine.  <a href="#ae483528f273528dffc2dfe6064825e15">More...</a><br /></td></tr>
+<tr class="separator:ae483528f273528dffc2dfe6064825e15"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:adae28850355836ac2c08dc1887ceb75d" id="r_adae28850355836ac2c08dc1887ceb75d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adae28850355836ac2c08dc1887ceb75d">DccServiceModeTaskPaged_initialize</a> (const <a class="el" href="structinterface__dcc__service__mode__task__paged__t.html">interface_dcc_service_mode_task_paged_t</a> *interface)</td></tr>
+<tr class="memdesc:adae28850355836ac2c08dc1887ceb75d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the paged task module. Call once during <a class="el" href="dcc__config_8c.html#a4e86c59e8b73091bd49e69d4fd66672c" title="Initialize the DCC library with user configuration.">DccConfig_initialize()</a>.  <br /></td></tr>
+<tr class="separator:adae28850355836ac2c08dc1887ceb75d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6ee4c523a577b3617a22d50d87a2aa16" id="r_a6ee4c523a577b3617a22d50d87a2aa16"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6ee4c523a577b3617a22d50d87a2aa16">DccServiceModeTaskPaged_read_cv</a> (uint16_t cv_number, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a6ee4c523a577b3617a22d50d87a2aa16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a CV byte using paged mode. Iterates paged_verify 0-255 until ACK.  <br /></td></tr>
+<tr class="separator:a6ee4c523a577b3617a22d50d87a2aa16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7e0d006c4dab27f9c7810faa81fba954" id="r_a7e0d006c4dab27f9c7810faa81fba954"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7e0d006c4dab27f9c7810faa81fba954">DccServiceModeTaskPaged_write_cv</a> (uint16_t cv_number, uint8_t value, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a7e0d006c4dab27f9c7810faa81fba954"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a CV byte then verify. Always 2 operations (write + targeted verify).  <br /></td></tr>
+<tr class="separator:a7e0d006c4dab27f9c7810faa81fba954"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3c00642209b3b886e031df6006c350ab" id="r_a3c00642209b3b886e031df6006c350ab"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3c00642209b3b886e031df6006c350ab">DccServiceModeTaskPaged_read_bit</a> (uint16_t cv_number, uint8_t bit_position, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:a3c00642209b3b886e031df6006c350ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Read a single CV bit using paged mode. Reads full byte, extracts bit.  <br /></td></tr>
+<tr class="separator:a3c00642209b3b886e031df6006c350ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3eed74440433938c1a22fea16ad9888" id="r_ab3eed74440433938c1a22fea16ad9888"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab3eed74440433938c1a22fea16ad9888">DccServiceModeTaskPaged_write_bit</a> (uint16_t cv_number, uint8_t bit_position, bool bit_value, <a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a> on_complete, <a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a> on_progress)</td></tr>
+<tr class="memdesc:ab3eed74440433938c1a22fea16ad9888"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write a single CV bit using paged mode. Read-modify-write sequence.  <br /></td></tr>
+<tr class="separator:ab3eed74440433938c1a22fea16ad9888"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a1f3a7a15c2d7d4a8e8e0cc28b0b25f" id="r_a6a1f3a7a15c2d7d4a8e8e0cc28b0b25f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a6a1f3a7a15c2d7d4a8e8e0cc28b0b25f">DccServiceModeTaskPaged_on_primitive_complete</a> (<a class="el" href="dcc__types_8h.html#aacb5b6351da94bd651145bb926e34bf3">dcc_service_mode_result_enum</a> result)</td></tr>
+<tr class="memdesc:a6a1f3a7a15c2d7d4a8e8e0cc28b0b25f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Notify the task module that the primitive has finished its full operation (including recovery packets).  <br /></td></tr>
+<tr class="separator:a6a1f3a7a15c2d7d4a8e8e0cc28b0b25f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Task orchestrator for Paged mode CV programming (S-9.2.3 §E). </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -107,7 +156,274 @@ $(function(){ initResizable(false); });
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Enumeration Type Documentation</h2>
+<a id="ae483528f273528dffc2dfe6064825e15" name="ae483528f273528dffc2dfe6064825e15"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae483528f273528dffc2dfe6064825e15">&#9670;&#160;</a></span>dcc_task_paged_state_enum</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="#ae483528f273528dffc2dfe6064825e15">dcc_task_paged_state_enum</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>States of the paged mode task state machine. </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ae483528f273528dffc2dfe6064825e15a73f17501853ac6e4fcc3c6d8d3089e46" name="ae483528f273528dffc2dfe6064825e15a73f17501853ac6e4fcc3c6d8d3089e46"></a>DCC_TASK_PAGED_STATE_IDLE&#160;</td><td class="fielddoc"><p>No operation in progress </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae483528f273528dffc2dfe6064825e15a8ddfbf87ef6f3733820c4ca5b89b4910" name="ae483528f273528dffc2dfe6064825e15a8ddfbf87ef6f3733820c4ca5b89b4910"></a>DCC_TASK_PAGED_STATE_READ_CV&#160;</td><td class="fielddoc"><p>read_cv: paged_verify of the current scan value outstanding </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae483528f273528dffc2dfe6064825e15a7c33e271ce472b1a1df6d63ad9df9bab" name="ae483528f273528dffc2dfe6064825e15a7c33e271ce472b1a1df6d63ad9df9bab"></a>DCC_TASK_PAGED_STATE_WRITE_CV&#160;</td><td class="fielddoc"><p>write_cv: paged_write outstanding </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae483528f273528dffc2dfe6064825e15ab0ffa5d305308b60bd3ee30616fbc865" name="ae483528f273528dffc2dfe6064825e15ab0ffa5d305308b60bd3ee30616fbc865"></a>DCC_TASK_PAGED_STATE_WRITE_CV_VERIFY&#160;</td><td class="fielddoc"><p>write_cv: paged_verify of the written value outstanding </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae483528f273528dffc2dfe6064825e15ade935486fa56ef6cd05777f5d67ed017" name="ae483528f273528dffc2dfe6064825e15ade935486fa56ef6cd05777f5d67ed017"></a>DCC_TASK_PAGED_STATE_READ_BIT_READ_BYTE&#160;</td><td class="fielddoc"><p>read_bit: scanning for the full byte </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae483528f273528dffc2dfe6064825e15a6865f71e5b3afee436385f34d1de52cb" name="ae483528f273528dffc2dfe6064825e15a6865f71e5b3afee436385f34d1de52cb"></a>DCC_TASK_PAGED_STATE_WRITE_BIT_READ_BYTE&#160;</td><td class="fielddoc"><p>write_bit: scanning for the current byte before modifying it </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae483528f273528dffc2dfe6064825e15aad4af807e8a126ac7b1777110b060ef9" name="ae483528f273528dffc2dfe6064825e15aad4af807e8a126ac7b1777110b060ef9"></a>DCC_TASK_PAGED_STATE_WRITE_BIT_WRITE&#160;</td><td class="fielddoc"><p>write_bit: paged_write of the modified byte outstanding </p>
+</td></tr>
+<tr><td class="fieldname"><a id="ae483528f273528dffc2dfe6064825e15a407cfce3fd132753855bf19cc0807b34" name="ae483528f273528dffc2dfe6064825e15a407cfce3fd132753855bf19cc0807b34"></a>DCC_TASK_PAGED_STATE_WRITE_BIT_VERIFY&#160;</td><td class="fielddoc"><p>write_bit: paged_verify of the modified byte outstanding </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="adae28850355836ac2c08dc1887ceb75d" name="adae28850355836ac2c08dc1887ceb75d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adae28850355836ac2c08dc1887ceb75d">&#9670;&#160;</a></span>DccServiceModeTaskPaged_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeTaskPaged_initialize </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__service__mode__task__paged__t.html">interface_dcc_service_mode_task_paged_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize the paged task module. Call once during <a class="el" href="dcc__config_8c.html#a4e86c59e8b73091bd49e69d4fd66672c" title="Initialize the DCC library with user configuration.">DccConfig_initialize()</a>. </p>
+<p>Clears the singleton context (state IDLE, no callbacks) and stores the interface pointer.</p>
+<pre class="fragment">* @param interface Pointer to populated interface_dcc_service_mode_task_paged_t (wired by dcc_config.c).
+* </pre> 
+</div>
+</div>
+<a id="a6ee4c523a577b3617a22d50d87a2aa16" name="a6ee4c523a577b3617a22d50d87a2aa16"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6ee4c523a577b3617a22d50d87a2aa16">&#9670;&#160;</a></span>DccServiceModeTaskPaged_read_cv()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskPaged_read_cv </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read a CV byte using paged mode. Iterates paged_verify 0-255 until ACK. </p>
+<p>Algorithm:</p><ol type="1">
+<li>Reject CV numbers outside 1-1024</li>
+<li>Reject if another operation is in progress (state not IDLE)</li>
+<li>Load the context: CV number, scan value 0, cleared step count, callbacks</li>
+<li>Enter READ_CV and issue paged_verify for value 0</li>
+<li>If the primitive refuses to start, return to IDLE and report failure to the caller</li>
+<li>The scan continues from <a class="el" href="#a6a1f3a7a15c2d7d4a8e8e0cc28b0b25f" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskPaged_on_primitive_complete()</a></li>
+</ol>
+<pre class="fragment">* @param cv_number CV number (1-1024).
+* @param on_complete Called when complete: SUCCESS with the CV byte found, ERROR if no value was ACKed, or BUSY.
+* @param on_progress Called after each scan step (nullable).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started; false if another operation is running, the CV is out of range, or the first verify could not start. </dd></dl>
+
+</div>
+</div>
+<a id="a7e0d006c4dab27f9c7810faa81fba954" name="a7e0d006c4dab27f9c7810faa81fba954"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7e0d006c4dab27f9c7810faa81fba954">&#9670;&#160;</a></span>DccServiceModeTaskPaged_write_cv()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskPaged_write_cv </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Write a CV byte then verify. Always 2 operations (write + targeted verify). </p>
+<p>Algorithm:</p><ol type="1">
+<li>Reject CV numbers outside 1-1024</li>
+<li>Reject if another operation is in progress (state not IDLE)</li>
+<li>Load the context: CV number, value, cleared step count, callbacks</li>
+<li>Enter WRITE_CV and issue paged_write</li>
+<li>If the primitive refuses to start, return to IDLE and report failure to the caller</li>
+<li>The verify runs from <a class="el" href="#a6a1f3a7a15c2d7d4a8e8e0cc28b0b25f" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskPaged_on_primitive_complete()</a></li>
+</ol>
+<pre class="fragment">* @param cv_number CV number (1-1024).
+* @param value Byte to write.
+* @param on_complete Called when complete: SUCCESS or VERIFY_FAIL with the byte written, or BUSY.
+* @param on_progress Called after each step (nullable).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started; false if another operation is running, the CV is out of range, or the write could not start. </dd></dl>
+
+</div>
+</div>
+<a id="a3c00642209b3b886e031df6006c350ab" name="a3c00642209b3b886e031df6006c350ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3c00642209b3b886e031df6006c350ab">&#9670;&#160;</a></span>DccServiceModeTaskPaged_read_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskPaged_read_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Read a single CV bit using paged mode. Reads full byte, extracts bit. </p>
+<p>Algorithm:</p><ol type="1">
+<li>Reject CV numbers outside 1-1024 or bit positions above 7</li>
+<li>Reject if another operation is in progress (state not IDLE)</li>
+<li>Load the context: CV number, bit position, scan value 0, cleared step count, callbacks</li>
+<li>Enter READ_BIT_READ_BYTE and issue paged_verify for value 0</li>
+<li>If the primitive refuses to start, return to IDLE and report failure to the caller</li>
+<li>The scan continues from <a class="el" href="#a6a1f3a7a15c2d7d4a8e8e0cc28b0b25f" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskPaged_on_primitive_complete()</a>; the requested bit is extracted from the value found</li>
+</ol>
+<pre class="fragment">* @param cv_number CV number (1-1024).
+* @param bit_position Bit position (0-7).
+* @param on_complete Called when complete: SUCCESS with value 0 or 1, ERROR if no byte value was ACKed, or BUSY.
+* @param on_progress Called after each scan step (nullable).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started; false if another operation is running, a parameter is out of range, or the first verify could not start. </dd></dl>
+
+</div>
+</div>
+<a id="ab3eed74440433938c1a22fea16ad9888" name="ab3eed74440433938c1a22fea16ad9888"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab3eed74440433938c1a22fea16ad9888">&#9670;&#160;</a></span>DccServiceModeTaskPaged_write_bit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeTaskPaged_write_bit </td>
+          <td>(</td>
+          <td class="paramtype">uint16_t</td>          <td class="paramname"><span class="paramname"><em>cv_number</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>bit_position</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>bit_value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a3900fbaae538fc2fd5db61e32b76ab00">dcc_service_mode_task_on_complete_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_complete</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#a2c3b55b566672dea8aa239cc37d11401">dcc_service_mode_task_on_progress_callback_t</a></td>          <td class="paramname"><span class="paramname"><em>on_progress</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Write a single CV bit using paged mode. Read-modify-write sequence. </p>
+<p>Algorithm:</p><ol type="1">
+<li>Reject CV numbers outside 1-1024 or bit positions above 7</li>
+<li>Reject if another operation is in progress (state not IDLE)</li>
+<li>Load the context: CV number, bit position, bit value, scan value 0, cleared step count, callbacks</li>
+<li>Enter WRITE_BIT_READ_BYTE and issue paged_verify for value 0 to start the read scan</li>
+<li>If the primitive refuses to start, return to IDLE and report failure to the caller</li>
+<li>From <a class="el" href="#a6a1f3a7a15c2d7d4a8e8e0cc28b0b25f" title="Notify the task module that the primitive has finished its full operation (including recovery packets...">DccServiceModeTaskPaged_on_primitive_complete()</a>: once the byte is found, write the modified byte, then verify it</li>
+</ol>
+<pre class="fragment">* @param cv_number CV number (1-1024).
+* @param bit_position Bit position (0-7).
+* @param bit_value Value to write.
+* @param on_complete Called when complete: SUCCESS or VERIFY_FAIL with the bit written, ERROR if the read scan found nothing, or BUSY.
+* @param on_progress Called after each scan step of the read phase only (nullable).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if started; false if another operation is running, a parameter is out of range, or the first verify could not start. </dd></dl>
+
+</div>
+</div>
+<a id="a6a1f3a7a15c2d7d4a8e8e0cc28b0b25f" name="a6a1f3a7a15c2d7d4a8e8e0cc28b0b25f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6a1f3a7a15c2d7d4a8e8e0cc28b0b25f">&#9670;&#160;</a></span>DccServiceModeTaskPaged_on_primitive_complete()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeTaskPaged_on_primitive_complete </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="dcc__types_8h.html#aacb5b6351da94bd651145bb926e34bf3">dcc_service_mode_result_enum</a></td>          <td class="paramname"><span class="paramname"><em>result</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Notify the task module that the primitive has finished its full operation (including recovery packets). </p>
+<p>Notify the task module that the primitive has finished its full operation (including recovery packets). Wire this into the primitive's on_complete slot via <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>. The task module advances its state machine on this event; the ACK outcome is taken from <code>result</code> (SUCCESS = ACK detected by the common module's pulse-width measurement, anything else = no ACK).</p>
+<p>Algorithm:</p><ol type="1">
+<li>Record the ACK outcome: SUCCESS from the primitive means a valid ACK was measured, anything else means no ACK</li>
+<li>Dispatch on the current state: the three scanning states share <em>advance_scan(), the others go to their _advance</em>* handler</li>
+<li>Ignore the event when IDLE (no operation in progress)</li>
+</ol>
+<pre class="fragment">* @param result Result of the primitive operation (passed through from primitive callback).
+* </pre> 
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

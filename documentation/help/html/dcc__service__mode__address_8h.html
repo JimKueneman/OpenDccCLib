@@ -90,6 +90,9 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#nested-classes">Data Structures</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_service_mode_address.h File Reference</div></div>
 </div><!--header-->
 <div class="contents">
@@ -98,6 +101,28 @@ $(function(){ initResizable(false); });
 <a href="#details">More...</a></p>
 
 <p><a href="dcc__service__mode__address_8h_source.html">Go to the source code of this file.</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="nested-classes" name="nested-classes"></a>
+Data Structures</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structinterface__dcc__service__mode__address__t.html">interface_dcc_service_mode_address_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Interface struct &ndash; dependencies injected by <a class="el" href="dcc__config_8c.html" title="Wiring module: builds interface structs and initializes all modules.">dcc_config.c</a>.  <a href="structinterface__dcc__service__mode__address__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Instance context for the address-only service mode module.  <a href="structdcc__service__mode__address__context__t.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:ad902df85e859bde82107dc6a926c61b3" id="r_ad902df85e859bde82107dc6a926c61b3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad902df85e859bde82107dc6a926c61b3">DccServiceModeAddress_initialize</a> (<a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a> *context, const <a class="el" href="structinterface__dcc__service__mode__address__t.html">interface_dcc_service_mode_address_t</a> *interface)</td></tr>
+<tr class="memdesc:ad902df85e859bde82107dc6a926c61b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the address-only service mode module.  <br /></td></tr>
+<tr class="separator:ad902df85e859bde82107dc6a926c61b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54a481570c4d6d253d98f2e358f84c71" id="r_a54a481570c4d6d253d98f2e358f84c71"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a54a481570c4d6d253d98f2e358f84c71">DccServiceModeAddress_write</a> (<a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a> *context, uint8_t address)</td></tr>
+<tr class="memdesc:a54a481570c4d6d253d98f2e358f84c71"><td class="mdescLeft">&#160;</td><td class="mdescRight">Write the short address (CV 1) using address-only mode.  <br /></td></tr>
+<tr class="separator:a54a481570c4d6d253d98f2e358f84c71"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a29679bc1522d20a1caef017645b6faf6" id="r_a29679bc1522d20a1caef017645b6faf6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a29679bc1522d20a1caef017645b6faf6">DccServiceModeAddress_verify</a> (<a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a> *context, uint8_t address)</td></tr>
+<tr class="memdesc:a29679bc1522d20a1caef017645b6faf6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Verify the short address (CV 1) using address-only mode.  <br /></td></tr>
+<tr class="separator:a29679bc1522d20a1caef017645b6faf6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Address-only mode programming (CV 1 write and verify). </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -110,7 +135,134 @@ $(function(){ initResizable(false); });
 <p>Minimal service mode that only writes or verifies the primary short address (CV 1), using the register-mode form addressed to register 1. Per S-9.2.3 each operation is a two-step sequence: a page-preset (page register -&gt; page 1) followed by the register-1 command.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="ad902df85e859bde82107dc6a926c61b3" name="ad902df85e859bde82107dc6a926c61b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad902df85e859bde82107dc6a926c61b3">&#9670;&#160;</a></span>DccServiceModeAddress_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccServiceModeAddress_initialize </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__service__mode__address__t.html">interface_dcc_service_mode_address_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initialize the address-only service mode module. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">interface</td><td>Pointer to populated <a class="el" href="structinterface__dcc__service__mode__address__t.html">interface_dcc_service_mode_address_t</a> struct.</td></tr>
+  </table>
+  </dd>
+</dl>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_address_context_t instance.
+* @param interface Pointer to populated interface_dcc_service_mode_address_t struct.
+* </pre> 
+</div>
+</div>
+<a id="a54a481570c4d6d253d98f2e358f84c71" name="a54a481570c4d6d253d98f2e358f84c71"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a54a481570c4d6d253d98f2e358f84c71">&#9670;&#160;</a></span>DccServiceModeAddress_write()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeAddress_write </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>address</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Write the short address (CV 1) using address-only mode. </p>
+<p>Two-step: a page-preset (page register -&gt; page 1) followed unconditionally by the register-1 write, which uses the longer 10-packet recovery (S-9.2.3). The result of the write step is delivered through the interface on_complete callback. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">address</td><td>The short address to write (1-127). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if address is out of range, the common module is busy, or an address operation is already in progress.</dd></dl>
+<p>Delegates to _begin_with_preset() as a write.</p>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_address_context_t instance.
+* @param address The short address to write (1-127).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if address is out of range, the common module is busy, or an address operation is already in progress. </dd></dl>
+
+</div>
+</div>
+<a id="a29679bc1522d20a1caef017645b6faf6" name="a29679bc1522d20a1caef017645b6faf6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a29679bc1522d20a1caef017645b6faf6">&#9670;&#160;</a></span>DccServiceModeAddress_verify()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccServiceModeAddress_verify </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t</td>          <td class="paramname"><span class="paramname"><em>address</em></span>&#160;)</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">extern</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Verify the short address (CV 1) using address-only mode. </p>
+<p>Two-step: a page-preset (page register -&gt; page 1) followed unconditionally by the register-1 verify (no recovery phase). The result of the verify step is delivered through the interface on_complete callback. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">context</td><td>Pointer to <a class="el" href="structdcc__service__mode__address__context__t.html">dcc_service_mode_address_context_t</a> instance. </td></tr>
+    <tr><td class="paramname">address</td><td>The short address to verify (1-127). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if address is out of range, the common module is busy, or an address operation is already in progress.</dd></dl>
+<p>Delegates to _begin_with_preset() as a verify.</p>
+<pre class="fragment">* @param context Pointer to dcc_service_mode_address_context_t instance.
+* @param address The short address to verify (1-127).
+* </pre><dl class="section return"><dt>Returns</dt><dd>true if the operation started, false if address is out of range, the common module is busy, or an address operation is already in progress. </dd></dl>
+
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

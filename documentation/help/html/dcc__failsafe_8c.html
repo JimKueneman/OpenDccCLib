@@ -90,12 +90,30 @@ $(function(){ initResizable(false); });
 </div><!-- top -->
 <div id="doc-content">
 <div class="header">
+  <div class="summary">
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle"><div class="title">dcc_failsafe.c File Reference</div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>Packet-timeout fail-safe (S-9.2.4 §4, CV11).  
 <a href="#details">More...</a></p>
+<table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a01ee6643116c9b3db9c3fd7f1c357792" id="r_a01ee6643116c9b3db9c3fd7f1c357792"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a01ee6643116c9b3db9c3fd7f1c357792">DccFailsafe_initialize</a> (const <a class="el" href="structinterface__dcc__failsafe__t.html">interface_dcc_failsafe_t</a> *interface)</td></tr>
+<tr class="memdesc:a01ee6643116c9b3db9c3fd7f1c357792"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the fail-safe module.  <br /></td></tr>
+<tr class="separator:a01ee6643116c9b3db9c3fd7f1c357792"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86123ed6a8789df5d79c306decd7f7fa" id="r_a86123ed6a8789df5d79c306decd7f7fa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a86123ed6a8789df5d79c306decd7f7fa">DccFailsafe_note_valid_packet</a> (void)</td></tr>
+<tr class="memdesc:a86123ed6a8789df5d79c306decd7f7fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Note that a command packet addressed to this decoder was received.  <br /></td></tr>
+<tr class="separator:a86123ed6a8789df5d79c306decd7f7fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d0081dfbd2b82308b8d81ace58b8a92" id="r_a7d0081dfbd2b82308b8d81ace58b8a92"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a7d0081dfbd2b82308b8d81ace58b8a92">DccFailsafe_run</a> (void)</td></tr>
+<tr class="memdesc:a7d0081dfbd2b82308b8d81ace58b8a92"><td class="mdescLeft">&#160;</td><td class="mdescRight">Periodic poll. Call from the main loop (DccConfig_run).  <br /></td></tr>
+<tr class="separator:a7d0081dfbd2b82308b8d81ace58b8a92"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af37d453bac095ee1be849733aae23dfd" id="r_af37d453bac095ee1be849733aae23dfd"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af37d453bac095ee1be849733aae23dfd">DccFailsafe_is_active</a> (void)</td></tr>
+<tr class="memdesc:af37d453bac095ee1be849733aae23dfd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Query whether the decoder is currently in fail-safe.  <br /></td></tr>
+<tr class="separator:af37d453bac095ee1be849733aae23dfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Packet-timeout fail-safe (S-9.2.4 §4, CV11). </p>
 <dl class="section copyright"><dt>Copyright</dt><dd>Copyright (c) 2026, Jim Kueneman All rights reserved.</dd></dl>
@@ -107,7 +125,101 @@ $(function(){ initResizable(false); });
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
-</div></div><!-- contents -->
+</div><h2 class="groupheader">Function Documentation</h2>
+<a id="a01ee6643116c9b3db9c3fd7f1c357792" name="a01ee6643116c9b3db9c3fd7f1c357792"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a01ee6643116c9b3db9c3fd7f1c357792">&#9670;&#160;</a></span>DccFailsafe_initialize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccFailsafe_initialize </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="structinterface__dcc__failsafe__t.html">interface_dcc_failsafe_t</a> *</td>          <td class="paramname"><span class="paramname"><em>interface</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Initialize the fail-safe module. </p>
+<p>Algorithm:</p><ol type="1">
+<li>Store the interface pointer and clear the tripped state.</li>
+<li>Stamp the last-packet clock with "now" (0 without a clock hook) so a fresh decoder does not trip before its first packet.</li>
+</ol>
+<pre class="fragment">* @param interface Pointer to a populated interface_dcc_failsafe_t.
+* </pre> 
+</div>
+</div>
+<a id="a86123ed6a8789df5d79c306decd7f7fa" name="a86123ed6a8789df5d79c306decd7f7fa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a86123ed6a8789df5d79c306decd7f7fa">&#9670;&#160;</a></span>DccFailsafe_note_valid_packet()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccFailsafe_note_valid_packet </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Note that a command packet addressed to this decoder was received. </p>
+<p>Algorithm:</p><ol type="1">
+<li>Ignore the call if the module is not initialized.</li>
+<li>Re-stamp the last-packet clock.</li>
+<li>If currently tripped, clear the state and fire on_failsafe_exited once. </li>
+</ol>
+
+</div>
+</div>
+<a id="a7d0081dfbd2b82308b8d81ace58b8a92" name="a7d0081dfbd2b82308b8d81ace58b8a92"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d0081dfbd2b82308b8d81ace58b8a92">&#9670;&#160;</a></span>DccFailsafe_run()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void DccFailsafe_run </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Periodic poll. Call from the main loop (DccConfig_run). </p>
+<p>Algorithm:</p><ol type="1">
+<li>Return if uninitialized or the cv_read / clock hooks are absent.</li>
+<li>Return while already tripped: recovery happens only in DccFailsafe_note_valid_packet.</li>
+<li>Read CV11; return if unreadable or 0 (time-out disabled).</li>
+<li>Trip and fire on_failsafe_entered once when the time since the last addressed packet reaches CV11 * DCC_FAILSAFE_CV11_UNIT_US (unsigned arithmetic tolerates clock wrap). </li>
+</ol>
+
+</div>
+</div>
+<a id="af37d453bac095ee1be849733aae23dfd" name="af37d453bac095ee1be849733aae23dfd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af37d453bac095ee1be849733aae23dfd">&#9670;&#160;</a></span>DccFailsafe_is_active()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool DccFailsafe_is_active </td>
+          <td>(</td>
+          <td class="paramtype">void</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Query whether the decoder is currently in fail-safe. </p>
+<dl class="section return"><dt>Returns</dt><dd>true if tripped (timed out and not yet recovered). </dd></dl>
+
+</div>
+</div>
+</div><!-- contents -->
 <!doctype html>
 <html>
     <body>

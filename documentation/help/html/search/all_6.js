@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['instruction_0',['instruction',['../structdcc__decoded__packet__t.html#a36440e6589e8b2a1f3521e0d541a229f',1,'dcc_decoded_packet_t']]],
-  ['instruction_5fcount_1',['instruction_count',['../structdcc__decoded__packet__t.html#a6de3151da71bb06f83725d4814c11532',1,'dcc_decoded_packet_t']]]
+  ['get_5ftimestamp_5fusec_0',['get_timestamp_usec',['../structdcc__config__t.html#ababd5b208d74906b3f4f756b75f370ea',1,'dcc_config_t::get_timestamp_usec'],['../structinterface__dcc__failsafe__t.html#ababd5b208d74906b3f4f756b75f370ea',1,'interface_dcc_failsafe_t::get_timestamp_usec']]]
 ];
