@@ -493,6 +493,16 @@ typedef struct {
          */
     extern void DccConfig_decoder_edge_isr(uint32_t timestamp_usec);
 
+        /**
+         * @brief Re-read the address CVs into the packet decoder's match cache.
+         *
+         * @details Writes made through DccApplicationDecoderCv_write() or by a
+         * DCC packet refresh the cache on their own. Call this after the
+         * application changes CV1, 17, 18, 19, 29, 513, 521 or 541 by any other
+         * route (writing its storage directly, restoring a backup).
+         */
+    extern void DccConfig_reload_address_cvs(void);
+
 #endif /* DCC_COMPILE_DECODER */
 
 #ifdef __cplusplus

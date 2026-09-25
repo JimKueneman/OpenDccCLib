@@ -1511,6 +1511,306 @@ TEST(DccPacketDecoder, consist_null_callback) {
 }
 
 // ============================================================================
+// Advanced consisting (S-9.2.1 2.3.1.4, S-9.2.2 CV19)
+// ============================================================================
+
+static void set_consist(interface_dcc_packet_decoder_t *interface, uint8_t cv19) {
+    mock_cv_values[DCC_CV_CONSIST_ADDRESS - 1] = cv19;
+    DccPacketDecoder_initialize(interface);
+}
+
+// @compliance DCC-S9.2.1-DEC-016
+TEST(DccPacketDecoder, consist_set_normal_writes_cv19) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    uint8_t data[] = {0x03, DCC_CONSIST_SET_NORMAL, 10, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(mock_cv_values[DCC_CV_CONSIST_ADDRESS - 1], (uint8_t)10);
+    EXPECT_EQ(consist_callback_count, (uint32_t)1);
+    EXPECT_TRUE(last_consist_dir_normal);
+    /* The CV19 write is reported like any other packet CV write */
+    EXPECT_EQ(cv_write_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_cv_write_number, (uint16_t)DCC_CV_CONSIST_ADDRESS);
+    EXPECT_EQ(last_cv_write_value, (uint8_t)10);
+    EXPECT_FALSE(last_cv_write_service_mode);
+}
+
+// @compliance DCC-S9.2.1-DEC-016, DCC-S9.2.2-DEC-006
+TEST(DccPacketDecoder, consist_set_reversed_writes_cv19_bit7) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    uint8_t data[] = {0x03, DCC_CONSIST_SET_REVERSED, 10, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(mock_cv_values[DCC_CV_CONSIST_ADDRESS - 1], (uint8_t)(0x80 | 10));
+    EXPECT_EQ(consist_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_consist_consist_addr, (uint8_t)10);
+    EXPECT_FALSE(last_consist_dir_normal);
+}
+
+// @compliance DCC-S9.2.1-DEC-016
+TEST(DccPacketDecoder, consist_clear_instruction_writes_zero) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 0x80 | 10);
+
+    uint8_t data[] = {0x03, DCC_CONSIST_CLEAR, 0x00, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(mock_cv_values[DCC_CV_CONSIST_ADDRESS - 1], (uint8_t)0);
+    EXPECT_EQ(consist_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_consist_consist_addr, (uint8_t)0);
+}
+
+// @compliance DCC-S9.2.1-DEC-016
+TEST(DccPacketDecoder, consist_set_with_address_zero_clears) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 10);
+
+    uint8_t data[] = {0x03, DCC_CONSIST_SET_NORMAL, 0x00, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(mock_cv_values[DCC_CV_CONSIST_ADDRESS - 1], (uint8_t)0);
+    EXPECT_EQ(last_consist_consist_addr, (uint8_t)0);
+}
+
+// @compliance DCC-S9.2.1-DEC-016
+TEST(DccPacketDecoder, consist_set_refused_write_leaves_consist_and_is_silent) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    mock_cv_write_should_fail = true;
+
+    uint8_t data[] = {0x03, DCC_CONSIST_SET_NORMAL, 10, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(mock_cv_values[DCC_CV_CONSIST_ADDRESS - 1], (uint8_t)0);
+    EXPECT_EQ(consist_callback_count, (uint32_t)0);
+}
+
+// @compliance DCC-S9.2.1-DEC-017
+TEST(DccPacketDecoder, consist_address_speed_128_dispatched) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 10);
+
+    uint8_t data[] = {10, DCC_ADV_OPS_128_SPEED, (uint8_t)(0x80 | 50), 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(speed_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_speed_address, (uint16_t)10);
+    EXPECT_EQ(last_speed_value, (uint8_t)50);
+    EXPECT_TRUE(last_speed_direction);
+    EXPECT_EQ(last_speed_mode, DCC_SPEED_MODE_128);
+}
+
+// @compliance DCC-S9.2.1-DEC-017
+TEST(DccPacketDecoder, consist_address_speed_28_dispatched) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 10);
+
+    uint8_t instruction = 0x60 | (0x02 | 0x10);   /* forward, step 2 */
+    uint8_t data[] = {10, instruction, 0x00};
+    data[2] = xor_bytes(data, 2);
+    DccPacketDecoder_process_packet(data, 3);
+
+    EXPECT_EQ(speed_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_speed_address, (uint16_t)10);
+    EXPECT_TRUE(last_speed_direction);
+}
+
+// @compliance DCC-S9.2.1-DEC-017
+TEST(DccPacketDecoder, consist_address_estop_dispatched) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 10);
+
+    uint8_t data[] = {10, DCC_ADV_OPS_128_SPEED, (uint8_t)(0x80 | DCC_SPEED_128_ESTOP), 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(estop_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_estop_address, (uint16_t)10);
+}
+
+// @compliance DCC-S9.2.1-DEC-017, DCC-S9.2.2-DEC-006
+TEST(DccPacketDecoder, consist_direction_bit_reverses_and_combines_with_cv29) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 0x80 | 10);           /* CV19 bit 7: reversed in the consist */
+
+    uint8_t fwd[] = {10, DCC_ADV_OPS_128_SPEED, (uint8_t)(0x80 | 50), 0x00};
+    fwd[3] = xor_bytes(fwd, 3);
+    DccPacketDecoder_process_packet(fwd, 4);
+    EXPECT_EQ(speed_callback_count, (uint32_t)1);
+    EXPECT_FALSE(last_speed_direction);           /* forward packet, reported reverse */
+
+    /* Own address is untouched by CV19 bit 7 */
+    uint8_t own[] = {0x03, DCC_ADV_OPS_128_SPEED, (uint8_t)(0x80 | 50), 0x00};
+    own[3] = xor_bytes(own, 3);
+    DccPacketDecoder_process_packet(own, 4);
+    EXPECT_EQ(speed_callback_count, (uint32_t)2);
+    EXPECT_TRUE(last_speed_direction);
+
+    /* CV29 bit 0 and CV19 bit 7 both set: double inversion, forward again */
+    mock_cv_values[DCC_CV_CONFIG - 1] |= DCC_CV29_DIRECTION_BIT;
+    DccPacketDecoder_initialize(&interface);
+    DccPacketDecoder_process_packet(fwd, 4);
+    EXPECT_EQ(speed_callback_count, (uint32_t)3);
+    EXPECT_TRUE(last_speed_direction);
+}
+
+// @compliance DCC-S9.2.1-DEC-017
+TEST(DccPacketDecoder, consist_address_function_packet_ignored) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 10);
+
+    uint8_t data[] = {10, (uint8_t)(0x80 | 0x10), 0x00};   /* FL on */
+    data[2] = xor_bytes(data, 2);
+    DccPacketDecoder_process_packet(data, 3);
+
+    EXPECT_EQ(func_callback_count, (uint32_t)0);
+}
+
+// @compliance DCC-S9.2.1-DEC-017
+TEST(DccPacketDecoder, consist_address_cv_write_ignored) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 10);
+
+    uint8_t data[] = {10, 0xEC, 0x00, 0x05, 0x00};          /* POM write CV1 = 5 */
+    data[4] = xor_bytes(data, 4);
+    DccPacketDecoder_process_packet(data, 5);
+
+    EXPECT_EQ(cv_write_callback_count, (uint32_t)0);
+    EXPECT_EQ(mock_cv_values[DCC_CV_PRIMARY_ADDRESS - 1], (uint8_t)3);
+}
+
+// @compliance DCC-S9.2.1-DEC-017
+TEST(DccPacketDecoder, consist_address_ignored_when_cv19_is_zero) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 0);
+
+    uint8_t data[] = {10, DCC_ADV_OPS_128_SPEED, (uint8_t)(0x80 | 50), 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(speed_callback_count, (uint32_t)0);
+}
+
+// @compliance DCC-S9.2.1-DEC-017
+TEST(DccPacketDecoder, consist_address_accepted_with_long_own_address) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_long_address(&interface, 1234);
+    set_consist(&interface, 10);
+
+    uint8_t data[] = {10, DCC_ADV_OPS_128_SPEED, (uint8_t)(0x80 | 50), 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(speed_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_speed_address, (uint16_t)10);
+}
+
+// @compliance DCC-S9.2.1-DEC-016
+TEST(DccPacketDecoder, consist_set_by_packet_takes_effect_immediately) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    uint8_t set[] = {0x03, DCC_CONSIST_SET_NORMAL, 10, 0x00};
+    set[3] = xor_bytes(set, 3);
+    DccPacketDecoder_process_packet(set, 4);
+
+    uint8_t data[] = {10, DCC_ADV_OPS_128_SPEED, (uint8_t)(0x80 | 50), 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(speed_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_speed_address, (uint16_t)10);
+}
+
+// ============================================================================
+// Address cache reload for CV writes made outside the library
+// ============================================================================
+
+// @compliance DCC-S9.2.1-DEC-017
+TEST(DccPacketDecoder, reload_address_cache_rereads_cv1) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    mock_cv_values[DCC_CV_PRIMARY_ADDRESS - 1] = 7;   /* app wrote its storage directly */
+    uint8_t data[] = {0x07, DCC_ADV_OPS_128_SPEED, (uint8_t)(0x80 | 50), 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+    EXPECT_EQ(speed_callback_count, (uint32_t)0);     /* cache still says 3 */
+
+    DccPacketDecoder_reload_address_cache();
+    DccPacketDecoder_process_packet(data, 4);
+    EXPECT_EQ(speed_callback_count, (uint32_t)1);
+}
+
+// @compliance DCC-S9.2.1-DEC-017
+TEST(DccPacketDecoder, on_cv_written_reloads_only_for_address_cvs) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    mock_cv_values[DCC_CV_PRIMARY_ADDRESS - 1] = 7;
+    uint8_t data[] = {0x07, DCC_ADV_OPS_128_SPEED, (uint8_t)(0x80 | 50), 0x00};
+    data[3] = xor_bytes(data, 3);
+
+    DccPacketDecoder_on_cv_written(5);                /* not an address CV */
+    DccPacketDecoder_process_packet(data, 4);
+    EXPECT_EQ(speed_callback_count, (uint32_t)0);
+
+    DccPacketDecoder_on_cv_written(DCC_CV_PRIMARY_ADDRESS);
+    DccPacketDecoder_process_packet(data, 4);
+    EXPECT_EQ(speed_callback_count, (uint32_t)1);
+}
+
+// @compliance DCC-S9.2.1-DEC-017, DCC-S9.2.2-DEC-006
+TEST(DccPacketDecoder, on_cv_written_cv19_enables_consist) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+
+    mock_cv_values[DCC_CV_CONSIST_ADDRESS - 1] = 10;
+    DccPacketDecoder_on_cv_written(DCC_CV_CONSIST_ADDRESS);
+
+    uint8_t data[] = {10, DCC_ADV_OPS_128_SPEED, (uint8_t)(0x80 | 50), 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+    EXPECT_EQ(speed_callback_count, (uint32_t)1);
+}
+
+// ============================================================================
 // Analog function
 // ============================================================================
 
@@ -2148,6 +2448,42 @@ TEST(DccPacketDecoder, accessory_basic_null_callback) {
 
     EXPECT_EQ(acc_basic_callback_count, (uint32_t)0);
 
+}
+
+TEST(DccPacketDecoder, accessory_decoder_ignores_loco_packet_with_same_number) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 5, false);   /* board address 5 */
+
+    /* 128-step speed to LOCO short address 5: must not reach the speed callback */
+    uint8_t data[] = {0x05, DCC_ADV_OPS_128_SPEED, (uint8_t)(0x80 | 50), 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+    EXPECT_EQ(speed_callback_count, (uint32_t)0);
+    EXPECT_EQ(addressed_packet_callback_count, (uint32_t)0);
+
+    /* Multifunction broadcast (address 0) is not for accessory decoders either */
+    uint8_t bcast[] = {0x00, DCC_ADV_OPS_128_SPEED, (uint8_t)(0x80 | 50), 0x00};
+    bcast[3] = xor_bytes(bcast, 3);
+    DccPacketDecoder_process_packet(bcast, 4);
+    EXPECT_EQ(speed_callback_count, (uint32_t)0);
+    EXPECT_EQ(estop_callback_count, (uint32_t)0);
+}
+
+TEST(DccPacketDecoder, accessory_decoder_ignores_loco_estop_and_functions_with_same_number) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 5, false);
+
+    uint8_t estop[] = {0x05, DCC_ADV_OPS_128_SPEED, (uint8_t)(0x80 | DCC_SPEED_128_ESTOP), 0x00};
+    estop[3] = xor_bytes(estop, 3);
+    DccPacketDecoder_process_packet(estop, 4);
+    EXPECT_EQ(estop_callback_count, (uint32_t)0);
+
+    uint8_t func[] = {0x05, (uint8_t)(0x80 | 0x10), 0x00};
+    func[2] = xor_bytes(func, 2);
+    DccPacketDecoder_process_packet(func, 3);
+    EXPECT_EQ(func_callback_count, (uint32_t)0);
 }
 
 TEST(DccPacketDecoder, accessory_extended_null_callback) {

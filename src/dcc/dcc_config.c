@@ -337,6 +337,28 @@ static void _on_packet_received_dispatch(const uint8_t *data, uint8_t byte_count
 }
 #endif /* DCC_COMPILE_RAILCOM */
 
+    /**
+     * @brief Application CV write: storage rules first, then refresh the packet
+     *  decoder's address cache if an address CV changed.
+     * @verbatim
+     * @param cv_number CV number (1-based).
+     * @param value Value to store.
+     * @endverbatim
+     */
+static bool _decoder_cv_application_write(uint16_t cv_number, uint8_t value) {
+
+    if (!DccCvStorage_write(cv_number, value)) {
+
+        return false;
+
+    }
+
+    DccPacketDecoder_on_cv_written(cv_number);
+
+    return true;
+
+}
+
 #endif /* DCC_COMPILE_DECODER */
 
 #ifdef DCC_COMPILE_COMMAND_STATION
@@ -1053,9 +1075,10 @@ void DccConfig_initialize(const dcc_config_t *config) {
     DccCvStorage_initialize(&_cv_storage_interface);
 
     /* Wire decoder CV application layer -- routed through cv_storage so the
-     * decoder lock, the CV 29 feature filter and the CV 8 reset apply. */
+     * decoder lock, the CV 29 feature filter and the CV 8 reset apply, then
+     * through the packet decoder so an address-CV write refreshes its cache. */
     _decoder_cv_application_interface.cv_read = &DccCvStorage_read;
-    _decoder_cv_application_interface.cv_write = &DccCvStorage_write;
+    _decoder_cv_application_interface.cv_write = &_decoder_cv_application_write;
     _decoder_cv_application_interface.is_locked = &DccCvStorage_is_locked;
 
     DccApplicationDecoderCv_initialize(&_decoder_cv_application_interface);
@@ -1253,6 +1276,12 @@ void DccConfig_100ms_timer_tick(void) {
 void DccConfig_decoder_edge_isr(uint32_t timestamp_usec) {
 
     DccBitDecoder_edge(timestamp_usec);
+
+}
+
+void DccConfig_reload_address_cvs(void) {
+
+    DccPacketDecoder_reload_address_cache();
 
 }
 

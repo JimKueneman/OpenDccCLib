@@ -56,6 +56,15 @@ static bool _use_extended_address;
     /** @brief Cached CV541 bit 6: true = output-address mode for accessory. */
 static bool _use_output_address;
 
+    /** @brief Cached CV19 bits 0-6: advanced consist address, 0 = not in a consist. */
+static uint8_t _consist_address;
+
+    /** @brief Cached CV19 bit 7: true = direction reversed within the consist. */
+static bool _consist_direction_reversed;
+
+    /** @brief True while dispatching a packet that matched the consist address. */
+static bool _via_consist;
+
     /** @brief Received-packet FIFO. The end-bit ISR enqueues; DccConfig_run drains.
      *  Single-producer (ISR) / single-consumer (poll): head/tail are volatile and one
      *  slot is reserved, so no shared counter and no lock is needed. */
@@ -87,6 +96,61 @@ static void _update_extended_address(void) {
 
         _my_address = ((uint16_t)(high_byte & 0x3F) << 8) | low_byte;
         _my_address_type = DCC_ADDRESS_LONG;
+
+    }
+
+}
+
+    /**
+     * @brief True for the CVs whose value feeds the address cache.
+     * @param cv_number CV number (1-based).
+     */
+static bool _is_address_cv(uint16_t cv_number) {
+
+    return cv_number == DCC_CV_CONFIG ||
+           cv_number == DCC_CV_PRIMARY_ADDRESS ||
+           cv_number == DCC_CV_EXTENDED_ADDRESS_HIGH ||
+           cv_number == DCC_CV_EXTENDED_ADDRESS_LOW ||
+           cv_number == DCC_CV_CONSIST_ADDRESS ||
+           cv_number == DCC_CV_ACC_CONFIG ||
+           cv_number == DCC_CV_ACC_ADDRESS_LSB ||
+           cv_number == DCC_CV_ACC_ADDRESS_MSB ||
+           cv_number == DCC_CV_MANUFACTURER_ID;   /* CV8 write = factory reset -> address CVs may have changed */
+
+}
+
+    /**
+     * @brief Apply CV29 bit 0 and, for a consist-addressed packet, CV19 bit 7.
+     * @param packet_direction Direction bit as decoded from the packet.
+     */
+static bool _effective_direction(bool packet_direction) {
+
+    bool reversed = _direction_reversed;
+
+    if (_via_consist && _consist_direction_reversed) {
+
+        reversed = !reversed;
+
+    }
+
+    return packet_direction != reversed;
+
+}
+
+    /**
+     * @brief Read CV19 and cache the consist address and its direction bit.
+     */
+static void _update_consist_address(void) {
+
+    uint8_t cv19_value;
+
+    _consist_address = 0;
+    _consist_direction_reversed = false;
+
+    if (_interface->cv_read(DCC_CV_CONSIST_ADDRESS, &cv19_value)) {
+
+        _consist_address = cv19_value & 0x7F;
+        _consist_direction_reversed = (cv19_value & 0x80) ? true : false;
 
     }
 
@@ -182,6 +246,8 @@ static void _update_address_cv_cache(void) {
     /* Check CV541 to determine decoder class */
     if (_interface->cv_read(DCC_CV_ACC_CONFIG, &cv541_value) && (cv541_value & DCC_CV541_ACCESSORY_DECODER_BIT)) {
 
+        _consist_address = 0;
+        _consist_direction_reversed = false;
         _update_accessory_address();
         return;
 
@@ -210,6 +276,8 @@ static void _update_address_cv_cache(void) {
         _update_primary_address();
 
     }
+
+    _update_consist_address();
 
 #if defined(DCC_COMPILE_RAILCOM)
     /* Push the freshly resolved address to subscribers (e.g. the RailCom Tx engine,
@@ -258,7 +326,7 @@ static bool _validate_xor(const uint8_t *data, uint8_t byte_count) {
 static void _dispatch_speed_128(uint16_t address, uint8_t speed_byte) {
 
     bool direction = (speed_byte & 0x80) ? true : false;
-    direction = (direction != _direction_reversed);
+    direction = _effective_direction(direction);
     uint8_t speed = speed_byte & 0x7F;
 
     if (speed == DCC_SPEED_128_ESTOP) {
@@ -309,7 +377,7 @@ static const uint8_t _speed_28_decode[32] = {
 static void _dispatch_speed_28(uint16_t address, uint8_t instruction) {
 
     bool direction = (instruction & 0x20) ? true : false;
-    direction = (direction != _direction_reversed);
+    direction = _effective_direction(direction);
     uint8_t speed_c = (instruction >> 4) & 0x01;
     uint8_t speed_ssss = instruction & 0x0F;
     uint8_t encoded = (speed_ssss << 1) | speed_c;
@@ -343,7 +411,7 @@ static void _dispatch_speed_28(uint16_t address, uint8_t instruction) {
 static void _dispatch_speed_14(uint16_t address, uint8_t instruction) {
 
     bool direction = (instruction & 0x20) ? true : false;
-    direction = (direction != _direction_reversed);
+    direction = _effective_direction(direction);
     uint8_t speed = instruction & 0x0F;
 
     if (speed == 1) {
@@ -475,14 +543,7 @@ static bool _cv_write_and_notify(uint16_t cv_number, uint8_t data_byte, bool is_
 
     }
 
-    if (cv_number == DCC_CV_CONFIG ||
-        cv_number == DCC_CV_PRIMARY_ADDRESS ||
-        cv_number == DCC_CV_EXTENDED_ADDRESS_HIGH ||
-        cv_number == DCC_CV_EXTENDED_ADDRESS_LOW ||
-        cv_number == DCC_CV_ACC_CONFIG ||
-        cv_number == DCC_CV_ACC_ADDRESS_LSB ||
-        cv_number == DCC_CV_ACC_ADDRESS_MSB ||
-        cv_number == DCC_CV_MANUFACTURER_ID) {   /* CV8 write = factory reset -> address CVs may have changed */
+    if (_is_address_cv(cv_number)) {
 
         _update_address_cv_cache();
 
@@ -996,9 +1057,20 @@ static void _dispatch_instruction(uint16_t address, const uint8_t *instruction_b
 
     if ((first & 0xF0) == 0x10 && instruction_byte_count >= 2) {
 
-        /* Consist control: 0001xxxx */
-        bool direction_normal = (first == DCC_CONSIST_SET_NORMAL);
-        uint8_t consist_address = instruction_bytes[1] & 0x7F;
+        /* Consist control: 0001xxxx. Set (0x12 normal / 0x13 reversed) stores the
+         * consist address in CV19 with bit 7 = reversed; clear (0x10), or a set
+         * with address 0, stores 0. The write goes through the normal CV path so
+         * the decoder lock applies; a refused write leaves the consist untouched
+         * and is not reported. */
+        bool direction_normal = (first != DCC_CONSIST_SET_REVERSED);
+        uint8_t consist_address = (first == DCC_CONSIST_CLEAR) ? 0 : (instruction_bytes[1] & 0x7F);
+        uint8_t cv19_value = (consist_address == 0) ? 0 : (uint8_t)(consist_address | (direction_normal ? 0x00 : 0x80));
+
+        if (!_cv_write_and_notify(DCC_CV_CONSIST_ADDRESS, cv19_value, false)) {
+
+            return;
+
+        }
 
         if (_interface->on_consist_command) {
 
@@ -1212,10 +1284,37 @@ void DccPacketDecoder_initialize(const interface_dcc_packet_decoder_t *interface
     _direction_reversed = false;
     _use_extended_address = false;
     _use_output_address = false;
+    _consist_address = 0;
+    _consist_direction_reversed = false;
+    _via_consist = false;
     _reset_count = 0;
     _service_mode_active = false;
     _packet_queue_head = 0;
     _packet_queue_tail = 0;
+    _update_address_cv_cache();
+
+}
+
+void DccPacketDecoder_reload_address_cache(void) {
+
+    if (!_interface) {
+
+        return;
+
+    }
+
+    _update_address_cv_cache();
+
+}
+
+void DccPacketDecoder_on_cv_written(uint16_t cv_number) {
+
+    if (!_interface || !_is_address_cv(cv_number)) {
+
+        return;
+
+    }
+
     _update_address_cv_cache();
 
 }
@@ -1243,6 +1342,18 @@ static void _dispatch_accessory(const uint8_t *data, uint8_t byte_count) {
         _dispatch_accessory_basic(data, byte_count);
 
     }
+
+}
+
+    /**
+     * @brief True for the instructions a consist address answers: 14/28-step
+     *  speed (01xxxxxx) and 128-step speed (advanced ops 0x3F). S-9.2.1: a decoder
+     *  in a consist takes speed and direction from the consist address only.
+     * @param first First instruction byte.
+     */
+static bool _is_consist_instruction(uint8_t first) {
+
+    return ((first & 0xC0) == 0x40) || (first == DCC_ADV_OPS_128_SPEED);
 
 }
 
@@ -1310,6 +1421,15 @@ void DccPacketDecoder_process_packet(const uint8_t *data, uint8_t byte_count) {
 
     }
 
+    /* Multi-function decoder packets are for multi-function decoders only. An
+     * accessory decoder must not match a locomotive packet whose short address
+     * happens to equal its board address, nor the multifunction broadcast. */
+    if (_my_address_type == DCC_ADDRESS_ACCESSORY || _my_address_type == DCC_ADDRESS_ACCESSORY_EXTENDED) {
+
+        return;
+
+    }
+
     /* Multi-function decoder packet */
     if (data[0] <= 0x7F) {
 
@@ -1317,10 +1437,19 @@ void DccPacketDecoder_process_packet(const uint8_t *data, uint8_t byte_count) {
         packet_address = data[0];
         inst_start = 1;
 
-        /* Address match: must match our address, or broadcast */
+        /* Address match: must match our address, or broadcast; or the advanced
+         * consist address (CV19) for speed, direction and e-stop only. */
         if (packet_address != _my_address && _my_address_type != DCC_ADDRESS_BROADCAST && packet_address != DCC_ADDRESS_BROADCAST_VALUE) {
 
-            return;
+            if (_consist_address == 0 || packet_address != _consist_address ||
+                (_my_address_type != DCC_ADDRESS_SHORT && _my_address_type != DCC_ADDRESS_LONG) ||
+                byte_count < 3 || !_is_consist_instruction(data[1])) {
+
+                return;
+
+            }
+
+            _via_consist = true;
 
         }
 
@@ -1353,6 +1482,7 @@ void DccPacketDecoder_process_packet(const uint8_t *data, uint8_t byte_count) {
 
     /* Dispatch instruction bytes (excluding address and XOR) */
     _dispatch_instruction(packet_address, &data[inst_start], byte_count - inst_start - 1);
+    _via_consist = false;
 
 }
 

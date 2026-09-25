@@ -53,8 +53,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-/* dcc_config is defined in decoder.c — needed for re-init after CV changes. */
-extern const dcc_config_t dcc_config;
 
 
 /* Maximum command line length */
@@ -227,8 +225,9 @@ static void _cmd_addr(char *tokens[], int count) {
 
     }
 
-    /* Re-initialize so the library re-reads the CV address cache. */
-    DccConfig_initialize(&dcc_config);
+    /* The CVs were written straight into the app's storage, behind the
+     * library's back, so tell the packet decoder to re-read its address cache. */
+    DccConfig_reload_address_cvs();
 
     _current_addr = addr;
     _current_type = type;

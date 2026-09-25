@@ -95,7 +95,9 @@ typedef struct {
         /** @brief CV bit command received. NULL = no notification. */
     void (*on_cv_bit_command)(uint16_t cv_number, uint8_t bit_position, bool bit_value, bool service_mode);
 
-        /** @brief Consist control received. NULL = no notification. */
+        /** @brief Consist control received and CV19 updated (consist_address 0 =
+         *  cleared). Not fired when the CV19 write is refused (decoder lock).
+         *  NULL = no notification. */
     void (*on_consist_command)(uint16_t address, uint8_t consist_address, bool direction_normal);
 
         /** @brief Binary state short command (1-127) received. NULL = no notification. */
@@ -130,6 +132,20 @@ typedef struct {
          * @param interface Pointer to populated interface struct.
          */
     extern void DccPacketDecoder_initialize(const interface_dcc_packet_decoder_t *interface);
+
+        /**
+         * @brief Re-read the address CVs (CV1, 17, 18, 19, 29 or 513, 521, 541)
+         *  into the match cache. Call after the application changes any of them
+         *  outside the library's own CV write path.
+         */
+    extern void DccPacketDecoder_reload_address_cache(void);
+
+        /**
+         * @brief Note that the application wrote a CV; reloads the address cache
+         *  when the CV is one the cache depends on, otherwise does nothing.
+         * @param cv_number CV number (1-based) that was written.
+         */
+    extern void DccPacketDecoder_on_cv_written(uint16_t cv_number);
 
         /**
          * @brief Process a complete raw packet from the bit decoder.

@@ -47,18 +47,18 @@ A valid preamble is at least `DCC_PREAMBLE_BITS_DECODER_MIN` = 10 one-bits (comm
 
 ### 2.4 Address Matching
 
-The library reads its addressing CVs at `DccConfig_initialize()` and again whenever a DCC packet writes one of them (CV 1, 8, 17, 18, 29, 513, 521, 541). Writes made by the application through `cv_write` do not refresh the cache; the demo's `ADDR` command re-calls `DccConfig_initialize()` for that reason.
+The library reads its addressing CVs at `DccConfig_initialize()` and again whenever a DCC packet writes one of them (CV 1, 8, 17, 18, 29, 513, 521, 541). Writes made through `DccApplicationDecoderCv_write` refresh it as well. If the application writes its storage directly, call `DccConfig_reload_address_cvs()` afterwards, as the demo's `ADDR` command does.
 
 | CV | Purpose |
 |---|---|
 | CV 1 | Primary (short) address, 1–127 |
 | CV 17–18 | Extended (long) address, 128–10239 |
 | CV 29 bit 5 | 0 = use CV 1, 1 = use CV 17–18 |
-| CV 19 | Consist address; not read by the library in this release, so consist-addressed packets are not matched |
+| CV 19 | Advanced consist address (bits 0–6, 0 = none) and direction bit 7; speed, direction and emergency-stop packets to this address are accepted |
 | CV 513, 521 | Accessory decoder address: low 6 bits and high 3 bits in decoder-address mode; in output-address mode (CV 541 bit 6) the flat address is CV 513 + 256 × CV 521 − 1 |
 | CV 541 | Accessory configuration: bit 7 accessory decoder, bit 6 output-address mode, bit 5 extended |
 
-Broadcast (address 0) is always accepted for multifunction packets. Accessory packets are not filtered: every basic and extended accessory command on the track reaches the accessory callbacks, and the application compares the address.
+Broadcast (address 0) is always accepted for multifunction packets. A decoder configured as an accessory decoder (CV 541 bit 7) ignores multifunction packets altogether, broadcast included, so a locomotive packet whose short address equals the board address is never mistaken for a command. Accessory packets are not filtered: every basic and extended accessory command on the track reaches the accessory callbacks, and the application compares the address.
 
 ### 2.5 Configuration Variables
 
@@ -71,7 +71,7 @@ Broadcast (address 0) is always accepted for multifunction packets. Accessory pa
 | 11 | Packet time-out | Fail-safe, in 100 ms units; 0 disables |
 | 15 / 16 | Decoder lock | Writes are refused unless CV 15 equals CV 16 |
 | 17–18 | Extended address | |
-| 19 | Consist address | |
+| 19 | Consist address | Written by the consist set/clear instruction; bit 7 reverses direction within the consist |
 | 28 | RailCom configuration | bit 0 Channel 1, bit 1 Channel 2; not read by the library in this release, the transmit engine always sends Channel 1 |
 | 29 | Configuration | See `DCC_CV29_*_BIT`; bit 6 is reserved and forced to 0 |
 | 31 / 32 | Indexed CV page | Selects the page behind CVs 257–512 |
@@ -249,16 +249,16 @@ The library's `DccConfig_100ms_timer_tick()` belongs to the command-station role
 
 ## 9. The Packet Decoder
 
-Completed packets are queued (`USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH`) and dispatched from `DccConfig_run()`. This deferral keeps long handlers such as CV writes out of the edge path, and it is why every command callback runs in main-loop context (`on_railcom_request` is the exception; it runs on the edge path). For each packet the decoder validates the XOR, matches the address, then parses the instruction and calls the matching callback. A multifunction packet addressed to this decoder, or broadcast, also re-arms the fail-safe timer; accessory, service-mode, idle and reset packets do not. The reply engine's address is updated whenever the address-CV cache is refreshed, not per packet. A full queue drops the newest packet.
+Completed packets are queued (`USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH`) and dispatched from `DccConfig_run()`. This deferral keeps long handlers such as CV writes out of the edge path, and it is why every command callback runs in main-loop context (`on_railcom_request` is the exception; it runs on the edge path). For each packet the decoder validates the XOR, matches the address (its own, broadcast, or for speed, direction and emergency stop the consist address in CV 19), then parses the instruction and calls the matching callback. A multifunction packet addressed to this decoder, or broadcast, also re-arms the fail-safe timer; accessory, service-mode, idle and reset packets do not. The reply engine's address is updated whenever the address-CV cache is refreshed, not per packet. A full queue drops the newest packet.
 
 | Instruction | Callback |
 |---|---|
-| Speed 14/28/128 | `on_speed_command(address, speed, direction, mode)`; `mode` is a `dcc_speed_mode_enum`. `direction` already has CV 29 bit 0 applied, `speed` is 0 (stop) or 2 and up (e-stop goes to the next row), and 14 versus 28 steps follows CV 29 bit 1 |
+| Speed 14/28/128 | `on_speed_command(address, speed, direction, mode)`; `mode` is a `dcc_speed_mode_enum`. `direction` already has CV 29 bit 0 applied, and CV 19 bit 7 for a packet that arrived on the consist address; `speed` is 0 (stop) or 2 and up (e-stop goes to the next row), and 14 versus 28 steps follows CV 29 bit 1 |
 | Emergency stop | `on_emergency_stop_command(address)` |
 | Functions F0–F68 | `on_function_command(address, function_number, state)` |
 | Basic / extended accessory | `on_accessory_basic_command(board, pair, activate)`, `on_accessory_extended_command(address, aspect)`; delivered for every accessory packet, no address filter. In output-address mode (CV 541 bit 6) `board` is the 11-bit output address and `pair` is the R bit |
 | CV write / verify / bit, main track or service track | `on_cv_write_command(cv, value, service_mode)`, `on_cv_verify_command(...)`, `on_cv_bit_command(cv, bit, value, service_mode)`. An operations-mode verify only notifies (nothing is read or compared); a service-mode bit write fires both the write and the bit callback; accessory operations-mode CV access is not delivered in this release |
-| Consist | `on_consist_command(address, consist_address, direction_normal)`; notification only, CV 19 is not stored and consist addresses are not matched |
+| Consist | `on_consist_command(address, consist_address, direction_normal)`; fired after CV 19 has been written through `cv_write` (0 = cleared), and not fired when the decoder lock refuses the write |
 | Binary state short / long | `on_binary_state_short_command(address, state, active)`, `on_binary_state_long_command(...)` |
 | Analog function | `on_analog_function_command(address, output, value)` |
 
@@ -271,7 +271,7 @@ All CV traffic goes through `dcc_cv_storage`, which wraps your `cv_read` / `cv_w
 - **Indexed CVs.** CVs 257–512 are routed to `cv_read_indexed` / `cv_write_indexed` with the page from CV 31:32, when those hooks are wired.
 - **CV 29 feature mask.** On every CV 29 write the library forces the reserved bit 6 clear, decodes the byte into a `dcc_cv29_flags_t` (direction reversed, 28/128 steps, analog conversion, RailCom, speed table, extended address, accessory), and calls `cv29_apply_supported_features()`. Clear the flags your product does not implement; per S-9.2.2 an unsupported feature bit must never be settable, and only the application knows what it supports.
 
-The application API is `DccApplicationDecoderCv_read`, `_write` and `_is_locked`, wired by `DccConfig_initialize()` onto the storage module, so the decoder lock, the CV 29 filter and the CV 8 reset apply to application writes too. Two differences from a write that arrives by DCC packet: the application path refuses every write while the decoder is locked, including the CV 8 reset, and it does not refresh the packet decoder's address-CV cache.
+The application API is `DccApplicationDecoderCv_read`, `_write` and `_is_locked`, wired by `DccConfig_initialize()` onto the storage module, so the decoder lock, the CV 29 filter and the CV 8 reset apply to application writes too. One difference from a write that arrives by DCC packet: the application path refuses every write while the decoder is locked, including the CV 8 reset. Both paths refresh the address cache; for storage written outside the library, call `DccConfig_reload_address_cvs()`.
 
 ## 11. Service Mode (Decoder Side)
 
@@ -305,12 +305,12 @@ S-9.2.4 requires a decoder to stop everything when no packet addressed to it arr
 
 ## 15. Unit Testing
 
-Decoder-role tests, GoogleTest with mocked drivers, run with the rest of the suite: `cd test && make`. At generation time the whole suite is 29 binaries, 1247 tests, 0 failures, with 99.7 % line coverage.
+Decoder-role tests, GoogleTest with mocked drivers, run with the rest of the suite: `cd test && make`. At generation time the whole suite is 29 binaries, 1269 tests, 0 failures, with 99.6 % line coverage.
 
 | Test file | What it tests |
 |---|---|
 | `dcc_bit_decoder_Test` | Edge classification, thresholds, preamble, noise and time-out recovery |
-| `dcc_packet_decoder_Test` | XOR, address matching for every address type, instruction dispatch, queue |
+| `dcc_packet_decoder_Test` | XOR, address matching for every address type including the consist address, CV 19 set/clear, instruction dispatch, address-cache reload, queue |
 | `dcc_cv_storage_Test`, `dcc_application_decoder_cv_Test` | Lock, factory reset, indexed CVs, CV 29 feature mask |
 | `dcc_failsafe_Test` | CV 11 time-out, enter and exit |
 | `dcc_config_Test` | Wiring and lifecycle, edge dispatch on run, the 6 ms ACK pulse (auto-stop, restart ignored, NULL hooks), the CV application API routed through storage and the lock |
