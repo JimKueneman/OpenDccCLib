@@ -1,23 +1,51 @@
-// ti_driverlib_uart_driver.c
-//
-// UART command interface implementation for MSPM0G3507.
-//
-// RING BUFFER PATTERN:
-// The RX ISR writes incoming bytes into _rx_ring[] at _rx_head.
-// The main loop reads from _rx_ring[] at _rx_tail (for command parsing)
-// and _echo_tail (for echoing characters back to the terminal).
-// _rx_head is written only by the ISR; _rx_tail and _echo_tail are
-// written only by the main loop. This single-producer / single-consumer
-// design means no locking is needed as long as the head/tail indices
-// are read atomically (they are uint16_t on a 32-bit MCU, so they are).
-//
-// ISR vs MAIN-LOOP SAFETY:
-// - TI_UartDriver_echo_process() and TI_UartDriver_read_line() must be
-//   called from main-loop context only. They read _rx_head (written by ISR)
-//   but never write it, so no race condition exists.
-// - TI_UartDriver_write_string() uses blocking TX and must not be called
-//   from an ISR (it would stall the ISR for the entire string duration).
-
+/** \copyright
+ * Copyright (c) 2026, Jim Kueneman
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  - Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  - Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @file ti_driverlib_uart_driver.c
+ * @brief UART command interface implementation for MSPM0G3507.
+ *
+ * @details RING BUFFER PATTERN:
+ * The RX ISR writes incoming bytes into _rx_ring[] at _rx_head.
+ * The main loop reads from _rx_ring[] at _rx_tail (for command parsing)
+ * and _echo_tail (for echoing characters back to the terminal).
+ * _rx_head is written only by the ISR; _rx_tail and _echo_tail are
+ * written only by the main loop. This single-producer / single-consumer
+ * design means no locking is needed as long as the head/tail indices
+ * are read atomically (they are uint16_t on a 32-bit MCU, so they are).
+ *
+ * ISR vs MAIN-LOOP SAFETY:
+ * - TI_UartDriver_echo_process() and TI_UartDriver_read_line() must be
+ *   called from main-loop context only. They read _rx_head (written by ISR)
+ *   but never write it, so no race condition exists.
+ * - TI_UartDriver_write_string() uses blocking TX and must not be called
+ *   from an ISR (it would stall the ISR for the entire string duration).
+ *
+ * @author Jim Kueneman
+ * @date 25 Sep 2026
+ */
 #include "ti_driverlib_uart_driver.h"
 #include "ti_msp_dl_config.h"
 #include <ti/driverlib/driverlib.h>

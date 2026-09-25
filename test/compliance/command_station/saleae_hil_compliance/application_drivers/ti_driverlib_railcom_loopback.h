@@ -1,28 +1,55 @@
-// ti_driverlib_railcom_loopback.h
-//
-// RailCom loopback (HIL only): the command station's REAL RailCom receive path
-// plus a mock decoder transmitter, looped back by one jumper.
-//
-//   MOCK_RC_TX (UART1 TX, PB6 / J2.13) --jumper--> RAILCOM_RX (UART2 RX, PB16 / J2.11)
-//                                                   ^ Saleae D6 (blue) taps this pin
-//
-// Receive side (what a real station has): a 250 kbaud UART whose bytes the DCC
-// library pulls through its .uart_read hook. The receiver is GATED by the
-// library's own channel-window hooks (.uart_rx_enable / .uart_rx_disable): a byte
-// that arrives while no window is open is dropped and counted, and the ring is
-// flushed at every cutout begin, so a byte can never be attributed to the wrong
-// cutout. No bit-banging: both directions are hardware UART peripherals.
-//
-// Mock side (bench stimulus): `RC MOCK` arms ONE reply. In WINDOW mode the
-// cutout state machine's window-open hook starts the Channel 1 bytes at T_TS1
-// and the Channel 2 bytes at T_TS2 -- where a decoder transmits -- through the
-// TX FIFO and TX interrupt, so nothing blocks inside the cutout timer ISR. In
-// LATE mode the same bytes go out at T_CE (cutout end, gate closed), to prove
-// that bytes outside a window never become a datagram. The arm is consumed by
-// the next cutout either way.
-//
-// All timing hooks below run in the RailCom cutout timer ISR context.
-
+/** \copyright
+ * Copyright (c) 2026, Jim Kueneman
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  - Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  - Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @file ti_driverlib_railcom_loopback.h
+ * @brief RailCom loopback (HIL only): the command station's REAL RailCom receive path plus a mock decoder transmitter, looped back by one jumper.
+ *
+ * @details   MOCK_RC_TX (UART1 TX, PB6 / J2.13) --jumper--> RAILCOM_RX (UART2 RX, PB16 / J2.11)
+ *                                                   ^ Saleae D6 (blue) taps this pin
+ *
+ * Receive side (what a real station has): a 250 kbaud UART whose bytes the DCC
+ * library pulls through its .uart_read hook. The receiver is GATED by the
+ * library's own channel-window hooks (.uart_rx_enable / .uart_rx_disable): a byte
+ * that arrives while no window is open is dropped and counted, and the ring is
+ * flushed at every cutout begin, so a byte can never be attributed to the wrong
+ * cutout. No bit-banging: both directions are hardware UART peripherals.
+ *
+ * Mock side (bench stimulus): `RC MOCK` arms ONE reply. In WINDOW mode the
+ * cutout state machine's window-open hook starts the Channel 1 bytes at T_TS1
+ * and the Channel 2 bytes at T_TS2 -- where a decoder transmits -- through the
+ * TX FIFO and TX interrupt, so nothing blocks inside the cutout timer ISR. In
+ * LATE mode the same bytes go out at T_CE (cutout end, gate closed), to prove
+ * that bytes outside a window never become a datagram. The arm is consumed by
+ * the next cutout either way.
+ *
+ * All timing hooks below run in the RailCom cutout timer ISR context.
+ *
+ * @author Jim Kueneman
+ * @date 25 Sep 2026
+ */
 #ifndef __TI_DRIVERLIB_RAILCOM_LOOPBACK__
 #define __TI_DRIVERLIB_RAILCOM_LOOPBACK__
 

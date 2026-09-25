@@ -1,7 +1,33 @@
-/*
- * ack_pulse_driver.c -- GPIO-based ACK pulse generator for service mode testing.
+/** \copyright
+ * Copyright (c) 2026, Jim Kueneman
+ * All rights reserved.
  *
- * Uses a one-shot hardware timer (TIMA1) to produce a precise pulse on PB12.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  - Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  - Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @file ack_pulse_driver.c
+ * @brief GPIO-based ACK pulse generator for service mode testing.
+ *
+ * @details Uses a one-shot hardware timer (TIMA1) to produce a precise pulse on PB12.
  * The pulse width is configurable at runtime via UART commands so the Python
  * test script can exercise NMRA S-9.2.3 ACK timing compliance.
  *
@@ -29,8 +55,10 @@
  *   ACK_PULSE_TIMER_INST_LOAD_VALUE   (5999U)
  *   GPIO_GRP_SALEAE_PORT               (GPIOB)
  *   GPIO_GRP_SALEAE_ACK_OUT_PIN   (DL_GPIO_PIN_3)
+ *
+ * @author Jim Kueneman
+ * @date 25 Sep 2026
  */
-
 #include "ack_pulse_driver.h"
 
 #ifdef DCC_COMPILE_DECODER

@@ -1,11 +1,41 @@
-// wfplayer_engine.c -- see wfplayer_engine.h.
-//
-// The playback timer (PLAYBACK_TIMER) is a ONE-SHOT, down-counting timer at 1 MHz
-// (prescale 40 from 40 MHz -> 1 us ticks), highest NVIC priority. Each segment:
-// set the pin to its level, load (duration_us - 1), start the one-shot; the ZERO
-// interrupt fires at the end and arms the next segment. Identical pattern to the
-// decoder example's ack_pulse_driver.
-
+/** \copyright
+ * Copyright (c) 2026, Jim Kueneman
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  - Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  - Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @file wfplayer_engine.c
+ * @brief see wfplayer_engine.h.
+ *
+ * @details The playback timer (PLAYBACK_TIMER) is a ONE-SHOT, down-counting timer at 1 MHz
+ * (prescale 40 from 40 MHz -> 1 us ticks), highest NVIC priority. Each segment:
+ * set the pin to its level, load (duration_us - 1), start the one-shot; the ZERO
+ * interrupt fires at the end and arms the next segment. Identical pattern to the
+ * decoder example's ack_pulse_driver.
+ *
+ * @author Jim Kueneman
+ * @date 25 Sep 2026
+ */
 #include "wfplayer_engine.h"
 #include "ti_msp_dl_config.h"
 #include <ti/driverlib/driverlib.h>

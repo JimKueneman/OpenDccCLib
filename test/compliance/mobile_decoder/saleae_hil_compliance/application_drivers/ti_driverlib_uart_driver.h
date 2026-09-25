@@ -1,13 +1,41 @@
-/*
- * ti_driverlib_uart_driver.h -- UART driver for the demo's command interface.
+/** \copyright
+ * Copyright (c) 2026, Jim Kueneman
+ * All rights reserved.
  *
- * Uses ISR-driven receive into a ring buffer and blocking (polling) transmit.
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  - Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  - Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @file ti_driverlib_uart_driver.h
+ * @brief UART driver for the demo's command interface.
+ *
+ * @details Uses ISR-driven receive into a ring buffer and blocking (polling) transmit.
  * UART0 at 230400 baud on the LaunchPad backchannel pins (PA10 TX, PA11 RX).
  *
  * This driver is demo infrastructure for the UART command parser.  A real
  * decoder may not need UART at all, or may use it for debug output only.
+ *
+ * @author Jim Kueneman
+ * @date 25 Sep 2026
  */
-
 #ifndef __TI_DRIVERLIB_UART_DRIVER__
 #define __TI_DRIVERLIB_UART_DRIVER__
 

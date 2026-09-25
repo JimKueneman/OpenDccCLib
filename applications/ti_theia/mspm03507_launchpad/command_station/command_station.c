@@ -1,24 +1,52 @@
-// command_station.c
-//
-// Main entry point for the DCC Command Station demo on MSPM0G3507 LaunchPad.
-//
-// INTEGRATION PATTERN:
-//   1. Fill a dcc_config_t struct with function pointers to your hardware
-//      drivers and (optionally) your application callbacks.
-//   2. Call DccConfig_initialize(&config) once at startup.
-//   3. Wire ISRs:
-//        - Shared 58us timer ISR must call DccConfig_58us_timer_isr().
-//        - RailCom cutout one-shot timer ISR must call DccConfig_railcom_oneshot_timer_isr().
-//        - A 100 ms periodic timer (or SysTick) must call DccConfig_100ms_timer_tick().
-//   4. Call DccConfig_run() repeatedly in your main loop.
-//
-// HOW TO ADD YOUR OWN CALLBACKS:
-//   Replace any NULL in the dcc_config struct below with a pointer to your
-//   function. For example, to get notified on every transmitted packet:
-//       .on_packet_sent = &MyApp_on_packet_sent,
-//   Your function signature must match the corresponding function pointer
-//   typedef in dcc_config.h.
-
+/** \copyright
+ * Copyright (c) 2026, Jim Kueneman
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  - Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  - Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @file command_station.c
+ * @brief Main entry point for the DCC Command Station demo on MSPM0G3507 LaunchPad.
+ *
+ * @details INTEGRATION PATTERN:
+ *   1. Fill a dcc_config_t struct with function pointers to your hardware
+ *      drivers and (optionally) your application callbacks.
+ *   2. Call DccConfig_initialize(&config) once at startup.
+ *   3. Wire ISRs:
+ *        - Shared 58us timer ISR must call DccConfig_58us_timer_isr().
+ *        - RailCom cutout one-shot timer ISR must call DccConfig_railcom_oneshot_timer_isr().
+ *        - A 100 ms periodic timer (or SysTick) must call DccConfig_100ms_timer_tick().
+ *   4. Call DccConfig_run() repeatedly in your main loop.
+ *
+ * HOW TO ADD YOUR OWN CALLBACKS:
+ *   Replace any NULL in the dcc_config struct below with a pointer to your
+ *   function. For example, to get notified on every transmitted packet:
+ *       .on_packet_sent = &MyApp_on_packet_sent,
+ *   Your function signature must match the corresponding function pointer
+ *   typedef in dcc_config.h.
+ *
+ * @author Jim Kueneman
+ * @date 25 Sep 2026
+ */
 #include "ti_msp_dl_config.h"
 #include <ti/driverlib/driverlib.h>
 #include <ti/driverlib/m0p/dl_interrupt.h>

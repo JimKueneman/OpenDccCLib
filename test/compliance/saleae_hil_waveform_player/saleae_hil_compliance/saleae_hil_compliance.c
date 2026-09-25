@@ -1,16 +1,46 @@
-// saleae_hil_compliance.c -- Waveform Player main entry point.
-//
-// MSPM0G3507 LaunchPad firmware for the generic, DCC-agnostic waveform player
-// (the shared HIL stimulus instrument). It receives (level, duration) segments
-// over UART and plays them on DCC_OUT via a one-shot, down-counting 1 MHz timer.
-// All DCC semantics live in the Python host (wfplayer.py). See SPEC.md /
-// PROTOCOL.md / IMPLEMENTATION.md in the parent folder.
-//
-//   main loop:  emit deferred "OK DONE"  +  parse one command line per pass
-//   ISRs:       PLAYBACK_TIMER (highest)  -> WfEngine playback step
-//               UART RX (mid)             -> ti_driverlib_uart_driver ring
-//               SysTick (lowest)          -> heartbeat LED ("firmware alive")
-
+/** \copyright
+ * Copyright (c) 2026, Jim Kueneman
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  - Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  - Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @file saleae_hil_compliance.c
+ * @brief Waveform Player main entry point.
+ *
+ * @details MSPM0G3507 LaunchPad firmware for the generic, DCC-agnostic waveform player
+ * (the shared HIL stimulus instrument). It receives (level, duration) segments
+ * over UART and plays them on DCC_OUT via a one-shot, down-counting 1 MHz timer.
+ * All DCC semantics live in the Python host (wfplayer.py). See SPEC.md /
+ * PROTOCOL.md / IMPLEMENTATION.md in the parent folder.
+ *
+ *   main loop:  emit deferred "OK DONE"  +  parse one command line per pass
+ *   ISRs:       PLAYBACK_TIMER (highest)  -> WfEngine playback step
+ *               UART RX (mid)             -> ti_driverlib_uart_driver ring
+ *               SysTick (lowest)          -> heartbeat LED ("firmware alive")
+ *
+ * @author Jim Kueneman
+ * @date 25 Sep 2026
+ */
 #include "ti_msp_dl_config.h"
 #include <ti/driverlib/driverlib.h>
 #include <ti/driverlib/m0p/dl_interrupt.h>

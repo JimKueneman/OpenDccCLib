@@ -1,18 +1,46 @@
-// ti_driverlib_dcc_driver.c
-//
-// Reference implementation of the DCC hardware drivers for MSPM0G3507.
-//
-// If you are porting to a different MCU, use this file as a template.
-// Replace the TI DriverLib calls with your MCU's equivalents. The key
-// contracts each function must fulfill are documented in the header.
-//
-// TIMESTAMP PATTERN:
-// The microsecond timestamp is derived from the shared 58us DCC timer.
-// TI_DccDriver_timestamp_tick() is called from the shared timer ISR and
-// increments a software counter. get_timestamp_usec() multiplies by 58
-// to return approximate microseconds. Resolution is 58us, which is
-// sufficient for timeout calculations.
-
+/** \copyright
+ * Copyright (c) 2026, Jim Kueneman
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *  - Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ *
+ *  - Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * @file ti_driverlib_dcc_driver.c
+ * @brief Reference implementation of the DCC hardware drivers for MSPM0G3507.
+ *
+ * @details If you are porting to a different MCU, use this file as a template.
+ * Replace the TI DriverLib calls with your MCU's equivalents. The key
+ * contracts each function must fulfill are documented in the header.
+ *
+ * TIMESTAMP PATTERN:
+ * The microsecond timestamp is derived from the shared 58us DCC timer.
+ * TI_DccDriver_timestamp_tick() is called from the shared timer ISR and
+ * increments a software counter. get_timestamp_usec() multiplies by 58
+ * to return approximate microseconds. Resolution is 58us, which is
+ * sufficient for timeout calculations.
+ *
+ * @author Jim Kueneman
+ * @date 25 Sep 2026
+ */
 #include "ti_driverlib_dcc_driver.h"
 #include "ti_msp_dl_config.h"
 #include <ti/driverlib/driverlib.h>
