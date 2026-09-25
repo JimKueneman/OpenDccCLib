@@ -56,7 +56,7 @@ typedef struct {
 
     const interface_dcc_service_mode_task_register_t *interface;
     dcc_task_register_state_enum state;
-    uint8_t reg;
+    uint8_t register_number;
     uint8_t bit_position;
     bool bit_value;
     uint8_t value;
@@ -144,7 +144,7 @@ static void _begin_write_bit(void) {
     _context.value = modified;
     _context.state = DCC_TASK_REGISTER_STATE_WRITE_BIT_WRITE;
 
-    if (!_context.interface->register_write(_context.reg, modified)) {
+    if (!_context.interface->register_write(_context.register_number, modified)) {
 
         _complete(DCC_SERVICE_MODE_BUSY, 0);
 
@@ -182,7 +182,7 @@ static void _advance_scan(bool to_write_bit) {
 
         _context.scan_value++;
 
-        if (!_context.interface->register_verify(_context.reg, _context.scan_value)) {
+        if (!_context.interface->register_verify(_context.register_number, _context.scan_value)) {
 
             _complete(DCC_SERVICE_MODE_BUSY, 0);
 
@@ -198,7 +198,7 @@ static void _advance_write_cv(void) {
     _report_progress(DCC_TASK_PHASE_WRITE);
     _context.state = DCC_TASK_REGISTER_STATE_WRITE_CV_VERIFY;
 
-    if (!_context.interface->register_verify(_context.reg, _context.value)) {
+    if (!_context.interface->register_verify(_context.register_number, _context.value)) {
 
         _complete(DCC_SERVICE_MODE_BUSY, 0);
 
@@ -220,7 +220,7 @@ static void _advance_write_bit_write(void) {
 
     _context.state = DCC_TASK_REGISTER_STATE_WRITE_BIT_VERIFY;
 
-    if (!_context.interface->register_verify(_context.reg, _context.value)) {
+    if (!_context.interface->register_verify(_context.register_number, _context.value)) {
 
         _complete(DCC_SERVICE_MODE_BUSY, 0);
 
@@ -252,9 +252,9 @@ void DccServiceModeTaskRegister_initialize(const interface_dcc_service_mode_task
 
 bool DccServiceModeTaskRegister_read_cv(uint16_t cv_number, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
-    uint8_t reg = _cv_to_register(cv_number, decoder_type);
+    uint8_t register_number = _cv_to_register(cv_number, decoder_type);
 
-    if (reg == 0) {
+    if (register_number == 0) {
 
         return false;
 
@@ -266,7 +266,7 @@ bool DccServiceModeTaskRegister_read_cv(uint16_t cv_number, dcc_decoder_type_enu
 
     }
 
-    _context.reg          = reg;
+    _context.register_number          = register_number;
     _context.decoder_type = decoder_type;
     _context.scan_value   = 0;
     _context.current_step = 0;
@@ -275,7 +275,7 @@ bool DccServiceModeTaskRegister_read_cv(uint16_t cv_number, dcc_decoder_type_enu
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_REGISTER_STATE_READ_CV;
 
-    if (!_context.interface->register_verify(reg, 0)) {
+    if (!_context.interface->register_verify(register_number, 0)) {
 
         _context.state = DCC_TASK_REGISTER_STATE_IDLE;
         return false;
@@ -288,9 +288,9 @@ bool DccServiceModeTaskRegister_read_cv(uint16_t cv_number, dcc_decoder_type_enu
 
 bool DccServiceModeTaskRegister_write_cv(uint16_t cv_number, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
-    uint8_t reg = _cv_to_register(cv_number, decoder_type);
+    uint8_t register_number = _cv_to_register(cv_number, decoder_type);
 
-    if (reg == 0) {
+    if (register_number == 0) {
 
         return false;
 
@@ -302,7 +302,7 @@ bool DccServiceModeTaskRegister_write_cv(uint16_t cv_number, uint8_t value, dcc_
 
     }
 
-    _context.reg          = reg;
+    _context.register_number          = register_number;
     _context.decoder_type = decoder_type;
     _context.value        = value;
     _context.current_step = 0;
@@ -311,7 +311,7 @@ bool DccServiceModeTaskRegister_write_cv(uint16_t cv_number, uint8_t value, dcc_
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_REGISTER_STATE_WRITE_CV;
 
-    if (!_context.interface->register_write(reg, value)) {
+    if (!_context.interface->register_write(register_number, value)) {
 
         _context.state = DCC_TASK_REGISTER_STATE_IDLE;
         return false;
@@ -330,9 +330,9 @@ bool DccServiceModeTaskRegister_read_bit(uint16_t cv_number, uint8_t bit_positio
 
     }
 
-    uint8_t reg = _cv_to_register(cv_number, decoder_type);
+    uint8_t register_number = _cv_to_register(cv_number, decoder_type);
 
-    if (reg == 0) {
+    if (register_number == 0) {
 
         return false;
 
@@ -344,7 +344,7 @@ bool DccServiceModeTaskRegister_read_bit(uint16_t cv_number, uint8_t bit_positio
 
     }
 
-    _context.reg          = reg;
+    _context.register_number          = register_number;
     _context.decoder_type = decoder_type;
     _context.bit_position          = bit_position;
     _context.scan_value   = 0;
@@ -354,7 +354,7 @@ bool DccServiceModeTaskRegister_read_bit(uint16_t cv_number, uint8_t bit_positio
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_REGISTER_STATE_READ_BIT_READ_BYTE;
 
-    if (!_context.interface->register_verify(reg, 0)) {
+    if (!_context.interface->register_verify(register_number, 0)) {
 
         _context.state = DCC_TASK_REGISTER_STATE_IDLE;
         return false;
@@ -379,9 +379,9 @@ bool DccServiceModeTaskRegister_write_bit(
 
     }
 
-    uint8_t reg = _cv_to_register(cv_number, decoder_type);
+    uint8_t register_number = _cv_to_register(cv_number, decoder_type);
 
-    if (reg == 0) {
+    if (register_number == 0) {
 
         return false;
 
@@ -393,7 +393,7 @@ bool DccServiceModeTaskRegister_write_bit(
 
     }
 
-    _context.reg          = reg;
+    _context.register_number          = register_number;
     _context.decoder_type = decoder_type;
     _context.bit_position          = bit_position;
     _context.bit_value    = bit_value;
@@ -404,7 +404,7 @@ bool DccServiceModeTaskRegister_write_bit(
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_REGISTER_STATE_WRITE_BIT_READ_BYTE;
 
-    if (!_context.interface->register_verify(reg, 0)) {
+    if (!_context.interface->register_verify(register_number, 0)) {
 
         _context.state = DCC_TASK_REGISTER_STATE_IDLE;
         return false;
@@ -425,9 +425,9 @@ static void _advance_verify_value(void) {
 
 bool DccServiceModeTaskRegister_verify_value(uint16_t cv_number, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
-    uint8_t reg = _cv_to_register(cv_number, decoder_type);
+    uint8_t register_number = _cv_to_register(cv_number, decoder_type);
 
-    if (reg == 0) {
+    if (register_number == 0) {
 
         return false;
 
@@ -439,7 +439,7 @@ bool DccServiceModeTaskRegister_verify_value(uint16_t cv_number, uint8_t value, 
 
     }
 
-    _context.reg          = reg;
+    _context.register_number          = register_number;
     _context.value        = value;
     _context.decoder_type = decoder_type;
     _context.current_step = 0;
@@ -448,7 +448,7 @@ bool DccServiceModeTaskRegister_verify_value(uint16_t cv_number, uint8_t value, 
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_REGISTER_STATE_VERIFY_VALUE;
 
-    if (!_context.interface->register_verify(reg, value)) {
+    if (!_context.interface->register_verify(register_number, value)) {
 
         _context.state = DCC_TASK_REGISTER_STATE_IDLE;
         return false;
