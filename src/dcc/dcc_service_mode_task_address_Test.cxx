@@ -4,8 +4,8 @@
  *
  * Test suite for DCC Service Mode Task Address-Only orchestrator.
  *
- * Address-Only mode accesses only CV#1 (7-bit short address, 0-127). read scans
- * address_verify(0..127) until ACK; write is write + verify; read_bit scans then
+ * Address-Only mode accesses only CV#1 (7-bit short address, 1-127). read scans
+ * address_verify(1..127) until ACK; write is write + verify; read_bit scans then
  * extracts a bit (0-6); write_bit does read-modify-write + verify. Bit 7 is always
  * 0 in a 7-bit address, so it is rejected.
  */
@@ -45,6 +45,12 @@ static uint8_t             on_progress_estimated_steps;
 static uint32_t            on_progress_count;
 
 static bool mock_address_verify(uint8_t address) {
+
+    if (address < 1 || address > 127) {
+
+        return false;            /* mirrors DccServiceModeAddress_verify: address 0 is broadcast */
+
+    }
 
     last_address_verify = address;
     address_verify_count++;
@@ -151,7 +157,8 @@ static void step_ack(void) {
 
 static void drive_scan_to(uint8_t target) {
 
-    for (uint16_t v = 0; v < (uint16_t)target; v++) {
+    /* The scan starts at address 1 (0 is broadcast, not a decoder address). */
+    for (uint16_t v = 1; v < (uint16_t)target; v++) {
 
         step_no_ack();
 
@@ -174,7 +181,7 @@ TEST(DccServiceModeTaskAddress, initialize_does_not_crash) {
 }
 
 // ============================================================================
-// read — scan 0-127
+// read — scan 1-127
 // ============================================================================
 
 TEST(DccServiceModeTaskAddress, read_starts_with_address_0) {
@@ -183,7 +190,7 @@ TEST(DccServiceModeTaskAddress, read_starts_with_address_0) {
     DccServiceModeTaskAddress_read(mock_on_complete, mock_on_progress);
 
     EXPECT_EQ(address_verify_count, (uint32_t)1);
-    EXPECT_EQ(last_address_verify, (uint8_t)0);
+    EXPECT_EQ(last_address_verify, (uint8_t)1);
 
 }
 
@@ -194,7 +201,7 @@ TEST(DccServiceModeTaskAddress, read_advances_after_no_ack) {
     step_no_ack();
 
     EXPECT_EQ(address_verify_count, (uint32_t)2);
-    EXPECT_EQ(last_address_verify, (uint8_t)1);
+    EXPECT_EQ(last_address_verify, (uint8_t)2);
 
 }
 
@@ -221,12 +228,12 @@ TEST(DccServiceModeTaskAddress, read_ack_on_address_127_returns_127) {
 
 }
 
-TEST(DccServiceModeTaskAddress, read_all_128_no_ack_returns_error) {
+TEST(DccServiceModeTaskAddress, read_all_127_no_ack_returns_error) {
 
     setup();
     DccServiceModeTaskAddress_read(mock_on_complete, mock_on_progress);
 
-    for (uint16_t i = 0; i < 128; i++) {
+    for (uint16_t i = 0; i < 127; i++) {
 
         step_no_ack();
 
@@ -236,18 +243,18 @@ TEST(DccServiceModeTaskAddress, read_all_128_no_ack_returns_error) {
 
 }
 
-TEST(DccServiceModeTaskAddress, read_scans_at_most_128_addresses) {
+TEST(DccServiceModeTaskAddress, read_scans_at_most_127_addresses) {
 
     setup();
     DccServiceModeTaskAddress_read(mock_on_complete, mock_on_progress);
 
-    for (uint16_t i = 0; i < 128; i++) {
+    for (uint16_t i = 0; i < 127; i++) {
 
         step_no_ack();
 
     }
 
-    EXPECT_EQ(address_verify_count, (uint32_t)128);
+    EXPECT_EQ(address_verify_count, (uint32_t)127);
 
 }
 
@@ -446,7 +453,7 @@ TEST(DccServiceModeTaskAddress, read_bit_scan_exhausted_returns_error) {
     setup();
     DccServiceModeTaskAddress_read_bit(0, mock_on_complete, mock_on_progress);
 
-    for (uint16_t i = 0; i < 128; i++) {
+    for (uint16_t i = 0; i < 127; i++) {
 
         step_no_ack();
 
@@ -483,12 +490,12 @@ TEST(DccServiceModeTaskAddress, write_bit_busy_rejected) {
 TEST(DccServiceModeTaskAddress, write_bit_scans_then_writes_with_bit_set) {
 
     setup();
-    // byte 0x00, set bit 2 → 0x04
+    // the scan starts at address 1: byte 0x01, set bit 2 → 0x05
     DccServiceModeTaskAddress_write_bit(2, true, mock_on_complete, mock_on_progress);
-    step_ack(); // scan found 0x00
+    step_ack(); // scan found 0x01
 
     EXPECT_EQ(address_write_count, (uint32_t)1);
-    EXPECT_EQ(last_address_write, (uint8_t)0x04);
+    EXPECT_EQ(last_address_write, (uint8_t)0x05);
 
 }
 
@@ -508,10 +515,10 @@ TEST(DccServiceModeTaskAddress, write_bit_verify_after_write) {
 
     setup();
     DccServiceModeTaskAddress_write_bit(2, true, mock_on_complete, mock_on_progress);
-    step_ack();    // scan found 0x00, write 0x04
-    step_no_ack(); // write complete, verify 0x04
+    step_ack();    // scan found 0x01, write 0x05
+    step_no_ack(); // write complete, verify 0x05
 
-    EXPECT_EQ(last_address_verify, (uint8_t)0x04);
+    EXPECT_EQ(last_address_verify, (uint8_t)0x05);
 
 }
 

@@ -13,7 +13,7 @@
  * supported, the remaining CV#8 bits are read so the byte value is known and the
  * Paged/Register stages collapse to a single value-verify instead of a 0..255 scan.
  * Whichever of Paged/Register scans first also learns the value for the other.
- * Address-Only is a separate 0..127 scan of CV#1. If nothing acknowledges,
+ * Address-Only is a separate 1..127 scan of CV#1. If nothing acknowledges,
  * supported_modes == 0 and result is NO_ACK.
  */
 
@@ -90,6 +90,12 @@ static bool mock_register_verify(uint8_t register_number, uint8_t value) {
 }
 
 static bool mock_address_verify(uint8_t address) {
+
+    if (address < 1 || address > 127) {
+
+        return false;            /* mirrors the primitive: address 0 is broadcast */
+
+    }
 
     last_address_verify = address;
     address_verify_count++;
@@ -559,7 +565,7 @@ TEST(DccServiceModeTaskDetect, register_scan_uses_register_8) {
 
 }
 
-TEST(DccServiceModeTaskDetect, address_scan_starts_at_zero) {
+TEST(DccServiceModeTaskDetect, address_scan_starts_at_one) {
 
     setup();
     DccServiceModeTaskDetect_detect_mode(mock_on_detect);
@@ -568,11 +574,11 @@ TEST(DccServiceModeTaskDetect, address_scan_starts_at_zero) {
     scan_exhaust_256(); // register -> address scan starts
 
     EXPECT_EQ(address_verify_count, (uint32_t)1);
-    EXPECT_EQ(last_address_verify, (uint8_t)0);
+    EXPECT_EQ(last_address_verify, (uint8_t)1);   /* 0 is broadcast, not a decoder address */
 
 }
 
-TEST(DccServiceModeTaskDetect, address_scans_at_most_128_values) {
+TEST(DccServiceModeTaskDetect, address_scans_at_most_127_values) {
 
     setup();
     DccServiceModeTaskDetect_detect_mode(mock_on_detect);
@@ -581,7 +587,7 @@ TEST(DccServiceModeTaskDetect, address_scans_at_most_128_values) {
     scan_exhaust_256();
     scan_exhaust_128();
 
-    EXPECT_EQ(address_verify_count, (uint32_t)128);
+    EXPECT_EQ(address_verify_count, (uint32_t)127);   /* addresses 1..127 */
 
 }
 

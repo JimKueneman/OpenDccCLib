@@ -28,7 +28,7 @@
  * @brief Task orchestrator for Address-Only mode CV programming (S-9.2.3 §E).
  *
  * @details Sequences address-only mode primitive operations to implement read
- * (iterate address_verify 0-127) and write (write + verify) of CV#1.
+ * (iterate address_verify 1-127) and write (write + verify) of CV#1.
  * The decoder automatically clears CV#29 bit 5 and CV#19 when CV#1 is written —
  * the command station does not need to handle these side effects explicitly.
  * Singleton — only one service track per command station.
@@ -52,7 +52,7 @@ extern "C" {
     /** @brief Interface struct — dependencies injected by dcc_config.c */
 typedef struct {
 
-        /** @brief Address-only primitive: verify the short address (CV#1, 0-127). */
+        /** @brief Address-only primitive: verify the short address (CV#1, 1-127). */
     bool (*address_verify)(uint8_t address);
 
         /** @brief Address-only primitive: write the short address (CV#1, 1-127). */
@@ -74,9 +74,9 @@ typedef struct {
     extern void DccServiceModeTaskAddress_initialize(const interface_dcc_service_mode_task_address_t *interface);
 
         /**
-         * @brief Read CV#1 (short address) using address-only mode. Iterates address_verify 0-127 until ACK.
-         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when complete: SUCCESS with the address found (0-127);
-         *        ERROR (value 0) if no address 0-127 was ACKed.
+         * @brief Read CV#1 (short address) using address-only mode. Iterates address_verify 1-127 until ACK.
+         * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when complete: SUCCESS with the address found (1-127);
+         *        ERROR (value 0) if no address 1-127 was ACKed.
          * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t called after each scan step (nullable); estimated_steps is reported as 0.
          * @return true if started, false if another operation is running.
          */
@@ -106,7 +106,7 @@ typedef struct {
          * @brief Read a single bit from CV#1. Reads full byte via iteration, extracts bit.
          * @param bit_position Bit position (0-6; bit 7 is always 0 in 7-bit address).
          * @param on_complete @ref dcc_service_mode_task_on_complete_callback_t called when complete: SUCCESS with value 0 or 1;
-         *        ERROR (value 0) if no address 0-127 was ACKed.
+         *        ERROR (value 0) if no address 1-127 was ACKed.
          * @param on_progress @ref dcc_service_mode_task_on_progress_callback_t called after each scan step (nullable); estimated_steps is reported as 0.
          * @return true if started, false if another operation is running or the bit is out of range.
          */

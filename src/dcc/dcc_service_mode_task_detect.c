@@ -35,7 +35,7 @@
  *   2. Paged   -- if the CV#8 value is already known, a single verify; otherwise a
  *      0..255 scan of CV#8 (Manufacturer ID) that also learns the value.
  *   3. Register -- same as Paged, against register 8 (= CV#8 mfg ID).
- *   4. Address-Only -- separate 0..127 scan of CV#1 (cannot reach CV#8). NOT assumed
+ *   4. Address-Only -- separate 1..127 scan of CV#1 (cannot reach CV#8). NOT assumed
  *      to be universally supported (the spec mandates it for command stations, not
  *      for every decoder).
  * If no stage acknowledges, supported_modes == 0 and result is NO_ACK.
@@ -58,7 +58,7 @@
 #define DCC_DETECT_REGISTER    8u
     /** @brief Last candidate value tried by the Paged and Register 0..255 scans. */
 #define DCC_DETECT_SCAN_MAX    255u
-    /** @brief Last candidate address tried by the Address-Only 0..127 scan. */
+    /** @brief Last candidate address tried by the Address-Only 1..127 scan. */
 #define DCC_DETECT_ADDRESS_MAX 127u
 
     /** @brief States of the detection task state machine. */
@@ -72,7 +72,7 @@ typedef enum {
     DCC_TASK_DETECT_STATE_PROBE_PAGED_SCAN,      /**< Paged: 0..255 scan of CV#8 in progress */
     DCC_TASK_DETECT_STATE_PROBE_REGISTER_VERIFY, /**< Register: single verify of the known register 8 value outstanding */
     DCC_TASK_DETECT_STATE_PROBE_REGISTER_SCAN,   /**< Register: 0..255 scan of register 8 in progress */
-    DCC_TASK_DETECT_STATE_PROBE_ADDRESS_SCAN,    /**< Address-Only: 0..127 scan of CV#1 in progress */
+    DCC_TASK_DETECT_STATE_PROBE_ADDRESS_SCAN,    /**< Address-Only: 1..127 scan of CV#1 in progress */
 
 } dcc_task_detect_state_enum;
 
@@ -244,7 +244,7 @@ static void _begin_register(void) {
     /**
      * @brief Starts the Address-Only stage.
      *
-     * @details Finishes detection when address_verify is not wired. Otherwise begins a 0..127 scan of CV#1
+     * @details Finishes detection when address_verify is not wired. Otherwise begins a 1..127 scan of CV#1
      * (PROBE_ADDRESS_SCAN); fails with BUSY if the primitive cannot be started.
      */
 static void _begin_address(void) {
@@ -256,10 +256,10 @@ static void _begin_address(void) {
 
     }
 
-    _context.scan_value = 0;
+    _context.scan_value = 1;
     _context.state = DCC_TASK_DETECT_STATE_PROBE_ADDRESS_SCAN;
 
-    if (!_context.interface->address_verify(0)) {
+    if (!_context.interface->address_verify(1)) {
 
         _fail(DCC_SERVICE_MODE_BUSY);
 

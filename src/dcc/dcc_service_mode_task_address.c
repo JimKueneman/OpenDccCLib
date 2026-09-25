@@ -63,7 +63,7 @@ typedef struct {
     uint8_t bit_position;                                       /**< Bit requested by read_bit / write_bit */
     bool bit_value;                                             /**< Bit value requested by write_bit */
     uint8_t value;                                              /**< Address to write or verify, or the modified address (write_bit) */
-    uint8_t scan_value;                                         /**< Candidate address currently being verified in a 0-127 scan */
+    uint8_t scan_value;                                         /**< Candidate address currently being verified in a 1-127 scan */
     uint8_t current_step;                                       /**< Steps completed so far, reported through on_progress */
     bool ack_result;                                            /**< Outcome of the most recent primitive: true = ACK measured */
     dcc_service_mode_task_on_complete_callback_t on_complete;   /**< Completion callback for the operation in progress */
@@ -133,7 +133,7 @@ static void _begin_write_bit(void) {
 }
 
     /**
-     * @brief Advances a 0-127 address_verify scan (read, read_bit, or the read phase of write_bit) after one verify completes.
+     * @brief Advances a 1-127 address_verify scan (read, read_bit, or the read phase of write_bit) after one verify completes.
      *
      * @details Algorithm:
      * -# Count the step and report READ progress
@@ -256,16 +256,16 @@ void DccServiceModeTaskAddress_initialize(const interface_dcc_service_mode_task_
 }
 
     /**
-     * @brief Read CV#1 (short address) using address-only mode. Iterates address_verify 0-127 until ACK.
+     * @brief Read CV#1 (short address) using address-only mode. Iterates address_verify 1-127 until ACK.
      *
      * @details Algorithm:
      * -# Reject if another operation is in progress (state not IDLE)
      * -# Load the context: scan value 0, cleared step count, callbacks
-     * -# Enter READ and issue address_verify for address 0 (a refused start puts the task back to IDLE and returns false)
+     * -# Enter READ and issue address_verify for address 1 (a refused start puts the task back to IDLE and returns false)
      * -# The scan continues from DccServiceModeTaskAddress_on_primitive_complete()
      *
      * @verbatim
-     * @param on_complete Called when complete: SUCCESS with the address found (0-127), or ERROR if no address was ACKed.
+     * @param on_complete Called when complete: SUCCESS with the address found (1-127), or ERROR if no address was ACKed.
      * @param on_progress Called after each scan step (nullable).
      * @endverbatim
      *
@@ -279,14 +279,14 @@ bool DccServiceModeTaskAddress_read(dcc_service_mode_task_on_complete_callback_t
 
     }
 
-    _context.scan_value   = 0;
+    _context.scan_value   = 1;
     _context.current_step = 0;
     _context.ack_result   = false;
     _context.on_complete  = on_complete;
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_ADDRESS_STATE_READ;
 
-    if (!_context.interface->address_verify(0)) {
+    if (!_context.interface->address_verify(1)) {
 
         _context.state = DCC_TASK_ADDRESS_STATE_IDLE;
         return false;
@@ -413,7 +413,7 @@ bool DccServiceModeTaskAddress_verify(uint8_t address, dcc_service_mode_task_on_
      * -# Reject bit positions above 6
      * -# Reject if another operation is in progress (state not IDLE)
      * -# Load the context: bit position, scan value 0, cleared step count, callbacks
-     * -# Enter READ_BIT_READ and issue address_verify for address 0 (a refused start puts the task back to IDLE and returns false)
+     * -# Enter READ_BIT_READ and issue address_verify for address 1 (a refused start puts the task back to IDLE and returns false)
      * -# The scan continues from DccServiceModeTaskAddress_on_primitive_complete(); the requested bit is extracted from the address found
      *
      * @verbatim
@@ -439,14 +439,14 @@ bool DccServiceModeTaskAddress_read_bit(uint8_t bit_position, dcc_service_mode_t
     }
 
     _context.bit_position          = bit_position;
-    _context.scan_value   = 0;
+    _context.scan_value   = 1;
     _context.current_step = 0;
     _context.ack_result   = false;
     _context.on_complete  = on_complete;
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_ADDRESS_STATE_READ_BIT_READ;
 
-    if (!_context.interface->address_verify(0)) {
+    if (!_context.interface->address_verify(1)) {
 
         _context.state = DCC_TASK_ADDRESS_STATE_IDLE;
         return false;
@@ -464,7 +464,7 @@ bool DccServiceModeTaskAddress_read_bit(uint8_t bit_position, dcc_service_mode_t
      * -# Reject bit positions above 6
      * -# Reject if another operation is in progress (state not IDLE)
      * -# Load the context: bit position, bit value, scan value 0, cleared step count, callbacks
-     * -# Enter WRITE_BIT_READ and issue address_verify for address 0 to start the read scan (a refused start puts the task back to IDLE and returns false)
+     * -# Enter WRITE_BIT_READ and issue address_verify for address 1 to start the read scan (a refused start puts the task back to IDLE and returns false)
      * -# From DccServiceModeTaskAddress_on_primitive_complete(): once the address is found, write the modified address, then verify it
      *
      * @verbatim
@@ -492,14 +492,14 @@ bool DccServiceModeTaskAddress_write_bit(uint8_t bit_position, bool bit_value, d
 
     _context.bit_position          = bit_position;
     _context.bit_value    = bit_value;
-    _context.scan_value   = 0;
+    _context.scan_value   = 1;
     _context.current_step = 0;
     _context.ack_result   = false;
     _context.on_complete  = on_complete;
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_ADDRESS_STATE_WRITE_BIT_READ;
 
-    if (!_context.interface->address_verify(0)) {
+    if (!_context.interface->address_verify(1)) {
 
         _context.state = DCC_TASK_ADDRESS_STATE_IDLE;
         return false;
