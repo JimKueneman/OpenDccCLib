@@ -337,8 +337,8 @@ extern "C" {
 #define DCC_CV_EMF_FEEDBACK_CUTOUT          10  /**< EMF Feedback Cutout: speed step at which back-EMF control stops */
 #define DCC_CV_PACKET_TIMEOUT               11  /**< Packet Time-Out Value: fail-safe timeout, 0 = disabled (S-9.2.4) */
 #define DCC_CV_POWER_SOURCE_CONVERSION      12  /**< Power Source Conversion: alternate power sources the decoder accepts */
-#define DCC_CV_ANALOG_MODE_FUNC_FL_F8       13  /**< Alternate Mode Function Status F1-F8: functions active in analog mode */
-#define DCC_CV_ANALOG_MODE_FUNC_F9_F12      14  /**< Alternate Mode Function Status FL, F9-F12: functions active in analog mode */
+#define DCC_CV_ANALOG_MODE_FUNC_F1_F8       13  /**< Alternate Mode Function Status F1-F8: functions active in analog mode */
+#define DCC_CV_ANALOG_MODE_FUNC_FL_F9_F12   14  /**< Alternate Mode Function 2 Status FL, F9-F12: functions active in analog mode */
 #define DCC_CV_DECODER_LOCK_1               15  /**< Decoder Lock: key written by the command station */
 #define DCC_CV_DECODER_LOCK_2               16  /**< Decoder Lock: this decoder's lock ID; writes are refused while CV15 != CV16 */
 #define DCC_CV_EXTENDED_ADDRESS_HIGH        17  /**< Extended Address high byte (0xC0-0xE7 on the wire) */
