@@ -20,7 +20,7 @@ window.COMPLIANCE =
 {
   "meta": {
     "title": "OpenDccCLib — NMRA DCC compliance",
-    "sourceCommit": "39f7080",
+    "sourceCommit": "04d5304",
     "validated": "2026-09-25",
     "roles": {
       "cs": "Command station",
@@ -6894,13 +6894,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "DccApplicationCommandStationServiceTrack_enter_service_mode/power_on call service_track.track_power_set(true) before starting the timer and encoder; exit_service_mode/power_off stop them and then call track_power_set(false). The bench driver maps power to the idle level of the service DCC pin (no H-bridge on the rig).",
             "gtest": "",
-            "hil": "Checks written 2026-09-25; awaiting a bench run on firmware rebuilt after the address-scan fix (6fdc418)."
+            "hil": "Bench-verified 2026-09-25 (04d5304): the EXIT settle checks first caught a real library defect (DccBitEncoder_stop left toggle_next armed, so a stray tick could still toggle the pin after stop and leave it on the wrong resting level, confirmed on a Saleae capture as a runt pulse right at the boundary). Fixed in DccBitEncoder_stop (src/dcc/dcc_bit_encoder.c); after reflash the pin settles cleanly LOW with no runt. With EXIT's resting level now reliably LOW, ENTER's track_power_set(true) is a real, visible LOW->HIGH edge, so the ENTER check expects a rising first edge. Full suite: 225 pass, 0 fail, 0 n/a."
           },
           "refs": {
             "symbols": [
@@ -6933,7 +6933,7 @@ window.COMPLIANCE =
                 "desc": "the service track is de-energized and silent after leaving service mode"
               },
               {
-                "label": "after SVC ENTER: pin was LOW and the first edge RISES; encoder running",
+                "label": "after SVC ENTER: pin driven HIGH by track_power_set, first edge RISES; encoder running",
                 "file": "command_station/s9_2_3_compliance.py",
                 "desc": "power is applied before the encoder's first toggle"
               }
@@ -6959,13 +6959,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "DccServiceModeCommon_begin_operation returns false when not in service mode, so every task's start call returns false and nothing is transmitted; the bench firmware replies ERR: service mode operation failed to start.",
             "gtest": "",
-            "hil": "Checks written 2026-09-25; awaiting a bench run on firmware rebuilt after the address-scan fix (6fdc418)."
+            "hil": "Bench-verified 2026-09-25 (04d5304): refused with no packets on the wire. Full suite: 225 pass, 0 fail, 0 n/a."
           },
           "refs": {
             "symbols": [
@@ -7006,13 +7006,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "planned",
+            "state": "ok",
             "note": ""
           },
           "detail": {
             "impl": "DccServiceModeTaskDetect_detect_mode probes direct (CV8 bit verifies), paged, register and the 1..127 address-only scan in turn and reports a DCC_SERVICE_MODE_SUPPORTED_* bitmask through on_detect; unwired stages are skipped.",
             "gtest": "",
-            "hil": "Checks written 2026-09-25; awaiting a bench run on firmware rebuilt after the address-scan fix (6fdc418)."
+            "hil": "Bench-verified 2026-09-25 (04d5304): all four compiled modes reported. The test's own SVC DETECT line match was missing its colon (a second spot beyond the shared wait helper), so it could pick up the echoed command instead of the real result line; fixed alongside the encoder bug. Full suite: 225 pass, 0 fail, 0 n/a."
           },
           "refs": {
             "symbols": [
