@@ -35,8 +35,8 @@ The fastest path is the command-station example. Import the project into Code Co
 - [Quick Start Guide — Command Station](documentation/QuickStartGuide_CommandStation.pdf) and [Quick Start Guide — Decoder](documentation/QuickStartGuide_Decoder.pdf): step-by-step LaunchPad walkthroughs.
 - [Developer Guide — Command Station](documentation/DeveloperGuide_CommandStation.pdf) and [Developer Guide — Decoder](documentation/DeveloperGuide_Decoder.pdf): the config struct, every module, porting, and testing.
 - [Architecture](documentation/ARCHITECTURE.md) (also as [PDF](documentation/ARCHITECTURE.pdf)): the as-built design — modules, feature flags, dependency injection, execution contexts.
-- [Compliance](documentation/compliance/ComplianceOverview.md): per-feature status against the NMRA S-9.x standards, with the machine-checked database behind the dashboard in `documentation/compliance/index.html`.
-- API reference: Doxygen, generated from the headers into `documentation/help/html/` (open `index.html` from a clone).
+- [Compliance](documentation/compliance/ComplianceOverview.md): per-feature status against the NMRA S-9.x standards, with the machine-checked [dashboard](https://jimkueneman.github.io/OpenDccCLib/documentation/compliance/index.html) behind it.
+- API reference: [https://jimkueneman.github.io/OpenDccCLib/documentation/help/html/](https://jimkueneman.github.io/OpenDccCLib/documentation/help/html/) — Doxygen, generated from the headers. In a clone, open `documentation/help/html/index.html`.
 - [Brochure](documentation/OpenDccCLib_Brochure.pdf): a one-page overview.
 
 ## Repository layout
