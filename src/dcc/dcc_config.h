@@ -277,16 +277,8 @@ typedef struct {
     // Command Station: OPTIONAL application callbacks (NULL = no notification)
     // =========================================================================
 
-        /** @brief Packet fully transmitted on the wire. */
+        /** @brief Packet dispatched to the encoder (transmit start). */
     void (*on_packet_sent)(const dcc_packet_t *packet);
-
-#if defined(DCC_COMPILE_RAILCOM)
-        /** @brief Accessory decoder SRQ detected in RailCom Ch1.
-         *  The user should respond by sending a stop command
-         *  (load_accessory_basic_stop or load_accessory_extended_stop)
-         *  to collect the decoder's update. NULL = SRQ ignored. */
-    void (*on_accessory_srq)(uint16_t address, bool is_extended);
-#endif /* DCC_COMPILE_RAILCOM */
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
@@ -482,7 +474,9 @@ typedef struct {
 
         /**
          * @brief 100ms timer tick. Call from a 100ms periodic timer or main loop.
-         * @details Used for timeout checking and periodic housekeeping.
+         * @details Reserved for periodic housekeeping. It does nothing in this
+         *  release; keep the call site so future work (RailCom accessory polling)
+         *  has a home.
          */
     extern void DccConfig_100ms_timer_tick(void);
 

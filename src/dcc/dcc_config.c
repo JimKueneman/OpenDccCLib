@@ -43,7 +43,6 @@
 #include "dcc_defines.h"
 
 #ifdef DCC_COMPILE_COMMAND_STATION
-#include <string.h>
 
 #include "dcc_bit_encoder.h"
 #include "dcc_application_command_station_packet.h"
@@ -174,20 +173,6 @@ static interface_dcc_railcom_cutout_t _railcom_cutout_interface;
     /** @brief Number of channels currently using the shared timer.
      *  Timer starts when count goes 0 -> 1, stops when 1 -> 0. */
 static uint8_t _shared_timer_ref_count = 0;
-
-/* =========================================================================
- * NOP auto-scheduling state (accessory RailCom SRQ polling)
- * ========================================================================= */
-
-#if defined(DCC_COMPILE_RAILCOM)
-    /** @brief 100ms tick counter for NOP auto-scheduling.
-     *  NOP inserted every 50 ticks (5 seconds) per S-9.3.2 Section 6.3.3. */
-static uint8_t _nop_tick_counter = 0;
-
-    /** @brief NOP threshold address for SRQ collision arbitration.
-     *  Starts at max (all decoders respond). Lowered on collision. */
-static uint16_t _nop_threshold_address = 0x07FF;
-#endif /* DCC_COMPILE_RAILCOM */
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
@@ -779,10 +764,6 @@ void DccConfig_initialize(const dcc_config_t *config) {
      * ================================================================= */
 
     _shared_timer_ref_count = 0;
-#if defined(DCC_COMPILE_RAILCOM)
-    _nop_tick_counter = 0;
-    _nop_threshold_address = 0x07FF;
-#endif /* DCC_COMPILE_RAILCOM */
 
     /* Wire main track bit encoder */
     _main_encoder_interface.pin_toggle = config->main_track.pin_toggle;
@@ -1261,33 +1242,7 @@ bool DccConfig_railcom_cutout_is_active(void) {
 
 void DccConfig_100ms_timer_tick(void) {
 
-#if defined(DCC_COMPILE_RAILCOM)
-    /* NOP auto-scheduling: insert accessory NOP every 5 seconds when main
-     * track is powered on and RailCom is enabled (S-9.3.2 Section 6.3.3).
-     * The NOP triggers accessory decoders to send SRQ in Ch1 if they have
-     * pending updates. */
-    if (_configuration_pointer->main_track.railcom && _configuration_pointer->on_accessory_srq) {
-
-        _nop_tick_counter++;
-
-        if (_nop_tick_counter >= 50) {
-
-            _nop_tick_counter = 0;
-
-            /* Build and schedule a NOP packet with the current threshold
-             * address. The threshold starts at max and is lowered on SRQ
-             * collision (garbled Ch1 data) to narrow the responder pool. */
-            dcc_packet_t nop_packet;
-            memset(&nop_packet, 0, sizeof(nop_packet));
-            DccApplicationCommandStationPacket_load_accessory_basic_stop(&nop_packet, _nop_threshold_address, 0);
-            nop_packet.repeat_count = 1;
-
-            DccApplicationCommandStationMainTrack_send_packet(&nop_packet, _nop_threshold_address, DCC_TAG_ACCESSORY, DCC_PRIORITY_ACCESSORY);
-
-        }
-
-    }
-#endif /* DCC_COMPILE_RAILCOM */
+    /* Reserved for periodic housekeeping. Nothing to do in this release. */
 
 }
 

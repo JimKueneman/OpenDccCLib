@@ -96,9 +96,8 @@ a RailCom one-shot timer (`railcom_timer_start/stop`), the five cutout periods
 (`railcom_cutout_start_delay_us`, `railcom_uart_rx_delay_us`, `railcom_ch1_window_us`,
 `railcom_ch1_ch2_gap_us`, `railcom_ch2_window_us`; 0 = spec default), and
 `dcc_railcom_hw_t` (`begin_railcom_cutout`, `end_railcom_cutout`, `uart_rx_enable`,
-`uart_rx_disable`, `uart_read`, `on_railcom_datagram_result`). Optional callbacks:
-`on_packet_sent` and `on_accessory_srq`; the latter is never invoked in this release
-and only enables the 100 ms accessory polling. Service-mode results are delivered per
+`uart_rx_disable`, `uart_read`, `on_railcom_datagram_result`). Optional callback:
+`on_packet_sent`. Service-mode results are delivered per
 call through the task callbacks (`on_complete`, `on_progress`, `on_detect`), not through
 a config callback.
 
@@ -125,7 +124,7 @@ programming from POM.
 - `DccConfig_58us_timer_isr()` — [CS] shared bit timer
 - `DccConfig_railcom_oneshot_timer_isr()` — [CS + RAILCOM] RailCom cutout state machine
 - `DccConfig_set_railcom_cutout_timing()`, `DccConfig_cancel_railcom_cutout()`, `DccConfig_railcom_cutout_is_active()` — [CS + RAILCOM] runtime cutout control
-- `DccConfig_100ms_timer_tick()` — [CS] RailCom accessory polling only (an accessory packet every 5 s when `main_track.railcom` and `on_accessory_srq` are both set); it handles no timeouts
+- `DccConfig_100ms_timer_tick()` — [CS] reserved housekeeping hook; does nothing in this release
 - `DccConfig_decoder_edge_isr(uint32_t timestamp_usec)` — [DECODER] input-capture edge
 
 ### Application modules (role-first naming)

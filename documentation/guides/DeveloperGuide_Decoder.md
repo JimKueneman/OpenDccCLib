@@ -307,7 +307,7 @@ S-9.2.4 requires a decoder to stop everything when no packet addressed to it arr
 
 ## 15. Unit Testing
 
-Decoder-role tests, GoogleTest with mocked drivers, run with the rest of the suite: `cd test && make`. At generation time the whole suite is 29 binaries, 1248 tests, 0 failures, with 99.7 % line coverage.
+Decoder-role tests, GoogleTest with mocked drivers, run with the rest of the suite: `cd test && make`. At generation time the whole suite is 29 binaries, 1247 tests, 0 failures, with 99.7 % line coverage.
 
 | Test file | What it tests |
 |---|---|

@@ -924,71 +924,25 @@ TEST(DccConfig, isr_null_current_sense_read) {
 }
 
 // ============================================================================
-// Group 9: 100ms tick NOP scheduling branch coverage
+// Group 9: 100ms tick is a safe no-op hook
 // ============================================================================
 
-static uint32_t mock_srq_callback_count = 0;
-static void mock_on_accessory_srq(uint16_t address, bool is_extended) {
-    (void)address; (void)is_extended; mock_srq_callback_count++;
-}
-
-TEST(DccConfig, nop_tick_fires_at_50) {
+TEST(DccConfig, hundred_ms_tick_is_harmless) {
     dcc_config_t cfg = make_test_config();
     cfg.shared_timer_start = mock_shared_timer_start;
     cfg.shared_timer_stop = mock_shared_timer_stop;
     cfg.main_track.pin_toggle = mock_main_pin_toggle;
-    cfg.service_track.pin_toggle = mock_svc_pin_toggle;
-    dcc_railcom_hw_t rc = make_railcom_hw();
-    cfg.main_track.railcom = &rc;
-    cfg.railcom_timer_start = mock_railcom_timer_start;
-    cfg.railcom_timer_stop = mock_railcom_timer_stop;
-    cfg.on_accessory_srq = mock_on_accessory_srq;
     DccConfig_initialize(&cfg);
-    DccApplicationCommandStationMainTrack_power_on();
 
-    /* Pump 49 ticks — no NOP yet (counter < 50) */
-    for (int i = 0; i < 49; i++) {
+    for (int i = 0; i < 60; i++) {
         DccConfig_100ms_timer_tick();
     }
+    /* Nothing scheduled, nothing called, no crash */
+}
 
-    /* 50th tick should fire the NOP packet scheduling */
+TEST(DccConfig, hundred_ms_tick_before_initialize_is_harmless) {
+    DccConfig_initialize(NULL);
     DccConfig_100ms_timer_tick();
-
-    DccApplicationCommandStationMainTrack_power_off();
-}
-
-TEST(DccConfig, nop_tick_no_railcom_skips) {
-    dcc_config_t cfg = make_test_config();
-    cfg.shared_timer_start = mock_shared_timer_start;
-    cfg.shared_timer_stop = mock_shared_timer_stop;
-    cfg.main_track.pin_toggle = mock_main_pin_toggle;
-    /* main_track.railcom = NULL — first part of compound && is false */
-    cfg.on_accessory_srq = mock_on_accessory_srq;
-    DccConfig_initialize(&cfg);
-
-    mock_srq_callback_count = 0;
-    for (int i = 0; i < 60; i++) {
-        DccConfig_100ms_timer_tick();
-    }
-    /* No crash, no NOP scheduled because railcom is NULL */
-}
-
-TEST(DccConfig, nop_tick_no_srq_callback_skips) {
-    dcc_config_t cfg = make_test_config();
-    cfg.shared_timer_start = mock_shared_timer_start;
-    cfg.shared_timer_stop = mock_shared_timer_stop;
-    cfg.main_track.pin_toggle = mock_main_pin_toggle;
-    dcc_railcom_hw_t rc = make_railcom_hw();
-    cfg.main_track.railcom = &rc;
-    cfg.railcom_timer_start = mock_railcom_timer_start;
-    cfg.railcom_timer_stop = mock_railcom_timer_stop;
-    /* on_accessory_srq = NULL — second part of compound && is false */
-    DccConfig_initialize(&cfg);
-
-    for (int i = 0; i < 60; i++) {
-        DccConfig_100ms_timer_tick();
-    }
-    /* No crash, no NOP scheduled because on_accessory_srq is NULL */
 }
 
 #endif /* DCC_COMPILE_COMMAND_STATION */

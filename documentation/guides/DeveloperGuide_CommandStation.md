@@ -253,7 +253,7 @@ The cutout is armed at the packet end bit's **last edge**. The bit encoder's sta
 
 ### 6.3 100 ms Periodic Tick
 
-A 100 ms timer, SysTick in the example, calls `DccConfig_100ms_timer_tick()`. Its only current job is RailCom accessory polling, an accessory packet every 5 s, and only when `main_track.railcom` and `on_accessory_srq` are both set; otherwise it does nothing. Keep calling it so future housekeeping has a home. It is also a convenient place for a heartbeat LED.
+A 100 ms timer, SysTick in the example, calls `DccConfig_100ms_timer_tick()`. The hook does nothing in this release; keep the call so future housekeeping (RailCom accessory polling is the planned occupant) has a home. It is also a convenient place for a heartbeat LED.
 
 ## 7. Implementing the Drivers
 
@@ -379,7 +379,6 @@ Command-station callbacks live in `dcc_config_t` and fire from `DccConfig_run()`
 | Callback | Fires when |
 |---|---|
 | `on_packet_sent(const dcc_packet_t *)` | The scheduler has dispatched a packet to the encoder (transmit start), on either track, service-mode resets included; main-track idle packets do not fire it. The bench firmware uses it to pulse a scope trigger |
-| `on_accessory_srq(address, is_extended)` | Reserved: nothing calls it in this release. Setting it together with `main_track.railcom` enables the 100 ms accessory polling in 6.3 |
 | `on_railcom_datagram_result(address, channel, datagram)` | In `dcc_railcom_hw_t`; a datagram was decoded |
 | `on_complete` / `on_progress` / `on_detect` | Per service-mode call; see section 10 |
 
@@ -437,7 +436,7 @@ cd test
 make            # configures CMake, builds, runs every binary serially, writes test/coverage.html
 ```
 
-At generation time: 29 test binaries, 1248 tests, 0 failures, 0 warnings; line coverage 99.7 %, function coverage 100 %, branch coverage 98.2 % (gcovr). The build also compiles six single-role configurations so a missing `DCC_COMPILE_*` guard fails as a compile or link error.
+At generation time: 29 test binaries, 1247 tests, 0 failures, 0 warnings; line coverage 99.7 %, function coverage 100 %, branch coverage 98.2 % (gcovr). The build also compiles six single-role configurations so a missing `DCC_COMPILE_*` guard fails as a compile or link error.
 
 | Test file | What it tests |
 |---|---|
