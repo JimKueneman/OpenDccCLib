@@ -32,7 +32,7 @@
  * detection (writing 8 to CV 8).
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_CV_STORAGE__
@@ -79,37 +79,37 @@ typedef struct {
 
 } interface_dcc_cv_storage_t;
 
-    /**
-     * @brief Initialize the CV storage module.
-     * @param interface Pointer to populated interface struct.
-     */
-extern void DccCvStorage_initialize(const interface_dcc_cv_storage_t *interface);
+        /**
+         * @brief Initialize the CV storage module.
+         * @param interface Pointer to populated interface struct.
+         */
+    extern void DccCvStorage_initialize(const interface_dcc_cv_storage_t *interface);
 
-    /**
-     * @brief Read a CV value.
-     * @param cv_number CV number (1-based).
-     * @param value Pointer to receive the value.
-     * @return true if read succeeded.
-     */
-extern bool DccCvStorage_read(uint16_t cv_number, uint8_t *value);
+        /**
+         * @brief Read a CV value.
+         * @param cv_number CV number (1-based).
+         * @param value Pointer to receive the value.
+         * @return true if read succeeded.
+         */
+    extern bool DccCvStorage_read(uint16_t cv_number, uint8_t *value);
 
-    /**
-     * @brief Write a CV value with decoder lock enforcement.
-     * @param cv_number CV number (1-based).
-     * @param value Value to write.
-     * @return true if write succeeded (false if locked or hardware failure).
-     *
-     * @details Checks decoder lock (CV 15 must equal CV 16) before allowing
-     * writes. CV 15 and CV 16 themselves are always writable. Writing the
-     * manufacturer ID value (8) to CV 8 is allowed for factory reset.
-     */
-extern bool DccCvStorage_write(uint16_t cv_number, uint8_t value);
+        /**
+         * @brief Write a CV value with decoder lock enforcement.
+         * @param cv_number CV number (1-based).
+         * @param value Value to write.
+         * @return true if write succeeded (false if locked or hardware failure).
+         *
+         * @details Checks decoder lock (CV 15 must equal CV 16) before allowing
+         * writes. CV 15 and CV 16 themselves are always writable. Writing the
+         * manufacturer ID value (8) to CV 8 is allowed for factory reset.
+         */
+    extern bool DccCvStorage_write(uint16_t cv_number, uint8_t value);
 
-    /**
-     * @brief Check if the decoder lock is engaged.
-     * @return true if locked (CV 15 != CV 16), false if unlocked.
-     */
-extern bool DccCvStorage_is_locked(void);
+        /**
+         * @brief Check if the decoder lock is engaged.
+         * @return true if locked (CV 15 != CV 16), false if unlocked.
+         */
+    extern bool DccCvStorage_is_locked(void);
 
 #ifdef __cplusplus
 }

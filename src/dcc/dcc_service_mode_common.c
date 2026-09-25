@@ -29,7 +29,7 @@
  * sequencing, and retry logic.
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_service_mode_common.h"
@@ -44,11 +44,11 @@
 
 typedef enum {
 
-    SERVICE_COMMON_STATE_IDLE,
-    SERVICE_COMMON_STATE_RESET_PRE,
-    SERVICE_COMMON_STATE_COMMAND,
-    SERVICE_COMMON_STATE_RECOVERY,
-    SERVICE_COMMON_STATE_RESET_POST
+    DCC_SERVICE_COMMON_STATE_IDLE,
+    DCC_SERVICE_COMMON_STATE_RESET_PRE,
+    DCC_SERVICE_COMMON_STATE_COMMAND,
+    DCC_SERVICE_COMMON_STATE_RECOVERY,
+    DCC_SERVICE_COMMON_STATE_RESET_POST
 
 } service_common_state_enum;
 
@@ -120,7 +120,7 @@ static void _load_reset_packet(dcc_service_mode_common_context_t *context) {
 void DccServiceModeCommon_initialize(dcc_service_mode_common_context_t *context, const interface_dcc_service_mode_common_t *interface) {
 
     context->interface = interface;
-    context->state = SERVICE_COMMON_STATE_IDLE;
+    context->state = DCC_SERVICE_COMMON_STATE_IDLE;
     context->in_service_mode = false;
     context->step_callback = NULL;
     context->packet_count = 0;
@@ -135,6 +135,58 @@ void DccServiceModeCommon_initialize(dcc_service_mode_common_context_t *context,
 
 }
 
+    /**
+     * @brief ACK sampler, current at or above threshold. Resuming after a brief dropout
+     *  absorbs the bridged low samples into the run (we measure the SPAN of elevated
+     *  current, not strict-high time -- a noisy motor ACK dips below threshold but the
+     *  current is still elevated). Flags over-current if the span grows past the upper
+     *  bound (S-9.2.3 p.3) -- that is a fault, not an ACK.
+     */
+static void _ack_sample_elevated(dcc_service_mode_common_context_t *context) {
+
+    if (!context->ack_overrun) {
+
+        context->ack_high_count += (uint16_t)(context->ack_low_run + 1u);
+
+        if (context->ack_high_count > DCC_ACK_MAX_SAMPLES) {
+
+            context->ack_overrun = true;
+
+        }
+
+    }
+
+    context->ack_low_run = 0;
+
+}
+
+    /**
+     * @brief ACK sampler, current below threshold while inside a run: a candidate dropout.
+     *  Bridges up to DCC_ACK_DROPOUT_SAMPLES consecutive low samples; only a longer low
+     *  run is a real falling edge, which closes the span and judges it.
+     */
+static void _ack_sample_dropout(dcc_service_mode_common_context_t *context) {
+
+    context->ack_low_run++;
+
+    if (context->ack_low_run > DCC_ACK_DROPOUT_SAMPLES) {
+
+        /* Real falling edge: accept as an ACK only if the span stayed in the
+         * two-sided 5-7 ms window (>= MIN and not over-current). */
+        if (!context->ack_overrun && context->ack_high_count >= DCC_ACK_MIN_SAMPLES) {
+
+            context->ack_detected = true;
+
+        }
+
+        context->ack_high_count = 0;
+        context->ack_low_run = 0;
+        context->ack_overrun = false;
+
+    }
+
+}
+
 void DccServiceModeCommon_ack_sample(dcc_service_mode_common_context_t *context, uint16_t sense_value) {
 
     if (context->ack_detected) {
@@ -143,8 +195,7 @@ void DccServiceModeCommon_ack_sample(dcc_service_mode_common_context_t *context,
 
     }
 
-    if (context->state != SERVICE_COMMON_STATE_COMMAND &&
-        context->state != SERVICE_COMMON_STATE_RECOVERY) {
+    if (context->state != DCC_SERVICE_COMMON_STATE_COMMAND && context->state != DCC_SERVICE_COMMON_STATE_RECOVERY) {
 
         return;
 
@@ -160,48 +211,11 @@ void DccServiceModeCommon_ack_sample(dcc_service_mode_common_context_t *context,
 
     if (sense_value >= USER_DEFINED_DCC_ACK_THRESHOLD_MA) {
 
-        /* Elevated. Resuming after a brief dropout absorbs the bridged low
-         * samples into the run (we measure the SPAN of elevated current, not
-         * strict-high time -- a noisy motor ACK dips below threshold but the
-         * current is still elevated). Flag over-current if the span grows past
-         * the upper bound (S-9.2.3 p.3) -- that is a fault, not an ACK. */
-        if (!context->ack_overrun) {
-
-            context->ack_high_count += (uint16_t)(context->ack_low_run + 1u);
-
-            if (context->ack_high_count > DCC_ACK_MAX_SAMPLES) {
-
-                context->ack_overrun = true;
-
-            }
-
-        }
-
-        context->ack_low_run = 0;
+        _ack_sample_elevated(context);
 
     } else if (context->ack_high_count > 0) {
 
-        /* Below threshold while inside a run: a candidate dropout. Bridge up to
-         * DCC_ACK_DROPOUT_SAMPLES consecutive low samples; only a longer low run
-         * is a real falling edge. */
-        context->ack_low_run++;
-
-        if (context->ack_low_run > DCC_ACK_DROPOUT_SAMPLES) {
-
-            /* Real falling edge: accept as an ACK only if the span stayed in the
-             * two-sided 5-7 ms window (>= MIN and not over-current). */
-            if (!context->ack_overrun &&
-                context->ack_high_count >= DCC_ACK_MIN_SAMPLES) {
-
-                context->ack_detected = true;
-
-            }
-
-            context->ack_high_count = 0;
-            context->ack_low_run = 0;
-            context->ack_overrun = false;
-
-        }
+        _ack_sample_dropout(context);
 
     }
 
@@ -221,13 +235,13 @@ static void _retry_or_fail(dcc_service_mode_common_context_t *context) {
     if (context->retry_count < USER_DEFINED_DCC_SERVICE_MODE_RETRIES) {
 
         context->retry_count++;
-        context->state = SERVICE_COMMON_STATE_RESET_PRE;
+        context->state = DCC_SERVICE_COMMON_STATE_RESET_PRE;
         context->packet_count = 0;
 
     } else {
 
         context->result = DCC_SERVICE_MODE_NO_ACK;
-        context->state = SERVICE_COMMON_STATE_RESET_POST;
+        context->state = DCC_SERVICE_COMMON_STATE_RESET_POST;
         context->packet_count = 0;
 
     }
@@ -244,7 +258,7 @@ static void _run_command_state(dcc_service_mode_common_context_t *context) {
         /* ACK confirmed — skip remaining command packets and
          * proceed directly to post-reset / recovery. */
         context->result = DCC_SERVICE_MODE_SUCCESS;
-        context->state = SERVICE_COMMON_STATE_RESET_POST;
+        context->state = DCC_SERVICE_COMMON_STATE_RESET_POST;
         context->packet_count = 0;
 
     } else if (context->packet_count < context->command_repeat_count) {
@@ -267,7 +281,7 @@ static void _run_command_state(dcc_service_mode_common_context_t *context) {
         /* Write operations enter recovery phase (S-9.2.3
          * Decoder-Recovery-Time) -- continue sending reset packets
          * while still scanning for ACK. */
-        context->state = SERVICE_COMMON_STATE_RECOVERY;
+        context->state = DCC_SERVICE_COMMON_STATE_RECOVERY;
         context->packet_count = 0;
 
     } else {
@@ -287,7 +301,7 @@ static void _run_recovery_state(dcc_service_mode_common_context_t *context) {
     if (context->ack_detected) {
 
         context->result = DCC_SERVICE_MODE_SUCCESS;
-        context->state = SERVICE_COMMON_STATE_RESET_POST;
+        context->state = DCC_SERVICE_COMMON_STATE_RESET_POST;
         context->packet_count = 0;
 
     } else if (context->packet_count < context->recovery_packet_count) {
@@ -318,7 +332,7 @@ static void _run_reset_post_state(dcc_service_mode_common_context_t *context) {
 
     } else {
 
-        context->state = SERVICE_COMMON_STATE_IDLE;
+        context->state = DCC_SERVICE_COMMON_STATE_IDLE;
 
         if (context->step_callback) {
 
@@ -358,7 +372,7 @@ void DccServiceModeCommon_run(dcc_service_mode_common_context_t *context) {
 
     }
 
-    if (context->state == SERVICE_COMMON_STATE_RESET_PRE) {
+    if (context->state == DCC_SERVICE_COMMON_STATE_RESET_PRE) {
 
         if (context->packet_count < DCC_SERVICE_MODE_RESET_PRE_COUNT) {
 
@@ -372,19 +386,19 @@ void DccServiceModeCommon_run(dcc_service_mode_common_context_t *context) {
             context->ack_detected = false;
             context->ack_high_count = 0;
             context->ack_overrun = false;
-            context->state = SERVICE_COMMON_STATE_COMMAND;
+            context->state = DCC_SERVICE_COMMON_STATE_COMMAND;
 
         }
 
-    } else if (context->state == SERVICE_COMMON_STATE_COMMAND) {
+    } else if (context->state == DCC_SERVICE_COMMON_STATE_COMMAND) {
 
         _run_command_state(context);
 
-    } else if (context->state == SERVICE_COMMON_STATE_RECOVERY) {
+    } else if (context->state == DCC_SERVICE_COMMON_STATE_RECOVERY) {
 
         _run_recovery_state(context);
 
-    } else if (context->state == SERVICE_COMMON_STATE_RESET_POST) {
+    } else if (context->state == DCC_SERVICE_COMMON_STATE_RESET_POST) {
 
         _run_reset_post_state(context);
 
@@ -394,7 +408,7 @@ void DccServiceModeCommon_run(dcc_service_mode_common_context_t *context) {
 
 bool DccServiceModeCommon_is_idle(const dcc_service_mode_common_context_t *context) {
 
-    return (context->state == SERVICE_COMMON_STATE_IDLE);
+    return (context->state == DCC_SERVICE_COMMON_STATE_IDLE);
 
 }
 
@@ -413,7 +427,7 @@ bool DccServiceModeCommon_enter(dcc_service_mode_common_context_t *context) {
 
 void DccServiceModeCommon_exit(dcc_service_mode_common_context_t *context) {
 
-    if (context->state != SERVICE_COMMON_STATE_IDLE) {
+    if (context->state != DCC_SERVICE_COMMON_STATE_IDLE) {
 
         return;
 
@@ -423,7 +437,13 @@ void DccServiceModeCommon_exit(dcc_service_mode_common_context_t *context) {
 
 }
 
-bool DccServiceModeCommon_begin_operation(dcc_service_mode_common_context_t *context, const dcc_packet_t *command_packet, dcc_service_mode_step_callback_t on_step_complete, bool is_write_operation, uint8_t command_repeat, uint8_t recovery_count) {
+bool DccServiceModeCommon_begin_operation(
+            dcc_service_mode_common_context_t *context,
+            const dcc_packet_t *command_packet,
+            dcc_service_mode_step_callback_t on_step_complete,
+            bool is_write_operation,
+            uint8_t command_repeat,
+            uint8_t recovery_count) {
 
     if (!context->in_service_mode) {
 
@@ -431,7 +451,7 @@ bool DccServiceModeCommon_begin_operation(dcc_service_mode_common_context_t *con
 
     }
 
-    if (context->state != SERVICE_COMMON_STATE_IDLE) {
+    if (context->state != DCC_SERVICE_COMMON_STATE_IDLE) {
 
         return false;
 
@@ -453,7 +473,7 @@ bool DccServiceModeCommon_begin_operation(dcc_service_mode_common_context_t *con
     context->ack_window_open = false;
     context->ack_low_run = 0;
 
-    context->state = SERVICE_COMMON_STATE_RESET_PRE;
+    context->state = DCC_SERVICE_COMMON_STATE_RESET_PRE;
 
     return true;
 

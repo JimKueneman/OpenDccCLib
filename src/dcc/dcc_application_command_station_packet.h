@@ -33,7 +33,7 @@
  * calls these via an interface struct to build packets on demand.
  *
  * @author Jim Kueneman
- * @date 23 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_APPLICATION_COMMAND_STATION_PACKET__
@@ -52,629 +52,629 @@ extern "C" {
 // Idle / Reset / Emergency Stop
 // =============================================================================
 
-    /**
-     * @brief Build an idle packet (0xFF 0x00 0xFF).
-     *
-     * @details Fills the packet with the standard DCC idle byte sequence.
-     *     The scheduler sends idle packets when no other traffic is pending
-     *     to keep the DCC signal alive on the track.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     */
-extern void DccApplicationCommandStationPacket_load_idle(dcc_packet_t *packet);
+        /**
+         * @brief Build an idle packet (0xFF 0x00 0xFF).
+         *
+         * @details Fills the packet with the standard DCC idle byte sequence.
+         *     The scheduler sends idle packets when no other traffic is pending
+         *     to keep the DCC signal alive on the track.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         */
+    extern void DccApplicationCommandStationPacket_load_idle(dcc_packet_t *packet);
 
-    /**
-     * @brief Build a reset packet (0x00 0x00 0x00).
-     *
-     * @details Fills the packet with the standard DCC reset byte sequence.
-     *     A reset packet commands all decoders on the track to enter their
-     *     power-on default state.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     */
-extern void DccApplicationCommandStationPacket_load_reset(dcc_packet_t *packet);
+        /**
+         * @brief Build a reset packet (0x00 0x00 0x00).
+         *
+         * @details Fills the packet with the standard DCC reset byte sequence.
+         *     A reset packet commands all decoders on the track to enter their
+         *     power-on default state.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         */
+    extern void DccApplicationCommandStationPacket_load_reset(dcc_packet_t *packet);
 
-    /**
-     * @brief Build a broadcast stop packet (S-9.2 baseline 01DC000S form).
-     *
-     * @details Broadcasts the baseline Digital Decoder Broadcast Stop to address
-     *     0, using the 01x instruction class every decoder is required to obey.
-     *
-     * @param packet  Pointer to a @ref dcc_packet_t struct to fill.
-     * @param isPanic true  = stop delivering energy (emergency stop, S=1);
-     *                false = bring the locomotive to a controlled stop (S=0).
-     */
-extern void DccApplicationCommandStationPacket_load_estop_all(dcc_packet_t *packet, bool isPanic);
+        /**
+         * @brief Build a broadcast stop packet (S-9.2 baseline 01DC000S form).
+         *
+         * @details Broadcasts the baseline Digital Decoder Broadcast Stop to address
+         *     0, using the 01x instruction class every decoder is required to obey.
+         *
+         * @param packet  Pointer to a @ref dcc_packet_t struct to fill.
+         * @param isPanic true  = stop delivering energy (emergency stop, S=1);
+         *                false = bring the locomotive to a controlled stop (S=0).
+         */
+    extern void DccApplicationCommandStationPacket_load_estop_all(dcc_packet_t *packet, bool isPanic);
 
 // =============================================================================
 // Speed Commands
 // =============================================================================
 
-    /**
-     * @brief Build a 128-step speed-and-direction packet.
-     *
-     * @details Encodes a two-byte advanced operations speed instruction per
-     *     NMRA S-9.2.1. Speed value 0 is stop, 1 is emergency stop, and
-     *     2-127 map to speed steps 1-126.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param speed Speed value (0=stop, 1=e-stop, 2-127=speed steps 1-126).
-     * @param direction true=forward, false=reverse.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_speed_128(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t speed, bool direction);
+        /**
+         * @brief Build a 128-step speed-and-direction packet.
+         *
+         * @details Encodes a two-byte advanced operations speed instruction per
+         *     NMRA S-9.2.1. Speed value 0 is stop, 1 is emergency stop, and
+         *     2-127 map to speed steps 1-126.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param speed Speed value (0=stop, 1=e-stop, 2-127=speed steps 1-126).
+         * @param direction true=forward, false=reverse.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_speed_128(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t speed, bool direction);
 
-    /**
-     * @brief Build a 28-step speed-and-direction packet.
-     *
-     * @details Encodes a baseline speed instruction with interleaved speed
-     *     bit mapping per NMRA S-9.2 Figure 2. Speed value 0 is stop, 1 is
-     *     emergency stop, and 2-29 map to speed steps 1-28.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param speed Speed value (0=stop, 1=e-stop, 2-29=speed steps 1-28).
-     * @param direction true=forward, false=reverse.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_speed_28(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t speed, bool direction);
+        /**
+         * @brief Build a 28-step speed-and-direction packet.
+         *
+         * @details Encodes a baseline speed instruction with interleaved speed
+         *     bit mapping per NMRA S-9.2 Figure 2. Speed value 0 is stop, 1 is
+         *     emergency stop, and 2-29 map to speed steps 1-28.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param speed Speed value (0=stop, 1=e-stop, 2-29=speed steps 1-28).
+         * @param direction true=forward, false=reverse.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_speed_28(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t speed, bool direction);
 
-    /**
-     * @brief Build a 14-step speed-and-direction packet.
-     *
-     * @details Encodes a baseline speed instruction where the FL headlight
-     *     bit shares the instruction byte. Speed value 0 is stop, 1 is
-     *     emergency stop, and 2-15 map to speed steps 1-14.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param speed Speed value (0=stop, 1=e-stop, 2-15=speed steps 1-14).
-     * @param direction true=forward, false=reverse.
-     * @param headlight FL headlight state (true=on).
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_speed_14(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t speed, bool direction, bool headlight);
+        /**
+         * @brief Build a 14-step speed-and-direction packet.
+         *
+         * @details Encodes a baseline speed instruction where the FL headlight
+         *     bit shares the instruction byte. Speed value 0 is stop, 1 is
+         *     emergency stop, and 2-15 map to speed steps 1-14.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param speed Speed value (0=stop, 1=e-stop, 2-15=speed steps 1-14).
+         * @param direction true=forward, false=reverse.
+         * @param headlight FL headlight state (true=on).
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_speed_14(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t speed, bool direction, bool headlight);
 
 // =============================================================================
 // Function Commands
 // =============================================================================
 
-    /**
-     * @brief Build a Function Group 1 packet (FL, F1-F4).
-     *
-     * @details Encodes the function group one instruction with a 5-bit
-     *     bitmask controlling the headlight and first four functions.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param func_bits Bitmask: bit4=FL, bit3=F4, bit2=F3, bit1=F2, bit0=F1.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_func_group_1(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
+        /**
+         * @brief Build a Function Group 1 packet (FL, F1-F4).
+         *
+         * @details Encodes the function group one instruction with a 5-bit
+         *     bitmask controlling the headlight and first four functions.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param func_bits Bitmask: bit4=FL, bit3=F4, bit2=F3, bit1=F2, bit0=F1.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_func_group_1(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
 
-    /**
-     * @brief Build a Function Group 2a packet (F5-F8).
-     *
-     * @details Encodes the function group two upper instruction with a
-     *     4-bit bitmask controlling functions F5 through F8.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param func_bits Bitmask: bit3=F8, bit2=F7, bit1=F6, bit0=F5.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_func_group_2a(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
+        /**
+         * @brief Build a Function Group 2a packet (F5-F8).
+         *
+         * @details Encodes the function group two upper instruction with a
+         *     4-bit bitmask controlling functions F5 through F8.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param func_bits Bitmask: bit3=F8, bit2=F7, bit1=F6, bit0=F5.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_func_group_2a(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
 
-    /**
-     * @brief Build a Function Group 2b packet (F9-F12).
-     *
-     * @details Encodes the function group two lower instruction with a
-     *     4-bit bitmask controlling functions F9 through F12.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param func_bits Bitmask: bit3=F12, bit2=F11, bit1=F10, bit0=F9.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_func_group_2b(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
+        /**
+         * @brief Build a Function Group 2b packet (F9-F12).
+         *
+         * @details Encodes the function group two lower instruction with a
+         *     4-bit bitmask controlling functions F9 through F12.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param func_bits Bitmask: bit3=F12, bit2=F11, bit1=F10, bit0=F9.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_func_group_2b(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
 
-    /**
-     * @brief Build a Function F13-F20 expansion packet.
-     *
-     * @details Encodes a feature expansion instruction with an 8-bit
-     *     bitmask controlling functions F13 through F20.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param func_bits Bitmask: bit7=F20 .. bit0=F13.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_func_f13_f20(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
+        /**
+         * @brief Build a Function F13-F20 expansion packet.
+         *
+         * @details Encodes a feature expansion instruction with an 8-bit
+         *     bitmask controlling functions F13 through F20.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param func_bits Bitmask: bit7=F20 .. bit0=F13.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_func_f13_f20(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
 
-    /**
-     * @brief Build a Function F21-F28 expansion packet.
-     *
-     * @details Encodes a feature expansion instruction with an 8-bit
-     *     bitmask controlling functions F21 through F28.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param func_bits Bitmask: bit7=F28 .. bit0=F21.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_func_f21_f28(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
+        /**
+         * @brief Build a Function F21-F28 expansion packet.
+         *
+         * @details Encodes a feature expansion instruction with an 8-bit
+         *     bitmask controlling functions F21 through F28.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param func_bits Bitmask: bit7=F28 .. bit0=F21.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_func_f21_f28(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
 
-    /**
-     * @brief Build a Function F29-F36 expansion packet.
-     *
-     * @details Encodes a feature expansion instruction with an 8-bit
-     *     bitmask controlling functions F29 through F36.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param func_bits Bitmask: bit7=F36 .. bit0=F29.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_func_f29_f36(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
+        /**
+         * @brief Build a Function F29-F36 expansion packet.
+         *
+         * @details Encodes a feature expansion instruction with an 8-bit
+         *     bitmask controlling functions F29 through F36.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param func_bits Bitmask: bit7=F36 .. bit0=F29.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_func_f29_f36(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
 
-    /**
-     * @brief Build a Function F37-F44 expansion packet.
-     *
-     * @details Encodes a feature expansion instruction with an 8-bit
-     *     bitmask controlling functions F37 through F44.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param func_bits Bitmask: bit7=F44 .. bit0=F37.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_func_f37_f44(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
+        /**
+         * @brief Build a Function F37-F44 expansion packet.
+         *
+         * @details Encodes a feature expansion instruction with an 8-bit
+         *     bitmask controlling functions F37 through F44.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param func_bits Bitmask: bit7=F44 .. bit0=F37.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_func_f37_f44(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
 
-    /**
-     * @brief Build a Function F45-F52 expansion packet.
-     *
-     * @details Encodes a feature expansion instruction with an 8-bit
-     *     bitmask controlling functions F45 through F52.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param func_bits Bitmask: bit7=F52 .. bit0=F45.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_func_f45_f52(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
+        /**
+         * @brief Build a Function F45-F52 expansion packet.
+         *
+         * @details Encodes a feature expansion instruction with an 8-bit
+         *     bitmask controlling functions F45 through F52.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param func_bits Bitmask: bit7=F52 .. bit0=F45.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_func_f45_f52(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
 
-    /**
-     * @brief Build a Function F53-F60 expansion packet.
-     *
-     * @details Encodes a feature expansion instruction with an 8-bit
-     *     bitmask controlling functions F53 through F60.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param func_bits Bitmask: bit7=F60 .. bit0=F53.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_func_f53_f60(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
+        /**
+         * @brief Build a Function F53-F60 expansion packet.
+         *
+         * @details Encodes a feature expansion instruction with an 8-bit
+         *     bitmask controlling functions F53 through F60.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param func_bits Bitmask: bit7=F60 .. bit0=F53.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_func_f53_f60(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
 
-    /**
-     * @brief Build a Function F61-F68 expansion packet.
-     *
-     * @details Encodes a feature expansion instruction with an 8-bit
-     *     bitmask controlling functions F61 through F68.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param func_bits Bitmask: bit7=F68 .. bit0=F61.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_func_f61_f68(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
+        /**
+         * @brief Build a Function F61-F68 expansion packet.
+         *
+         * @details Encodes a feature expansion instruction with an 8-bit
+         *     bitmask controlling functions F61 through F68.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param func_bits Bitmask: bit7=F68 .. bit0=F61.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_func_f61_f68(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t func_bits);
 
 // =============================================================================
 // Accessory Commands
 // =============================================================================
 
-    /**
-     * @brief Build a basic accessory decoder packet.
-     *
-     * @details Encodes the two-byte basic accessory instruction that controls
-     *     turnouts and similar on/off outputs. The board address and output
-     *     pair select the specific output on the decoder.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param board_address 9-bit board address (0-511).
-     * @param output_pair Output selection (0-7).
-     * @param activate true=activate, false=deactivate.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_accessory_basic(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair, bool activate);
+        /**
+         * @brief Build a basic accessory decoder packet.
+         *
+         * @details Encodes the two-byte basic accessory instruction that controls
+         *     turnouts and similar on/off outputs. The board address and output
+         *     pair select the specific output on the decoder.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param board_address 9-bit board address (0-511).
+         * @param output_pair Output selection (0-7).
+         * @param activate true=activate, false=deactivate.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_accessory_basic(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair, bool activate);
 
-    /**
-     * @brief Build an extended accessory decoder (signal aspect) packet.
-     *
-     * @details Encodes the three-byte extended accessory instruction used
-     *     for signal decoders. The aspect value selects the signal indication
-     *     displayed by the addressed decoder.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address 11-bit address (0-2047).
-     * @param aspect Signal aspect value (0-255).
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_accessory_extended(dcc_packet_t *packet, uint16_t address, uint8_t aspect);
+        /**
+         * @brief Build an extended accessory decoder (signal aspect) packet.
+         *
+         * @details Encodes the three-byte extended accessory instruction used
+         *     for signal decoders. The aspect value selects the signal indication
+         *     displayed by the addressed decoder.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address 11-bit address (0-2047).
+         * @param aspect Signal aspect value (0-255).
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_accessory_extended(dcc_packet_t *packet, uint16_t address, uint8_t aspect);
 
-    /**
-     * @brief Build a NOP packet for basic or extended accessory decoders.
-     *
-     * @details Encodes the S-9.2.1 (2.4.6) No-Operation command
-     *     (10AAAAAA 0 0AAA1AAT). It changes no output state; it lets a
-     *     bi-directional accessory decoder raise a service request (SRQ) during
-     *     the RailCom cutout. The T bit selects the addressed decoder type.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address 11-bit accessory address (0-2047).
-     * @param is_extended false = basic accessory decoder (T=0); true = extended (T=1).
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_accessory_nop(dcc_packet_t *packet, uint16_t address, bool is_extended);
+        /**
+         * @brief Build a NOP packet for basic or extended accessory decoders.
+         *
+         * @details Encodes the S-9.2.1 (2.4.6) No-Operation command
+         *     (10AAAAAA 0 0AAA1AAT). It changes no output state; it lets a
+         *     bi-directional accessory decoder raise a service request (SRQ) during
+         *     the RailCom cutout. The T bit selects the addressed decoder type.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address 11-bit accessory address (0-2047).
+         * @param is_extended false = basic accessory decoder (T=0); true = extended (T=1).
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_accessory_nop(dcc_packet_t *packet, uint16_t address, bool is_extended);
 
-    /**
-     * @brief Build a basic accessory stop (deactivate) packet.
-     *
-     * @details Encodes a basic accessory instruction with activate=0 for the
-     *     given board address and output pair. Functionally identical to calling
-     *     load_accessory_basic with activate=false, but provided as a distinct
-     *     entry point so the scheduler can distinguish stop-for-SRQ-collection
-     *     from a normal deactivate command.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param board_address 9-bit board address (0-511).
-     * @param output_pair Output selection (0-7).
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_accessory_basic_stop(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair);
+        /**
+         * @brief Build a basic accessory stop (deactivate) packet.
+         *
+         * @details Encodes a basic accessory instruction with activate=0 for the
+         *     given board address and output pair. Functionally identical to calling
+         *     load_accessory_basic with activate=false, but provided as a distinct
+         *     entry point so the scheduler can distinguish stop-for-SRQ-collection
+         *     from a normal deactivate command.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param board_address 9-bit board address (0-511).
+         * @param output_pair Output selection (0-7).
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_accessory_basic_stop(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair);
 
-    /**
-     * @brief Build an extended accessory stop (aspect 0) packet.
-     *
-     * @details Encodes an extended accessory instruction with aspect=0 (all
-     *     stop) per S-9.3.2 Table 36. Provided as a distinct entry point so
-     *     the scheduler can distinguish stop-for-SRQ-collection from a normal
-     *     aspect-0 command.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address 11-bit address (0-2047).
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_accessory_extended_stop(dcc_packet_t *packet, uint16_t address);
+        /**
+         * @brief Build an extended accessory stop (aspect 0) packet.
+         *
+         * @details Encodes an extended accessory instruction with aspect=0 (all
+         *     stop) per S-9.3.2 Table 36. Provided as a distinct entry point so
+         *     the scheduler can distinguish stop-for-SRQ-collection from a normal
+         *     aspect-0 command.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address 11-bit address (0-2047).
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_accessory_extended_stop(dcc_packet_t *packet, uint16_t address);
 
 // =============================================================================
 // Accessory CV Programming (Ops-Mode)
 // =============================================================================
 
-    /**
-     * @brief Build a basic accessory ops-mode CV write packet.
-     *
-     * @details Programs a CV value in a basic accessory decoder while it
-     *     remains on the main track. The output pair selects the sub-address
-     *     within the board.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param board_address 9-bit board address (0-511).
-     * @param output_pair Output pair (0-3) for sub-address within board.
-     * @param cv_number CV number (1-1024, 1-based).
-     * @param value Byte value to write.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_accessory_basic_cv_write(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair, uint16_t cv_number, uint8_t value);
+        /**
+         * @brief Build a basic accessory ops-mode CV write packet.
+         *
+         * @details Programs a CV value in a basic accessory decoder while it
+         *     remains on the main track. The output pair selects the sub-address
+         *     within the board.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param board_address 9-bit board address (0-511).
+         * @param output_pair Output pair (0-3) for sub-address within board.
+         * @param cv_number CV number (1-1024, 1-based).
+         * @param value Byte value to write.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_accessory_basic_cv_write(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair, uint16_t cv_number, uint8_t value);
 
-    /**
-     * @brief Build a basic accessory ops-mode CV verify packet.
-     *
-     * @details Verifies a CV value in a basic accessory decoder on the main
-     *     track. The decoder acknowledges via a current pulse if the value
-     *     matches.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param board_address 9-bit board address (0-511).
-     * @param output_pair Output pair (0-3) for sub-address within board.
-     * @param cv_number CV number (1-1024, 1-based).
-     * @param value Expected byte value to verify.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_accessory_basic_cv_verify(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair, uint16_t cv_number, uint8_t value);
+        /**
+         * @brief Build a basic accessory ops-mode CV verify packet.
+         *
+         * @details Verifies a CV value in a basic accessory decoder on the main
+         *     track. The decoder acknowledges via a current pulse if the value
+         *     matches.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param board_address 9-bit board address (0-511).
+         * @param output_pair Output pair (0-3) for sub-address within board.
+         * @param cv_number CV number (1-1024, 1-based).
+         * @param value Expected byte value to verify.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_accessory_basic_cv_verify(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair, uint16_t cv_number, uint8_t value);
 
-    /**
-     * @brief Build a basic accessory ops-mode CV bit manipulation packet.
-     *
-     * @details Writes or verifies a single bit within a CV of a basic
-     *     accessory decoder on the main track. Useful for toggling individual
-     *     configuration flags without rewriting the entire CV byte.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param board_address 9-bit board address (0-511).
-     * @param output_pair Output pair (0-3) for sub-address within board.
-     * @param cv_number CV number (1-1024, 1-based).
-     * @param bit_position Bit position within the CV byte (0-7).
-     * @param bit_value Desired bit value (true=1, false=0).
-     * @param write true=write the bit, false=verify the bit.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_accessory_basic_cv_bit(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair, uint16_t cv_number, uint8_t bit_position, bool bit_value, bool write);
+        /**
+         * @brief Build a basic accessory ops-mode CV bit manipulation packet.
+         *
+         * @details Writes or verifies a single bit within a CV of a basic
+         *     accessory decoder on the main track. Useful for toggling individual
+         *     configuration flags without rewriting the entire CV byte.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param board_address 9-bit board address (0-511).
+         * @param output_pair Output pair (0-3) for sub-address within board.
+         * @param cv_number CV number (1-1024, 1-based).
+         * @param bit_position Bit position within the CV byte (0-7).
+         * @param bit_value Desired bit value (true=1, false=0).
+         * @param write true=write the bit, false=verify the bit.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_accessory_basic_cv_bit(dcc_packet_t *packet, uint16_t board_address, uint8_t output_pair, uint16_t cv_number, uint8_t bit_position, bool bit_value, bool write);
 
-    /**
-     * @brief Build an extended accessory ops-mode CV write packet.
-     *
-     * @details Programs a CV value in an extended accessory (signal) decoder
-     *     while it remains on the main track.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address 11-bit address (0-2047).
-     * @param cv_number CV number (1-1024, 1-based).
-     * @param value Byte value to write.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_accessory_extended_cv_write(dcc_packet_t *packet, uint16_t address, uint16_t cv_number, uint8_t value);
+        /**
+         * @brief Build an extended accessory ops-mode CV write packet.
+         *
+         * @details Programs a CV value in an extended accessory (signal) decoder
+         *     while it remains on the main track.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address 11-bit address (0-2047).
+         * @param cv_number CV number (1-1024, 1-based).
+         * @param value Byte value to write.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_accessory_extended_cv_write(dcc_packet_t *packet, uint16_t address, uint16_t cv_number, uint8_t value);
 
-    /**
-     * @brief Build an extended accessory ops-mode CV verify packet.
-     *
-     * @details Verifies a CV value in an extended accessory (signal) decoder
-     *     on the main track. The decoder acknowledges via a current pulse if
-     *     the value matches.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address 11-bit address (0-2047).
-     * @param cv_number CV number (1-1024, 1-based).
-     * @param value Expected byte value to verify.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_accessory_extended_cv_verify(dcc_packet_t *packet, uint16_t address, uint16_t cv_number, uint8_t value);
+        /**
+         * @brief Build an extended accessory ops-mode CV verify packet.
+         *
+         * @details Verifies a CV value in an extended accessory (signal) decoder
+         *     on the main track. The decoder acknowledges via a current pulse if
+         *     the value matches.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address 11-bit address (0-2047).
+         * @param cv_number CV number (1-1024, 1-based).
+         * @param value Expected byte value to verify.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_accessory_extended_cv_verify(dcc_packet_t *packet, uint16_t address, uint16_t cv_number, uint8_t value);
 
-    /**
-     * @brief Build an extended accessory ops-mode CV bit manipulation packet.
-     *
-     * @details Writes or verifies a single bit within a CV of an extended
-     *     accessory (signal) decoder on the main track.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address 11-bit address (0-2047).
-     * @param cv_number CV number (1-1024, 1-based).
-     * @param bit_position Bit position within the CV byte (0-7).
-     * @param bit_value Desired bit value (true=1, false=0).
-     * @param write true=write the bit, false=verify the bit.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_accessory_extended_cv_bit(dcc_packet_t *packet, uint16_t address, uint16_t cv_number, uint8_t bit_position, bool bit_value, bool write);
+        /**
+         * @brief Build an extended accessory ops-mode CV bit manipulation packet.
+         *
+         * @details Writes or verifies a single bit within a CV of an extended
+         *     accessory (signal) decoder on the main track.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address 11-bit address (0-2047).
+         * @param cv_number CV number (1-1024, 1-based).
+         * @param bit_position Bit position within the CV byte (0-7).
+         * @param bit_value Desired bit value (true=1, false=0).
+         * @param write true=write the bit, false=verify the bit.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_accessory_extended_cv_bit(dcc_packet_t *packet, uint16_t address, uint16_t cv_number, uint8_t bit_position, bool bit_value, bool write);
 
 // =============================================================================
 // CV Programming (POM — Programming on the Main)
 // =============================================================================
 
-    /**
-     * @brief Build a POM CV write packet (long form).
-     *
-     * @details Programs a CV value in a locomotive or multi-function decoder
-     *     while it remains on the main track. Uses the long-form CV access
-     *     instruction per NMRA S-9.2.1.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param cv_number CV number (1-1024, 1-based per NMRA convention).
-     * @param value Byte value to write.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_cv_write_pom(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint16_t cv_number, uint8_t value);
+        /**
+         * @brief Build a POM CV write packet (long form).
+         *
+         * @details Programs a CV value in a locomotive or multi-function decoder
+         *     while it remains on the main track. Uses the long-form CV access
+         *     instruction per NMRA S-9.2.1.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param cv_number CV number (1-1024, 1-based per NMRA convention).
+         * @param value Byte value to write.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_cv_write_pom(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint16_t cv_number, uint8_t value);
 
-    /**
-     * @brief Build a POM CV verify packet (long form).
-     *
-     * @details Verifies a CV value in a locomotive or multi-function decoder
-     *     on the main track. The decoder acknowledges via RailCom or current
-     *     pulse if the value matches.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param cv_number CV number (1-1024, 1-based per NMRA convention).
-     * @param value Expected byte value to verify.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_cv_verify_pom(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint16_t cv_number, uint8_t value);
+        /**
+         * @brief Build a POM CV verify packet (long form).
+         *
+         * @details Verifies a CV value in a locomotive or multi-function decoder
+         *     on the main track. The decoder acknowledges via RailCom or current
+         *     pulse if the value matches.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param cv_number CV number (1-1024, 1-based per NMRA convention).
+         * @param value Expected byte value to verify.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_cv_verify_pom(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint16_t cv_number, uint8_t value);
 
-    /**
-     * @brief Build a POM CV bit manipulation packet (long form).
-     *
-     * @details Writes or verifies a single bit within a CV of a locomotive
-     *     or multi-function decoder on the main track. Useful for toggling
-     *     individual configuration flags.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param cv_number CV number (1-1024, 1-based per NMRA convention).
-     * @param bit_position Bit position within the CV byte (0-7).
-     * @param bit_value Desired bit value (true=1, false=0).
-     * @param write true=write the bit, false=verify the bit.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_cv_bit_pom(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint16_t cv_number, uint8_t bit_position, bool bit_value, bool write);
+        /**
+         * @brief Build a POM CV bit manipulation packet (long form).
+         *
+         * @details Writes or verifies a single bit within a CV of a locomotive
+         *     or multi-function decoder on the main track. Useful for toggling
+         *     individual configuration flags.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param cv_number CV number (1-1024, 1-based per NMRA convention).
+         * @param bit_position Bit position within the CV byte (0-7).
+         * @param bit_value Desired bit value (true=1, false=0).
+         * @param write true=write the bit, false=verify the bit.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_cv_bit_pom(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint16_t cv_number, uint8_t bit_position, bool bit_value, bool write);
 
 // =============================================================================
 // Consist Control
 // =============================================================================
 
-    /**
-     * @brief Build a consist address set packet.
-     *
-     * @details Assigns a locomotive to a consist by writing the consist
-     *     address into the decoder. The direction flag controls whether
-     *     the locomotive runs in its normal or reversed orientation within
-     *     the consist.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the locomotive.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param consist_address 7-bit consist address (1-127).
-     * @param direction_normal true=normal direction, false=reversed.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_consist_set(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t consist_address, bool direction_normal);
+        /**
+         * @brief Build a consist address set packet.
+         *
+         * @details Assigns a locomotive to a consist by writing the consist
+         *     address into the decoder. The direction flag controls whether
+         *     the locomotive runs in its normal or reversed orientation within
+         *     the consist.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the locomotive.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param consist_address 7-bit consist address (1-127).
+         * @param direction_normal true=normal direction, false=reversed.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_consist_set(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t consist_address, bool direction_normal);
 
-    /**
-     * @brief Build a consist address clear packet.
-     *
-     * @details Removes a locomotive from its consist by writing consist
-     *     address zero with normal direction.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the locomotive.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_consist_clear(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type);
+        /**
+         * @brief Build a consist address clear packet.
+         *
+         * @details Removes a locomotive from its consist by writing consist
+         *     address zero with normal direction.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the locomotive.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_consist_clear(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type);
 
 // =============================================================================
 // Binary State / Analog Function
 // =============================================================================
 
-    /**
-     * @brief Build a binary state control short form packet (states 0-127).
-     *
-     * @details Activates or deactivates a single binary state in the short
-     *     form encoding, supporting up to 128 states per decoder.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param state_number State number (0-127).
-     * @param active true=activate, false=deactivate.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_binary_state_short(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t state_number, bool active);
+        /**
+         * @brief Build a binary state control short form packet (states 0-127).
+         *
+         * @details Activates or deactivates a single binary state in the short
+         *     form encoding, supporting up to 128 states per decoder.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param state_number State number (0-127).
+         * @param active true=activate, false=deactivate.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_binary_state_short(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t state_number, bool active);
 
-    /**
-     * @brief Build a binary state control long form packet (states 0-32767).
-     *
-     * @details Activates or deactivates a single binary state in the long
-     *     form encoding, supporting up to 32768 states per decoder.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param state_number State number (0-32767).
-     * @param active true=activate, false=deactivate.
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_binary_state_long(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint16_t state_number, bool active);
+        /**
+         * @brief Build a binary state control long form packet (states 0-32767).
+         *
+         * @details Activates or deactivates a single binary state in the long
+         *     form encoding, supporting up to 32768 states per decoder.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param state_number State number (0-32767).
+         * @param active true=activate, false=deactivate.
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_binary_state_long(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint16_t state_number, bool active);
 
-    /**
-     * @brief Build an analog function control packet.
-     *
-     * @details Sends an 8-bit analog value to a numbered output on the
-     *     decoder. Commonly used for volume, lighting intensity, or other
-     *     continuously variable outputs.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param address DCC address of the target decoder.
-     * @param address_type Short or long address per @ref dcc_address_type_enum.
-     * @param output_number Analog output number (0-255).
-     * @param value Analog output value (0-255).
-     * @return true if packet was built successfully, false if invalid parameters.
-     */
-extern bool DccApplicationCommandStationPacket_load_analog_function(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t output_number, uint8_t value);
+        /**
+         * @brief Build an analog function control packet.
+         *
+         * @details Sends an 8-bit analog value to a numbered output on the
+         *     decoder. Commonly used for volume, lighting intensity, or other
+         *     continuously variable outputs.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param address DCC address of the target decoder.
+         * @param address_type Short or long address per @ref dcc_address_type_enum.
+         * @param output_number Analog output number (0-255).
+         * @param value Analog output value (0-255).
+         * @return true if packet was built successfully, false if invalid parameters.
+         */
+    extern bool DccApplicationCommandStationPacket_load_analog_function(dcc_packet_t *packet, dcc_address_t address, dcc_address_type_enum address_type, uint8_t output_number, uint8_t value);
 
 // =============================================================================
 // System Time (S-9.2.1 §2.3.6.3)
 // =============================================================================
 
-    /**
-     * @brief Build a System Time broadcast packet (S-9.2.1 §2.3.6.3).
-     *
-     * @details Broadcasts a 16-bit milliseconds-since-startup timestamp to
-     *     broadcast address 0 using feature-expansion sub-instruction 00010.
-     *     The value wraps at 65535 (~65.5 seconds). The spec recommends a
-     *     command station send this roughly every 30 seconds so decoders can
-     *     synchronize relative timing. The timestamp refers to the beginning
-     *     of the packet's start bit.
-     *
-     * @note The byte-level packet format for this instruction is defined only in
-     *     the NMRA draft revision of S-9.2.1 (posted 15-Nov-2025) and has not
-     *     yet been ratified. The ratified spec acknowledges the packet exists but
-     *     provides no byte-level definition. This implementation may need to
-     *     change if the format is modified before ratification.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param milliseconds Milliseconds since system startup (0-65535), sent
-     *     most-significant byte first per the spec.
-     */
-extern void DccApplicationCommandStationPacket_load_system_time(dcc_packet_t *packet, uint16_t milliseconds);
+        /**
+         * @brief Build a System Time broadcast packet (S-9.2.1 §2.3.6.3).
+         *
+         * @details Broadcasts a 16-bit milliseconds-since-startup timestamp to
+         *     broadcast address 0 using feature-expansion sub-instruction 00010.
+         *     The value wraps at 65535 (~65.5 seconds). The spec recommends a
+         *     command station send this roughly every 30 seconds so decoders can
+         *     synchronize relative timing. The timestamp refers to the beginning
+         *     of the packet's start bit.
+         *
+         * @note The byte-level packet format for this instruction is defined only in
+         *     the NMRA draft revision of S-9.2.1 (posted 15-Nov-2025) and has not
+         *     yet been ratified. The ratified spec acknowledges the packet exists but
+         *     provides no byte-level definition. This implementation may need to
+         *     change if the format is modified before ratification.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param milliseconds Milliseconds since system startup (0-65535), sent
+         *     most-significant byte first per the spec.
+         */
+    extern void DccApplicationCommandStationPacket_load_system_time(dcc_packet_t *packet, uint16_t milliseconds);
 
 // =============================================================================
 // Time / Date (S-9.2.1 §2.3.6.2)
 // =============================================================================
 
-    /**
-     * @brief Build a model Time broadcast packet (S-9.2.1 §2.3.6.2, CC=00).
-     *
-     * @details Broadcasts the model clock time to address 0 using feature-
-     *     expansion sub-instruction 00001 (0xC1). Carries minutes, day of week,
-     *     hours, an update flag, and the clock acceleration factor. Distinct
-     *     from @ref DccApplicationCommandStationPacket_load_system_time, which
-     *     reports raw milliseconds since startup.
-     *
-     * @note The byte-level packet format for this instruction is defined only in
-     *     the NMRA draft revision of S-9.2.1 (posted 15-Nov-2025). The ratified
-     *     spec acknowledges this packet type but provides no byte-level
-     *     definition. This implementation may need to change if the format is
-     *     modified before ratification.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param minutes Minutes past the hour (0-59).
-     * @param day_of_week Day of week per @ref dcc_day_of_week_enum.
-     * @param hours Hour of day (0-23).
-     * @param update true if the time has changed significantly since the last
-     *     update (sets the U bit); normally false.
-     * @param accel_factor Clock acceleration factor (0-63): 0=stopped,
-     *     1=real time, n=n x real time.
-     * @return true if the packet was built, false if any field is out of range.
-     */
-extern bool DccApplicationCommandStationPacket_load_model_time(dcc_packet_t *packet, uint8_t minutes, dcc_day_of_week_enum day_of_week, uint8_t hours, bool update, uint8_t accel_factor);
+        /**
+         * @brief Build a model Time broadcast packet (S-9.2.1 §2.3.6.2, CC=00).
+         *
+         * @details Broadcasts the model clock time to address 0 using feature-
+         *     expansion sub-instruction 00001 (0xC1). Carries minutes, day of week,
+         *     hours, an update flag, and the clock acceleration factor. Distinct
+         *     from @ref DccApplicationCommandStationPacket_load_system_time, which
+         *     reports raw milliseconds since startup.
+         *
+         * @note The byte-level packet format for this instruction is defined only in
+         *     the NMRA draft revision of S-9.2.1 (posted 15-Nov-2025). The ratified
+         *     spec acknowledges this packet type but provides no byte-level
+         *     definition. This implementation may need to change if the format is
+         *     modified before ratification.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param minutes Minutes past the hour (0-59).
+         * @param day_of_week Day of week per @ref dcc_day_of_week_enum.
+         * @param hours Hour of day (0-23).
+         * @param update true if the time has changed significantly since the last
+         *     update (sets the U bit); normally false.
+         * @param accel_factor Clock acceleration factor (0-63): 0=stopped,
+         *     1=real time, n=n x real time.
+         * @return true if the packet was built, false if any field is out of range.
+         */
+    extern bool DccApplicationCommandStationPacket_load_model_time(dcc_packet_t *packet, uint8_t minutes, dcc_day_of_week_enum day_of_week, uint8_t hours, bool update, uint8_t accel_factor);
 
-    /**
-     * @brief Build a model Date broadcast packet (S-9.2.1 §2.3.6.2, CC=01).
-     *
-     * @details Broadcasts the model calendar date to address 0 using feature-
-     *     expansion sub-instruction 00001 (0xC1). The year is a 12-bit value
-     *     split across two bytes (most-significant 4 bits packed with the month,
-     *     least-significant 8 bits in the final data byte).
-     *
-     * @note This packet type is entirely new in the NMRA draft revision of
-     *     S-9.2.1 (posted 15-Nov-2025) and does not exist in the current
-     *     ratified spec. This implementation may need to change if the format
-     *     is modified before ratification.
-     *
-     * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-     * @param day Day of the month (1-31).
-     * @param month Month (1-12, 1=January).
-     * @param year Year (0-4095).
-     * @return true if the packet was built, false if any field is out of range.
-     */
-extern bool DccApplicationCommandStationPacket_load_model_date(dcc_packet_t *packet, uint8_t day, uint8_t month, uint16_t year);
+        /**
+         * @brief Build a model Date broadcast packet (S-9.2.1 §2.3.6.2, CC=01).
+         *
+         * @details Broadcasts the model calendar date to address 0 using feature-
+         *     expansion sub-instruction 00001 (0xC1). The year is a 12-bit value
+         *     split across two bytes (most-significant 4 bits packed with the month,
+         *     least-significant 8 bits in the final data byte).
+         *
+         * @note This packet type is entirely new in the NMRA draft revision of
+         *     S-9.2.1 (posted 15-Nov-2025) and does not exist in the current
+         *     ratified spec. This implementation may need to change if the format
+         *     is modified before ratification.
+         *
+         * @param packet Pointer to a @ref dcc_packet_t struct to fill.
+         * @param day Day of the month (1-31).
+         * @param month Month (1-12, 1=January).
+         * @param year Year (0-4095).
+         * @return true if the packet was built, false if any field is out of range.
+         */
+    extern bool DccApplicationCommandStationPacket_load_model_date(dcc_packet_t *packet, uint8_t day, uint8_t month, uint16_t year);
 
 #ifdef __cplusplus
 }

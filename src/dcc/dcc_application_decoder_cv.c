@@ -28,7 +28,7 @@
  * @brief Application-layer implementation for decoder CV access.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_application_decoder_cv.h"
@@ -46,24 +46,24 @@ static const interface_dcc_application_decoder_cv_t *_interface = (void *)0;
 // Public API
 // =============================================================================
 
-/**
- * @verbatim
- * @param interface  Pointer to populated interface struct (wired by dcc_config.c).
- * @endverbatim
- */
+    /**
+     * @verbatim
+     * @param interface  Pointer to populated interface struct (wired by dcc_config.c).
+     * @endverbatim
+     */
 void DccApplicationDecoderCv_initialize(const interface_dcc_application_decoder_cv_t *interface) {
 
     _interface = interface;
 
 }
 
-/**
- * @verbatim
- * @param cv_number  CV number (1-based per NMRA convention).
- * @param value      Pointer to receive the CV value.
- * @endverbatim
- * @return true if the read succeeded, false on error or NULL interface.
- */
+    /**
+     * @verbatim
+     * @param cv_number  CV number (1-based per NMRA convention).
+     * @param value      Pointer to receive the CV value.
+     * @endverbatim
+     * @return true if the read succeeded, false on error or NULL interface.
+     */
 bool DccApplicationDecoderCv_read(uint16_t cv_number, uint8_t *value) {
 
     if (!_interface) {
@@ -76,13 +76,13 @@ bool DccApplicationDecoderCv_read(uint16_t cv_number, uint8_t *value) {
 
 }
 
-/**
- * @verbatim
- * @param cv_number  CV number (1-based per NMRA convention).
- * @param value      Value to write.
- * @endverbatim
- * @return true if the write succeeded, false if locked or on error.
- */
+    /**
+     * @verbatim
+     * @param cv_number  CV number (1-based per NMRA convention).
+     * @param value      Value to write.
+     * @endverbatim
+     * @return true if the write succeeded, false if locked or on error.
+     */
 bool DccApplicationDecoderCv_write(uint16_t cv_number, uint8_t value) {
 
     if (!_interface) {
@@ -101,9 +101,9 @@ bool DccApplicationDecoderCv_write(uint16_t cv_number, uint8_t value) {
 
 }
 
-/**
- * @return true if locked (CV 15 != CV 16), false if unlocked.
- */
+    /**
+     * @return true if locked (CV 15 != CV 16), false if unlocked.
+     */
 bool DccApplicationDecoderCv_is_locked(void) {
 
     if (!_interface) {

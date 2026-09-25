@@ -35,7 +35,7 @@
  * the current sense input via DccServiceModeCommon_ack_sample().
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_SERVICE_MODE_COMMON__
@@ -89,71 +89,77 @@ typedef struct {
 
 } dcc_service_mode_common_context_t;
 
-    /**
-     * @brief Initialize the service mode common module.
-     * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
-     * @param interface Pointer to populated @ref interface_dcc_service_mode_common_t struct.
-     */
+        /**
+         * @brief Initialize the service mode common module.
+         * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
+         * @param interface Pointer to populated @ref interface_dcc_service_mode_common_t struct.
+         */
     extern void DccServiceModeCommon_initialize(dcc_service_mode_common_context_t *context, const interface_dcc_service_mode_common_t *interface);
 
-    /**
-     * @brief Main loop processing for service mode state machine.
-     * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
-     */
-extern void DccServiceModeCommon_run(dcc_service_mode_common_context_t *context);
+        /**
+         * @brief Main loop processing for service mode state machine.
+         * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
+         */
+    extern void DccServiceModeCommon_run(dcc_service_mode_common_context_t *context);
 
-    /**
-     * @brief Sample the current sense input from the timer ISR.
-     * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
-     * @param sense_value Raw reading from current sense hardware.
-     */
+        /**
+         * @brief Sample the current sense input from the timer ISR.
+         * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
+         * @param sense_value Raw reading from current sense hardware.
+         */
     extern void DccServiceModeCommon_ack_sample(dcc_service_mode_common_context_t *context, uint16_t sense_value);
 
-    /**
-     * @brief Notify that the encoder has finished transmitting a packet.
-     * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
-     * @details Called from ISR context (via on_packet_complete callback).
-     */
-extern void DccServiceModeCommon_on_packet_complete(dcc_service_mode_common_context_t *context);
+        /**
+         * @brief Notify that the encoder has finished transmitting a packet.
+         * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
+         * @details Called from ISR context (via on_packet_complete callback).
+         */
+    extern void DccServiceModeCommon_on_packet_complete(dcc_service_mode_common_context_t *context);
 
-    /**
-     * @brief Check if the common module is idle (no operation in progress).
-     * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
-     * @return true if idle and ready for a new operation.
-     */
-extern bool DccServiceModeCommon_is_idle(const dcc_service_mode_common_context_t *context);
+        /**
+         * @brief Check if the common module is idle (no operation in progress).
+         * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
+         * @return true if idle and ready for a new operation.
+         */
+    extern bool DccServiceModeCommon_is_idle(const dcc_service_mode_common_context_t *context);
 
-    /**
-     * @brief Check if currently in service mode.
-     * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
-     * @return true if service mode is active.
-     */
-extern bool DccServiceModeCommon_is_active(const dcc_service_mode_common_context_t *context);
+        /**
+         * @brief Check if currently in service mode.
+         * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
+         * @return true if service mode is active.
+         */
+    extern bool DccServiceModeCommon_is_active(const dcc_service_mode_common_context_t *context);
 
-    /**
-     * @brief Enter service mode.
-     * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
-     * @return true if entered successfully.
-     */
-extern bool DccServiceModeCommon_enter(dcc_service_mode_common_context_t *context);
+        /**
+         * @brief Enter service mode.
+         * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
+         * @return true if entered successfully.
+         */
+    extern bool DccServiceModeCommon_enter(dcc_service_mode_common_context_t *context);
 
-    /**
-     * @brief Exit service mode.
-     * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
-     */
-extern void DccServiceModeCommon_exit(dcc_service_mode_common_context_t *context);
+        /**
+         * @brief Exit service mode.
+         * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
+         */
+    extern void DccServiceModeCommon_exit(dcc_service_mode_common_context_t *context);
 
-    /**
-     * @brief Start a single service mode operation.
-     * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
-     * @param command_packet Pointer to @ref dcc_packet_t to send during the command phase.
-     * @param on_step_complete Callback fired when the operation completes (@ref dcc_service_mode_step_callback_t).
-     * @param is_write_operation true for write operations (longer recovery), false for verify.
-     * @param command_repeat Number of command packets to send (S-9.2.3 minimum varies by mode).
-     * @param recovery_count Number of recovery packets to send after the command phase.
-     * @return true if operation started, false if busy or no current sense.
-     */
-    extern bool DccServiceModeCommon_begin_operation(dcc_service_mode_common_context_t *context, const dcc_packet_t *command_packet, dcc_service_mode_step_callback_t on_step_complete, bool is_write_operation, uint8_t command_repeat, uint8_t recovery_count);
+        /**
+         * @brief Start a single service mode operation.
+         * @param context Pointer to @ref dcc_service_mode_common_context_t instance.
+         * @param command_packet Pointer to @ref dcc_packet_t to send during the command phase.
+         * @param on_step_complete Callback fired when the operation completes (@ref dcc_service_mode_step_callback_t).
+         * @param is_write_operation true for write operations (longer recovery), false for verify.
+         * @param command_repeat Number of command packets to send (S-9.2.3 minimum varies by mode).
+         * @param recovery_count Number of recovery packets to send after the command phase.
+         * @return true if operation started, false if busy or no current sense.
+         */
+    extern bool DccServiceModeCommon_begin_operation(
+                dcc_service_mode_common_context_t *context,
+                const dcc_packet_t *command_packet,
+                dcc_service_mode_step_callback_t on_step_complete,
+                bool is_write_operation,
+                uint8_t command_repeat,
+                uint8_t recovery_count);
 
 #ifdef __cplusplus
 }

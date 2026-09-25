@@ -34,7 +34,7 @@
  * bracketed by the shared-resource lock + edge-IRQ mask. Disabled if tx_pin_set is NULL.
  *
  * @author Jim Kueneman
- * @date 28 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_RAILCOM_DECODER__
@@ -76,93 +76,93 @@ typedef struct {
 
 } interface_dcc_railcom_decoder_t;
 
-    /**
-     * @brief Initialize the RailCom encoder module.
-     * @param interface Pointer to populated interface struct.
-     */
-extern void DccRailcomDecoder_initialize(const interface_dcc_railcom_decoder_t *interface);
+        /**
+         * @brief Initialize the RailCom encoder module.
+         * @param interface Pointer to populated interface struct.
+         */
+    extern void DccRailcomDecoder_initialize(const interface_dcc_railcom_decoder_t *interface);
 
-    /**
-     * @brief Set this decoder's active address, pushed by the packet decoder whenever
-     *  it resolves or changes (at init and on address-CV writes).
-     *
-     * @details The RailCom Tx engine holds the address for its ADR (Channel 1)
-     *  datagram, so it never re-reads CVs during the cutout.
-     *
-     * @param address The decoder's resolved @ref dcc_address_t.
-     * @param type The resolved @ref dcc_address_type_enum (short / long).
-     */
-extern void DccRailcomDecoder_set_address(dcc_address_t address, dcc_address_type_enum type);
+        /**
+         * @brief Set this decoder's active address, pushed by the packet decoder whenever
+         *  it resolves or changes (at init and on address-CV writes).
+         *
+         * @details The RailCom Tx engine holds the address for its ADR (Channel 1)
+         *  datagram, so it never re-reads CVs during the cutout.
+         *
+         * @param address The decoder's resolved @ref dcc_address_t.
+         * @param type The resolved @ref dcc_address_type_enum (short / long).
+         */
+    extern void DccRailcomDecoder_set_address(dcc_address_t address, dcc_address_type_enum type);
 
-    /**
-     * @brief Transmit the armed RailCom reply into the cutout (call at the packet end-bit
-     *  edge, from the bit decoder's on_packet_received).
-     *
-     * @details No-op unless a command addressed to this decoder was recognized while its
-     *  bytes arrived (see @ref DccRailcomDecoder_on_byte_received). Re-validates the XOR of
-     *  the complete packet, and only then bit-bangs ADR (Channel 1) plus the app's optional
-     *  Channel 2 reply -- blank, Ch1, gap, Ch2 -- timed off the end-bit edge per S-9.3.2
-     *  sec 2.4. Blocks for the ~454us cutout with interrupts masked; intended for ISR context.
-     *
-     * @param data Complete packet bytes including the trailing XOR byte.
-     * @param count Number of bytes in @p data.
-     */
-extern void DccRailcomDecoder_transmit(const uint8_t *data, uint8_t count);
+        /**
+         * @brief Transmit the armed RailCom reply into the cutout (call at the packet end-bit
+         *  edge, from the bit decoder's on_packet_received).
+         *
+         * @details No-op unless a command addressed to this decoder was recognized while its
+         *  bytes arrived (see @ref DccRailcomDecoder_on_byte_received). Re-validates the XOR of
+         *  the complete packet, and only then bit-bangs ADR (Channel 1) plus the app's optional
+         *  Channel 2 reply -- blank, Ch1, gap, Ch2 -- timed off the end-bit edge per S-9.3.2
+         *  sec 2.4. Blocks for the ~454us cutout with interrupts masked; intended for ISR context.
+         *
+         * @param data Complete packet bytes including the trailing XOR byte.
+         * @param count Number of bytes in @p data.
+         */
+    extern void DccRailcomDecoder_transmit(const uint8_t *data, uint8_t count);
 
 // =============================================================================
 // Decoder-side recognizer (pure)
 // =============================================================================
 
-    /**
-     * @brief Total DCC packet length (including the XOR byte) implied by the bytes
-     *  received so far, from the self-describing multifunction-decoder instruction
-     *  format (S-9.2.1).
-     *
-     * @details Pure -- no side effects, no module state. The decoder-side RailCom
-     *  recognizer uses it to know a command is complete (the next byte is the XOR)
-     *  before the cutout. Returns 0 when the length cannot yet be determined: too few
-     *  bytes to classify, an extended form not yet sized (XPOM), an accessory/reserved
-     *  leading byte, or an instruction this module does not size.
-     *
-     * @param data Packet bytes received so far (address + instruction).
-     * @param count Number of bytes in @p data.
-     *
-     * @return Total packet length in bytes including XOR, or 0 if undeterminable.
-     */
-extern uint8_t DccRailcomDecoder_packet_length(const uint8_t *data, uint8_t count);
+        /**
+         * @brief Total DCC packet length (including the XOR byte) implied by the bytes
+         *  received so far, from the self-describing multifunction-decoder instruction
+         *  format (S-9.2.1).
+         *
+         * @details Pure -- no side effects, no module state. The decoder-side RailCom
+         *  recognizer uses it to know a command is complete (the next byte is the XOR)
+         *  before the cutout. Returns 0 when the length cannot yet be determined: too few
+         *  bytes to classify, an extended form not yet sized (XPOM), an accessory/reserved
+         *  leading byte, or an instruction this module does not size.
+         *
+         * @param data Packet bytes received so far (address + instruction).
+         * @param count Number of bytes in @p data.
+         *
+         * @return Total packet length in bytes including XOR, or 0 if undeterminable.
+         */
+    extern uint8_t DccRailcomDecoder_packet_length(const uint8_t *data, uint8_t count);
 
-    /**
-     * @brief Extract the multifunction address and its type from a packet's leading
-     *  bytes.
-     *
-     * @details Pure -- no side effects, no module state. Decodes the broadcast, short
-     *  (CV1), long (CV17/18), and idle leading bytes. The recognizer compares the
-     *  result against this decoder's own address to decide "addressed to me."
-     *
-     * @param data Packet bytes received so far.
-     * @param count Number of bytes in @p data.
-     * @param address Out: decoded @ref dcc_address_t (valid only when true is returned).
-     * @param type Out: decoded @ref dcc_address_type_enum (valid only when true returned).
-     *
-     * @return true if an address was decoded; false if too few bytes or an
-     *         accessory/reserved leading byte (not a multifunction packet).
-     */
-extern bool DccRailcomDecoder_packet_address(const uint8_t *data, uint8_t count,
-            dcc_address_t *address, dcc_address_type_enum *type);
+        /**
+         * @brief Extract the multifunction address and its type from a packet's leading
+         *  bytes.
+         *
+         * @details Pure -- no side effects, no module state. Decodes the broadcast, short
+         *  (CV1), long (CV17/18), and idle leading bytes. The recognizer compares the
+         *  result against this decoder's own address to decide "addressed to me."
+         *
+         * @param data Packet bytes received so far.
+         * @param count Number of bytes in @p data.
+         * @param address Out: decoded @ref dcc_address_t (valid only when true is returned).
+         * @param type Out: decoded @ref dcc_address_type_enum (valid only when true returned).
+         *
+         * @return true if an address was decoded; false if too few bytes or an
+         *         accessory/reserved leading byte (not a multifunction packet).
+         */
+    extern bool DccRailcomDecoder_packet_address(const uint8_t *data, uint8_t count,
+                dcc_address_t *address, dcc_address_type_enum *type);
 
-    /**
-     * @brief Feed one assembled packet byte to the RailCom Tx recognizer.
-     *
-     * @details Wired (in dcc_config) to the bit decoder's on_byte_received. As bytes
-     *  arrive it recognizes a complete command addressed to this decoder (the next byte is
-     *  the XOR) and arms the ADR reply plus the app's optional Channel 2 reply (firing
-     *  on_railcom_request before the XOR). The transmit itself happens later, at the
-     *  end-bit edge, in @ref DccRailcomDecoder_transmit.
-     *
-     * @param data Packet bytes assembled so far.
-     * @param count Number of bytes in @p data.
-     */
-extern void DccRailcomDecoder_on_byte_received(const uint8_t *data, uint8_t count);
+        /**
+         * @brief Feed one assembled packet byte to the RailCom Tx recognizer.
+         *
+         * @details Wired (in dcc_config) to the bit decoder's on_byte_received. As bytes
+         *  arrive it recognizes a complete command addressed to this decoder (the next byte is
+         *  the XOR) and arms the ADR reply plus the app's optional Channel 2 reply (firing
+         *  on_railcom_request before the XOR). The transmit itself happens later, at the
+         *  end-bit edge, in @ref DccRailcomDecoder_transmit.
+         *
+         * @param data Packet bytes assembled so far.
+         * @param count Number of bytes in @p data.
+         */
+    extern void DccRailcomDecoder_on_byte_received(const uint8_t *data, uint8_t count);
 
 #ifdef __cplusplus
 }

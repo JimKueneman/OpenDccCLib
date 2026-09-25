@@ -28,7 +28,7 @@
  * @brief Physical register mode CV programming (legacy, registers 1-8).
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_service_mode_register.h"
@@ -39,9 +39,9 @@
 
 typedef enum {
 
-    REGISTER_STATE_IDLE,
-    REGISTER_STATE_PAGE_PRESET,
-    REGISTER_STATE_COMMAND
+    DCC_REGISTER_STATE_IDLE,
+    DCC_REGISTER_STATE_PAGE_PRESET,
+    DCC_REGISTER_STATE_COMMAND
 
 } register_state_enum;
 
@@ -65,9 +65,7 @@ static void _append_xor(dcc_packet_t *packet) {
 
 static void _build_register_packet(dcc_packet_t *packet, uint8_t register_number, uint8_t value, bool write) {
 
-    uint8_t prefix = write
-                     ? DCC_SERVICE_REGISTER_WRITE_PREFIX
-                     : DCC_SERVICE_REGISTER_VERIFY_PREFIX;
+    uint8_t prefix = write ? DCC_SERVICE_REGISTER_WRITE_PREFIX : DCC_SERVICE_REGISTER_VERIFY_PREFIX;
 
     packet->data[0] = prefix | ((register_number - 1) & 0x07);
     packet->data[1] = value;
@@ -80,7 +78,7 @@ static void _build_register_packet(dcc_packet_t *packet, uint8_t register_number
 
 static void _on_command_complete(dcc_service_mode_result_t result) {
 
-    _active_context->register_state = REGISTER_STATE_IDLE;
+    _active_context->register_state = DCC_REGISTER_STATE_IDLE;
 
     if (_active_context->interface->on_complete) {
 
@@ -101,16 +99,14 @@ static void _on_preset_complete(dcc_service_mode_result_t result) {
     (void)result;
     memset(&packet, 0, sizeof(packet));
 
-    _active_context->register_state = REGISTER_STATE_COMMAND;
+    _active_context->register_state = DCC_REGISTER_STATE_COMMAND;
     _build_register_packet(&packet, _active_context->register_number, _active_context->value, _active_context->is_write);
 
     bool started;
 
     if (_active_context->is_write) {
 
-        uint8_t recovery = (_active_context->register_number == 1)
-                           ? DCC_SERVICE_MODE_RECOVERY_COUNT_LONG
-                           : DCC_SERVICE_MODE_RECOVERY_COUNT;
+        uint8_t recovery = (_active_context->register_number == 1) ? DCC_SERVICE_MODE_RECOVERY_COUNT_LONG : DCC_SERVICE_MODE_RECOVERY_COUNT;
 
         started = _active_context->interface->begin_operation(&packet, &_on_command_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, recovery);
 
@@ -126,7 +122,7 @@ static void _on_preset_complete(dcc_service_mode_result_t result) {
      * later call, since the state never returns to IDLE). */
     if (!started) {
 
-        _active_context->register_state = REGISTER_STATE_IDLE;
+        _active_context->register_state = DCC_REGISTER_STATE_IDLE;
 
         if (_active_context->interface->on_complete) {
 
@@ -157,7 +153,7 @@ static bool _begin_with_preset(dcc_service_mode_register_context_t *context, uin
 
     }
 
-    if (context->register_state != REGISTER_STATE_IDLE) {
+    if (context->register_state != DCC_REGISTER_STATE_IDLE) {
 
         return false;
 
@@ -166,14 +162,14 @@ static bool _begin_with_preset(dcc_service_mode_register_context_t *context, uin
     context->register_number = register_number;
     context->value = value;
     context->is_write = is_write;
-    context->register_state = REGISTER_STATE_PAGE_PRESET;
+    context->register_state = DCC_REGISTER_STATE_PAGE_PRESET;
     _active_context = context;
 
     _build_register_packet(&packet, DCC_SERVICE_MODE_PAGE_REGISTER, DCC_SERVICE_MODE_PAGE_PRESET_PAGE, true);
 
     if (!context->interface->begin_operation(&packet, &_on_preset_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT)) {
 
-        context->register_state = REGISTER_STATE_IDLE;
+        context->register_state = DCC_REGISTER_STATE_IDLE;
         return false;
 
     }
@@ -185,7 +181,7 @@ static bool _begin_with_preset(dcc_service_mode_register_context_t *context, uin
 void DccServiceModeRegister_initialize(dcc_service_mode_register_context_t *context, const interface_dcc_service_mode_register_t *interface) {
 
     context->interface = interface;
-    context->register_state = REGISTER_STATE_IDLE;
+    context->register_state = DCC_REGISTER_STATE_IDLE;
 
 }
 

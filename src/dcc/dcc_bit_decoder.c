@@ -29,7 +29,7 @@
  * assembly for DCC decoder.
  *
  * @author Jim Kueneman
- * @date 28 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_bit_decoder.h"
@@ -42,17 +42,17 @@
 
 typedef enum {
 
-    HALF_NONE,
-    HALF_SHORT,
-    HALF_LONG
+    DCC_HALF_NONE,
+    DCC_HALF_SHORT,
+    DCC_HALF_LONG
 
 } half_type_enum;
 
 typedef enum {
 
-    DECODE_SEEKING_PREAMBLE,
-    DECODE_ACCUMULATING,
-    DECODE_SEPARATOR
+    DCC_DECODE_SEEKING_PREAMBLE,
+    DCC_DECODE_ACCUMULATING,
+    DCC_DECODE_SEPARATOR
 
 } decode_state_enum;
 
@@ -82,7 +82,7 @@ static uint8_t _byte_count;
      */
 static void _reset_to_preamble(void) {
 
-    _state = DECODE_SEEKING_PREAMBLE;
+    _state = DCC_DECODE_SEEKING_PREAMBLE;
     _preamble_count = 0;
     _bit_count = 0;
     _byte_count = 0;
@@ -105,7 +105,7 @@ static void _on_bit_seeking_preamble(bool is_one) {
         if (_preamble_count >= DCC_PREAMBLE_BITS_DECODER_MIN) {
 
             /* Zero after valid preamble = start bit of first byte */
-            _state = DECODE_ACCUMULATING;
+            _state = DCC_DECODE_ACCUMULATING;
             _bit_count = 0;
             _byte_count = 0;
             _current_byte = 0;
@@ -121,6 +121,42 @@ static void _on_bit_seeking_preamble(bool is_one) {
 }
 
     /**
+     * @brief Packet end bit: hand the assembled packet to the interface and re-arm the
+     *  preamble search.
+     */
+static void _on_end_bit(void) {
+
+#if defined(DCC_COMPILE_RAILCOM)
+    /* RailCom: on_packet_received fires the Tx, which masks/unmasks the DCC edge IRQ
+     * for the cutout. Reset the assembler to a clean preamble search with a skipped
+     * first edge BEFORE that callback, so a queued/stale edge after unmask lands as the
+     * discarded baseline -- not a mid-packet event. The end bit is NOT counted as a
+     * preamble bit (the cutout gaps it from the next packet's preamble). */
+    uint8_t saved_count = _byte_count;
+
+    _reset_to_preamble();
+    _first_edge = true;
+
+    if (saved_count >= 2 && _interface->on_packet_received) {
+
+        _interface->on_packet_received(_packet_buffer, saved_count);
+
+    }
+#else
+    if (_byte_count >= 2 && _interface->on_packet_received) {
+
+        _interface->on_packet_received(_packet_buffer, _byte_count);
+
+    }
+
+    /* The end bit also counts as first preamble bit */
+    _state = DCC_DECODE_SEEKING_PREAMBLE;
+    _preamble_count = 1;
+#endif /* DCC_COMPILE_RAILCOM */
+
+}
+
+    /**
      * @brief Handle a decoded bit while waiting for a separator or end bit.
      * @param is_one true if the bit is a one-bit, false if zero-bit.
      */
@@ -129,35 +165,7 @@ static void _on_bit_separator(bool is_one) {
     if (is_one) {
 
         /* End bit — packet complete */
-#if defined(DCC_COMPILE_RAILCOM)
-        /* RailCom: on_packet_received fires the Tx, which masks/unmasks the DCC edge IRQ
-         * for the cutout. Reset the assembler to a clean preamble search with a skipped
-         * first edge BEFORE that callback, so a queued/stale edge after unmask lands as the
-         * discarded baseline -- not a mid-packet event. The end bit is NOT counted as a
-         * preamble bit (the cutout gaps it from the next packet's preamble). */
-        {
-            uint8_t saved_count = _byte_count;
-
-            _reset_to_preamble();
-            _first_edge = true;
-
-            if (saved_count >= 2 && _interface->on_packet_received) {
-
-                _interface->on_packet_received(_packet_buffer, saved_count);
-
-            }
-        }
-#else
-        if (_byte_count >= 2 && _interface->on_packet_received) {
-
-            _interface->on_packet_received(_packet_buffer, _byte_count);
-
-        }
-
-        /* The end bit also counts as first preamble bit */
-        _state = DECODE_SEEKING_PREAMBLE;
-        _preamble_count = 1;
-#endif /* DCC_COMPILE_RAILCOM */
+        _on_end_bit();
 
     } else {
 
@@ -169,7 +177,7 @@ static void _on_bit_separator(bool is_one) {
 
         } else {
 
-            _state = DECODE_ACCUMULATING;
+            _state = DCC_DECODE_ACCUMULATING;
             _bit_count = 0;
             _current_byte = 0;
 
@@ -179,17 +187,37 @@ static void _on_bit_separator(bool is_one) {
 
 }
 
+    /** @brief A full byte has been shifted in: store it and move to the separator-bit state. */
+static void _on_byte_complete(void) {
+
+    _packet_buffer[_byte_count] = _current_byte;
+    _byte_count++;
+
+#if defined(DCC_COMPILE_RAILCOM)
+    /* Emit the byte the instant it completes -- before the next byte arrives (so the
+     * last data byte fires before the XOR) for the RailCom Tx command-recognizer. */
+    if (_interface->on_byte_received) {
+
+        _interface->on_byte_received(_packet_buffer, _byte_count);
+
+    }
+#endif /* DCC_COMPILE_RAILCOM */
+
+    _state = DCC_DECODE_SEPARATOR;
+
+}
+
     /**
      * @brief Process a complete decoded bit (one or zero).
      * @param is_one true if the bit is a one-bit, false if zero-bit.
      */
 static void _on_bit(bool is_one) {
 
-    if (_state == DECODE_SEEKING_PREAMBLE) {
+    if (_state == DCC_DECODE_SEEKING_PREAMBLE) {
 
         _on_bit_seeking_preamble(is_one);
 
-    } else if (_state == DECODE_ACCUMULATING) {
+    } else if (_state == DCC_DECODE_ACCUMULATING) {
 
         /* Shift bit into current byte, MSB first */
         _current_byte = (_current_byte << 1) | (is_one ? 1 : 0);
@@ -197,20 +225,7 @@ static void _on_bit(bool is_one) {
 
         if (_bit_count >= 8) {
 
-            _packet_buffer[_byte_count] = _current_byte;
-            _byte_count++;
-
-#if defined(DCC_COMPILE_RAILCOM)
-            /* Emit the byte the instant it completes -- before the next byte arrives (so the
-             * last data byte fires before the XOR) for the RailCom Tx command-recognizer. */
-            if (_interface->on_byte_received) {
-
-                _interface->on_byte_received(_packet_buffer, _byte_count);
-
-            }
-#endif /* DCC_COMPILE_RAILCOM */
-
-            _state = DECODE_SEPARATOR;
+            _on_byte_complete();
 
         }
 
@@ -231,7 +246,7 @@ void DccBitDecoder_initialize(const interface_dcc_bit_decoder_t *interface) {
     _interface = interface;
     _last_edge_usec = 0;
     _first_edge = true;
-    _first_half_type = HALF_NONE;
+    _first_half_type = DCC_HALF_NONE;
     _reset_to_preamble();
 
 }
@@ -256,7 +271,7 @@ void DccBitDecoder_edge(uint32_t timestamp_usec) {
     if (elapsed >= DCC_DECODER_HALF_BIT_MAX_US) {
 
         /* Invalid — too long */
-        _first_half_type = HALF_NONE;
+        _first_half_type = DCC_HALF_NONE;
         _reset_to_preamble();
         return;
 
@@ -264,24 +279,24 @@ void DccBitDecoder_edge(uint32_t timestamp_usec) {
 
     if (elapsed < DCC_DECODER_HALF_BIT_THRESHOLD_US) {
 
-        this_half = HALF_SHORT;
+        this_half = DCC_HALF_SHORT;
 
     } else {
 
-        this_half = HALF_LONG;
+        this_half = DCC_HALF_LONG;
 
     }
 
     /* Pair half-bits */
-    if (_first_half_type == HALF_NONE) {
+    if (_first_half_type == DCC_HALF_NONE) {
 
         _first_half_type = this_half;
 
     } else if (_first_half_type == this_half) {
 
         /* Matching pair — emit a bit */
-        _on_bit(this_half == HALF_SHORT);
-        _first_half_type = HALF_NONE;
+        _on_bit(this_half == DCC_HALF_SHORT);
+        _first_half_type = DCC_HALF_NONE;
 
     } else {
 

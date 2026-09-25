@@ -28,7 +28,7 @@
  * @brief Address-only mode CV programming (writes CV 1 only).
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_service_mode_address.h"
@@ -39,9 +39,9 @@
 
 typedef enum {
 
-    ADDRESS_STATE_IDLE,
-    ADDRESS_STATE_PAGE_PRESET,
-    ADDRESS_STATE_COMMAND
+    DCC_ADDRESS_STATE_IDLE,
+    DCC_ADDRESS_STATE_PAGE_PRESET,
+    DCC_ADDRESS_STATE_COMMAND
 
 } address_state_enum;
 
@@ -68,9 +68,7 @@ static void _append_xor(dcc_packet_t *packet) {
      * (0111C000), both per S-9.2.3. */
 static void _build_register_packet(dcc_packet_t *packet, uint8_t register_number, uint8_t value, bool write) {
 
-    uint8_t prefix = write
-                     ? DCC_SERVICE_REGISTER_WRITE_PREFIX
-                     : DCC_SERVICE_REGISTER_VERIFY_PREFIX;
+    uint8_t prefix = write ? DCC_SERVICE_REGISTER_WRITE_PREFIX : DCC_SERVICE_REGISTER_VERIFY_PREFIX;
 
     packet->data[0] = prefix | ((register_number - 1) & 0x07);
     packet->data[1] = value;
@@ -83,7 +81,7 @@ static void _build_register_packet(dcc_packet_t *packet, uint8_t register_number
 
 static void _on_command_complete(dcc_service_mode_result_t result) {
 
-    _active_context->address_state = ADDRESS_STATE_IDLE;
+    _active_context->address_state = DCC_ADDRESS_STATE_IDLE;
 
     if (_active_context->interface->on_complete) {
 
@@ -102,7 +100,7 @@ static void _on_preset_complete(dcc_service_mode_result_t result) {
     (void)result;
     memset(&packet, 0, sizeof(packet));
 
-    _active_context->address_state = ADDRESS_STATE_COMMAND;
+    _active_context->address_state = DCC_ADDRESS_STATE_COMMAND;
     _build_register_packet(&packet, 1, _active_context->address, _active_context->is_write);
 
     bool started;
@@ -123,7 +121,7 @@ static void _on_preset_complete(dcc_service_mode_result_t result) {
      * later call, since the state never returns to IDLE). */
     if (!started) {
 
-        _active_context->address_state = ADDRESS_STATE_IDLE;
+        _active_context->address_state = DCC_ADDRESS_STATE_IDLE;
 
         if (_active_context->interface->on_complete) {
 
@@ -154,7 +152,7 @@ static bool _begin_with_preset(dcc_service_mode_address_context_t *context, uint
 
     }
 
-    if (context->address_state != ADDRESS_STATE_IDLE) {
+    if (context->address_state != DCC_ADDRESS_STATE_IDLE) {
 
         return false;
 
@@ -162,14 +160,14 @@ static bool _begin_with_preset(dcc_service_mode_address_context_t *context, uint
 
     context->address = address;
     context->is_write = is_write;
-    context->address_state = ADDRESS_STATE_PAGE_PRESET;
+    context->address_state = DCC_ADDRESS_STATE_PAGE_PRESET;
     _active_context = context;
 
     _build_register_packet(&packet, DCC_SERVICE_MODE_PAGE_REGISTER, DCC_SERVICE_MODE_PAGE_PRESET_PAGE, true);
 
     if (!context->interface->begin_operation(&packet, &_on_preset_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT)) {
 
-        context->address_state = ADDRESS_STATE_IDLE;
+        context->address_state = DCC_ADDRESS_STATE_IDLE;
         return false;
 
     }
@@ -181,7 +179,7 @@ static bool _begin_with_preset(dcc_service_mode_address_context_t *context, uint
 void DccServiceModeAddress_initialize(dcc_service_mode_address_context_t *context, const interface_dcc_service_mode_address_t *interface) {
 
     context->interface = interface;
-    context->address_state = ADDRESS_STATE_IDLE;
+    context->address_state = DCC_ADDRESS_STATE_IDLE;
 
 }
 

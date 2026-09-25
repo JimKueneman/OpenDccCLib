@@ -34,7 +34,7 @@
  * decode for receive.
  *
  * @author Jim Kueneman
- * @date 28 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_RAILCOM_UTILITIES__

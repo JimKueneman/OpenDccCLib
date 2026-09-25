@@ -34,7 +34,7 @@
  * raw packet bytes. Complete packets are forwarded via callback.
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_BIT_DECODER__
@@ -74,20 +74,20 @@ typedef struct {
 
 } interface_dcc_bit_decoder_t;
 
-    /**
-     * @brief Initialize the bit decoder module.
-     * @param interface Pointer to populated interface struct.
-     */
-extern void DccBitDecoder_initialize(const interface_dcc_bit_decoder_t *interface);
+        /**
+         * @brief Initialize the bit decoder module.
+         * @param interface Pointer to populated interface struct.
+         */
+    extern void DccBitDecoder_initialize(const interface_dcc_bit_decoder_t *interface);
 
-    /**
-     * @brief Process a signal edge from the input-capture ISR.
-     * @param timestamp_usec Microsecond timestamp of the edge.
-     *
-     * @details Call this from the input-capture ISR on every edge (rising or
-     * falling). The library classifies one/zero bits from the timing internally.
-     */
-extern void DccBitDecoder_edge(uint32_t timestamp_usec);
+        /**
+         * @brief Process a signal edge from the input-capture ISR.
+         * @param timestamp_usec Microsecond timestamp of the edge.
+         *
+         * @details Call this from the input-capture ISR on every edge (rising or
+         * falling). The library classifies one/zero bits from the timing internally.
+         */
+    extern void DccBitDecoder_edge(uint32_t timestamp_usec);
 
 #ifdef __cplusplus
 }

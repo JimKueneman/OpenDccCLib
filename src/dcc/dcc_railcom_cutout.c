@@ -28,15 +28,14 @@
  * @brief RailCom cutout timer state machine for the command station.
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_railcom_cutout.h"
 
 #if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_COMMAND_STATION)
 
-void DccRailcomCutout_initialize(dcc_railcom_cutout_context_t *context, const interface_dcc_railcom_cutout_t *interface,
-                                 uint16_t start_delay, uint16_t uart_rx_delay, uint16_t ch1, uint16_t gap, uint16_t ch2) {
+void DccRailcomCutout_initialize(dcc_railcom_cutout_context_t *context, const interface_dcc_railcom_cutout_t *interface, uint16_t start_delay, uint16_t uart_rx_delay, uint16_t ch1, uint16_t gap, uint16_t ch2) {
 
     context->interface = interface;
     context->state = DCC_RAILCOM_CUTOUT_IDLE;
@@ -75,39 +74,38 @@ void DccRailcomCutout_cancel(dcc_railcom_cutout_context_t *context) {
 
     }
 
-    if (context->state != DCC_RAILCOM_CUTOUT_IDLE) {
+    if (context->state == DCC_RAILCOM_CUTOUT_IDLE) {
 
-        if (context->interface->timer_one_shot_stop) {
-
-            context->interface->timer_one_shot_stop();
-
-        }
-
-        /* Re-enable H-bridge and disable UART if the cutout was active.
-         * The H-bridge is tristated once DELAY expires, i.e. in any of
-         * SETTLING / CH1 / GAP / CH2. */
-        if (context->state == DCC_RAILCOM_CUTOUT_SETTLING ||
-            context->state == DCC_RAILCOM_CUTOUT_CH1 ||
-            context->state == DCC_RAILCOM_CUTOUT_GAP ||
-            context->state == DCC_RAILCOM_CUTOUT_CH2) {
-
-            if (context->interface->uart_rx_disable) {
-
-                context->interface->uart_rx_disable();
-
-            }
-
-            if (context->interface->end_railcom_cutout) {
-
-                context->interface->end_railcom_cutout();
-
-            }
-
-        }
-
-        context->state = DCC_RAILCOM_CUTOUT_IDLE;
+        return;
 
     }
+
+    if (context->interface->timer_one_shot_stop) {
+
+        context->interface->timer_one_shot_stop();
+
+    }
+
+    /* Re-enable H-bridge and disable UART if the cutout was active.
+     * The H-bridge is tristated once DELAY expires, i.e. in any of
+     * SETTLING / CH1 / GAP / CH2. */
+    if (context->state == DCC_RAILCOM_CUTOUT_SETTLING || context->state == DCC_RAILCOM_CUTOUT_CH1 || context->state == DCC_RAILCOM_CUTOUT_GAP || context->state == DCC_RAILCOM_CUTOUT_CH2) {
+
+        if (context->interface->uart_rx_disable) {
+
+            context->interface->uart_rx_disable();
+
+        }
+
+        if (context->interface->end_railcom_cutout) {
+
+            context->interface->end_railcom_cutout();
+
+        }
+
+    }
+
+    context->state = DCC_RAILCOM_CUTOUT_IDLE;
 
 }
 

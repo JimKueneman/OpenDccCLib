@@ -32,7 +32,7 @@
  * directly from the NMRA specifications.
  *
  * @author Jim Kueneman
- * @date 28 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_DEFINES__
@@ -461,6 +461,24 @@ extern "C" {
 
     /** @brief Logon Enable datagram */
 #define DCC_RAILCOM_ID_LOGON_ENABLE         15
+
+// =============================================================================
+// RailCom Accessory Channel 2 Datagram IDs (2026 draft S-9.3.2, Section 7)
+// Accessory ID space -- distinct from the mobile DCC_RAILCOM_ID_* set above.
+// SRQ is a 12-bit Channel-1 datagram with NO identifier (Section 7.1 / Table 36).
+// =============================================================================
+
+    /** @brief All-pairs status (STAT4) */
+#define DCC_RAILCOM_ACC_ID_STATUS_4         3
+
+    /** @brief Single-pair status (STAT1) */
+#define DCC_RAILCOM_ACC_ID_STATUS           4
+
+    /** @brief Time report */
+#define DCC_RAILCOM_ACC_ID_TIME             5
+
+    /** @brief Error report */
+#define DCC_RAILCOM_ACC_ID_ERROR            6
 
 // =============================================================================
 // RailCom 4/8 Special Code Words (2026 draft S-9.3.2)

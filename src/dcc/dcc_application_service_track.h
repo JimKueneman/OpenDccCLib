@@ -123,37 +123,37 @@ typedef struct {
 
 } interface_dcc_application_service_track_t;
 
-    /**
-     * @brief Initialize the service track application module.
-     * @param interface Pointer to populated @ref interface_dcc_application_service_track_t struct (wired by dcc_config.c).
-     */
-extern void DccApplicationServiceTrack_initialize(const interface_dcc_application_service_track_t *interface);
+        /**
+         * @brief Initialize the service track application module.
+         * @param interface Pointer to populated @ref interface_dcc_application_service_track_t struct (wired by dcc_config.c).
+         */
+    extern void DccApplicationServiceTrack_initialize(const interface_dcc_application_service_track_t *interface);
 
     // =========================================================================
     // Power control
     // =========================================================================
 
-    /** @brief Enable service track power output and start DCC signal generation. */
-extern void DccApplicationServiceTrack_power_on(void);
+        /** @brief Enable service track power output and start DCC signal generation. */
+    extern void DccApplicationServiceTrack_power_on(void);
 
-    /** @brief Disable service track power output and stop DCC signal generation. */
-extern void DccApplicationServiceTrack_power_off(void);
+        /** @brief Disable service track power output and stop DCC signal generation. */
+    extern void DccApplicationServiceTrack_power_off(void);
 
     // =========================================================================
     // Service mode entry/exit
     // =========================================================================
 
-    /**
-     * @brief Enter service mode on the service track.
-     * @return true if service mode was activated, false if busy.
-     */
-extern bool DccApplicationServiceTrack_enter(void);
+        /**
+         * @brief Enter service mode on the service track.
+         * @return true if service mode was activated, false if busy.
+         */
+    extern bool DccApplicationServiceTrack_enter(void);
 
-    /** @brief Exit service mode on the service track. */
-extern void DccApplicationServiceTrack_exit(void);
+        /** @brief Exit service mode on the service track. */
+    extern void DccApplicationServiceTrack_exit(void);
 
-    /** @brief Check if service mode is currently active. */
-extern bool DccApplicationServiceTrack_is_active(void);
+        /** @brief Check if service mode is currently active. */
+    extern bool DccApplicationServiceTrack_is_active(void);
 
     // =========================================================================
     // Direct mode programming
@@ -161,17 +161,17 @@ extern bool DccApplicationServiceTrack_is_active(void);
 
 #ifdef DCC_COMPILE_SERVICE_MODE_DIRECT
 
-    /** @brief Direct mode: write a CV byte. */
-extern bool DccApplicationServiceTrack_direct_write_byte(uint16_t cv_number, uint8_t value);
+        /** @brief Direct mode: write a CV byte. */
+    extern bool DccApplicationServiceTrack_direct_write_byte(uint16_t cv_number, uint8_t value);
 
-    /** @brief Direct mode: verify a CV byte. */
-extern bool DccApplicationServiceTrack_direct_verify_byte(uint16_t cv_number, uint8_t value);
+        /** @brief Direct mode: verify a CV byte. */
+    extern bool DccApplicationServiceTrack_direct_verify_byte(uint16_t cv_number, uint8_t value);
 
-    /** @brief Direct mode: write a single CV bit. */
-extern bool DccApplicationServiceTrack_direct_write_bit(uint16_t cv_number, uint8_t bit_position, bool bit_value);
+        /** @brief Direct mode: write a single CV bit. */
+    extern bool DccApplicationServiceTrack_direct_write_bit(uint16_t cv_number, uint8_t bit_position, bool bit_value);
 
-    /** @brief Direct mode: verify a single CV bit. */
-extern bool DccApplicationServiceTrack_direct_verify_bit(uint16_t cv_number, uint8_t bit_position, bool bit_value);
+        /** @brief Direct mode: verify a single CV bit. */
+    extern bool DccApplicationServiceTrack_direct_verify_bit(uint16_t cv_number, uint8_t bit_position, bool bit_value);
 
 #endif /* DCC_COMPILE_SERVICE_MODE_DIRECT */
 
@@ -181,11 +181,11 @@ extern bool DccApplicationServiceTrack_direct_verify_bit(uint16_t cv_number, uin
 
 #ifdef DCC_COMPILE_SERVICE_MODE_PAGED
 
-    /** @brief Paged mode: write a CV. */
-extern bool DccApplicationServiceTrack_paged_write(uint16_t cv_number, uint8_t value);
+        /** @brief Paged mode: write a CV. */
+    extern bool DccApplicationServiceTrack_paged_write(uint16_t cv_number, uint8_t value);
 
-    /** @brief Paged mode: verify a CV. */
-extern bool DccApplicationServiceTrack_paged_verify(uint16_t cv_number, uint8_t value);
+        /** @brief Paged mode: verify a CV. */
+    extern bool DccApplicationServiceTrack_paged_verify(uint16_t cv_number, uint8_t value);
 
 #endif /* DCC_COMPILE_SERVICE_MODE_PAGED */
 
@@ -195,11 +195,11 @@ extern bool DccApplicationServiceTrack_paged_verify(uint16_t cv_number, uint8_t 
 
 #ifdef DCC_COMPILE_SERVICE_MODE_REGISTER
 
-    /** @brief Register mode: write a register. */
-extern bool DccApplicationServiceTrack_register_write(uint8_t register_number, uint8_t value);
+        /** @brief Register mode: write a register. */
+    extern bool DccApplicationServiceTrack_register_write(uint8_t register_number, uint8_t value);
 
-    /** @brief Register mode: verify a register. */
-extern bool DccApplicationServiceTrack_register_verify(uint8_t register_number, uint8_t value);
+        /** @brief Register mode: verify a register. */
+    extern bool DccApplicationServiceTrack_register_verify(uint8_t register_number, uint8_t value);
 
 #endif /* DCC_COMPILE_SERVICE_MODE_REGISTER */
 
@@ -209,11 +209,11 @@ extern bool DccApplicationServiceTrack_register_verify(uint8_t register_number, 
 
 #ifdef DCC_COMPILE_SERVICE_MODE_ADDRESS
 
-    /** @brief Address-only mode: write the short address (CV 1). */
-extern bool DccApplicationServiceTrack_address_write(uint8_t address);
+        /** @brief Address-only mode: write the short address (CV 1). */
+    extern bool DccApplicationServiceTrack_address_write(uint8_t address);
 
-    /** @brief Address-only mode: verify the short address (CV 1). */
-extern bool DccApplicationServiceTrack_address_verify(uint8_t address);
+        /** @brief Address-only mode: verify the short address (CV 1). */
+    extern bool DccApplicationServiceTrack_address_verify(uint8_t address);
 
 #endif /* DCC_COMPILE_SERVICE_MODE_ADDRESS */
 

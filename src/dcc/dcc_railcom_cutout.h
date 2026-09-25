@@ -42,7 +42,7 @@
  * through interface function pointers only (no direct includes).
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_RAILCOM_CUTOUT__
@@ -119,48 +119,48 @@ typedef struct {
 
 } dcc_railcom_cutout_context_t;
 
-    /**
-     * @brief Initialize the RailCom cutout module.
-     *  context Pointer to  dcc_railcom_cutout_context_t instance.
-     *  interface Pointer to populated  interface_dcc_railcom_cutout_t struct.
-     *  start_delay  DELAY duration (us)    — tristate H-bridge at T_CS on expiry.
-     *  uart_rx_delay SETTLING duration (us) — enable UART Rx at T_TS1 on expiry.
-     *  ch1          CH1 window duration (us) — disable UART Rx at T_TC1 on expiry.
-     *  gap          GAP duration (us)      — re-enable UART Rx at T_TS2 on expiry.
-     *  ch2          CH2 window duration (us) — disable UART Rx + restore at T_CE on expiry.
-     */
-extern void DccRailcomCutout_initialize(dcc_railcom_cutout_context_t *context, const interface_dcc_railcom_cutout_t *interface,
-                                        uint16_t start_delay, uint16_t uart_rx_delay, uint16_t ch1, uint16_t gap, uint16_t ch2);
+        /**
+         * @brief Initialize the RailCom cutout module.
+         *  context Pointer to  dcc_railcom_cutout_context_t instance.
+         *  interface Pointer to populated  interface_dcc_railcom_cutout_t struct.
+         *  start_delay  DELAY duration (us)    — tristate H-bridge at T_CS on expiry.
+         *  uart_rx_delay SETTLING duration (us) — enable UART Rx at T_TS1 on expiry.
+         *  ch1          CH1 window duration (us) — disable UART Rx at T_TC1 on expiry.
+         *  gap          GAP duration (us)      — re-enable UART Rx at T_TS2 on expiry.
+         *  ch2          CH2 window duration (us) — disable UART Rx + restore at T_CE on expiry.
+         */
+    extern void DccRailcomCutout_initialize(dcc_railcom_cutout_context_t *context, const interface_dcc_railcom_cutout_t *interface,
+                                            uint16_t start_delay, uint16_t uart_rx_delay, uint16_t ch1, uint16_t gap, uint16_t ch2);
 
-    /**
-     * @brief Begin the cutout sequence. Called when the end bit completes.
-     *  context Pointer to  dcc_railcom_cutout_context_t instance.
-     *
-     * @details Starts Timer 2 with a one-shot for the pre-cutout DELAY duration.
-     */
-extern void DccRailcomCutout_begin(dcc_railcom_cutout_context_t *context);
+        /**
+         * @brief Begin the cutout sequence. Called when the end bit completes.
+         *  context Pointer to  dcc_railcom_cutout_context_t instance.
+         *
+         * @details Starts Timer 2 with a one-shot for the pre-cutout DELAY duration.
+         */
+    extern void DccRailcomCutout_begin(dcc_railcom_cutout_context_t *context);
 
-    /**
-     * @brief Cancel the cutout sequence. Called on power-off or error.
-     *  context Pointer to  dcc_railcom_cutout_context_t instance.
-     */
-extern void DccRailcomCutout_cancel(dcc_railcom_cutout_context_t *context);
+        /**
+         * @brief Cancel the cutout sequence. Called on power-off or error.
+         *  context Pointer to  dcc_railcom_cutout_context_t instance.
+         */
+    extern void DccRailcomCutout_cancel(dcc_railcom_cutout_context_t *context);
 
-    /**
-     * @brief Timer 2 ISR entry point. Call from the one-shot timer ISR.
-     *  context Pointer to  dcc_railcom_cutout_context_t instance.
-     *
-     * @details Advances the cutout state machine through
-     *  DELAY -> SETTLING -> CH1 -> GAP -> CH2 -> IDLE.
-     */
-extern void DccRailcomCutout_timer_isr(dcc_railcom_cutout_context_t *context);
+        /**
+         * @brief Timer 2 ISR entry point. Call from the one-shot timer ISR.
+         *  context Pointer to  dcc_railcom_cutout_context_t instance.
+         *
+         * @details Advances the cutout state machine through
+         *  DELAY -> SETTLING -> CH1 -> GAP -> CH2 -> IDLE.
+         */
+    extern void DccRailcomCutout_timer_isr(dcc_railcom_cutout_context_t *context);
 
-    /**
-     * @brief Check if the cutout is idle (no cutout in progress).
-     *  context Pointer to  dcc_railcom_cutout_context_t instance.
-     * @return true if idle, false if a cutout is in progress.
-     */
-extern bool DccRailcomCutout_is_idle(const dcc_railcom_cutout_context_t *context);
+        /**
+         * @brief Check if the cutout is idle (no cutout in progress).
+         *  context Pointer to  dcc_railcom_cutout_context_t instance.
+         * @return true if idle, false if a cutout is in progress.
+         */
+    extern bool DccRailcomCutout_is_idle(const dcc_railcom_cutout_context_t *context);
 
 #ifdef __cplusplus
 }

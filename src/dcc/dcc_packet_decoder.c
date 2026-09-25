@@ -29,7 +29,7 @@
  * dispatch for decoders.
  *
  * @author Jim Kueneman
- * @date 28 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_packet_decoder.h"
@@ -83,8 +83,7 @@ static void _update_extended_address(void) {
     uint8_t high_byte;
     uint8_t low_byte;
 
-    if (_interface->cv_read(DCC_CV_EXTENDED_ADDRESS_HIGH, &high_byte) &&
-        _interface->cv_read(DCC_CV_EXTENDED_ADDRESS_LOW, &low_byte)) {
+    if (_interface->cv_read(DCC_CV_EXTENDED_ADDRESS_HIGH, &high_byte) && _interface->cv_read(DCC_CV_EXTENDED_ADDRESS_LOW, &low_byte)) {
 
         _my_address = ((uint16_t)(high_byte & 0x3F) << 8) | low_byte;
         _my_address_type = DCC_ADDRESS_LONG;
@@ -132,17 +131,12 @@ static void _update_accessory_address(void) {
 
     if (_interface->cv_read(DCC_CV_ACC_CONFIG, &cv541_value)) {
 
-        _my_address_type = (cv541_value & DCC_CV541_BASIC_EXTENDED_BIT)
-            ? DCC_ADDRESS_ACCESSORY_EXTENDED
-            : DCC_ADDRESS_ACCESSORY;
-        _use_output_address = (cv541_value & DCC_CV541_ADDRESS_METHOD_BIT)
-            ? true
-            : false;
+        _my_address_type = (cv541_value & DCC_CV541_BASIC_EXTENDED_BIT) ? DCC_ADDRESS_ACCESSORY_EXTENDED : DCC_ADDRESS_ACCESSORY;
+        _use_output_address = (cv541_value & DCC_CV541_ADDRESS_METHOD_BIT) ? true : false;
 
     }
 
-    if (_interface->cv_read(DCC_CV_ACC_ADDRESS_LSB, &address_low_byte) &&
-        _interface->cv_read(DCC_CV_ACC_ADDRESS_MSB, &address_high_byte)) {
+    if (_interface->cv_read(DCC_CV_ACC_ADDRESS_LSB, &address_low_byte) && _interface->cv_read(DCC_CV_ACC_ADDRESS_MSB, &address_high_byte)) {
 
         if (_use_output_address) {
 
@@ -186,8 +180,7 @@ static void _update_address_cv_cache(void) {
     }
 
     /* Check CV541 to determine decoder class */
-    if (_interface->cv_read(DCC_CV_ACC_CONFIG, &cv541_value) &&
-        (cv541_value & DCC_CV541_ACCESSORY_DECODER_BIT)) {
+    if (_interface->cv_read(DCC_CV_ACC_CONFIG, &cv541_value) && (cv541_value & DCC_CV541_ACCESSORY_DECODER_BIT)) {
 
         _update_accessory_address();
         return;
@@ -741,6 +734,29 @@ static void _dispatch_acc_cv_access(const uint8_t *instruction_bytes, uint8_t in
 }
 
     /**
+     * @brief Accessory CV-access long form: does the packet's address select this decoder
+     *  under the active addressing method (output address or board address)?
+     */
+static bool _acc_cv_access_is_for_me(const uint8_t *data) {
+
+    uint8_t cv_addr_low = data[0] & 0x3F;
+    uint8_t cv_addr_high_inv = (data[1] >> 4) & 0x07;
+    uint16_t cv_board_address = (uint16_t)cv_addr_low | ((uint16_t)(~cv_addr_high_inv & 0x07) << 6);
+
+    if (_use_output_address) {
+
+        /* A1=bit2, A0=bit1 per S-9.2.1 2025 notation */
+        uint16_t cv_output_address = (cv_board_address << 2) | ((data[1] >> 1) & 0x03);
+
+        return (cv_output_address == _my_address);
+
+    }
+
+    return (cv_board_address == _my_address);
+
+}
+
+    /**
      * @brief Dispatch a basic accessory instruction.
      * @param data Raw packet bytes.
      * @param byte_count Number of bytes.
@@ -762,30 +778,9 @@ static void _dispatch_accessory_basic(const uint8_t *data, uint8_t byte_count) {
     /* CV access long form (ops-mode): 6-byte packet, byte 2 starts with 1110 */
     if (byte_count == 6 && (data[2] & 0xF0) == 0xE0) {
 
-        uint8_t cv_addr_low = data[0] & 0x3F;
-        uint8_t cv_addr_high_inv = (data[1] >> 4) & 0x07;
-        uint16_t cv_board_address = (uint16_t)cv_addr_low |
-                    ((uint16_t)(~cv_addr_high_inv & 0x07) << 6);
+        if (!_acc_cv_access_is_for_me(data)) {
 
-        if (_use_output_address) {
-
-            /* A1=bit2, A0=bit1 per S-9.2.1 2025 notation */
-            uint16_t cv_output_address = (cv_board_address << 2) |
-                        ((data[1] >> 1) & 0x03);
-
-            if (cv_output_address != _my_address) {
-
-                return;
-
-            }
-
-        } else {
-
-            if (cv_board_address != _my_address) {
-
-                return;
-
-            }
+            return;
 
         }
 
@@ -854,8 +849,7 @@ static void _dispatch_accessory_extended(const uint8_t *data, uint8_t byte_count
 
         uint8_t cv_addr_low = data[0] & 0x3F;
         uint8_t cv_addr_high_inv = ((data[1] >> 4) & 0x07);
-        uint16_t cv_address = (uint16_t)cv_addr_low |
-                    ((uint16_t)(~cv_addr_high_inv & 0x07) << 6);
+        uint16_t cv_address = (uint16_t)cv_addr_low | ((uint16_t)(~cv_addr_high_inv & 0x07) << 6);
         cv_address |= (uint16_t)((data[1] >> 1) & 0x03) << 9;
 
         if (cv_address != _my_address) {
@@ -1143,22 +1137,22 @@ static void _dispatch_service_mode_bit_manipulate(uint16_t cv_number, uint8_t da
      */
 static void _dispatch_service_mode_direct(const uint8_t *data) {
 
-    uint8_t cc = (data[0] >> 2) & 0x03;
+    uint8_t cv_command_bits = (data[0] >> 2) & 0x03;
     uint16_t cv_number = (uint16_t)((data[0] & 0x03) << 8) | data[1];
     cv_number += 1;  /* 0-based wire → 1-based CV */
     uint8_t data_byte = data[2];
 
-    if (cc == 0x03) {
+    if (cv_command_bits == 0x03) {
 
         /* Write byte (CC=11) */
         _cv_write_and_notify(cv_number, data_byte, true);
 
-    } else if (cc == 0x01) {
+    } else if (cv_command_bits == 0x01) {
 
         /* Verify byte (CC=01) */
         _cv_verify_byte(cv_number, data_byte);
 
-    } else if (cc == 0x02) {
+    } else if (cv_command_bits == 0x02) {
 
         /* Bit manipulate (CC=10) */
         _dispatch_service_mode_bit_manipulate(cv_number, data_byte);
@@ -1233,8 +1227,7 @@ void DccPacketDecoder_initialize(const interface_dcc_packet_decoder_t *interface
      */
 static void _dispatch_accessory(const uint8_t *data, uint8_t byte_count) {
 
-    if (_my_address_type != DCC_ADDRESS_ACCESSORY &&
-        _my_address_type != DCC_ADDRESS_ACCESSORY_EXTENDED) {
+    if (_my_address_type != DCC_ADDRESS_ACCESSORY && _my_address_type != DCC_ADDRESS_ACCESSORY_EXTENDED) {
 
         return;
 
@@ -1325,9 +1318,7 @@ void DccPacketDecoder_process_packet(const uint8_t *data, uint8_t byte_count) {
         inst_start = 1;
 
         /* Address match: must match our address, or broadcast */
-        if (packet_address != _my_address &&
-            _my_address_type != DCC_ADDRESS_BROADCAST &&
-            packet_address != DCC_ADDRESS_BROADCAST_VALUE) {
+        if (packet_address != _my_address && _my_address_type != DCC_ADDRESS_BROADCAST && packet_address != DCC_ADDRESS_BROADCAST_VALUE) {
 
             return;
 

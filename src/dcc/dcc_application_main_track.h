@@ -76,37 +76,37 @@ typedef struct {
 
 } interface_dcc_application_main_track_t;
 
-    /**
-     * @brief Initialize the main track application module.
-     * @param interface Pointer to populated interface struct (wired by dcc_config.c).
-     */
-extern void DccApplicationMainTrack_initialize(const interface_dcc_application_main_track_t *interface);
+        /**
+         * @brief Initialize the main track application module.
+         * @param interface Pointer to populated interface struct (wired by dcc_config.c).
+         */
+    extern void DccApplicationMainTrack_initialize(const interface_dcc_application_main_track_t *interface);
 
-    /** @brief Enable main track power output and start DCC signal generation. */
-extern void DccApplicationMainTrack_power_on(void);
+        /** @brief Enable main track power output and start DCC signal generation. */
+    extern void DccApplicationMainTrack_power_on(void);
 
-    /** @brief Disable main track power output and stop DCC signal generation. */
-extern void DccApplicationMainTrack_power_off(void);
+        /** @brief Disable main track power output and stop DCC signal generation. */
+    extern void DccApplicationMainTrack_power_off(void);
 
-    /**
-     * @brief Insert a packet into the main track scheduler.
-     * @param packet The DCC packet to schedule.
-     * @param address DCC address for duplicate combining key.
-     * @param tag Sub-key for duplicate combining (e.g., function group).
-     * @param priority Packet priority level.
-     * @param auto_refresh true = keep in refresh cycle indefinitely.
-     * @return true if packet was scheduled, false if no free slots.
-     */
-extern bool DccApplicationMainTrack_insert(const dcc_packet_t *packet, dcc_address_t address, dcc_tag_enum tag, dcc_priority_enum priority, bool auto_refresh);
+        /**
+         * @brief Insert a packet into the main track scheduler.
+         * @param packet The DCC packet to schedule.
+         * @param address DCC address for duplicate combining key.
+         * @param tag Sub-key for duplicate combining (e.g., function group).
+         * @param priority Packet priority level.
+         * @param auto_refresh true = keep in refresh cycle indefinitely.
+         * @return true if packet was scheduled, false if no free slots.
+         */
+    extern bool DccApplicationMainTrack_insert(const dcc_packet_t *packet, dcc_address_t address, dcc_tag_enum tag, dcc_priority_enum priority, bool auto_refresh);
 
-    /**
-     * @brief Remove all scheduler slots for a given address.
-     * @param address The address to purge.
-     */
-extern void DccApplicationMainTrack_remove_address(dcc_address_t address);
+        /**
+         * @brief Remove all scheduler slots for a given address.
+         * @param address The address to purge.
+         */
+    extern void DccApplicationMainTrack_remove_address(dcc_address_t address);
 
-    /** @brief Clear all active scheduler slots. */
-extern void DccApplicationMainTrack_clear(void);
+        /** @brief Clear all active scheduler slots. */
+    extern void DccApplicationMainTrack_clear(void);
 
 #ifdef __cplusplus
 }

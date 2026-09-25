@@ -33,7 +33,7 @@
  * is NULL in the config.
  *
  * @author Jim Kueneman
- * @date 28 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_RAILCOM_COMMAND_STATION__
@@ -79,46 +79,46 @@ typedef struct {
 
 } dcc_railcom_command_station_context_t;
 
-    /**
-     * @brief Initialize the RailCom decoder module.
-     * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
-     * @param interface Pointer to populated @ref interface_dcc_railcom_command_station_t struct.
-     */
+        /**
+         * @brief Initialize the RailCom decoder module.
+         * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
+         * @param interface Pointer to populated @ref interface_dcc_railcom_command_station_t struct.
+         */
     extern void DccRailcomCommandStation_initialize(dcc_railcom_command_station_context_t *context, const interface_dcc_railcom_command_station_t *interface);
 
-    /**
-     * @brief Main loop processing for the RailCom decoder.
-     * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
-     */
-extern void DccRailcomCommandStation_run(dcc_railcom_command_station_context_t *context);
+        /**
+         * @brief Main loop processing for the RailCom decoder.
+         * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
+         */
+    extern void DccRailcomCommandStation_run(dcc_railcom_command_station_context_t *context);
 
-    /**
-     * @brief Begin a RailCom cutout window for a given address.
-     * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
-     * @param address The DCC address associated with this cutout.
-     */
+        /**
+         * @brief Begin a RailCom cutout window for a given address.
+         * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
+         * @param address The DCC address associated with this cutout.
+         */
     extern void DccRailcomCommandStation_begin_cutout(dcc_railcom_command_station_context_t *context, dcc_address_t address);
 
-    /**
-     * @brief End the current RailCom cutout window.
-     * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
-     */
-extern void DccRailcomCommandStation_end_cutout(dcc_railcom_command_station_context_t *context);
+        /**
+         * @brief End the current RailCom cutout window.
+         * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
+         */
+    extern void DccRailcomCommandStation_end_cutout(dcc_railcom_command_station_context_t *context);
 
-    /**
-     * @brief Read the next decoded RailCom datagram from the buffer.
-     * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
-     * @param datagram Pointer to @ref dcc_railcom_datagram_t to fill with decoded data.
-     * @return true if a datagram was available, false if buffer empty.
-     */
+        /**
+         * @brief Read the next decoded RailCom datagram from the buffer.
+         * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
+         * @param datagram Pointer to @ref dcc_railcom_datagram_t to fill with decoded data.
+         * @return true if a datagram was available, false if buffer empty.
+         */
     extern bool DccRailcomCommandStation_read(dcc_railcom_command_station_context_t *context, dcc_railcom_datagram_t *datagram);
 
-    /**
-     * @brief Return the number of decoded datagrams available in the buffer.
-     * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
-     * @return Number of datagrams waiting to be read.
-     */
-extern uint8_t DccRailcomCommandStation_available(const dcc_railcom_command_station_context_t *context);
+        /**
+         * @brief Return the number of decoded datagrams available in the buffer.
+         * @param context Pointer to @ref dcc_railcom_command_station_context_t instance.
+         * @return Number of datagrams waiting to be read.
+         */
+    extern uint8_t DccRailcomCommandStation_available(const dcc_railcom_command_station_context_t *context);
 
 #ifdef __cplusplus
 }

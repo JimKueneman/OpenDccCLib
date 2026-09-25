@@ -28,7 +28,7 @@
  * @brief Paged mode CV programming via register 6 page pointer.
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_service_mode_paged.h"
@@ -43,9 +43,9 @@
 
 typedef enum {
 
-    PAGED_STATE_IDLE,
-    PAGED_STATE_PAGE_SELECT,
-    PAGED_STATE_DATA_ACCESS
+    DCC_PAGED_STATE_IDLE,
+    DCC_PAGED_STATE_PAGE_SELECT,
+    DCC_PAGED_STATE_DATA_ACCESS
 
 } paged_state_enum;
 
@@ -74,9 +74,7 @@ static void _append_xor(dcc_packet_t *packet) {
 
 static void _build_register_packet(dcc_packet_t *packet, uint8_t register_number, uint8_t value, bool write) {
 
-    uint8_t prefix = write
-                     ? DCC_SERVICE_REGISTER_WRITE_PREFIX
-                     : DCC_SERVICE_REGISTER_VERIFY_PREFIX;
+    uint8_t prefix = write ? DCC_SERVICE_REGISTER_WRITE_PREFIX : DCC_SERVICE_REGISTER_VERIFY_PREFIX;
 
     packet->data[0] = prefix | ((register_number - 1) & 0x07);
     packet->data[1] = value;
@@ -100,7 +98,7 @@ static void _on_page_select_complete(dcc_service_mode_result_t result) {
      * the page-write phase completes either by ACK or by sending its packet
      * count, and ACK is optional (some decoders never assert one), so the page
      * select's own ACK result is not required to proceed. */
-    _active_context->paged_state = PAGED_STATE_DATA_ACCESS;
+    _active_context->paged_state = DCC_PAGED_STATE_DATA_ACCESS;
     _build_register_packet(&packet, _active_context->data_register, _active_context->data_value, _active_context->is_write);
 
     /* begin_operation() refuses to start when the shared context is not idle.
@@ -109,7 +107,7 @@ static void _on_page_select_complete(dcc_service_mode_result_t result) {
      * paged call, since the state never returns to IDLE). */
     if (!_active_context->interface->begin_operation(&packet, &_on_data_access_complete, _active_context->is_write, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT)) {
 
-        _active_context->paged_state = PAGED_STATE_IDLE;
+        _active_context->paged_state = DCC_PAGED_STATE_IDLE;
 
         if (_active_context->interface->on_complete) {
 
@@ -123,7 +121,7 @@ static void _on_page_select_complete(dcc_service_mode_result_t result) {
 
 static void _on_data_access_complete(dcc_service_mode_result_t result) {
 
-    _active_context->paged_state = PAGED_STATE_IDLE;
+    _active_context->paged_state = DCC_PAGED_STATE_IDLE;
 
     if (_active_context->interface->on_complete) {
 
@@ -140,7 +138,7 @@ static void _on_data_access_complete(dcc_service_mode_result_t result) {
 void DccServiceModePaged_initialize(dcc_service_mode_paged_context_t *context, const interface_dcc_service_mode_paged_t *interface) {
 
     context->interface = interface;
-    context->paged_state = PAGED_STATE_IDLE;
+    context->paged_state = DCC_PAGED_STATE_IDLE;
 
 }
 
@@ -162,7 +160,7 @@ bool DccServiceModePaged_write(dcc_service_mode_paged_context_t *context, uint16
 
     }
 
-    if (context->paged_state != PAGED_STATE_IDLE) {
+    if (context->paged_state != DCC_PAGED_STATE_IDLE) {
 
         return false;
 
@@ -173,13 +171,13 @@ bool DccServiceModePaged_write(dcc_service_mode_paged_context_t *context, uint16
     context->data_value = value;
     context->is_write = true;
 
-    context->paged_state = PAGED_STATE_PAGE_SELECT;
+    context->paged_state = DCC_PAGED_STATE_PAGE_SELECT;
     _active_context = context;
     _build_register_packet(&packet, DCC_SERVICE_MODE_PAGE_REGISTER, page, true);
 
     if (!context->interface->begin_operation(&packet, &_on_page_select_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT)) {
 
-        context->paged_state = PAGED_STATE_IDLE;
+        context->paged_state = DCC_PAGED_STATE_IDLE;
         return false;
 
     }
@@ -206,7 +204,7 @@ bool DccServiceModePaged_verify(dcc_service_mode_paged_context_t *context, uint1
 
     }
 
-    if (context->paged_state != PAGED_STATE_IDLE) {
+    if (context->paged_state != DCC_PAGED_STATE_IDLE) {
 
         return false;
 
@@ -217,13 +215,13 @@ bool DccServiceModePaged_verify(dcc_service_mode_paged_context_t *context, uint1
     context->data_value = value;
     context->is_write = false;
 
-    context->paged_state = PAGED_STATE_PAGE_SELECT;
+    context->paged_state = DCC_PAGED_STATE_PAGE_SELECT;
     _active_context = context;
     _build_register_packet(&packet, DCC_SERVICE_MODE_PAGE_REGISTER, page, true);
 
     if (!context->interface->begin_operation(&packet, &_on_page_select_complete, true, DCC_SERVICE_MODE_COMMAND_REPEAT, DCC_SERVICE_MODE_RECOVERY_COUNT)) {
 
-        context->paged_state = PAGED_STATE_IDLE;
+        context->paged_state = DCC_PAGED_STATE_IDLE;
         return false;
 
     }

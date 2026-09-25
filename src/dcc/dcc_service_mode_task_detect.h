@@ -40,7 +40,7 @@
  * Singleton — only one service track per command station.
  *
  * @author Jim Kueneman
- * @date 23 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_SERVICE_MODE_TASK_DETECT__
@@ -79,30 +79,30 @@ typedef struct {
 
 } interface_dcc_service_mode_task_detect_t;
 
-    /**
-     * @brief Initialize the detect task module. Call once during DccConfig_initialize().
-     * @param interface Pointer to populated @ref interface_dcc_service_mode_task_detect_t (wired by dcc_config.c).
-     */
+        /**
+         * @brief Initialize the detect task module. Call once during DccConfig_initialize().
+         * @param interface Pointer to populated @ref interface_dcc_service_mode_task_detect_t (wired by dcc_config.c).
+         */
     extern void DccServiceModeTaskDetect_initialize(const interface_dcc_service_mode_task_detect_t *interface);
 
-    /**
-     * @brief Probe the decoder for ALL supported service modes.
-     *        Runs Direct → Paged → Register → Address-Only, accumulating a
-     *        DCC_SERVICE_MODE_SUPPORTED_* bitmask. If none acknowledge, the bitmask
-     *        is 0 and result is DCC_SERVICE_MODE_NO_ACK; otherwise SUCCESS.
-     * @param on_detect Called when detection completes; supported_modes = capability bitmask.
-     * @return true if started, false if busy.
-     */
+        /**
+         * @brief Probe the decoder for ALL supported service modes.
+         *        Runs Direct → Paged → Register → Address-Only, accumulating a
+         *        DCC_SERVICE_MODE_SUPPORTED_* bitmask. If none acknowledge, the bitmask
+         *        is 0 and result is DCC_SERVICE_MODE_NO_ACK; otherwise SUCCESS.
+         * @param on_detect Called when detection completes; supported_modes = capability bitmask.
+         * @return true if started, false if busy.
+         */
     extern bool DccServiceModeTaskDetect_detect_mode(dcc_service_mode_task_on_detect_callback_t on_detect);
 
-    /**
-     * @brief Notify the task module that the primitive has finished its full operation
-     *        (including recovery packets). Wire this into the primitive's on_complete slot
-     *        via dcc_config.c. The task module advances its state machine on this event;
-     *        the ACK outcome is taken from @p result (SUCCESS = ACK detected by the common
-     *        module's pulse-width measurement, anything else = no ACK).
-     * @param result Result of the primitive operation (passed through from primitive callback).
-     */
+        /**
+         * @brief Notify the task module that the primitive has finished its full operation
+         *        (including recovery packets). Wire this into the primitive's on_complete slot
+         *        via dcc_config.c. The task module advances its state machine on this event;
+         *        the ACK outcome is taken from @p result (SUCCESS = ACK detected by the common
+         *        module's pulse-width measurement, anything else = no ACK).
+         * @param result Result of the primitive operation (passed through from primitive callback).
+         */
     extern void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_t result);
 
 #ifdef __cplusplus

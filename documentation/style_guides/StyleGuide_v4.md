@@ -251,6 +251,14 @@ Never `#include` a module header to call its functions directly in another modul
 
 The only file that includes all module headers is `dcc_config.c` — the wiring module.  It builds the interface structs, allocates context structs, and passes them to each module's `_initialize()` function.
 
+**Exception — common utilities modules.**  A utilities module (`dcc_<name>_utilities.h` / `.c`, for example `dcc_railcom_utilities.h`) is exempt from the interface-struct rule and may be `#include`d directly by any module; that is the definition of what a utilities module is.  To qualify, the module must be:
+
+- **Stateless** — no context struct, no static mutable data, every function is a pure computation on its arguments.
+- **Dependency-free** — includes only `dcc_types.h` / `dcc_defines.h`; never another module's header.
+- **Standalone testable** — it has its own `dcc_<name>_utilities_Test.cxx` that exercises it with no other module linked in.
+
+Anything that holds state or calls out to hardware is a module, not a utility, and goes through an interface struct.
+
 ~~~
 
 // In dcc_config.c — the ONLY place that wires modules together:
@@ -396,6 +404,8 @@ During style review, verify that no stack-allocated struct is declared without a
 ### Functions and Variable Formats and Naming
 
 All variable and function names SHALL not be named short historical C name such as i, x, src.  The names shall contain a context for what the variable function does and be limited to 40 characters.
+
+The 40-character limit applies to the descriptive part of the name, not the module prefix.  For a public function `Dcc<Module>_<action>` the limit is measured on `<action>` only, i.e. everything after the first underscore that follows the module ID.  For example in `DccApplicationCommandStationServiceTrack_register_verify_value` the counted part is `register_verify_value` (21 characters).  Local variables, parameters, and module-private (`_`-prefixed static) names have no prefix, so the whole name counts.  Type names are measured the same way: for `dcc_<module>_<name>_t`, `dcc_<module>_<name>_enum`, `dcc_<module>_<name>_callback_t`, and `interface_dcc_<module>_t` only the `<name>` part after the module ID counts, so a type whose name is nothing but its module ID always passes.
 
 ~~~
 

@@ -28,32 +28,13 @@
  * @brief Application-layer implementation for accessory decoder RailCom SRQ and status.
  *
  * @author Jim Kueneman
- * @date 28 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_application_accessory_decoder_railcom.h"
 #include "dcc_defines.h"
 
 #if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_ACCESSORY_DECODER)
-
-// =============================================================================
-// RailCom datagram ID aliases (mapped to existing dcc_defines.h constants)
-// =============================================================================
-
-    /* SRQ is a 12-bit Channel-1 datagram with NO identifier (S-9.3.2
-     * Section 7.1 / Table 36); see DccApplicationAccessoryDecoderRailcom_on_cutout. */
-
-    /** @brief All-pairs status -- Ch2 datagram ID 3 (S-9.3.2) */
-#define RAILCOM_ID_STATUS_4     3
-
-    /** @brief Single-pair status -- Ch2 datagram ID 4 (S-9.3.2) */
-#define RAILCOM_ID_STATUS       4
-
-    /** @brief Time report -- Ch2 datagram ID 5 (S-9.3.2) */
-#define RAILCOM_ID_TIME         5
-
-    /** @brief Error report -- Ch2 datagram ID 6 (S-9.3.2) */
-#define RAILCOM_ID_ERROR        6
 
 // =============================================================================
 // Static state
@@ -81,11 +62,11 @@ static bool _has_pending_response = false;
 // Public API
 // =============================================================================
 
-/**
- * @verbatim
- * @param interface  Pointer to populated interface struct (wired by dcc_config.c).
- * @endverbatim
- */
+    /**
+     * @verbatim
+     * @param interface  Pointer to populated interface struct (wired by dcc_config.c).
+     * @endverbatim
+     */
 void DccApplicationAccessoryDecoderRailcom_initialize(const interface_dcc_application_accessory_decoder_railcom_t *interface) {
 
     _interface = interface;
@@ -96,12 +77,12 @@ void DccApplicationAccessoryDecoderRailcom_initialize(const interface_dcc_applic
 
 }
 
-/**
- * @verbatim
- * @param address      The accessory decoder address (9-bit basic, 11-bit extended).
- * @param is_extended  True for extended (11-bit) addressing, false for basic (9-bit).
- * @endverbatim
- */
+    /**
+     * @verbatim
+     * @param address      The accessory decoder address (9-bit basic, 11-bit extended).
+     * @param is_extended  True for extended (11-bit) addressing, false for basic (9-bit).
+     * @endverbatim
+     */
 void DccApplicationAccessoryDecoderRailcom_send_srq(uint16_t address, bool is_extended) {
 
     _srq_address = address;
@@ -110,13 +91,13 @@ void DccApplicationAccessoryDecoderRailcom_send_srq(uint16_t address, bool is_ex
 
 }
 
-/**
- * @verbatim
- * @param aspect_state   Current aspect state (5 bits, 0-31).
- * @param command_match  True if the last command matched this decoder.
- * @param is_setpoint    True if reporting a setpoint value.
- * @endverbatim
- */
+    /**
+     * @verbatim
+     * @param aspect_state   Current aspect state (5 bits, 0-31).
+     * @param command_match  True if the last command matched this decoder.
+     * @param is_setpoint    True if reporting a setpoint value.
+     * @endverbatim
+     */
 void DccApplicationAccessoryDecoderRailcom_send_status(uint8_t aspect_state, bool command_match, bool is_setpoint) {
 
     uint8_t packed;
@@ -135,20 +116,20 @@ void DccApplicationAccessoryDecoderRailcom_send_status(uint8_t aspect_state, boo
 
     }
 
-    _pending_response.datagram_id = RAILCOM_ID_STATUS;
+    _pending_response.datagram_id = DCC_RAILCOM_ACC_ID_STATUS;
     _pending_response.data[0] = packed;
     _pending_response.count = 1;
     _has_pending_response = true;
 
 }
 
-/**
- * @verbatim
- * @param aspect_state   Current aspect state (8 bits, 0-255).
- * @param command_match  True if the last command matched this decoder.
- * @param is_setpoint    True if reporting a setpoint value.
- * @endverbatim
- */
+    /**
+     * @verbatim
+     * @param aspect_state   Current aspect state (8 bits, 0-255).
+     * @param command_match  True if the last command matched this decoder.
+     * @param is_setpoint    True if reporting a setpoint value.
+     * @endverbatim
+     */
 void DccApplicationAccessoryDecoderRailcom_send_status_extended(uint8_t aspect_state, bool command_match, bool is_setpoint) {
 
     uint8_t packed_low;
@@ -172,7 +153,7 @@ void DccApplicationAccessoryDecoderRailcom_send_status_extended(uint8_t aspect_s
     /* Second datagram: upper 3 bits */
     packed_high = (uint8_t)((aspect_state >> 5) & 0x07);
 
-    _pending_response.datagram_id = RAILCOM_ID_STATUS;
+    _pending_response.datagram_id = DCC_RAILCOM_ACC_ID_STATUS;
     _pending_response.data[0] = packed_low;
     _pending_response.data[1] = packed_high;
     _pending_response.count = 2;
@@ -180,26 +161,26 @@ void DccApplicationAccessoryDecoderRailcom_send_status_extended(uint8_t aspect_s
 
 }
 
-/**
- * @verbatim
- * @param all_pairs_state  Combined state byte for all output pairs.
- * @endverbatim
- */
+    /**
+     * @verbatim
+     * @param all_pairs_state  Combined state byte for all output pairs.
+     * @endverbatim
+     */
 void DccApplicationAccessoryDecoderRailcom_send_status_4(uint8_t all_pairs_state) {
 
-    _pending_response.datagram_id = RAILCOM_ID_STATUS_4;
+    _pending_response.datagram_id = DCC_RAILCOM_ACC_ID_STATUS_4;
     _pending_response.data[0] = all_pairs_state;
     _pending_response.count = 1;
     _has_pending_response = true;
 
 }
 
-/**
- * @verbatim
- * @param time_value     Time value (7 bits, 0-127).
- * @param resolution_1s  True for 1-second resolution, false for 1-minute.
- * @endverbatim
- */
+    /**
+     * @verbatim
+     * @param time_value     Time value (7 bits, 0-127).
+     * @param resolution_1s  True for 1-second resolution, false for 1-minute.
+     * @endverbatim
+     */
 void DccApplicationAccessoryDecoderRailcom_send_time_report(uint8_t time_value, bool resolution_1s) {
 
     uint8_t packed;
@@ -212,19 +193,19 @@ void DccApplicationAccessoryDecoderRailcom_send_time_report(uint8_t time_value, 
 
     }
 
-    _pending_response.datagram_id = RAILCOM_ID_TIME;
+    _pending_response.datagram_id = DCC_RAILCOM_ACC_ID_TIME;
     _pending_response.data[0] = packed;
     _pending_response.count = 1;
     _has_pending_response = true;
 
 }
 
-/**
- * @verbatim
- * @param error_code  Error code (6 bits, 0-63).
- * @param additional  True if additional error data follows.
- * @endverbatim
- */
+    /**
+     * @verbatim
+     * @param error_code  Error code (6 bits, 0-63).
+     * @param additional  True if additional error data follows.
+     * @endverbatim
+     */
 void DccApplicationAccessoryDecoderRailcom_send_error_report(uint8_t error_code, bool additional) {
 
     uint8_t packed;
@@ -237,7 +218,7 @@ void DccApplicationAccessoryDecoderRailcom_send_error_report(uint8_t error_code,
 
     }
 
-    _pending_response.datagram_id = RAILCOM_ID_ERROR;
+    _pending_response.datagram_id = DCC_RAILCOM_ACC_ID_ERROR;
     _pending_response.data[0] = packed;
     _pending_response.count = 1;
     _has_pending_response = true;

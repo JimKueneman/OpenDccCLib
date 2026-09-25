@@ -28,7 +28,7 @@
  * @brief CV read/write abstraction with decoder lock and factory reset.
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_cv_storage.h"
@@ -56,8 +56,7 @@ void DccCvStorage_initialize(const interface_dcc_cv_storage_t *interface) {
 /* Resolve the indexed-window page pointer (CV31 high, CV32 low). */
 static bool _index_page(uint8_t *page_hi, uint8_t *page_lo) {
 
-    return _interface->cv_read(DCC_CV_INDEX_HIGH, page_hi) &&
-           _interface->cv_read(DCC_CV_INDEX_LOW, page_lo);
+    return _interface->cv_read(DCC_CV_INDEX_HIGH, page_hi) && _interface->cv_read(DCC_CV_INDEX_LOW, page_lo);
 
 }
 
@@ -129,8 +128,7 @@ bool DccCvStorage_write(uint16_t cv_number, uint8_t value) {
     }
 
     /* CV 15 and CV 16 are always writable (they control the lock) */
-    if (cv_number == DCC_CV_DECODER_LOCK_1 ||
-        cv_number == DCC_CV_DECODER_LOCK_2) {
+    if (cv_number == DCC_CV_DECODER_LOCK_1 || cv_number == DCC_CV_DECODER_LOCK_2) {
 
         return _interface->cv_write(cv_number, value);
 

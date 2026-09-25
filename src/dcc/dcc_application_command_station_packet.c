@@ -33,7 +33,7 @@
  * with the correct byte layout and XOR error detection byte per NMRA S-9.2.
  *
  * @author Jim Kueneman
- * @date 23 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_application_command_station_packet.h"
@@ -97,9 +97,7 @@ static uint8_t _encode_address(dcc_packet_t *packet, dcc_address_t address, dcc_
      */
 static bool _is_loco_address_type(dcc_address_type_enum address_type) {
 
-    return (address_type == DCC_ADDRESS_SHORT ||
-            address_type == DCC_ADDRESS_LONG ||
-            address_type == DCC_ADDRESS_BROADCAST);
+    return (address_type == DCC_ADDRESS_SHORT || address_type == DCC_ADDRESS_LONG || address_type == DCC_ADDRESS_BROADCAST);
 
 }
 
@@ -535,10 +533,7 @@ bool DccApplicationCommandStationPacket_load_accessory_basic(dcc_packet_t *packe
     packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)(board_address & 0x3F);
 
     /* Byte 2: 1AAACDDDD — upper 3 address bits (INVERTED), C=activate, DDD=output */
-    packet->data[1] = 0x80
-                      | (uint8_t)((~(board_address >> 6) & 0x07) << 4)
-                      | (activate ? 0x08 : 0x00)
-                      | (output_pair & 0x07);
+    packet->data[1] = 0x80 | (uint8_t)((~(board_address >> 6) & 0x07) << 4) | (activate ? 0x08 : 0x00) | (output_pair & 0x07);
 
     packet->byte_count = 2;
     _append_xor(packet);
@@ -562,9 +557,7 @@ bool DccApplicationCommandStationPacket_load_accessory_extended(dcc_packet_t *pa
     packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)(address & 0x3F);
 
     /* Byte 2: 0AAA0AA1 — upper 3 bits inverted (bits 6-4), next 2 bits (bits 2-1) */
-    packet->data[1] = DCC_ACCESSORY_EXTENDED_PREFIX
-                      | (uint8_t)((~(address >> 6) & 0x07) << 4)
-                      | (uint8_t)(((address >> 9) & 0x03) << 1);
+    packet->data[1] = DCC_ACCESSORY_EXTENDED_PREFIX | (uint8_t)((~(address >> 6) & 0x07) << 4) | (uint8_t)(((address >> 9) & 0x03) << 1);
 
     /* Byte 3: signal aspect */
     packet->data[2] = aspect;
@@ -592,10 +585,7 @@ bool DccApplicationCommandStationPacket_load_accessory_nop(dcc_packet_t *packet,
 
     /* Byte 2: 0AAA1AAT — upper 3 bits inverted (bits 6-4), bit 3 = 1 (NOP marker),
      * next 2 address bits (bits 2-1), T (bit 0): 0 = basic, 1 = extended */
-    packet->data[1] = (uint8_t)((~(address >> 6) & 0x07) << 4)
-                      | 0x08
-                      | (uint8_t)(((address >> 9) & 0x03) << 1)
-                      | (is_extended ? 0x01 : 0x00);
+    packet->data[1] = (uint8_t)((~(address >> 6) & 0x07) << 4) | 0x08 | (uint8_t)(((address >> 9) & 0x03) << 1) | (is_extended ? 0x01 : 0x00);
 
     packet->byte_count = 2;
     _append_xor(packet);
@@ -632,9 +622,7 @@ bool DccApplicationCommandStationPacket_load_accessory_basic_stop(dcc_packet_t *
     packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)(board_address & 0x3F);
 
     /* Byte 2: 1AAAC0DDD — upper 3 address bits (INVERTED), C=0 (deactivate), DDD=output */
-    packet->data[1] = 0x80
-                      | (uint8_t)((~(board_address >> 6) & 0x07) << 4)
-                      | (output_pair & 0x07);
+    packet->data[1] = 0x80 | (uint8_t)((~(board_address >> 6) & 0x07) << 4) | (output_pair & 0x07);
 
     packet->byte_count = 2;
     _append_xor(packet);
@@ -664,9 +652,7 @@ bool DccApplicationCommandStationPacket_load_accessory_extended_stop(dcc_packet_
     packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)(address & 0x3F);
 
     /* Byte 2: 0AAA0AA1 — upper 3 bits inverted (bits 6-4), next 2 bits (bits 2-1) */
-    packet->data[1] = DCC_ACCESSORY_EXTENDED_PREFIX
-                      | (uint8_t)((~(address >> 6) & 0x07) << 4)
-                      | (uint8_t)(((address >> 9) & 0x03) << 1);
+    packet->data[1] = DCC_ACCESSORY_EXTENDED_PREFIX | (uint8_t)((~(address >> 6) & 0x07) << 4) | (uint8_t)(((address >> 9) & 0x03) << 1);
 
     /* Byte 3: aspect 0 (all stop) */
     packet->data[2] = 0x00;
@@ -711,10 +697,7 @@ static bool _acc_basic_cv_common(dcc_packet_t *packet, uint16_t board_address, u
     packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)(board_address & 0x3F);
 
     /* Byte 1: 1AAA1AA0 — upper 3 addr bits inverted, bit3=1, A1A0, bit0=0 */
-    packet->data[1] = 0x80
-                      | (uint8_t)((~(board_address >> 6) & 0x07) << 4)
-                      | 0x08
-                      | (uint8_t)((output_pair & 0x03) << 1);
+    packet->data[1] = 0x80 | (uint8_t)((~(board_address >> 6) & 0x07) << 4) | 0x08 | (uint8_t)((output_pair & 0x03) << 1);
 
     /* Byte 2: 1110CCDD — CV instruction prefix + CV address high 2 bits */
     packet->data[2] = cv_instruction_prefix | (uint8_t)((wire_cv >> 8) & 0x03);
@@ -762,9 +745,7 @@ static bool _acc_extended_cv_common(dcc_packet_t *packet, uint16_t address, uint
     packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)(address & 0x3F);
 
     /* Byte 1: 0AAA0AA1 — upper 3 bits inverted, next 2 bits */
-    packet->data[1] = DCC_ACCESSORY_EXTENDED_PREFIX
-                      | (uint8_t)((~(address >> 6) & 0x07) << 4)
-                      | (uint8_t)(((address >> 9) & 0x03) << 1);
+    packet->data[1] = DCC_ACCESSORY_EXTENDED_PREFIX | (uint8_t)((~(address >> 6) & 0x07) << 4) | (uint8_t)(((address >> 9) & 0x03) << 1);
 
     /* Byte 2: 1110CCDD — CV instruction prefix + CV address high 2 bits */
     packet->data[2] = cv_instruction_prefix | (uint8_t)((wire_cv >> 8) & 0x03);
@@ -826,10 +807,7 @@ bool DccApplicationCommandStationPacket_load_accessory_basic_cv_bit(dcc_packet_t
     }
 
     /* Bit manipulation byte: 111CDBBB — C=write, D=bit value, BBB=bit position */
-    bit_byte = 0xE0
-               | (write ? 0x10 : 0x00)
-               | (bit_value ? 0x08 : 0x00)
-               | (bit_position & 0x07);
+    bit_byte = 0xE0 | (write ? 0x10 : 0x00) | (bit_value ? 0x08 : 0x00) | (bit_position & 0x07);
 
     return _acc_basic_cv_common(packet, board_address, output_pair, DCC_CV_LONG_BIT, cv_number - 1, bit_byte, write);
 
@@ -870,10 +848,7 @@ bool DccApplicationCommandStationPacket_load_accessory_extended_cv_bit(dcc_packe
     }
 
     /* Bit manipulation byte: 111CDBBB — C=write, D=bit value, BBB=bit position */
-    bit_byte = 0xE0
-               | (write ? 0x10 : 0x00)
-               | (bit_value ? 0x08 : 0x00)
-               | (bit_position & 0x07);
+    bit_byte = 0xE0 | (write ? 0x10 : 0x00) | (bit_value ? 0x08 : 0x00) | (bit_position & 0x07);
 
     return _acc_extended_cv_common(packet, address, DCC_CV_LONG_BIT, cv_number - 1, bit_byte, write);
 
@@ -931,10 +906,7 @@ bool DccApplicationCommandStationPacket_load_cv_bit_pom(dcc_packet_t *packet, dc
     byte_index++;
 
     /* Bit manipulation byte: 111CDBBB — C=write, D=bit value, BBB=bit position */
-    packet->data[byte_index] = 0xE0
-                               | (write ? 0x10 : 0x00)
-                               | (bit_value ? 0x08 : 0x00)
-                               | (bit_position & 0x07);
+    packet->data[byte_index] = 0xE0 | (write ? 0x10 : 0x00) | (bit_value ? 0x08 : 0x00) | (bit_position & 0x07);
     byte_index++;
 
     packet->byte_count = byte_index;
@@ -981,9 +953,7 @@ bool DccApplicationCommandStationPacket_load_consist_set(dcc_packet_t *packet, d
     byte_index = _encode_address(packet, address, address_type);
 
     /* Instruction: 0001001D — D=0 normal, D=1 reversed */
-    packet->data[byte_index] = direction_normal
-                               ? DCC_CONSIST_SET_NORMAL
-                               : DCC_CONSIST_SET_REVERSED;
+    packet->data[byte_index] = direction_normal ? DCC_CONSIST_SET_NORMAL : DCC_CONSIST_SET_REVERSED;
     byte_index++;
 
     /* Consist address (7-bit) */

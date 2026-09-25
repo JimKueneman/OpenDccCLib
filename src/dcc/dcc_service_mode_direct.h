@@ -32,7 +32,7 @@
  * Each operation is single-step (one call to the common module).
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_SERVICE_MODE_DIRECT__
@@ -68,49 +68,49 @@ typedef struct {
 
 } dcc_service_mode_direct_context_t;
 
-    /**
-     * @brief Initialize the direct service mode module.
-     * @param context Pointer to @ref dcc_service_mode_direct_context_t instance.
-     * @param interface Pointer to populated @ref interface_dcc_service_mode_direct_t struct.
-     */
+        /**
+         * @brief Initialize the direct service mode module.
+         * @param context Pointer to @ref dcc_service_mode_direct_context_t instance.
+         * @param interface Pointer to populated @ref interface_dcc_service_mode_direct_t struct.
+         */
     extern void DccServiceModeDirect_initialize(dcc_service_mode_direct_context_t *context, const interface_dcc_service_mode_direct_t *interface);
 
-    /**
-     * @brief Write a byte to a CV using direct mode.
-     * @param context Pointer to @ref dcc_service_mode_direct_context_t instance.
-     * @param cv_number CV number to write (1-1024).
-     * @param value Byte value to write.
-     * @return true if operation started, false if busy.
-     */
+        /**
+         * @brief Write a byte to a CV using direct mode.
+         * @param context Pointer to @ref dcc_service_mode_direct_context_t instance.
+         * @param cv_number CV number to write (1-1024).
+         * @param value Byte value to write.
+         * @return true if operation started, false if busy.
+         */
     extern bool DccServiceModeDirect_write_byte(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t value);
 
-    /**
-     * @brief Verify a CV byte value using direct mode.
-     * @param context Pointer to @ref dcc_service_mode_direct_context_t instance.
-     * @param cv_number CV number to verify (1-1024).
-     * @param value Expected byte value.
-     * @return true if operation started, false if busy.
-     */
+        /**
+         * @brief Verify a CV byte value using direct mode.
+         * @param context Pointer to @ref dcc_service_mode_direct_context_t instance.
+         * @param cv_number CV number to verify (1-1024).
+         * @param value Expected byte value.
+         * @return true if operation started, false if busy.
+         */
     extern bool DccServiceModeDirect_verify_byte(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t value);
 
-    /**
-     * @brief Write a single bit to a CV using direct mode.
-     * @param context Pointer to @ref dcc_service_mode_direct_context_t instance.
-     * @param cv_number CV number to write (1-1024).
-     * @param bit_position Bit position within the CV (0-7).
-     * @param bit_value Value to write (true = 1, false = 0).
-     * @return true if operation started, false if busy.
-     */
+        /**
+         * @brief Write a single bit to a CV using direct mode.
+         * @param context Pointer to @ref dcc_service_mode_direct_context_t instance.
+         * @param cv_number CV number to write (1-1024).
+         * @param bit_position Bit position within the CV (0-7).
+         * @param bit_value Value to write (true = 1, false = 0).
+         * @return true if operation started, false if busy.
+         */
     extern bool DccServiceModeDirect_write_bit(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t bit_position, bool bit_value);
 
-    /**
-     * @brief Verify a single bit in a CV using direct mode.
-     * @param context Pointer to @ref dcc_service_mode_direct_context_t instance.
-     * @param cv_number CV number to verify (1-1024).
-     * @param bit_position Bit position within the CV (0-7).
-     * @param bit_value Expected bit value (true = 1, false = 0).
-     * @return true if operation started, false if busy.
-     */
+        /**
+         * @brief Verify a single bit in a CV using direct mode.
+         * @param context Pointer to @ref dcc_service_mode_direct_context_t instance.
+         * @param cv_number CV number to verify (1-1024).
+         * @param bit_position Bit position within the CV (0-7).
+         * @param bit_value Expected bit value (true = 1, false = 0).
+         * @return true if operation started, false if busy.
+         */
     extern bool DccServiceModeDirect_verify_bit(dcc_service_mode_direct_context_t *context, uint16_t cv_number, uint8_t bit_position, bool bit_value);
 
 #ifdef __cplusplus

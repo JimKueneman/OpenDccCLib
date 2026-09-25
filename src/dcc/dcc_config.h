@@ -32,7 +32,7 @@
  * to bring up the entire stack. This is the only header users need to include.
  *
  * @author Jim Kueneman
- * @date 28 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_CONFIG__
@@ -423,20 +423,20 @@ typedef struct {
 // Lifecycle & ISR Entry Points
 // =============================================================================
 
-    /**
-     * @brief Initialize the DCC library with user configuration.
-     * @param config Pointer to user-populated configuration struct.
-     */
-extern void DccConfig_initialize(const dcc_config_t *config);
+        /**
+         * @brief Initialize the DCC library with user configuration.
+         * @param config Pointer to user-populated configuration struct.
+         */
+    extern void DccConfig_initialize(const dcc_config_t *config);
 
-    /**
-     * @brief Main loop processing. Call repeatedly from your main loop.
-     *
-     * @details Runs the scheduler, drains RailCom buffers, processes decoded
-     * packets, fires application callbacks. All callbacks fire from this context.
-     * Also handles 6ms ACK pulse timing when an ACK is in progress.
-     */
-extern void DccConfig_run(void);
+        /**
+         * @brief Main loop processing. Call repeatedly from your main loop.
+         *
+         * @details Runs the scheduler, drains RailCom buffers, processes decoded
+         * packets, fires application callbacks. All callbacks fire from this context.
+         * Also handles 6ms ACK pulse timing when an ACK is in progress.
+         */
+    extern void DccConfig_run(void);
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
@@ -444,67 +444,67 @@ extern void DccConfig_run(void);
     // Command Station ISR Entry Points
     // =========================================================================
 
-    /**
-     * @brief Shared fixed-period timer ISR entry point.
-     * @details Call from the 58us shared timer ISR. Drives the tick_isr for
-     *  both main track and service track bit encoders. Also samples current
-     *  sense on the service track for ACK detection.
-     */
-extern void DccConfig_58us_timer_isr(void);
+        /**
+         * @brief Shared fixed-period timer ISR entry point.
+         * @details Call from the 58us shared timer ISR. Drives the tick_isr for
+         *  both main track and service track bit encoders. Also samples current
+         *  sense on the service track for ACK detection.
+         */
+    extern void DccConfig_58us_timer_isr(void);
 
 #if defined(DCC_COMPILE_RAILCOM)
-    /**
-     * @brief RailCom cutout one-shot timer ISR entry point.
-     * @details Call from the RailCom one-shot timer ISR. Drives the cutout
-     *  state machine through DELAY -> SETTLING -> CH1 -> GAP -> CH2 -> IDLE.
-     */
-extern void DccConfig_railcom_oneshot_timer_isr(void);
+        /**
+         * @brief RailCom cutout one-shot timer ISR entry point.
+         * @details Call from the RailCom one-shot timer ISR. Drives the cutout
+         *  state machine through DELAY -> SETTLING -> CH1 -> GAP -> CH2 -> IDLE.
+         */
+    extern void DccConfig_railcom_oneshot_timer_isr(void);
 
-    /**
-     * @brief Reconfigure the RailCom cutout per-state timing at runtime.
-     * @details Overwrites the active cutout context's five period fields; a 0 in
-     *  any field selects that field's spec default (DCC_RAILCOM_* in dcc_defines.h),
-     *  matching DccConfig_initialize. State and interface are left untouched, so an
-     *  in-flight cutout completes on its old timing and the new values take effect
-     *  from the next cutout. Periods are in microseconds.
-     */
-extern void DccConfig_set_railcom_cutout_timing(uint16_t start_delay_us, uint16_t uart_rx_delay_us,
-                                                uint16_t ch1_window_us, uint16_t ch1_ch2_gap_us,
-                                                uint16_t ch2_window_us);
+        /**
+         * @brief Reconfigure the RailCom cutout per-state timing at runtime.
+         * @details Overwrites the active cutout context's five period fields; a 0 in
+         *  any field selects that field's spec default (DCC_RAILCOM_* in dcc_defines.h),
+         *  matching DccConfig_initialize. State and interface are left untouched, so an
+         *  in-flight cutout completes on its old timing and the new values take effect
+         *  from the next cutout. Periods are in microseconds.
+         */
+    extern void DccConfig_set_railcom_cutout_timing(uint16_t start_delay_us, uint16_t uart_rx_delay_us,
+                                                    uint16_t ch1_window_us, uint16_t ch1_ch2_gap_us,
+                                                    uint16_t ch2_window_us);
 
-    /**
-     * @brief Cancel an in-progress RailCom cutout, restoring the H-bridge.
-     * @details Stops the cutout one-shot timer and, if the cutout was active
-     *  (past DELAY), calls end_railcom_cutout to restore normal drive. No-op when
-     *  idle. Safe to call from a same-or-lower-priority ISR than the cutout timer.
-     */
-extern void DccConfig_cancel_railcom_cutout(void);
+        /**
+         * @brief Cancel an in-progress RailCom cutout, restoring the H-bridge.
+         * @details Stops the cutout one-shot timer and, if the cutout was active
+         *  (past DELAY), calls end_railcom_cutout to restore normal drive. No-op when
+         *  idle. Safe to call from a same-or-lower-priority ISR than the cutout timer.
+         */
+    extern void DccConfig_cancel_railcom_cutout(void);
 
-    /**
-     * @brief True while a RailCom cutout is in progress (state != IDLE).
-     */
-extern bool DccConfig_railcom_cutout_is_active(void);
+        /**
+         * @brief True while a RailCom cutout is in progress (state != IDLE).
+         */
+    extern bool DccConfig_railcom_cutout_is_active(void);
 
 #endif /* DCC_COMPILE_RAILCOM */
 
-    /**
-     * @brief 100ms timer tick. Call from a 100ms periodic timer or main loop.
-     * @details Used for timeout checking and periodic housekeeping.
-     */
-extern void DccConfig_100ms_timer_tick(void);
+        /**
+         * @brief 100ms timer tick. Call from a 100ms periodic timer or main loop.
+         * @details Used for timeout checking and periodic housekeeping.
+         */
+    extern void DccConfig_100ms_timer_tick(void);
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
 
 #ifdef DCC_COMPILE_DECODER
 
-    /**
-     * @brief Decoder bit edge detected. Call from input-capture ISR.
-     * @param timestamp_usec Microsecond timestamp of the signal edge.
-     *
-     * @details The library classifies one/zero bits from edge timing internally.
-     * User ISR only needs to read the timer and call this function on each edge.
-     */
-extern void DccConfig_decoder_edge_isr(uint32_t timestamp_usec);
+        /**
+         * @brief Decoder bit edge detected. Call from input-capture ISR.
+         * @param timestamp_usec Microsecond timestamp of the signal edge.
+         *
+         * @details The library classifies one/zero bits from edge timing internally.
+         * User ISR only needs to read the timer and call this function on each edge.
+         */
+    extern void DccConfig_decoder_edge_isr(uint32_t timestamp_usec);
 
 #endif /* DCC_COMPILE_DECODER */
 

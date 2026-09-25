@@ -33,7 +33,7 @@
  * null-guards the interface.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_application_command_station_service_track.h"
@@ -131,7 +131,7 @@ bool DccApplicationCommandStationServiceTrack_is_service_mode_active(void) {
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
 
-bool DccApplicationCommandStationServiceTrack_direct_read_cv(uint16_t cv, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccApplicationCommandStationServiceTrack_direct_read_cv(uint16_t cv_number, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->direct_read_cv) {
 
@@ -139,11 +139,11 @@ bool DccApplicationCommandStationServiceTrack_direct_read_cv(uint16_t cv, dcc_se
 
     }
 
-    return _interface->direct_read_cv(cv, on_complete, on_progress);
+    return _interface->direct_read_cv(cv_number, on_complete, on_progress);
 
 }
 
-bool DccApplicationCommandStationServiceTrack_direct_write_cv(uint16_t cv, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccApplicationCommandStationServiceTrack_direct_write_cv(uint16_t cv_number, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->direct_write_cv) {
 
@@ -151,11 +151,11 @@ bool DccApplicationCommandStationServiceTrack_direct_write_cv(uint16_t cv, uint8
 
     }
 
-    return _interface->direct_write_cv(cv, value, on_complete, on_progress);
+    return _interface->direct_write_cv(cv_number, value, on_complete, on_progress);
 
 }
 
-bool DccApplicationCommandStationServiceTrack_direct_read_bit(uint16_t cv, uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccApplicationCommandStationServiceTrack_direct_read_bit(uint16_t cv_number, uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->direct_read_bit) {
 
@@ -163,11 +163,11 @@ bool DccApplicationCommandStationServiceTrack_direct_read_bit(uint16_t cv, uint8
 
     }
 
-    return _interface->direct_read_bit(cv, bit, on_complete, on_progress);
+    return _interface->direct_read_bit(cv_number, bit_position, on_complete, on_progress);
 
 }
 
-bool DccApplicationCommandStationServiceTrack_direct_write_bit(uint16_t cv, uint8_t bit, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccApplicationCommandStationServiceTrack_direct_write_bit(uint16_t cv_number, uint8_t bit_position, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->direct_write_bit) {
 
@@ -175,7 +175,7 @@ bool DccApplicationCommandStationServiceTrack_direct_write_bit(uint16_t cv, uint
 
     }
 
-    return _interface->direct_write_bit(cv, bit, bit_value, on_complete, on_progress);
+    return _interface->direct_write_bit(cv_number, bit_position, bit_value, on_complete, on_progress);
 
 }
 
@@ -187,7 +187,7 @@ bool DccApplicationCommandStationServiceTrack_direct_write_bit(uint16_t cv, uint
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
 
-bool DccApplicationCommandStationServiceTrack_paged_read_cv(uint16_t cv, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccApplicationCommandStationServiceTrack_paged_read_cv(uint16_t cv_number, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->paged_read_cv) {
 
@@ -195,11 +195,11 @@ bool DccApplicationCommandStationServiceTrack_paged_read_cv(uint16_t cv, dcc_ser
 
     }
 
-    return _interface->paged_read_cv(cv, on_complete, on_progress);
+    return _interface->paged_read_cv(cv_number, on_complete, on_progress);
 
 }
 
-bool DccApplicationCommandStationServiceTrack_paged_write_cv(uint16_t cv, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccApplicationCommandStationServiceTrack_paged_write_cv(uint16_t cv_number, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->paged_write_cv) {
 
@@ -207,11 +207,11 @@ bool DccApplicationCommandStationServiceTrack_paged_write_cv(uint16_t cv, uint8_
 
     }
 
-    return _interface->paged_write_cv(cv, value, on_complete, on_progress);
+    return _interface->paged_write_cv(cv_number, value, on_complete, on_progress);
 
 }
 
-bool DccApplicationCommandStationServiceTrack_paged_read_bit(uint16_t cv, uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccApplicationCommandStationServiceTrack_paged_read_bit(uint16_t cv_number, uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->paged_read_bit) {
 
@@ -219,11 +219,11 @@ bool DccApplicationCommandStationServiceTrack_paged_read_bit(uint16_t cv, uint8_
 
     }
 
-    return _interface->paged_read_bit(cv, bit, on_complete, on_progress);
+    return _interface->paged_read_bit(cv_number, bit_position, on_complete, on_progress);
 
 }
 
-bool DccApplicationCommandStationServiceTrack_paged_write_bit(uint16_t cv, uint8_t bit, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccApplicationCommandStationServiceTrack_paged_write_bit(uint16_t cv_number, uint8_t bit_position, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->paged_write_bit) {
 
@@ -231,7 +231,7 @@ bool DccApplicationCommandStationServiceTrack_paged_write_bit(uint16_t cv, uint8
 
     }
 
-    return _interface->paged_write_bit(cv, bit, bit_value, on_complete, on_progress);
+    return _interface->paged_write_bit(cv_number, bit_position, bit_value, on_complete, on_progress);
 
 }
 
@@ -243,7 +243,7 @@ bool DccApplicationCommandStationServiceTrack_paged_write_bit(uint16_t cv, uint8
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
 
-bool DccApplicationCommandStationServiceTrack_register_read_cv(uint16_t cv, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccApplicationCommandStationServiceTrack_register_read_cv(uint16_t cv_number, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->register_read_cv) {
 
@@ -251,11 +251,16 @@ bool DccApplicationCommandStationServiceTrack_register_read_cv(uint16_t cv, dcc_
 
     }
 
-    return _interface->register_read_cv(cv, decoder_type, on_complete, on_progress);
+    return _interface->register_read_cv(cv_number, decoder_type, on_complete, on_progress);
 
 }
 
-bool DccApplicationCommandStationServiceTrack_register_write_cv(uint16_t cv, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccApplicationCommandStationServiceTrack_register_write_cv(
+            uint16_t cv_number,
+            uint8_t value,
+            dcc_decoder_type_enum decoder_type,
+            dcc_service_mode_task_on_complete_callback_t on_complete,
+            dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->register_write_cv) {
 
@@ -263,11 +268,16 @@ bool DccApplicationCommandStationServiceTrack_register_write_cv(uint16_t cv, uin
 
     }
 
-    return _interface->register_write_cv(cv, value, decoder_type, on_complete, on_progress);
+    return _interface->register_write_cv(cv_number, value, decoder_type, on_complete, on_progress);
 
 }
 
-bool DccApplicationCommandStationServiceTrack_register_read_bit(uint16_t cv, uint8_t bit, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccApplicationCommandStationServiceTrack_register_read_bit(
+            uint16_t cv_number,
+            uint8_t bit_position,
+            dcc_decoder_type_enum decoder_type,
+            dcc_service_mode_task_on_complete_callback_t on_complete,
+            dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->register_read_bit) {
 
@@ -275,11 +285,17 @@ bool DccApplicationCommandStationServiceTrack_register_read_bit(uint16_t cv, uin
 
     }
 
-    return _interface->register_read_bit(cv, bit, decoder_type, on_complete, on_progress);
+    return _interface->register_read_bit(cv_number, bit_position, decoder_type, on_complete, on_progress);
 
 }
 
-bool DccApplicationCommandStationServiceTrack_register_write_bit(uint16_t cv, uint8_t bit, bool bit_value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccApplicationCommandStationServiceTrack_register_write_bit(
+            uint16_t cv_number,
+            uint8_t bit_position,
+            bool bit_value,
+            dcc_decoder_type_enum decoder_type,
+            dcc_service_mode_task_on_complete_callback_t on_complete,
+            dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->register_write_bit) {
 
@@ -287,7 +303,7 @@ bool DccApplicationCommandStationServiceTrack_register_write_bit(uint16_t cv, ui
 
     }
 
-    return _interface->register_write_bit(cv, bit, bit_value, decoder_type, on_complete, on_progress);
+    return _interface->register_write_bit(cv_number, bit_position, bit_value, decoder_type, on_complete, on_progress);
 
 }
 
@@ -303,7 +319,12 @@ bool DccApplicationCommandStationServiceTrack_register_factory_reset(dcc_service
 
 }
 
-bool DccApplicationCommandStationServiceTrack_register_verify_value(uint16_t cv, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccApplicationCommandStationServiceTrack_register_verify_value(
+            uint16_t cv_number,
+            uint8_t value,
+            dcc_decoder_type_enum decoder_type,
+            dcc_service_mode_task_on_complete_callback_t on_complete,
+            dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->register_verify_value) {
 
@@ -311,7 +332,7 @@ bool DccApplicationCommandStationServiceTrack_register_verify_value(uint16_t cv,
 
     }
 
-    return _interface->register_verify_value(cv, value, decoder_type, on_complete, on_progress);
+    return _interface->register_verify_value(cv_number, value, decoder_type, on_complete, on_progress);
 
 }
 
@@ -359,7 +380,7 @@ bool DccApplicationCommandStationServiceTrack_address_verify(uint8_t address, dc
 
 }
 
-bool DccApplicationCommandStationServiceTrack_address_read_bit(uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccApplicationCommandStationServiceTrack_address_read_bit(uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->address_read_bit) {
 
@@ -367,11 +388,11 @@ bool DccApplicationCommandStationServiceTrack_address_read_bit(uint8_t bit, dcc_
 
     }
 
-    return _interface->address_read_bit(bit, on_complete, on_progress);
+    return _interface->address_read_bit(bit_position, on_complete, on_progress);
 
 }
 
-bool DccApplicationCommandStationServiceTrack_address_write_bit(uint8_t bit, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccApplicationCommandStationServiceTrack_address_write_bit(uint8_t bit_position, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
     if (!_interface || !_interface->address_write_bit) {
 
@@ -379,7 +400,7 @@ bool DccApplicationCommandStationServiceTrack_address_write_bit(uint8_t bit, boo
 
     }
 
-    return _interface->address_write_bit(bit, bit_value, on_complete, on_progress);
+    return _interface->address_write_bit(bit_position, bit_value, on_complete, on_progress);
 
 }
 

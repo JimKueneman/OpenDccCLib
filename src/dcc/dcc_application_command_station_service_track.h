@@ -45,7 +45,7 @@
  * manages power sequencing automatically on enter/exit.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_APPLICATION_COMMAND_STATION_SERVICE_TRACK__
@@ -86,54 +86,60 @@ typedef struct {
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
 
         /** @brief Direct mode task: read a CV byte. */
-    bool (*direct_read_cv)(uint16_t cv, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+    bool (*direct_read_cv)(uint16_t cv_number, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /** @brief Direct mode task: write a CV byte (with verify). */
-    bool (*direct_write_cv)(uint16_t cv, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+    bool (*direct_write_cv)(uint16_t cv_number, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /** @brief Direct mode task: read a single CV bit. */
-    bool (*direct_read_bit)(uint16_t cv, uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+    bool (*direct_read_bit)(uint16_t cv_number, uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /** @brief Direct mode task: write a single CV bit (with verify). */
-    bool (*direct_write_bit)(uint16_t cv, uint8_t bit, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+    bool (*direct_write_bit)(uint16_t cv_number, uint8_t bit_position, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_DIRECT */
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
 
         /** @brief Paged mode task: read a CV byte. */
-    bool (*paged_read_cv)(uint16_t cv, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+    bool (*paged_read_cv)(uint16_t cv_number, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /** @brief Paged mode task: write a CV byte (with verify). */
-    bool (*paged_write_cv)(uint16_t cv, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+    bool (*paged_write_cv)(uint16_t cv_number, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /** @brief Paged mode task: read a single CV bit. */
-    bool (*paged_read_bit)(uint16_t cv, uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+    bool (*paged_read_bit)(uint16_t cv_number, uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /** @brief Paged mode task: write a single CV bit (with verify). */
-    bool (*paged_write_bit)(uint16_t cv, uint8_t bit, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+    bool (*paged_write_bit)(uint16_t cv_number, uint8_t bit_position, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_PAGED */
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
 
         /** @brief Register mode task: read a CV byte. */
-    bool (*register_read_cv)(uint16_t cv, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+    bool (*register_read_cv)(uint16_t cv_number, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /** @brief Register mode task: write a CV byte (with verify). */
-    bool (*register_write_cv)(uint16_t cv, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+    bool (*register_write_cv)(uint16_t cv_number, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /** @brief Register mode task: read a single CV bit. */
-    bool (*register_read_bit)(uint16_t cv, uint8_t bit, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+    bool (*register_read_bit)(uint16_t cv_number, uint8_t bit_position, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /** @brief Register mode task: write a single CV bit (with verify). */
-    bool (*register_write_bit)(uint16_t cv, uint8_t bit, bool bit_value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+    bool (*register_write_bit)(
+                uint16_t cv_number,
+                uint8_t bit_position,
+                bool bit_value,
+                dcc_decoder_type_enum decoder_type,
+                dcc_service_mode_task_on_complete_callback_t on_complete,
+                dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /** @brief Register mode task: decoder factory reset (write 8 to register 8). */
     bool (*register_factory_reset)(dcc_service_mode_task_on_complete_callback_t on_complete);
 
         /** @brief Register mode task: verify a single register value. */
-    bool (*register_verify_value)(uint16_t cv, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+    bool (*register_verify_value)(uint16_t cv_number, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_REGISTER */
 
@@ -149,10 +155,10 @@ typedef struct {
     bool (*address_verify)(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /** @brief Address-only mode task: read a single bit of CV#1. */
-    bool (*address_read_bit)(uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+    bool (*address_read_bit)(uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
         /** @brief Address-only mode task: write a single bit of CV#1 (with verify). */
-    bool (*address_write_bit)(uint8_t bit, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+    bool (*address_write_bit)(uint8_t bit_position, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS */
 
@@ -165,37 +171,37 @@ typedef struct {
 
 } interface_dcc_application_command_station_service_track_t;
 
-    /**
-     * @brief Initialize the command station service track application module.
-     * @param interface Pointer to populated @ref interface_dcc_application_command_station_service_track_t struct (wired by dcc_config.c).
-     */
-extern void DccApplicationCommandStationServiceTrack_initialize(const interface_dcc_application_command_station_service_track_t *interface);
+        /**
+         * @brief Initialize the command station service track application module.
+         * @param interface Pointer to populated @ref interface_dcc_application_command_station_service_track_t struct (wired by dcc_config.c).
+         */
+    extern void DccApplicationCommandStationServiceTrack_initialize(const interface_dcc_application_command_station_service_track_t *interface);
 
     // =========================================================================
     // Power control
     // =========================================================================
 
-    /** @brief Enable service track power output and start DCC signal generation. */
-extern void DccApplicationCommandStationServiceTrack_power_on(void);
+        /** @brief Enable service track power output and start DCC signal generation. */
+    extern void DccApplicationCommandStationServiceTrack_power_on(void);
 
-    /** @brief Disable service track power output and stop DCC signal generation. */
-extern void DccApplicationCommandStationServiceTrack_power_off(void);
+        /** @brief Disable service track power output and stop DCC signal generation. */
+    extern void DccApplicationCommandStationServiceTrack_power_off(void);
 
     // =========================================================================
     // Service mode entry/exit
     // =========================================================================
 
-    /**
-     * @brief Enter service mode on the service track.
-     * @return true if service mode was activated, false if busy.
-     */
-extern bool DccApplicationCommandStationServiceTrack_enter_service_mode(void);
+        /**
+         * @brief Enter service mode on the service track.
+         * @return true if service mode was activated, false if busy.
+         */
+    extern bool DccApplicationCommandStationServiceTrack_enter_service_mode(void);
 
-    /** @brief Exit service mode on the service track. */
-extern void DccApplicationCommandStationServiceTrack_exit_service_mode(void);
+        /** @brief Exit service mode on the service track. */
+    extern void DccApplicationCommandStationServiceTrack_exit_service_mode(void);
 
-    /** @brief Check if service mode is currently active. */
-extern bool DccApplicationCommandStationServiceTrack_is_service_mode_active(void);
+        /** @brief Check if service mode is currently active. */
+    extern bool DccApplicationCommandStationServiceTrack_is_service_mode_active(void);
 
     // =========================================================================
     // Direct mode programming (task layer)
@@ -203,17 +209,22 @@ extern bool DccApplicationCommandStationServiceTrack_is_service_mode_active(void
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_DIRECT
 
-    /** @brief Direct mode: read a CV byte (8 bit-verifies). */
-extern bool DccApplicationCommandStationServiceTrack_direct_read_cv(uint16_t cv, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Direct mode: read a CV byte (8 bit-verifies). */
+    extern bool DccApplicationCommandStationServiceTrack_direct_read_cv(uint16_t cv_number, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
-    /** @brief Direct mode: write a CV byte then verify. */
-extern bool DccApplicationCommandStationServiceTrack_direct_write_cv(uint16_t cv, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Direct mode: write a CV byte then verify. */
+    extern bool DccApplicationCommandStationServiceTrack_direct_write_cv(uint16_t cv_number, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
-    /** @brief Direct mode: read a single CV bit. */
-extern bool DccApplicationCommandStationServiceTrack_direct_read_bit(uint16_t cv, uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Direct mode: read a single CV bit. */
+    extern bool DccApplicationCommandStationServiceTrack_direct_read_bit(uint16_t cv_number, uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
-    /** @brief Direct mode: write a single CV bit then verify. */
-extern bool DccApplicationCommandStationServiceTrack_direct_write_bit(uint16_t cv, uint8_t bit, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Direct mode: write a single CV bit then verify. */
+    extern bool DccApplicationCommandStationServiceTrack_direct_write_bit(
+                uint16_t cv_number,
+                uint8_t bit_position,
+                bool bit_value,
+                dcc_service_mode_task_on_complete_callback_t on_complete,
+                dcc_service_mode_task_on_progress_callback_t on_progress);
 
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_DIRECT */
 
@@ -223,17 +234,22 @@ extern bool DccApplicationCommandStationServiceTrack_direct_write_bit(uint16_t c
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_PAGED
 
-    /** @brief Paged mode: read a CV byte (scan). */
-extern bool DccApplicationCommandStationServiceTrack_paged_read_cv(uint16_t cv, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Paged mode: read a CV byte (scan). */
+    extern bool DccApplicationCommandStationServiceTrack_paged_read_cv(uint16_t cv_number, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
-    /** @brief Paged mode: write a CV byte then verify. */
-extern bool DccApplicationCommandStationServiceTrack_paged_write_cv(uint16_t cv, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Paged mode: write a CV byte then verify. */
+    extern bool DccApplicationCommandStationServiceTrack_paged_write_cv(uint16_t cv_number, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
-    /** @brief Paged mode: read a single CV bit. */
-extern bool DccApplicationCommandStationServiceTrack_paged_read_bit(uint16_t cv, uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Paged mode: read a single CV bit. */
+    extern bool DccApplicationCommandStationServiceTrack_paged_read_bit(uint16_t cv_number, uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
-    /** @brief Paged mode: write a single CV bit then verify. */
-extern bool DccApplicationCommandStationServiceTrack_paged_write_bit(uint16_t cv, uint8_t bit, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Paged mode: write a single CV bit then verify. */
+    extern bool DccApplicationCommandStationServiceTrack_paged_write_bit(
+                uint16_t cv_number,
+                uint8_t bit_position,
+                bool bit_value,
+                dcc_service_mode_task_on_complete_callback_t on_complete,
+                dcc_service_mode_task_on_progress_callback_t on_progress);
 
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_PAGED */
 
@@ -243,23 +259,48 @@ extern bool DccApplicationCommandStationServiceTrack_paged_write_bit(uint16_t cv
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_REGISTER
 
-    /** @brief Register mode: read a CV byte (scan). decoder_type per call. */
-extern bool DccApplicationCommandStationServiceTrack_register_read_cv(uint16_t cv, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Register mode: read a CV byte (scan). decoder_type per call. */
+    extern bool DccApplicationCommandStationServiceTrack_register_read_cv(
+                uint16_t cv_number,
+                dcc_decoder_type_enum decoder_type,
+                dcc_service_mode_task_on_complete_callback_t on_complete,
+                dcc_service_mode_task_on_progress_callback_t on_progress);
 
-    /** @brief Register mode: write a CV byte then verify. decoder_type per call. */
-extern bool DccApplicationCommandStationServiceTrack_register_write_cv(uint16_t cv, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Register mode: write a CV byte then verify. decoder_type per call. */
+    extern bool DccApplicationCommandStationServiceTrack_register_write_cv(
+                uint16_t cv_number,
+                uint8_t value,
+                dcc_decoder_type_enum decoder_type,
+                dcc_service_mode_task_on_complete_callback_t on_complete,
+                dcc_service_mode_task_on_progress_callback_t on_progress);
 
-    /** @brief Register mode: read a single CV bit. decoder_type per call. */
-extern bool DccApplicationCommandStationServiceTrack_register_read_bit(uint16_t cv, uint8_t bit, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Register mode: read a single CV bit. decoder_type per call. */
+    extern bool DccApplicationCommandStationServiceTrack_register_read_bit(
+                uint16_t cv_number,
+                uint8_t bit_position,
+                dcc_decoder_type_enum decoder_type,
+                dcc_service_mode_task_on_complete_callback_t on_complete,
+                dcc_service_mode_task_on_progress_callback_t on_progress);
 
-    /** @brief Register mode: write a single CV bit then verify. decoder_type per call. */
-extern bool DccApplicationCommandStationServiceTrack_register_write_bit(uint16_t cv, uint8_t bit, bool bit_value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Register mode: write a single CV bit then verify. decoder_type per call. */
+    extern bool DccApplicationCommandStationServiceTrack_register_write_bit(
+                uint16_t cv_number,
+                uint8_t bit_position,
+                bool bit_value,
+                dcc_decoder_type_enum decoder_type,
+                dcc_service_mode_task_on_complete_callback_t on_complete,
+                dcc_service_mode_task_on_progress_callback_t on_progress);
 
-    /** @brief Register mode: decoder factory reset (write 8 to register 8). */
-extern bool DccApplicationCommandStationServiceTrack_register_factory_reset(dcc_service_mode_task_on_complete_callback_t on_complete);
+        /** @brief Register mode: decoder factory reset (write 8 to register 8). */
+    extern bool DccApplicationCommandStationServiceTrack_register_factory_reset(dcc_service_mode_task_on_complete_callback_t on_complete);
 
-    /** @brief Register mode: verify a single register value. */
-extern bool DccApplicationCommandStationServiceTrack_register_verify_value(uint16_t cv, uint8_t value, dcc_decoder_type_enum decoder_type, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Register mode: verify a single register value. */
+    extern bool DccApplicationCommandStationServiceTrack_register_verify_value(
+                uint16_t cv_number,
+                uint8_t value,
+                dcc_decoder_type_enum decoder_type,
+                dcc_service_mode_task_on_complete_callback_t on_complete,
+                dcc_service_mode_task_on_progress_callback_t on_progress);
 
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_REGISTER */
 
@@ -269,20 +310,20 @@ extern bool DccApplicationCommandStationServiceTrack_register_verify_value(uint1
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS
 
-    /** @brief Address-only mode: read CV#1 (short address). */
-extern bool DccApplicationCommandStationServiceTrack_address_read(dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Address-only mode: read CV#1 (short address). */
+    extern bool DccApplicationCommandStationServiceTrack_address_read(dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
-    /** @brief Address-only mode: write CV#1 (short address) then verify. */
-extern bool DccApplicationCommandStationServiceTrack_address_write(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Address-only mode: write CV#1 (short address) then verify. */
+    extern bool DccApplicationCommandStationServiceTrack_address_write(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
-    /** @brief Address-only mode: verify CV#1 against a value. */
-extern bool DccApplicationCommandStationServiceTrack_address_verify(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Address-only mode: verify CV#1 against a value. */
+    extern bool DccApplicationCommandStationServiceTrack_address_verify(uint8_t address, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
-    /** @brief Address-only mode: read a single bit of CV#1. */
-extern bool DccApplicationCommandStationServiceTrack_address_read_bit(uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Address-only mode: read a single bit of CV#1. */
+    extern bool DccApplicationCommandStationServiceTrack_address_read_bit(uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
-    /** @brief Address-only mode: write a single bit of CV#1 then verify. */
-extern bool DccApplicationCommandStationServiceTrack_address_write_bit(uint8_t bit, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
+        /** @brief Address-only mode: write a single bit of CV#1 then verify. */
+    extern bool DccApplicationCommandStationServiceTrack_address_write_bit(uint8_t bit_position, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress);
 
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_ADDRESS */
 
@@ -292,8 +333,8 @@ extern bool DccApplicationCommandStationServiceTrack_address_write_bit(uint8_t b
 
 #ifdef DCC_COMPILE_SERVICE_MODE_TASK_DETECT
 
-    /** @brief Probe the decoder for all supported service modes (bitmask via on_detect). */
-extern bool DccApplicationCommandStationServiceTrack_detect_mode(dcc_service_mode_task_on_detect_callback_t on_detect);
+        /** @brief Probe the decoder for all supported service modes (bitmask via on_detect). */
+    extern bool DccApplicationCommandStationServiceTrack_detect_mode(dcc_service_mode_task_on_detect_callback_t on_detect);
 
 #endif /* DCC_COMPILE_SERVICE_MODE_TASK_DETECT */
 

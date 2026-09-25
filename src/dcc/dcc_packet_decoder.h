@@ -34,7 +34,7 @@
  * appropriate application callbacks.
  *
  * @author Jim Kueneman
- * @date 28 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_PACKET_DECODER__
@@ -125,44 +125,44 @@ typedef struct {
 
 } interface_dcc_packet_decoder_t;
 
-    /**
-     * @brief Initialize the packet decoder module.
-     * @param interface Pointer to populated interface struct.
-     */
-extern void DccPacketDecoder_initialize(const interface_dcc_packet_decoder_t *interface);
+        /**
+         * @brief Initialize the packet decoder module.
+         * @param interface Pointer to populated interface struct.
+         */
+    extern void DccPacketDecoder_initialize(const interface_dcc_packet_decoder_t *interface);
 
-    /**
-     * @brief Process a complete raw packet from the bit decoder.
-     * @param data Raw packet bytes (including XOR byte).
-     * @param byte_count Number of bytes in the packet.
-     *
-     * @details Validates XOR, extracts address, checks address match, parses
-     * the instruction, and dispatches to the appropriate callback.
-     */
-extern void DccPacketDecoder_process_packet(const uint8_t *data, uint8_t byte_count);
+        /**
+         * @brief Process a complete raw packet from the bit decoder.
+         * @param data Raw packet bytes (including XOR byte).
+         * @param byte_count Number of bytes in the packet.
+         *
+         * @details Validates XOR, extracts address, checks address match, parses
+         * the instruction, and dispatches to the appropriate callback.
+         */
+    extern void DccPacketDecoder_process_packet(const uint8_t *data, uint8_t byte_count);
 
-    /**
-     * @brief Enqueue a raw decoded packet for deferred dispatch.
-     *
-     * @details Wired to the bit decoder's on_packet_received, so it runs in the end-bit
-     * ISR. It only copies the bytes into a FIFO (no dispatch) -- the instruction
-     * callbacks fire later from @ref DccPacketDecoder_run, keeping the ISR short and the
-     * RailCom cutout window clear. A full FIFO drops the packet (the command station
-     * resends).
-     *
-     * @param data Raw packet bytes (including XOR byte).
-     * @param byte_count Number of bytes in the packet.
-     */
-extern void DccPacketDecoder_enqueue(const uint8_t *data, uint8_t byte_count);
+        /**
+         * @brief Enqueue a raw decoded packet for deferred dispatch.
+         *
+         * @details Wired to the bit decoder's on_packet_received, so it runs in the end-bit
+         * ISR. It only copies the bytes into a FIFO (no dispatch) -- the instruction
+         * callbacks fire later from @ref DccPacketDecoder_run, keeping the ISR short and the
+         * RailCom cutout window clear. A full FIFO drops the packet (the command station
+         * resends).
+         *
+         * @param data Raw packet bytes (including XOR byte).
+         * @param byte_count Number of bytes in the packet.
+         */
+    extern void DccPacketDecoder_enqueue(const uint8_t *data, uint8_t byte_count);
 
-    /**
-     * @brief Drain the packet FIFO, dispatching each queued packet.
-     *
-     * @details Call from the main loop (DccConfig_run). Runs @ref
-     * DccPacketDecoder_process_packet for every packet queued since the last call, in
-     * the poll context rather than the edge ISR.
-     */
-extern void DccPacketDecoder_run(void);
+        /**
+         * @brief Drain the packet FIFO, dispatching each queued packet.
+         *
+         * @details Call from the main loop (DccConfig_run). Runs @ref
+         * DccPacketDecoder_process_packet for every packet queued since the last call, in
+         * the poll context rather than the edge ISR.
+         */
+    extern void DccPacketDecoder_run(void);
 
 #ifdef __cplusplus
 }

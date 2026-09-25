@@ -28,7 +28,7 @@
  * @brief Packet scheduler with duplicate combining and auto-refresh.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_scheduler.h"
@@ -50,9 +50,7 @@ static int16_t _find_slot(dcc_scheduler_context_t *context, dcc_address_t addres
 
     for (slot_index = 0; slot_index < USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT; slot_index++) {
 
-        if (context->slots[slot_index].active &&
-            context->slots[slot_index].address == address &&
-            context->slots[slot_index].tag == tag) {
+        if (context->slots[slot_index].active && context->slots[slot_index].address == address && context->slots[slot_index].tag == tag) {
 
             return (int16_t)slot_index;
 
@@ -129,10 +127,10 @@ static int16_t _select_one_shot(dcc_scheduler_context_t *context) {
     /** @brief Which refresh slots a pass of _select_refresh() takes. */
 typedef enum {
 
-    REFRESH_PASS_ANY,       /**< flat ring (cold tier disabled) */
-    REFRESH_PASS_OVERDUE,   /**< any refresh slot unsent for refresh_cold_max_cycles or more */
-    REFRESH_PASS_PROMPT,    /**< still inside its burst after an insert */
-    REFRESH_PASS_DUE        /**< out of its burst, unsent for refresh_cold_cycles or more */
+    DCC_REFRESH_PASS_ANY,       /**< flat ring (cold tier disabled) */
+    DCC_REFRESH_PASS_OVERDUE,   /**< any refresh slot unsent for refresh_cold_max_cycles or more */
+    DCC_REFRESH_PASS_PROMPT,    /**< still inside its burst after an insert */
+    DCC_REFRESH_PASS_DUE        /**< out of its burst, unsent for refresh_cold_cycles or more */
 
 } refresh_pass_enum;
 
@@ -146,15 +144,15 @@ static bool _refresh_slot_in_pass(const dcc_scheduler_context_t *context, const 
 
     switch (pass) {
 
-        case REFRESH_PASS_OVERDUE:
+        case DCC_REFRESH_PASS_OVERDUE:
 
             return slot->unsent_cycles >= context->refresh_cold_max_cycles;
 
-        case REFRESH_PASS_PROMPT:
+        case DCC_REFRESH_PASS_PROMPT:
 
             return slot->prompt_sends_left > 0;
 
-        case REFRESH_PASS_DUE:
+        case DCC_REFRESH_PASS_DUE:
 
             return slot->prompt_sends_left == 0 && slot->unsent_cycles >= context->refresh_cold_cycles;
 
@@ -177,9 +175,7 @@ static bool _refresh_slot_in_pass(const dcc_scheduler_context_t *context, const 
      */
 static int16_t _select_refresh_pass(dcc_scheduler_context_t *context, refresh_pass_enum pass) {
 
-    uint8_t *cursor = (pass == REFRESH_PASS_OVERDUE || pass == REFRESH_PASS_DUE)
-                      ? &context->refresh_cold_index
-                      : &context->refresh_index;
+    uint8_t *cursor = (pass == DCC_REFRESH_PASS_OVERDUE || pass == DCC_REFRESH_PASS_DUE) ? &context->refresh_cold_index : &context->refresh_index;
     uint8_t start_index = *cursor;
     uint8_t scan_count;
 
@@ -220,13 +216,13 @@ static int16_t _select_refresh(dcc_scheduler_context_t *context) {
 
     if (context->refresh_cold_cycles == 0) {
 
-        return _select_refresh_pass(context, REFRESH_PASS_ANY);
+        return _select_refresh_pass(context, DCC_REFRESH_PASS_ANY);
 
     }
 
     if (context->refresh_last_was_overdue) {
 
-        slot_index = _select_refresh_pass(context, REFRESH_PASS_PROMPT);
+        slot_index = _select_refresh_pass(context, DCC_REFRESH_PASS_PROMPT);
 
         if (slot_index >= 0) {
 
@@ -237,18 +233,18 @@ static int16_t _select_refresh(dcc_scheduler_context_t *context) {
 
     }
 
-    slot_index = _select_refresh_pass(context, REFRESH_PASS_OVERDUE);
+    slot_index = _select_refresh_pass(context, DCC_REFRESH_PASS_OVERDUE);
     context->refresh_last_was_overdue = (slot_index >= 0);
 
     if (slot_index < 0) {
 
-        slot_index = _select_refresh_pass(context, REFRESH_PASS_PROMPT);
+        slot_index = _select_refresh_pass(context, DCC_REFRESH_PASS_PROMPT);
 
     }
 
     if (slot_index < 0) {
 
-        slot_index = _select_refresh_pass(context, REFRESH_PASS_DUE);
+        slot_index = _select_refresh_pass(context, DCC_REFRESH_PASS_DUE);
 
     }
 
@@ -338,8 +334,7 @@ bool DccScheduler_insert(dcc_scheduler_context_t *context, const dcc_packet_t *p
 
         context->slots[slot_index].unsent_cycles = 0;
 
-    } else if (auto_refresh && context->slots[slot_index].auto_refresh
-               && context->refresh_cold_cycles == 0) {
+    } else if (auto_refresh && context->slots[slot_index].auto_refresh && context->refresh_cold_cycles == 0) {
 
         /* Flat ring: a changed command for a refresh slot takes the next refresh turn
          * instead of waiting for the ring to come round to it (up to one full ring of

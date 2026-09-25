@@ -36,7 +36,7 @@
  * user-facing API.
  *
  * @author Jim Kueneman
- * @date 28 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_config.h"
@@ -307,6 +307,33 @@ static void _start_ack_pulse_wrapper(void) {
 
 }
 
+    /** @brief Poll the ACK pulse and stop it once the 6 ms window has elapsed (S-9.2.3 sec 3). */
+static void _run_ack_pulse(void) {
+
+    uint32_t elapsed;
+
+    if (!_ack_pulse_active) {
+
+        return;
+
+    }
+
+    elapsed = _configuration_pointer->get_timestamp_usec() - _ack_pulse_start_usec;
+
+    if (elapsed >= DCC_ACK_PULSE_DURATION_US) {
+
+        _ack_pulse_active = false;
+
+        if (_configuration_pointer->stop_ack_pulse) {
+
+            _configuration_pointer->stop_ack_pulse();
+
+        }
+
+    }
+
+}
+
 #if defined(DCC_COMPILE_RAILCOM)
     /**
      * @brief Bit decoder on_packet_received dispatch for a RailCom decoder. Runs at the
@@ -353,17 +380,17 @@ static dcc_address_t _decode_main_packet_address(const dcc_packet_t *packet) {
 
     }
 
-    uint8_t b0 = packet->data[0];
+    uint8_t first_byte = packet->data[0];
 
-    if (b0 >= 0xC0 && b0 <= 0xE7 && packet->byte_count >= 2) {
+    if (first_byte >= 0xC0 && first_byte <= 0xE7 && packet->byte_count >= 2) {
 
-        return (dcc_address_t)(((b0 & 0x3F) << 8) | packet->data[1]);
+        return (dcc_address_t)(((first_byte & 0x3F) << 8) | packet->data[1]);
 
     }
 
-    if (b0 >= 1 && b0 <= 127) {
+    if (first_byte >= 1 && first_byte <= 127) {
 
-        return (dcc_address_t)b0;
+        return (dcc_address_t)first_byte;
 
     }
 
@@ -822,16 +849,11 @@ void DccConfig_initialize(const dcc_config_t *config) {
 
     /* Resolve each cutout timing: a non-zero config value overrides the spec
      * default, 0 selects the dcc_defines spec default. */
-    uint16_t cutout_start_delay = config->railcom_cutout_start_delay_us
-        ? config->railcom_cutout_start_delay_us : DCC_RAILCOM_CUTOUT_START_DELAY_US;
-    uint16_t cutout_uart_rx_delay = config->railcom_uart_rx_delay_us
-        ? config->railcom_uart_rx_delay_us : DCC_RAILCOM_UART_RX_DELAY_US;
-    uint16_t cutout_ch1_window = config->railcom_ch1_window_us
-        ? config->railcom_ch1_window_us : DCC_RAILCOM_CH1_WINDOW_US;
-    uint16_t cutout_ch1_ch2_gap = config->railcom_ch1_ch2_gap_us
-        ? config->railcom_ch1_ch2_gap_us : DCC_RAILCOM_CH1_CH2_GAP_US;
-    uint16_t cutout_ch2_window = config->railcom_ch2_window_us
-        ? config->railcom_ch2_window_us : DCC_RAILCOM_CH2_WINDOW_US;
+    uint16_t cutout_start_delay = config->railcom_cutout_start_delay_us ? config->railcom_cutout_start_delay_us : DCC_RAILCOM_CUTOUT_START_DELAY_US;
+    uint16_t cutout_uart_rx_delay = config->railcom_uart_rx_delay_us ? config->railcom_uart_rx_delay_us : DCC_RAILCOM_UART_RX_DELAY_US;
+    uint16_t cutout_ch1_window = config->railcom_ch1_window_us ? config->railcom_ch1_window_us : DCC_RAILCOM_CH1_WINDOW_US;
+    uint16_t cutout_ch1_ch2_gap = config->railcom_ch1_ch2_gap_us ? config->railcom_ch1_ch2_gap_us : DCC_RAILCOM_CH1_CH2_GAP_US;
+    uint16_t cutout_ch2_window = config->railcom_ch2_window_us ? config->railcom_ch2_window_us : DCC_RAILCOM_CH2_WINDOW_US;
 
     DccRailcomCutout_initialize(&_railcom_cutout_context, &_railcom_cutout_interface,
                                 cutout_start_delay, cutout_uart_rx_delay, cutout_ch1_window,
@@ -1147,23 +1169,7 @@ void DccConfig_run(void) {
     DccFailsafe_run();
 
     /* ACK pulse 6ms timing: poll timestamp and stop after 6ms elapsed */
-    if (_ack_pulse_active) {
-
-        uint32_t elapsed = _configuration_pointer->get_timestamp_usec() - _ack_pulse_start_usec;
-
-        if (elapsed >= DCC_ACK_PULSE_DURATION_US) {
-
-            _ack_pulse_active = false;
-
-            if (_configuration_pointer->stop_ack_pulse) {
-
-                _configuration_pointer->stop_ack_pulse();
-
-            }
-
-        }
-
-    }
+    _run_ack_pulse();
 
 #endif /* DCC_COMPILE_DECODER */
 
@@ -1213,24 +1219,17 @@ void DccConfig_railcom_oneshot_timer_isr(void) {
 
 }
 
-void DccConfig_set_railcom_cutout_timing(uint16_t start_delay_us, uint16_t uart_rx_delay_us,
-                                         uint16_t ch1_window_us, uint16_t ch1_ch2_gap_us,
-                                         uint16_t ch2_window_us) {
+void DccConfig_set_railcom_cutout_timing(uint16_t start_delay_us, uint16_t uart_rx_delay_us, uint16_t ch1_window_us, uint16_t ch1_ch2_gap_us, uint16_t ch2_window_us) {
 
     /* 0 in any field selects that field's spec default, same as DccConfig_initialize.
      * Write the period fields directly (not via _initialize) so the cutout state
      * machine is NOT reset: an in-flight cutout finishes on its old timing and the
      * new periods apply from the next cutout. */
-    _railcom_cutout_context.start_delay_us = start_delay_us
-        ? start_delay_us : DCC_RAILCOM_CUTOUT_START_DELAY_US;
-    _railcom_cutout_context.uart_rx_delay_us = uart_rx_delay_us
-        ? uart_rx_delay_us : DCC_RAILCOM_UART_RX_DELAY_US;
-    _railcom_cutout_context.ch1_window_us = ch1_window_us
-        ? ch1_window_us : DCC_RAILCOM_CH1_WINDOW_US;
-    _railcom_cutout_context.ch1_ch2_gap_us = ch1_ch2_gap_us
-        ? ch1_ch2_gap_us : DCC_RAILCOM_CH1_CH2_GAP_US;
-    _railcom_cutout_context.ch2_window_us = ch2_window_us
-        ? ch2_window_us : DCC_RAILCOM_CH2_WINDOW_US;
+    _railcom_cutout_context.start_delay_us = start_delay_us ? start_delay_us : DCC_RAILCOM_CUTOUT_START_DELAY_US;
+    _railcom_cutout_context.uart_rx_delay_us = uart_rx_delay_us ? uart_rx_delay_us : DCC_RAILCOM_UART_RX_DELAY_US;
+    _railcom_cutout_context.ch1_window_us = ch1_window_us ? ch1_window_us : DCC_RAILCOM_CH1_WINDOW_US;
+    _railcom_cutout_context.ch1_ch2_gap_us = ch1_ch2_gap_us ? ch1_ch2_gap_us : DCC_RAILCOM_CH1_CH2_GAP_US;
+    _railcom_cutout_context.ch2_window_us = ch2_window_us ? ch2_window_us : DCC_RAILCOM_CH2_WINDOW_US;
 
 }
 
@@ -1254,8 +1253,7 @@ void DccConfig_100ms_timer_tick(void) {
      * track is powered on and RailCom is enabled (S-9.3.2 Section 6.3.3).
      * The NOP triggers accessory decoders to send SRQ in Ch1 if they have
      * pending updates. */
-    if (_configuration_pointer->main_track.railcom &&
-        _configuration_pointer->on_accessory_srq) {
+    if (_configuration_pointer->main_track.railcom && _configuration_pointer->on_accessory_srq) {
 
         _nop_tick_counter++;
 
@@ -1268,13 +1266,10 @@ void DccConfig_100ms_timer_tick(void) {
              * collision (garbled Ch1 data) to narrow the responder pool. */
             dcc_packet_t nop_packet;
             memset(&nop_packet, 0, sizeof(nop_packet));
-            DccApplicationCommandStationPacket_load_accessory_basic_stop(
-                &nop_packet, _nop_threshold_address, 0);
+            DccApplicationCommandStationPacket_load_accessory_basic_stop(&nop_packet, _nop_threshold_address, 0);
             nop_packet.repeat_count = 1;
 
-            DccApplicationCommandStationMainTrack_send_packet(
-                &nop_packet, _nop_threshold_address,
-                DCC_TAG_ACCESSORY, DCC_PRIORITY_ACCESSORY);
+            DccApplicationCommandStationMainTrack_send_packet(&nop_packet, _nop_threshold_address, DCC_TAG_ACCESSORY, DCC_PRIORITY_ACCESSORY);
 
         }
 

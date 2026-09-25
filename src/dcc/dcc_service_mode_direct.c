@@ -28,7 +28,7 @@
  * @brief Direct mode CV programming (byte write/verify, bit write/verify).
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_service_mode_direct.h"

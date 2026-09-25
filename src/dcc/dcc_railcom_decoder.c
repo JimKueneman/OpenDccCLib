@@ -28,7 +28,7 @@
  * @brief RailCom 4/8 encoding and datagram transmission for decoders.
  *
  * @author Jim Kueneman
- * @date 28 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_railcom_decoder.h"
@@ -189,10 +189,7 @@ static uint8_t _instruction_byte_count(uint8_t opcode) {
 
         }
 
-        if (opcode == DCC_FEAT_F13_F20 || opcode == DCC_FEAT_F21_F28 ||
-            opcode == DCC_FEAT_F29_F36 || opcode == DCC_FEAT_F37_F44 ||
-            opcode == DCC_FEAT_F45_F52 || opcode == DCC_FEAT_F53_F60 ||
-            opcode == DCC_FEAT_F61_F68) {
+        if (opcode == DCC_FEAT_F13_F20 || opcode == DCC_FEAT_F21_F28 || opcode == DCC_FEAT_F29_F36 || opcode == DCC_FEAT_F37_F44 || opcode == DCC_FEAT_F45_F52 || opcode == DCC_FEAT_F53_F60 || opcode == DCC_FEAT_F61_F68) {
 
             return 2;   /* feature-expansion function groups: opcode + 1 data */
 
@@ -210,8 +207,7 @@ static uint8_t _instruction_byte_count(uint8_t opcode) {
 
         }
 
-        if (opcode == DCC_CV_LONG_VERIFY || opcode == DCC_CV_LONG_BIT ||
-            opcode == DCC_CV_LONG_WRITE) {
+        if (opcode == DCC_CV_LONG_VERIFY || opcode == DCC_CV_LONG_BIT || opcode == DCC_CV_LONG_WRITE) {
 
             return 3;   /* standard POM long form: 1110GGVV VVVVVVVV DDDDDDDD */
 
@@ -409,6 +405,7 @@ static void _fill_adr(void) {
 static void _fill_ch2(const uint8_t *data, uint8_t count) {
 
     dcc_railcom_response_t out;
+    memset(&out, 0, sizeof(out));
     dcc_railcom_reply_status_enum status;
     uint8_t address_bytes;
 
@@ -421,10 +418,8 @@ static void _fill_ch2(const uint8_t *data, uint8_t count) {
     }
 
     address_bytes = _address_byte_count(data[0]);
-    memset(&out, 0, sizeof(out));
 
-    status = _interface->on_railcom_request(&data[address_bytes],
-            (uint8_t)(count - address_bytes), &out);
+    status = _interface->on_railcom_request(&data[address_bytes], (uint8_t)(count - address_bytes), &out);
 
     switch (status) {
 
@@ -471,14 +466,14 @@ static void _fill_ch2(const uint8_t *data, uint8_t count) {
      */
 static void _transmit_byte(uint8_t value) {
 
-    uint8_t bit;
+    uint8_t bit_position;
 
     _interface->tx_pin_set(false);                  /* start bit */
     _interface->delay_us(DCC_RAILCOM_TX_BIT_US);
 
-    for (bit = 0; bit < 8; bit++) {
+    for (bit_position = 0; bit_position < 8; bit_position++) {
 
-        _interface->tx_pin_set((value >> bit) & 0x01);
+        _interface->tx_pin_set((value >> bit_position) & 0x01);
         _interface->delay_us(DCC_RAILCOM_TX_BIT_US);
 
     }
@@ -563,8 +558,7 @@ void DccRailcomDecoder_on_byte_received(const uint8_t *data, uint8_t count) {
 
     }
 
-    if (DccRailcomDecoder_packet_address(data, count, &address, &type)
-            && type == _decoder_address_type && address == _decoder_address) {
+    if (DccRailcomDecoder_packet_address(data, count, &address, &type) && type == _decoder_address_type && address == _decoder_address) {
 
         _fill_adr();
         _fill_ch2(data, count);

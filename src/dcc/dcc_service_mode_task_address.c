@@ -28,7 +28,7 @@
  * @brief Task orchestrator for Address-Only mode CV programming (S-9.2.3 §E).
  *
  * @author Jim Kueneman
- * @date 23 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_service_mode_task_address.h"
@@ -57,7 +57,7 @@ typedef struct {
 
     const interface_dcc_service_mode_task_address_t *interface;
     dcc_task_address_state_enum state;
-    uint8_t bit;
+    uint8_t bit_position;
     bool bit_value;
     uint8_t value;
     uint8_t scan_value;
@@ -92,6 +92,27 @@ static void _complete(dcc_service_mode_result_t result, uint8_t value) {
 
 }
 
+    /** @brief write_bit: apply the requested bit to the scanned value and start the write of the modified byte. */
+static void _begin_write_bit(void) {
+
+    uint8_t modified = _context.scan_value;
+
+    if (_context.bit_value) {
+
+        modified |= (uint8_t)(1u << _context.bit_position);
+
+    } else {
+
+        modified &= (uint8_t)(~(1u << _context.bit_position));
+
+    }
+
+    _context.value = modified;
+    _context.state = DCC_TASK_ADDRESS_STATE_WRITE_BIT_WRITE;
+    _context.interface->address_write(modified);
+
+}
+
 static void _advance_scan(bool to_write_bit) {
 
     _context.current_step++;
@@ -101,25 +122,11 @@ static void _advance_scan(bool to_write_bit) {
 
         if (to_write_bit) {
 
-            uint8_t modified = _context.scan_value;
-
-            if (_context.bit_value) {
-
-                modified |= (uint8_t)(1u << _context.bit);
-
-            } else {
-
-                modified &= (uint8_t)(~(1u << _context.bit));
-
-            }
-
-            _context.value = modified;
-            _context.state = DCC_TASK_ADDRESS_STATE_WRITE_BIT_WRITE;
-            _context.interface->address_write(modified);
+            _begin_write_bit();
 
         } else if (_context.state == DCC_TASK_ADDRESS_STATE_READ_BIT_READ) {
 
-            uint8_t bit_result = (_context.scan_value >> _context.bit) & 1u;
+            uint8_t bit_result = (_context.scan_value >> _context.bit_position) & 1u;
             _complete(DCC_SERVICE_MODE_SUCCESS, bit_result);
 
         } else {
@@ -234,8 +241,7 @@ static void _advance_verify(void) {
 
     /* Single CV#1 verify: ACK = the address matched (SUCCESS); otherwise the
      * value did not verify (VERIFY_FAIL). */
-    _complete(_context.ack_result ? DCC_SERVICE_MODE_SUCCESS : DCC_SERVICE_MODE_VERIFY_FAIL,
-              _context.value);
+    _complete(_context.ack_result ? DCC_SERVICE_MODE_SUCCESS : DCC_SERVICE_MODE_VERIFY_FAIL, _context.value);
 
 }
 
@@ -266,9 +272,9 @@ bool DccServiceModeTaskAddress_verify(uint8_t address, dcc_service_mode_task_on_
 
 }
 
-bool DccServiceModeTaskAddress_read_bit(uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccServiceModeTaskAddress_read_bit(uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
-    if (bit > 6) {
+    if (bit_position > 6) {
 
         return false;
 
@@ -280,7 +286,7 @@ bool DccServiceModeTaskAddress_read_bit(uint8_t bit, dcc_service_mode_task_on_co
 
     }
 
-    _context.bit          = bit;
+    _context.bit_position          = bit_position;
     _context.scan_value   = 0;
     _context.current_step = 0;
     _context.ack_result   = false;
@@ -294,9 +300,9 @@ bool DccServiceModeTaskAddress_read_bit(uint8_t bit, dcc_service_mode_task_on_co
 
 }
 
-bool DccServiceModeTaskAddress_write_bit(uint8_t bit, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccServiceModeTaskAddress_write_bit(uint8_t bit_position, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
-    if (bit > 6) {
+    if (bit_position > 6) {
 
         return false;
 
@@ -308,7 +314,7 @@ bool DccServiceModeTaskAddress_write_bit(uint8_t bit, bool bit_value, dcc_servic
 
     }
 
-    _context.bit          = bit;
+    _context.bit_position          = bit_position;
     _context.bit_value    = bit_value;
     _context.scan_value   = 0;
     _context.current_step = 0;

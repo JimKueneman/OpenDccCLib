@@ -41,7 +41,7 @@
  * If no stage acknowledges, supported_modes == 0 and result is NO_ACK.
  *
  * @author Jim Kueneman
- * @date 23 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_service_mode_task_detect.h"
@@ -290,6 +290,56 @@ bool DccServiceModeTaskDetect_detect_mode(dcc_service_mode_task_on_detect_callba
 
 }
 
+    /** @brief Probe one Direct-mode bit of the detect CV; a refused primitive fails the task with BUSY. */
+static void _probe_direct_bit(uint8_t bit_position) {
+
+    if (!_context.interface->direct_verify_bit(DCC_DETECT_CV, bit_position, true)) {
+
+        _fail(DCC_SERVICE_MODE_BUSY);
+
+    }
+
+}
+
+    /** @brief Paged scan: advance to the next candidate value and verify it. */
+static void _scan_paged_next(void) {
+
+    _context.scan_value++;
+
+    if (!_context.interface->paged_verify(DCC_DETECT_CV, _context.scan_value)) {
+
+        _fail(DCC_SERVICE_MODE_BUSY);
+
+    }
+
+}
+
+    /** @brief Register scan: advance to the next candidate value and verify it. */
+static void _scan_register_next(void) {
+
+    _context.scan_value++;
+
+    if (!_context.interface->register_verify(DCC_DETECT_REGISTER, _context.scan_value)) {
+
+        _fail(DCC_SERVICE_MODE_BUSY);
+
+    }
+
+}
+
+    /** @brief Address scan: advance to the next candidate address and verify it. */
+static void _scan_address_next(void) {
+
+    _context.scan_value++;
+
+    if (!_context.interface->address_verify(_context.scan_value)) {
+
+        _fail(DCC_SERVICE_MODE_BUSY);
+
+    }
+
+}
+
 void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_t result) {
 
     /* The common module measures the ACK pulse width internally and reports the
@@ -309,12 +359,7 @@ void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_t re
             } else {
 
                 _context.state = DCC_TASK_DETECT_STATE_PROBE_DIRECT_1;
-
-                if (!_context.interface->direct_verify_bit(DCC_DETECT_CV, DCC_DETECT_BIT, true)) {
-
-                    _fail(DCC_SERVICE_MODE_BUSY);
-
-                }
+                _probe_direct_bit(DCC_DETECT_BIT);
 
             }
 
@@ -352,12 +397,7 @@ void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_t re
             } else {
 
                 _context.read_bit--;
-
-                if (!_context.interface->direct_verify_bit(DCC_DETECT_CV, _context.read_bit, true)) {
-
-                    _fail(DCC_SERVICE_MODE_BUSY);
-
-                }
+                _probe_direct_bit(_context.read_bit);
 
             }
 
@@ -390,13 +430,7 @@ void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_t re
 
             } else {
 
-                _context.scan_value++;
-
-                if (!_context.interface->paged_verify(DCC_DETECT_CV, _context.scan_value)) {
-
-                    _fail(DCC_SERVICE_MODE_BUSY);
-
-                }
+                _scan_paged_next();
 
             }
 
@@ -429,13 +463,7 @@ void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_t re
 
             } else {
 
-                _context.scan_value++;
-
-                if (!_context.interface->register_verify(DCC_DETECT_REGISTER, _context.scan_value)) {
-
-                    _fail(DCC_SERVICE_MODE_BUSY);
-
-                }
+                _scan_register_next();
 
             }
 
@@ -454,13 +482,7 @@ void DccServiceModeTaskDetect_on_primitive_complete(dcc_service_mode_result_t re
 
             } else {
 
-                _context.scan_value++;
-
-                if (!_context.interface->address_verify(_context.scan_value)) {
-
-                    _fail(DCC_SERVICE_MODE_BUSY);
-
-                }
+                _scan_address_next();
 
             }
 

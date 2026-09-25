@@ -108,52 +108,52 @@ typedef struct {
 
 } dcc_bit_encoder_context_t;
 
-    /**
-     * @brief Initialize the bit encoder module.
-     *  context Pointer to  dcc_bit_encoder_context_t instance.
-     *  interface Pointer to populated  interface_dcc_bit_encoder_t struct.
-     */
-extern void DccBitEncoder_initialize(dcc_bit_encoder_context_t *context, const interface_dcc_bit_encoder_t *interface);
+        /**
+         * @brief Initialize the bit encoder module.
+         *  context Pointer to  dcc_bit_encoder_context_t instance.
+         *  interface Pointer to populated  interface_dcc_bit_encoder_t struct.
+         */
+    extern void DccBitEncoder_initialize(dcc_bit_encoder_context_t *context, const interface_dcc_bit_encoder_t *interface);
 
-    /**
-     * @brief Fixed-period tick ISR entry point — call every 58us from shared timer.
-     *  context Pointer to  dcc_bit_encoder_context_t instance.
-     *
-     * @details Alternative to DccBitEncoder_half_bit_isr() for the shared-timer
-     * architecture. The timer period never changes. One-bits toggle every tick
-     * (58us half-period), zero-bits skip one tick and toggle on the second
-     * (116us half-period). Uses pin_toggle() instead of timer_set_period().
-     */
-extern void DccBitEncoder_tick_isr(dcc_bit_encoder_context_t *context);
+        /**
+         * @brief Fixed-period tick ISR entry point — call every 58us from shared timer.
+         *  context Pointer to  dcc_bit_encoder_context_t instance.
+         *
+         * @details Alternative to DccBitEncoder_half_bit_isr() for the shared-timer
+         * architecture. The timer period never changes. One-bits toggle every tick
+         * (58us half-period), zero-bits skip one tick and toggle on the second
+         * (116us half-period). Uses pin_toggle() instead of timer_set_period().
+         */
+    extern void DccBitEncoder_tick_isr(dcc_bit_encoder_context_t *context);
 
-    /**
-     * @brief Load a new packet for transmission.
-     *  context Pointer to  dcc_bit_encoder_context_t instance.
-     *  packet Pointer to  dcc_packet_t to transmit. Contents are copied.
-     *
-     * @details Called from main loop context (under lock). The bit encoder begins
-     * transmitting this packet starting with the preamble on the next ISR cycle.
-     */
-extern void DccBitEncoder_load_packet(dcc_bit_encoder_context_t *context, const dcc_packet_t *packet);
+        /**
+         * @brief Load a new packet for transmission.
+         *  context Pointer to  dcc_bit_encoder_context_t instance.
+         *  packet Pointer to  dcc_packet_t to transmit. Contents are copied.
+         *
+         * @details Called from main loop context (under lock). The bit encoder begins
+         * transmitting this packet starting with the preamble on the next ISR cycle.
+         */
+    extern void DccBitEncoder_load_packet(dcc_bit_encoder_context_t *context, const dcc_packet_t *packet);
 
-    /**
-     * @brief Check if the bit encoder has finished transmitting its current packet.
-     *  context Pointer to  dcc_bit_encoder_context_t instance.
-     * @return true if idle (ready for a new packet), false if transmitting.
-     */
-extern bool DccBitEncoder_is_idle(const dcc_bit_encoder_context_t *context);
+        /**
+         * @brief Check if the bit encoder has finished transmitting its current packet.
+         *  context Pointer to  dcc_bit_encoder_context_t instance.
+         * @return true if idle (ready for a new packet), false if transmitting.
+         */
+    extern bool DccBitEncoder_is_idle(const dcc_bit_encoder_context_t *context);
 
-    /**
-     * @brief Start the bit encoder. Begins generating DCC signal.
-     *  context Pointer to  dcc_bit_encoder_context_t instance.
-     */
-extern void DccBitEncoder_start(dcc_bit_encoder_context_t *context);
+        /**
+         * @brief Start the bit encoder. Begins generating DCC signal.
+         *  context Pointer to  dcc_bit_encoder_context_t instance.
+         */
+    extern void DccBitEncoder_start(dcc_bit_encoder_context_t *context);
 
-    /**
-     * @brief Stop the bit encoder. Halts DCC signal generation.
-     *  context Pointer to  dcc_bit_encoder_context_t instance.
-     */
-extern void DccBitEncoder_stop(dcc_bit_encoder_context_t *context);
+        /**
+         * @brief Stop the bit encoder. Halts DCC signal generation.
+         *  context Pointer to  dcc_bit_encoder_context_t instance.
+         */
+    extern void DccBitEncoder_stop(dcc_bit_encoder_context_t *context);
 
 #ifdef __cplusplus
 }

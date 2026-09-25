@@ -28,7 +28,7 @@
  * @brief Task orchestrator for Direct mode CV programming (S-9.2.3 §E).
  *
  * @author Jim Kueneman
- * @date 23 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_service_mode_task_direct.h"
@@ -55,8 +55,8 @@ typedef struct {
 
     const interface_dcc_service_mode_task_direct_t *interface;
     dcc_task_direct_state_enum state;
-    uint16_t cv;
-    uint8_t bit;
+    uint16_t cv_number;
+    uint8_t bit_position;
     bool bit_value;
     uint8_t value;
     bool any_ack;
@@ -95,29 +95,29 @@ static void _advance_read_cv(void) {
 
     if (_context.ack_result) {
 
-        _context.value |= (uint8_t)(1u << _context.bit);
+        _context.value |= (uint8_t)(1u << _context.bit_position);
         _context.any_ack = true;
 
     }
 
-    _context.bit++;
+    _context.bit_position++;
     _context.current_step++;
     _report_progress(DCC_TASK_PHASE_READ, 9);
 
-    if (_context.bit > 7) {
+    if (_context.bit_position > 7) {
 
         /* A missing ACK reads as a 0 bit, so with no decoder on the track the
          * eight bit-verifies assemble 0x00, the same as a CV that holds 0.
          * Confirm the assembled byte with one verify_byte before reporting it. */
         _context.state = DCC_TASK_DIRECT_STATE_READ_CV_VERIFY;
 
-        if (!_context.interface->verify_byte(_context.cv, _context.value)) {
+        if (!_context.interface->verify_byte(_context.cv_number, _context.value)) {
 
             _complete(DCC_SERVICE_MODE_BUSY, 0);
 
         }
 
-    } else if (!_context.interface->verify_bit(_context.cv, _context.bit, true)) {
+    } else if (!_context.interface->verify_bit(_context.cv_number, _context.bit_position, true)) {
 
         _complete(DCC_SERVICE_MODE_BUSY, 0);
 
@@ -154,7 +154,7 @@ static void _advance_write_cv(void) {
     _report_progress(DCC_TASK_PHASE_WRITE, 8);
     _context.state = DCC_TASK_DIRECT_STATE_WRITE_CV_VERIFY;
 
-    if (!_context.interface->verify_byte(_context.cv, _context.value)) {
+    if (!_context.interface->verify_byte(_context.cv_number, _context.value)) {
 
         _complete(DCC_SERVICE_MODE_BUSY, 0);
 
@@ -185,7 +185,7 @@ static void _advance_read_bit(void) {
      * bit really is 0 with a verify of the opposite value before reporting it. */
     _context.state = DCC_TASK_DIRECT_STATE_READ_BIT_CONFIRM;
 
-    if (!_context.interface->verify_bit(_context.cv, _context.bit, false)) {
+    if (!_context.interface->verify_bit(_context.cv_number, _context.bit_position, false)) {
 
         _complete(DCC_SERVICE_MODE_BUSY, 0);
 
@@ -212,7 +212,7 @@ static void _advance_write_bit(void) {
 
     _context.state = DCC_TASK_DIRECT_STATE_WRITE_BIT_VERIFY;
 
-    if (!_context.interface->verify_bit(_context.cv, _context.bit, _context.bit_value)) {
+    if (!_context.interface->verify_bit(_context.cv_number, _context.bit_position, _context.bit_value)) {
 
         _complete(DCC_SERVICE_MODE_BUSY, 0);
 
@@ -235,9 +235,9 @@ void DccServiceModeTaskDirect_initialize(const interface_dcc_service_mode_task_d
 
 }
 
-bool DccServiceModeTaskDirect_read_cv(uint16_t cv, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccServiceModeTaskDirect_read_cv(uint16_t cv_number, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
-    if (cv < 1 || cv > 1024) {
+    if (cv_number < 1 || cv_number > 1024) {
 
         return false;
 
@@ -249,8 +249,8 @@ bool DccServiceModeTaskDirect_read_cv(uint16_t cv, dcc_service_mode_task_on_comp
 
     }
 
-    _context.cv           = cv;
-    _context.bit          = 0;
+    _context.cv_number           = cv_number;
+    _context.bit_position          = 0;
     _context.value        = 0;
     _context.any_ack      = false;
     _context.current_step = 0;
@@ -259,7 +259,7 @@ bool DccServiceModeTaskDirect_read_cv(uint16_t cv, dcc_service_mode_task_on_comp
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_DIRECT_STATE_READ_CV;
 
-    if (!_context.interface->verify_bit(cv, 0, true)) {
+    if (!_context.interface->verify_bit(cv_number, 0, true)) {
 
         _context.state = DCC_TASK_DIRECT_STATE_IDLE;
         return false;
@@ -270,9 +270,9 @@ bool DccServiceModeTaskDirect_read_cv(uint16_t cv, dcc_service_mode_task_on_comp
 
 }
 
-bool DccServiceModeTaskDirect_write_cv(uint16_t cv, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccServiceModeTaskDirect_write_cv(uint16_t cv_number, uint8_t value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
-    if (cv < 1 || cv > 1024) {
+    if (cv_number < 1 || cv_number > 1024) {
 
         return false;
 
@@ -284,7 +284,7 @@ bool DccServiceModeTaskDirect_write_cv(uint16_t cv, uint8_t value, dcc_service_m
 
     }
 
-    _context.cv           = cv;
+    _context.cv_number           = cv_number;
     _context.value        = value;
     _context.current_step = 0;
     _context.ack_result   = false;
@@ -292,7 +292,7 @@ bool DccServiceModeTaskDirect_write_cv(uint16_t cv, uint8_t value, dcc_service_m
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_DIRECT_STATE_WRITE_CV;
 
-    if (!_context.interface->write_byte(cv, value)) {
+    if (!_context.interface->write_byte(cv_number, value)) {
 
         _context.state = DCC_TASK_DIRECT_STATE_IDLE;
         return false;
@@ -303,15 +303,15 @@ bool DccServiceModeTaskDirect_write_cv(uint16_t cv, uint8_t value, dcc_service_m
 
 }
 
-bool DccServiceModeTaskDirect_read_bit(uint16_t cv, uint8_t bit, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccServiceModeTaskDirect_read_bit(uint16_t cv_number, uint8_t bit_position, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
-    if (cv < 1 || cv > 1024) {
+    if (cv_number < 1 || cv_number > 1024) {
 
         return false;
 
     }
 
-    if (bit > 7) {
+    if (bit_position > 7) {
 
         return false;
 
@@ -323,14 +323,14 @@ bool DccServiceModeTaskDirect_read_bit(uint16_t cv, uint8_t bit, dcc_service_mod
 
     }
 
-    _context.cv           = cv;
-    _context.bit          = bit;
+    _context.cv_number           = cv_number;
+    _context.bit_position          = bit_position;
     _context.ack_result   = false;
     _context.on_complete  = on_complete;
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_DIRECT_STATE_READ_BIT;
 
-    if (!_context.interface->verify_bit(cv, bit, true)) {
+    if (!_context.interface->verify_bit(cv_number, bit_position, true)) {
 
         _context.state = DCC_TASK_DIRECT_STATE_IDLE;
         return false;
@@ -341,15 +341,15 @@ bool DccServiceModeTaskDirect_read_bit(uint16_t cv, uint8_t bit, dcc_service_mod
 
 }
 
-bool DccServiceModeTaskDirect_write_bit(uint16_t cv, uint8_t bit, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
+bool DccServiceModeTaskDirect_write_bit(uint16_t cv_number, uint8_t bit_position, bool bit_value, dcc_service_mode_task_on_complete_callback_t on_complete, dcc_service_mode_task_on_progress_callback_t on_progress) {
 
-    if (cv < 1 || cv > 1024) {
+    if (cv_number < 1 || cv_number > 1024) {
 
         return false;
 
     }
 
-    if (bit > 7) {
+    if (bit_position > 7) {
 
         return false;
 
@@ -361,15 +361,15 @@ bool DccServiceModeTaskDirect_write_bit(uint16_t cv, uint8_t bit, bool bit_value
 
     }
 
-    _context.cv           = cv;
-    _context.bit          = bit;
+    _context.cv_number           = cv_number;
+    _context.bit_position          = bit_position;
     _context.bit_value    = bit_value;
     _context.ack_result   = false;
     _context.on_complete  = on_complete;
     _context.on_progress  = on_progress;
     _context.state        = DCC_TASK_DIRECT_STATE_WRITE_BIT;
 
-    if (!_context.interface->write_bit(cv, bit, bit_value)) {
+    if (!_context.interface->write_bit(cv_number, bit_position, bit_value)) {
 
         _context.state = DCC_TASK_DIRECT_STATE_IDLE;
         return false;

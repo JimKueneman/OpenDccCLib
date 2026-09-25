@@ -34,7 +34,7 @@
  * of the internal RailCom encoder header.
  *
  * @author Jim Kueneman
- * @date 28 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_APPLICATION_DECODER_RAILCOM__
@@ -62,12 +62,12 @@ typedef struct {
 
 } interface_dcc_application_decoder_railcom_t;
 
-    /**
-     * @brief Initialize the decoder RailCom application module.
-     * @param interface Pointer to populated
-     *        @ref interface_dcc_application_decoder_railcom_t (wired by dcc_config.c).
-     */
-extern void DccApplicationDecoderRailcom_initialize(const interface_dcc_application_decoder_railcom_t *interface);
+        /**
+         * @brief Initialize the decoder RailCom application module.
+         * @param interface Pointer to populated
+         *        @ref interface_dcc_application_decoder_railcom_t (wired by dcc_config.c).
+         */
+    extern void DccApplicationDecoderRailcom_initialize(const interface_dcc_application_decoder_railcom_t *interface);
 
 // =============================================================================
 // Mobile Decoder Only — address feedback, track search, CV auto-transfer
@@ -75,30 +75,30 @@ extern void DccApplicationDecoderRailcom_initialize(const interface_dcc_applicat
 
 #ifdef DCC_COMPILE_DECODER
 
-    /**
-     * @brief Send Ch1 address feedback, alternating ADR1 (low) and ADR2 (high).
-     * @param address The decoder address (0-10239).
-     *
-     * Alternates between ADR1 (low 8 bits, datagram ID 1) and ADR2 (high 6 bits,
-     * datagram ID 2) on successive calls.
-     */
-extern void DccApplicationDecoderRailcom_send_address_feedback(uint16_t address);
+        /**
+         * @brief Send Ch1 address feedback, alternating ADR1 (low) and ADR2 (high).
+         * @param address The decoder address (0-10239).
+         *
+         * Alternates between ADR1 (low 8 bits, datagram ID 1) and ADR2 (high 6 bits,
+         * datagram ID 2) on successive calls.
+         */
+    extern void DccApplicationDecoderRailcom_send_address_feedback(uint16_t address);
 
-    /**
-     * @brief Send a Ch2 track search response.
-     * @param address The decoder address.
-     * @param seconds_since_powerup Seconds elapsed since decoder power-up.
-     *
-     * Packs ADR1, ADR2, and time into a multi-byte Ch2 datagram.
-     */
-extern void DccApplicationDecoderRailcom_send_track_search_response(uint16_t address, uint8_t seconds_since_powerup);
+        /**
+         * @brief Send a Ch2 track search response.
+         * @param address The decoder address.
+         * @param seconds_since_powerup Seconds elapsed since decoder power-up.
+         *
+         * Packs ADR1, ADR2, and time into a multi-byte Ch2 datagram.
+         */
+    extern void DccApplicationDecoderRailcom_send_track_search_response(uint16_t address, uint8_t seconds_since_powerup);
 
-    /**
-     * @brief Send a Ch2 CV auto-transfer datagram (ID 12, 36-bit payload).
-     * @param indexed_cv_address The indexed CV address (up to 24 bits).
-     * @param value The CV value.
-     */
-extern void DccApplicationDecoderRailcom_send_cv_auto_transfer(uint32_t indexed_cv_address, uint8_t value);
+        /**
+         * @brief Send a Ch2 CV auto-transfer datagram (ID 12, 36-bit payload).
+         * @param indexed_cv_address The indexed CV address (up to 24 bits).
+         * @param value The CV value.
+         */
+    extern void DccApplicationDecoderRailcom_send_cv_auto_transfer(uint32_t indexed_cv_address, uint8_t value);
 
 #endif /* DCC_COMPILE_DECODER */
 
@@ -106,47 +106,47 @@ extern void DccApplicationDecoderRailcom_send_cv_auto_transfer(uint32_t indexed_
 // Shared — POM, dynamic data, ACK/NACK, raw (mobile + accessory decoder)
 // =============================================================================
 
-    /**
-     * @brief Send a Ch2 POM (programming on main) response.
-     * @param cv_address The CV address being read (used as first data byte).
-     * @param value The CV value to report.
-     *
-     * Sends a datagram ID 0 response combining cv_address and value.
-     */
-extern void DccApplicationDecoderRailcom_send_pom_response(uint16_t cv_address, uint8_t value);
+        /**
+         * @brief Send a Ch2 POM (programming on main) response.
+         * @param cv_address The CV address being read (used as first data byte).
+         * @param value The CV value to report.
+         *
+         * Sends a datagram ID 0 response combining cv_address and value.
+         */
+    extern void DccApplicationDecoderRailcom_send_pom_response(uint16_t cv_address, uint8_t value);
 
-    /**
-     * @brief Send a Ch2 dynamic data datagram (ID 7).
-     * @param subid Sub-index identifying the dynamic data type.
-     * @param value The dynamic data value.
-     */
-extern void DccApplicationDecoderRailcom_send_dynamic_data(uint8_t subid, uint8_t value);
+        /**
+         * @brief Send a Ch2 dynamic data datagram (ID 7).
+         * @param subid Sub-index identifying the dynamic data type.
+         * @param value The dynamic data value.
+         */
+    extern void DccApplicationDecoderRailcom_send_dynamic_data(uint8_t subid, uint8_t value);
 
-    /**
-     * @brief Send the RailCom ACK special code word.
-     *
-     * Transmits the raw ACK code word (@ref DCC_RAILCOM_CODE_WORD_ACK) per the
-     * 2026 draft S-9.3.2, bypassing the 4/8 encode table.
-     */
-extern void DccApplicationDecoderRailcom_send_ack(void);
+        /**
+         * @brief Send the RailCom ACK special code word.
+         *
+         * Transmits the raw ACK code word (@ref DCC_RAILCOM_CODE_WORD_ACK) per the
+         * 2026 draft S-9.3.2, bypassing the 4/8 encode table.
+         */
+    extern void DccApplicationDecoderRailcom_send_ack(void);
 
-    /**
-     * @brief Send the RailCom NACK special code word.
-     *
-     * Transmits the raw NACK code word (@ref DCC_RAILCOM_CODE_WORD_NACK) per the
-     * 2026 draft S-9.3.2, bypassing the 4/8 encode table.
-     */
-extern void DccApplicationDecoderRailcom_send_nack(void);
+        /**
+         * @brief Send the RailCom NACK special code word.
+         *
+         * Transmits the raw NACK code word (@ref DCC_RAILCOM_CODE_WORD_NACK) per the
+         * 2026 draft S-9.3.2, bypassing the 4/8 encode table.
+         */
+    extern void DccApplicationDecoderRailcom_send_nack(void);
 
-    /**
-     * @brief Send a raw Ch2 datagram (escape hatch).
-     * @param datagram_id Datagram ID (0-15).
-     * @param data Pointer to data bytes to send.
-     * @param count Number of data bytes (max @ref DCC_RAILCOM_DATAGRAM_MAX_BYTES).
-     *
-     * Builds a @ref dcc_railcom_response_t and sends via Ch2.
-     */
-extern void DccApplicationDecoderRailcom_send_raw(uint8_t datagram_id, const uint8_t *data, uint8_t count);
+        /**
+         * @brief Send a raw Ch2 datagram (escape hatch).
+         * @param datagram_id Datagram ID (0-15).
+         * @param data Pointer to data bytes to send.
+         * @param count Number of data bytes (max @ref DCC_RAILCOM_DATAGRAM_MAX_BYTES).
+         *
+         * Builds a @ref dcc_railcom_response_t and sends via Ch2.
+         */
+    extern void DccApplicationDecoderRailcom_send_raw(uint8_t datagram_id, const uint8_t *data, uint8_t count);
 
 #ifdef __cplusplus
 }

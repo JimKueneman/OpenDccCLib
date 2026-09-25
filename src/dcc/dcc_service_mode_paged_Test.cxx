@@ -321,7 +321,7 @@ TEST(DccServiceModePaged, write_cv1025_rejected) {
 // Jim Kueneman's review of upstream PR #2 (2026-09-23): DccServiceModePaged_write()/_verify()
 // returned begin_operation()'s result directly without resetting paged_state on failure,
 // leaving it stuck in PAGE_SELECT forever -- every later paged call rejected. Fixed by
-// resetting to PAGED_STATE_IDLE on a failed start, matching what the address/register
+// resetting to DCC_PAGED_STATE_IDLE on a failed start, matching what the address/register
 // primitives already did. This pins the fix down: the page-select begin_operation itself
 // fails, and a FOLLOWING call must be accepted, not rejected by a stuck state.
 TEST(DccServiceModePaged, write_page_select_begin_operation_fails_resets_to_idle) {

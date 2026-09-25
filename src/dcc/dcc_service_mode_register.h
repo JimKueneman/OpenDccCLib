@@ -32,7 +32,7 @@
  * register verify/write. This is the oldest service mode, supported by all decoders.
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_SERVICE_MODE_REGISTER__
@@ -72,29 +72,29 @@ typedef struct {
 
 } dcc_service_mode_register_context_t;
 
-    /**
-     * @brief Initialize the register service mode module.
-     * @param context Pointer to @ref dcc_service_mode_register_context_t instance.
-     * @param interface Pointer to populated @ref interface_dcc_service_mode_register_t struct.
-     */
+        /**
+         * @brief Initialize the register service mode module.
+         * @param context Pointer to @ref dcc_service_mode_register_context_t instance.
+         * @param interface Pointer to populated @ref interface_dcc_service_mode_register_t struct.
+         */
     extern void DccServiceModeRegister_initialize(dcc_service_mode_register_context_t *context, const interface_dcc_service_mode_register_t *interface);
 
-    /**
-     * @brief Write a register value using register mode.
-     * @param context Pointer to @ref dcc_service_mode_register_context_t instance.
-     * @param register_number Register number to write (1-8).
-     * @param value Byte value to write.
-     * @return true if operation started, false if busy.
-     */
+        /**
+         * @brief Write a register value using register mode.
+         * @param context Pointer to @ref dcc_service_mode_register_context_t instance.
+         * @param register_number Register number to write (1-8).
+         * @param value Byte value to write.
+         * @return true if operation started, false if busy.
+         */
     extern bool DccServiceModeRegister_write(dcc_service_mode_register_context_t *context, uint8_t register_number, uint8_t value);
 
-    /**
-     * @brief Verify a register value using register mode.
-     * @param context Pointer to @ref dcc_service_mode_register_context_t instance.
-     * @param register_number Register number to verify (1-8).
-     * @param value Expected byte value.
-     * @return true if operation started, false if busy.
-     */
+        /**
+         * @brief Verify a register value using register mode.
+         * @param context Pointer to @ref dcc_service_mode_register_context_t instance.
+         * @param register_number Register number to verify (1-8).
+         * @param value Expected byte value.
+         * @return true if operation started, false if busy.
+         */
     extern bool DccServiceModeRegister_verify(dcc_service_mode_register_context_t *context, uint8_t register_number, uint8_t value);
 
 #ifdef __cplusplus

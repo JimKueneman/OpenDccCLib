@@ -33,7 +33,7 @@
  * includes this header instead of the internal CV storage header.
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_APPLICATION_DECODER_CV__
@@ -61,34 +61,34 @@ typedef struct {
 
 } interface_dcc_application_decoder_cv_t;
 
-    /**
-     * @brief Initialize the decoder CV application module.
-     * @param interface Pointer to populated
-     *        @ref interface_dcc_application_decoder_cv_t (wired by dcc_config.c).
-     */
-extern void DccApplicationDecoderCv_initialize(const interface_dcc_application_decoder_cv_t *interface);
+        /**
+         * @brief Initialize the decoder CV application module.
+         * @param interface Pointer to populated
+         *        @ref interface_dcc_application_decoder_cv_t (wired by dcc_config.c).
+         */
+    extern void DccApplicationDecoderCv_initialize(const interface_dcc_application_decoder_cv_t *interface);
 
-    /**
-     * @brief Read a CV value.
-     * @param cv_number CV number (1-based per NMRA convention).
-     * @param value Pointer to receive the CV value.
-     * @return true if the read succeeded, false on error or NULL interface.
-     */
-extern bool DccApplicationDecoderCv_read(uint16_t cv_number, uint8_t *value);
+        /**
+         * @brief Read a CV value.
+         * @param cv_number CV number (1-based per NMRA convention).
+         * @param value Pointer to receive the CV value.
+         * @return true if the read succeeded, false on error or NULL interface.
+         */
+    extern bool DccApplicationDecoderCv_read(uint16_t cv_number, uint8_t *value);
 
-    /**
-     * @brief Write a CV value with decoder lock enforcement.
-     * @param cv_number CV number (1-based per NMRA convention).
-     * @param value Value to write.
-     * @return true if the write succeeded, false if locked or on error.
-     */
-extern bool DccApplicationDecoderCv_write(uint16_t cv_number, uint8_t value);
+        /**
+         * @brief Write a CV value with decoder lock enforcement.
+         * @param cv_number CV number (1-based per NMRA convention).
+         * @param value Value to write.
+         * @return true if the write succeeded, false if locked or on error.
+         */
+    extern bool DccApplicationDecoderCv_write(uint16_t cv_number, uint8_t value);
 
-    /**
-     * @brief Check if the decoder lock is engaged.
-     * @return true if locked (CV 15 != CV 16), false if unlocked.
-     */
-extern bool DccApplicationDecoderCv_is_locked(void);
+        /**
+         * @brief Check if the decoder lock is engaged.
+         * @return true if locked (CV 15 != CV 16), false if unlocked.
+         */
+    extern bool DccApplicationDecoderCv_is_locked(void);
 
 #ifdef __cplusplus
 }

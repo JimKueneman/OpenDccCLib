@@ -28,7 +28,7 @@
  * @brief Packet-timeout fail-safe (S-9.2.4 §4, CV11).
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_failsafe.h"
@@ -58,9 +58,7 @@ void DccFailsafe_initialize(const interface_dcc_failsafe_t *interface) {
 
     /* Stamp "seen now" so a fresh decoder does not trip before the first
      * packet arrives. */
-    _last_packet_usec = (interface && interface->get_timestamp_usec)
-        ? interface->get_timestamp_usec()
-        : 0;
+    _last_packet_usec = (interface && interface->get_timestamp_usec) ? interface->get_timestamp_usec() : 0;
 
 }
 

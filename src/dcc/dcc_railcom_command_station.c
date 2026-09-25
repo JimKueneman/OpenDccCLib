@@ -28,7 +28,7 @@
  * @brief RailCom 4/8 decoding, cutout management, and receive buffer.
  *
  * @author Jim Kueneman
- * @date 28 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_railcom_command_station.h"
@@ -66,6 +66,7 @@ static void _buffer_push(dcc_railcom_command_station_context_t *context, const d
 static void _decode_channel_1(dcc_railcom_command_station_context_t *context, const uint8_t *raw_bytes, uint8_t raw_count) {
 
     dcc_railcom_datagram_t datagram;
+    memset(&datagram, 0, sizeof(datagram));
 
     if (raw_count < DCC_RAILCOM_CH1_MAX_BYTES) {
 
@@ -98,6 +99,7 @@ static void _decode_channel_1(dcc_railcom_command_station_context_t *context, co
 static void _decode_channel_2(dcc_railcom_command_station_context_t *context, const uint8_t *raw_bytes, uint8_t raw_count) {
 
     dcc_railcom_datagram_t datagram;
+    memset(&datagram, 0, sizeof(datagram));
 
     if (raw_count <= DCC_RAILCOM_CH1_MAX_BYTES) {
 

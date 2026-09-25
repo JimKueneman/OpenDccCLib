@@ -42,7 +42,7 @@
  * controlled devices.
  *
  * @author Jim Kueneman
- * @date 27 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_FAILSAFE__
@@ -74,40 +74,40 @@ typedef struct {
 
 } interface_dcc_failsafe_t;
 
-    /**
-     * @brief Initialize the fail-safe module.
-     * @param interface Pointer to populated interface struct.
-     *
-     * @details Clears the tripped state and stamps "last packet seen = now" so a
-     * freshly initialized decoder does not immediately time out.
-     */
-extern void DccFailsafe_initialize(const interface_dcc_failsafe_t *interface);
+        /**
+         * @brief Initialize the fail-safe module.
+         * @param interface Pointer to populated interface struct.
+         *
+         * @details Clears the tripped state and stamps "last packet seen = now" so a
+         * freshly initialized decoder does not immediately time out.
+         */
+    extern void DccFailsafe_initialize(const interface_dcc_failsafe_t *interface);
 
-    /**
-     * @brief Note that a command packet addressed to this decoder was received.
-     *
-     * @details Re-arms the time-out by re-stamping the last-packet clock. If the
-     * decoder is currently in fail-safe, this also clears the state and fires
-     * on_failsafe_exited exactly once. Call from the packet-decode path whenever
-     * a packet matches our address (or broadcast) in Operations Mode.
-     */
-extern void DccFailsafe_note_valid_packet(void);
+        /**
+         * @brief Note that a command packet addressed to this decoder was received.
+         *
+         * @details Re-arms the time-out by re-stamping the last-packet clock. If the
+         * decoder is currently in fail-safe, this also clears the state and fires
+         * on_failsafe_exited exactly once. Call from the packet-decode path whenever
+         * a packet matches our address (or broadcast) in Operations Mode.
+         */
+    extern void DccFailsafe_note_valid_packet(void);
 
-    /**
-     * @brief Periodic poll. Call from the main loop (DccConfig_run).
-     *
-     * @details Reads CV11; when CV11 = 0 the time-out is disabled. Otherwise, if
-     * the elapsed time since the last addressed packet has reached
-     * CV11 * DCC_FAILSAFE_CV11_UNIT_US and the decoder is not already tripped,
-     * fires on_failsafe_entered exactly once.
-     */
-extern void DccFailsafe_run(void);
+        /**
+         * @brief Periodic poll. Call from the main loop (DccConfig_run).
+         *
+         * @details Reads CV11; when CV11 = 0 the time-out is disabled. Otherwise, if
+         * the elapsed time since the last addressed packet has reached
+         * CV11 * DCC_FAILSAFE_CV11_UNIT_US and the decoder is not already tripped,
+         * fires on_failsafe_entered exactly once.
+         */
+    extern void DccFailsafe_run(void);
 
-    /**
-     * @brief Query whether the decoder is currently in fail-safe.
-     * @return true if tripped (timed out and not yet recovered).
-     */
-extern bool DccFailsafe_is_active(void);
+        /**
+         * @brief Query whether the decoder is currently in fail-safe.
+         * @return true if tripped (timed out and not yet recovered).
+         */
+    extern bool DccFailsafe_is_active(void);
 
 #ifdef __cplusplus
 }

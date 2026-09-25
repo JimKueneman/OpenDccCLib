@@ -34,7 +34,7 @@
  * - Round-robin through refresh slots
  *
  * @author Jim Kueneman
- * @date 13 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_SCHEDULER__
@@ -111,63 +111,63 @@ typedef struct {
 
 } dcc_scheduler_context_t;
 
-    /**
-     * @brief Initialize the scheduler module.
-     * @param context Pointer to @ref dcc_scheduler_context_t instance.
-     * @param interface Pointer to populated @ref interface_dcc_scheduler_t struct.
-     */
+        /**
+         * @brief Initialize the scheduler module.
+         * @param context Pointer to @ref dcc_scheduler_context_t instance.
+         * @param interface Pointer to populated @ref interface_dcc_scheduler_t struct.
+         */
     extern void DccScheduler_initialize(dcc_scheduler_context_t *context, const interface_dcc_scheduler_t *interface);
 
-    /**
-     * @brief Main loop processing. Selects next packet and feeds to bit encoder.
-     * @param context Pointer to @ref dcc_scheduler_context_t instance.
-     *
-     * @details Called from DccConfig_run(). Checks if the bit encoder is idle,
-     * selects the highest-priority packet, handles auto-refresh round-robin,
-     * and loads the next packet.
-     */
-extern void DccScheduler_run(dcc_scheduler_context_t *context);
+        /**
+         * @brief Main loop processing. Selects next packet and feeds to bit encoder.
+         * @param context Pointer to @ref dcc_scheduler_context_t instance.
+         *
+         * @details Called from DccConfig_run(). Checks if the bit encoder is idle,
+         * selects the highest-priority packet, handles auto-refresh round-robin,
+         * and loads the next packet.
+         */
+    extern void DccScheduler_run(dcc_scheduler_context_t *context);
 
-    /**
-     * @brief Insert or update a packet in the scheduler.
-     * @param context Pointer to @ref dcc_scheduler_context_t instance.
-     *
-     * @details If a slot with matching (address, tag) exists and is active,
-     * its packet data is overwritten (duplicate combining). Otherwise a new
-     * slot is allocated.
-     *
-     * @param packet Pointer to @ref dcc_packet_t to schedule.
-     * @param address DCC address for duplicate combining key.
-     * @param tag Sub-key for duplicate combining (@ref dcc_tag_enum).
-     * @param priority Packet priority level (@ref dcc_priority_enum).
-     * @param auto_refresh true = keep in refresh cycle indefinitely.
-     * @return true if packet was scheduled, false if no free slots.
-     */
+        /**
+         * @brief Insert or update a packet in the scheduler.
+         * @param context Pointer to @ref dcc_scheduler_context_t instance.
+         *
+         * @details If a slot with matching (address, tag) exists and is active,
+         * its packet data is overwritten (duplicate combining). Otherwise a new
+         * slot is allocated.
+         *
+         * @param packet Pointer to @ref dcc_packet_t to schedule.
+         * @param address DCC address for duplicate combining key.
+         * @param tag Sub-key for duplicate combining (@ref dcc_tag_enum).
+         * @param priority Packet priority level (@ref dcc_priority_enum).
+         * @param auto_refresh true = keep in refresh cycle indefinitely.
+         * @return true if packet was scheduled, false if no free slots.
+         */
     extern bool DccScheduler_insert(dcc_scheduler_context_t *context, const dcc_packet_t *packet, dcc_address_t address, dcc_tag_enum tag, dcc_priority_enum priority, bool auto_refresh);
 
-    /**
-     * @brief Remove all slots for a given address.
-     * @param context Pointer to @ref dcc_scheduler_context_t instance.
-     * @param address The address to purge.
-     */
+        /**
+         * @brief Remove all slots for a given address.
+         * @param context Pointer to @ref dcc_scheduler_context_t instance.
+         * @param address The address to purge.
+         */
     extern void DccScheduler_remove_address(dcc_scheduler_context_t *context, dcc_address_t address);
 
-    /**
-     * @brief Remove all active slots (clear the scheduler).
-     * @param context Pointer to @ref dcc_scheduler_context_t instance.
-     */
-extern void DccScheduler_clear(dcc_scheduler_context_t *context);
+        /**
+         * @brief Remove all active slots (clear the scheduler).
+         * @param context Pointer to @ref dcc_scheduler_context_t instance.
+         */
+    extern void DccScheduler_clear(dcc_scheduler_context_t *context);
 
-    /**
-     * @brief Notify the scheduler that the bit encoder finished a packet.
-     * @param context Pointer to @ref dcc_scheduler_context_t instance.
-     *
-     * @details Called from ISR context (via on_packet_complete callback) when a
-     * packet has FINISHED transmitting. Sets a flag that DccScheduler_run() will
-     * process. This is the "packet finished" counterpart to the on_packet_sent
-     * dispatch notification (see @ref interface_dcc_scheduler_t::on_packet_sent).
-     */
-extern void DccScheduler_on_packet_complete(dcc_scheduler_context_t *context);
+        /**
+         * @brief Notify the scheduler that the bit encoder finished a packet.
+         * @param context Pointer to @ref dcc_scheduler_context_t instance.
+         *
+         * @details Called from ISR context (via on_packet_complete callback) when a
+         * packet has FINISHED transmitting. Sets a flag that DccScheduler_run() will
+         * process. This is the "packet finished" counterpart to the on_packet_sent
+         * dispatch notification (see @ref interface_dcc_scheduler_t::on_packet_sent).
+         */
+    extern void DccScheduler_on_packet_complete(dcc_scheduler_context_t *context);
 
 #ifdef __cplusplus
 }

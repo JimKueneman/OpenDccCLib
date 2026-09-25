@@ -32,7 +32,7 @@
  * to page and register: page = ((CV-1)/4)+1, register = ((CV-1)%4)+1.
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_SERVICE_MODE_PAGED__
@@ -72,29 +72,29 @@ typedef struct {
 
 } dcc_service_mode_paged_context_t;
 
-    /**
-     * @brief Initialize the paged service mode module.
-     * @param context Pointer to @ref dcc_service_mode_paged_context_t instance.
-     * @param interface Pointer to populated @ref interface_dcc_service_mode_paged_t struct.
-     */
+        /**
+         * @brief Initialize the paged service mode module.
+         * @param context Pointer to @ref dcc_service_mode_paged_context_t instance.
+         * @param interface Pointer to populated @ref interface_dcc_service_mode_paged_t struct.
+         */
     extern void DccServiceModePaged_initialize(dcc_service_mode_paged_context_t *context, const interface_dcc_service_mode_paged_t *interface);
 
-    /**
-     * @brief Write a CV value using paged mode.
-     * @param context Pointer to @ref dcc_service_mode_paged_context_t instance.
-     * @param cv_number CV number to write (1-1024).
-     * @param value Byte value to write.
-     * @return true if operation started, false if busy.
-     */
+        /**
+         * @brief Write a CV value using paged mode.
+         * @param context Pointer to @ref dcc_service_mode_paged_context_t instance.
+         * @param cv_number CV number to write (1-1024).
+         * @param value Byte value to write.
+         * @return true if operation started, false if busy.
+         */
     extern bool DccServiceModePaged_write(dcc_service_mode_paged_context_t *context, uint16_t cv_number, uint8_t value);
 
-    /**
-     * @brief Verify a CV value using paged mode.
-     * @param context Pointer to @ref dcc_service_mode_paged_context_t instance.
-     * @param cv_number CV number to verify (1-1024).
-     * @param value Expected byte value.
-     * @return true if operation started, false if busy.
-     */
+        /**
+         * @brief Verify a CV value using paged mode.
+         * @param context Pointer to @ref dcc_service_mode_paged_context_t instance.
+         * @param cv_number CV number to verify (1-1024).
+         * @param value Expected byte value.
+         * @return true if operation started, false if busy.
+         */
     extern bool DccServiceModePaged_verify(dcc_service_mode_paged_context_t *context, uint16_t cv_number, uint8_t value);
 
 #ifdef __cplusplus

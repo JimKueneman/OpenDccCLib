@@ -31,7 +31,7 @@
  * (CV 1). Uses register mode write to register 1. Single-step operation.
  *
  * @author Jim Kueneman
- * @date 07 Apr 2026
+ * @date 25 Sep 2026
  */
 
 #ifndef __DCC_SERVICE_MODE_ADDRESS__
@@ -70,27 +70,27 @@ typedef struct {
 
 } dcc_service_mode_address_context_t;
 
-    /**
-     * @brief Initialize the address-only service mode module.
-     * @param context Pointer to @ref dcc_service_mode_address_context_t instance.
-     * @param interface Pointer to populated @ref interface_dcc_service_mode_address_t struct.
-     */
+        /**
+         * @brief Initialize the address-only service mode module.
+         * @param context Pointer to @ref dcc_service_mode_address_context_t instance.
+         * @param interface Pointer to populated @ref interface_dcc_service_mode_address_t struct.
+         */
     extern void DccServiceModeAddress_initialize(dcc_service_mode_address_context_t *context, const interface_dcc_service_mode_address_t *interface);
 
-    /**
-     * @brief Write the short address (CV 1) using address-only mode.
-     * @param context Pointer to @ref dcc_service_mode_address_context_t instance.
-     * @param address The short address to write (1-127).
-     * @return true if operation started, false if busy.
-     */
+        /**
+         * @brief Write the short address (CV 1) using address-only mode.
+         * @param context Pointer to @ref dcc_service_mode_address_context_t instance.
+         * @param address The short address to write (1-127).
+         * @return true if operation started, false if busy.
+         */
     extern bool DccServiceModeAddress_write(dcc_service_mode_address_context_t *context, uint8_t address);
 
-    /**
-     * @brief Verify the short address (CV 1) using address-only mode.
-     * @param context Pointer to @ref dcc_service_mode_address_context_t instance.
-     * @param address The short address to verify (1-127).
-     * @return true if operation started, false if busy.
-     */
+        /**
+         * @brief Verify the short address (CV 1) using address-only mode.
+         * @param context Pointer to @ref dcc_service_mode_address_context_t instance.
+         * @param address The short address to verify (1-127).
+         * @return true if operation started, false if busy.
+         */
     extern bool DccServiceModeAddress_verify(dcc_service_mode_address_context_t *context, uint8_t address);
 
 #ifdef __cplusplus

@@ -28,7 +28,7 @@
  * @brief Pure RailCom helper functions (4/8 codec) shared across roles.
  *
  * @author Jim Kueneman
- * @date 28 Jun 2026
+ * @date 25 Sep 2026
  */
 
 #include "dcc_railcom_utilities.h"
@@ -63,6 +63,7 @@ static const uint8_t _encode_table[64] = {
     0xC6, 0xCC, 0x78, 0x17, 0x1B, 0x1D, 0x1E, 0x2E,
     /* 0x38-0x3F */
     0x36, 0x3A, 0x27, 0x2B, 0x2D, 0x35, 0x39, 0x33
+
 };
 
 uint8_t DccRailcomUtilities_encode_byte(uint8_t value) {
@@ -181,6 +182,7 @@ static const uint8_t _decode_table[256] = {
     /* 0xF0 is the primary ACK special code word (S-9.3.2 Table 2) */
     0xFE, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+
 };
 
 uint8_t DccRailcomUtilities_decode_byte(uint8_t encoded) {
