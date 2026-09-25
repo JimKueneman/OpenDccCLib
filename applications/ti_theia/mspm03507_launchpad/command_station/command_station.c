@@ -97,8 +97,6 @@ static const dcc_config_t dcc_config = {
 
     // Main track hardware -- runs the scheduler (normal DCC operations).
     .main_track = {
-        .timer_start      = NULL,    /* not used with shared timer */
-        .timer_stop       = NULL,    /* not used with shared timer */
         .pin_toggle       = &TI_DccDriver_main_pin_toggle,
         .track_power_set  = &TI_DccDriver_track_power_set,
         .current_sense_read = NULL,  /* no current sensing on main track */
@@ -107,8 +105,6 @@ static const dcc_config_t dcc_config = {
 
     // Service track hardware -- runs service mode (programming).
     .service_track = {
-        .timer_start        = NULL,  /* not used with shared timer */
-        .timer_stop         = NULL,  /* not used with shared timer */
         .pin_toggle         = &TI_DccDriver_svc_pin_toggle,
         .track_power_set    = &TI_DccDriver_svc_track_power_set,
         .current_sense_read = &TI_DccDriver_current_sense_read,

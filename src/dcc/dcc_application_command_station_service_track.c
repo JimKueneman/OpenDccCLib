@@ -62,6 +62,7 @@ void DccApplicationCommandStationServiceTrack_power_on(void) {
 
     }
 
+    _interface->track_power_set(true);
     _interface->timer_start(DCC_ONE_BIT_HALF_PERIOD_US);
     _interface->encoder_start();
 
@@ -77,6 +78,7 @@ void DccApplicationCommandStationServiceTrack_power_off(void) {
 
     _interface->encoder_stop();
     _interface->timer_stop();
+    _interface->track_power_set(false);
 
 }
 
@@ -92,6 +94,7 @@ bool DccApplicationCommandStationServiceTrack_enter_service_mode(void) {
 
     }
 
+    _interface->track_power_set(true);
     _interface->timer_start(DCC_ONE_BIT_HALF_PERIOD_US);
     _interface->encoder_start();
 
@@ -110,6 +113,7 @@ void DccApplicationCommandStationServiceTrack_exit_service_mode(void) {
     _interface->exit_service_mode();
     _interface->encoder_stop();
     _interface->timer_stop();
+    _interface->track_power_set(false);
 
 }
 

@@ -131,40 +131,33 @@ typedef struct {
      * @brief Per-channel DCC output hardware drivers.
      *
      * @details Each DCC output channel (main track, service track) has its own
-     * timer, H-bridge, and optional peripherals. The timer drives a hardware
-     * output-compare toggle pin for zero-jitter DCC signal generation.
+     * output pin and H-bridge enable. Both channels are clocked by the shared
+     * 58 us timer (shared_timer_start/shared_timer_stop in dcc_config_t); there
+     * is no per-channel timer.
      */
 typedef struct {
 
-        /**
-         * @brief Start DCC bit timer. User configures their timer in output compare
-         *  toggle mode so the track signal pin toggles automatically on compare match
-         *  with zero jitter. Timer ISR must call DccConfig_58us_timer_isr(). REQUIRED.
-         */
-    void (*timer_start)(uint16_t half_bit_period_usec);
-
-        /** @brief Stop DCC bit timer. REQUIRED. */
-    void (*timer_stop)(void);
-
-        /** @brief Toggle DCC output GPIO pin (ISR context). Used by the
-         *  fixed-period shared timer architecture (tick_isr). REQUIRED. */
+        /** @brief Toggle DCC output GPIO pin (ISR context). Called on every tick
+         *  of the shared timer while this channel is generating. REQUIRED. */
     void (*pin_toggle)(void);
 
-        /** @brief Enable or disable track power for this channel. REQUIRED. */
+        /** @brief Enable or disable track power for this channel. Called by
+         *  power_on/power_off on both tracks and by enter/exit_service_mode on
+         *  the service track. REQUIRED. */
     void (*track_power_set)(bool enabled);
 
         /**
          * @brief Read current sense value. Returns milliamps (ADC) or 0/non-zero
-         *  (comparator). Used for service mode ACK detection on the service track.
-         *  May be used for overcurrent protection on either channel.
-         *  NULL = feature disabled on this channel.
+         *  (comparator). Read on the service track only, every 58 us tick, for
+         *  service-mode ACK detection. Not read on the main track in this release.
+         *  NULL = no ACK detection.
          */
     uint16_t (*current_sense_read)(void);
 
 #if defined(DCC_COMPILE_RAILCOM)
         /**
-         * @brief RailCom detector hardware. NULL = no RailCom on this channel.
-         *  In practice only the main track has a RailCom detector.
+         * @brief RailCom detector hardware. Read on the main track only; leave it
+         *  NULL on the service track. NULL = no RailCom receive.
          */
     const dcc_railcom_hw_t *railcom;
 #endif /* DCC_COMPILE_RAILCOM */

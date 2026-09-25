@@ -87,13 +87,11 @@ NULL-optional fields disable the associated feature at runtime.
 
 **Command Station:** a shared fixed-period DCC timer (`shared_timer_start/stop`,
 clocked at `DCC_ONE_BIT_HALF_PERIOD_US` = 58 µs). Per-channel hardware is described by
-`dcc_output_hw_t` for `main_track` and `service_track`: `pin_toggle`, `track_power_set`,
-optional `current_sense_read`, an optional nested `dcc_railcom_hw_t`, and
-`timer_start/stop`, which the header marks REQUIRED but `dcc_config.c` never calls (it
-substitutes shared-timer wrappers). Of these the library reads
-`main_track.track_power_set`, `service_track.current_sense_read` (ACK sampling) and
-`main_track.railcom`; `service_track.track_power_set`, `main_track.current_sense_read`
-and `service_track.railcom` are not wired in this release. With `DCC_COMPILE_RAILCOM`:
+`dcc_output_hw_t` for `main_track` and `service_track`: `pin_toggle`, `track_power_set`
+(called by `power_on/off` on both tracks and by `enter/exit_service_mode` on the service
+track), optional `current_sense_read` (read on the service track only, for ACK sampling)
+and an optional nested `dcc_railcom_hw_t` (read on the main track only). There is no
+per-channel timer; both channels run from the shared timer. With `DCC_COMPILE_RAILCOM`:
 a RailCom one-shot timer (`railcom_timer_start/stop`), the five cutout periods
 (`railcom_cutout_start_delay_us`, `railcom_uart_rx_delay_us`, `railcom_ch1_window_us`,
 `railcom_ch1_ch2_gap_us`, `railcom_ch2_window_us`; 0 = spec default), and

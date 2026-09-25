@@ -308,6 +308,18 @@ void TI_DccDriver_svc_pin_toggle(void) {
 
 }
 
+void TI_DccDriver_svc_track_power_set(bool enabled) {
+
+    /* Same convention as the main track: the bench has no H-bridge, so power
+     * is the idle level of the service-track DCC pin. */
+    if (enabled) {
+        DL_GPIO_setPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_SERVICE_MODE_DCC_PIN);
+    } else {
+        DL_GPIO_clearPins(GPIO_GRP_SALEAE_PORT, GPIO_GRP_SALEAE_SERVICE_MODE_DCC_PIN);
+    }
+
+}
+
 void TI_DccDriver_timestamp_tick(void) {
 
     _timestamp_ticks++;

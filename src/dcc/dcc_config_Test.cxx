@@ -26,12 +26,9 @@ static uint32_t mock_timestamp(void) { return 0; }
 
 #ifdef DCC_COMPILE_COMMAND_STATION
 
-static void mock_main_timer_start(uint16_t period) { (void)period; }
-static void mock_main_timer_stop(void) {}
 static void mock_main_power_set(bool enabled) { (void)enabled; }
+static void mock_svc_power_set(bool enabled) { (void)enabled; }
 
-static void mock_svc_timer_start(uint16_t period) { (void)period; }
-static void mock_svc_timer_stop(void) {}
 
 static uint16_t mock_current_sense_read(void) { return 100; }
 
@@ -123,12 +120,9 @@ static dcc_config_t make_test_config(void) {
     cfg.get_timestamp_usec = mock_timestamp;
 
 #ifdef DCC_COMPILE_COMMAND_STATION
-    cfg.main_track.timer_start = mock_main_timer_start;
-    cfg.main_track.timer_stop = mock_main_timer_stop;
     cfg.main_track.track_power_set = mock_main_power_set;
 
-    cfg.service_track.timer_start = mock_svc_timer_start;
-    cfg.service_track.timer_stop = mock_svc_timer_stop;
+    cfg.service_track.track_power_set = mock_svc_power_set;
 #endif
 
 #ifdef DCC_COMPILE_DECODER
@@ -234,6 +228,40 @@ TEST(DccConfig, service_track_power_on_null_guard) {
 TEST(DccConfig, service_track_power_off_null_guard) {
     DccConfig_initialize(NULL);
     DccApplicationCommandStationServiceTrack_power_off();
+}
+
+static int  _svc_power_calls;
+static bool _svc_power_last;
+static void mock_svc_power_set_tracking(bool enabled) { _svc_power_calls++; _svc_power_last = enabled; }
+
+TEST(DccConfig, service_track_power_on_off_reach_driver) {
+    dcc_config_t cfg = make_test_config();
+    cfg.service_track.track_power_set = mock_svc_power_set_tracking;
+    _svc_power_calls = 0;
+    DccConfig_initialize(&cfg);
+
+    DccApplicationCommandStationServiceTrack_power_on();
+    EXPECT_EQ(_svc_power_calls, 1);
+    EXPECT_TRUE(_svc_power_last);
+
+    DccApplicationCommandStationServiceTrack_power_off();
+    EXPECT_EQ(_svc_power_calls, 2);
+    EXPECT_FALSE(_svc_power_last);
+}
+
+TEST(DccConfig, service_mode_enter_exit_switch_track_power) {
+    dcc_config_t cfg = make_test_config();
+    cfg.service_track.track_power_set = mock_svc_power_set_tracking;
+    _svc_power_calls = 0;
+    DccConfig_initialize(&cfg);
+
+    DccApplicationCommandStationServiceTrack_enter_service_mode();
+    EXPECT_EQ(_svc_power_calls, 1);
+    EXPECT_TRUE(_svc_power_last);
+
+    DccApplicationCommandStationServiceTrack_exit_service_mode();
+    EXPECT_EQ(_svc_power_calls, 2);
+    EXPECT_FALSE(_svc_power_last);
 }
 
 // ============================================================================

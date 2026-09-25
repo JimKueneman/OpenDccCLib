@@ -146,6 +146,9 @@ extern void TI_DccDriver_railcom_window_close(void);
 // bit encoder's tick_isr.
 extern void TI_DccDriver_svc_pin_toggle(void);
 
+    /** @brief Service-track power: idle level of the service-track DCC pin (no H-bridge on the bench). */
+extern void TI_DccDriver_svc_track_power_set(bool enabled);
+
 // Increment the software timestamp counter. Call from the shared DCC timer ISR
 // (every 58us) to provide a free-running microsecond timestamp.
 extern void TI_DccDriver_timestamp_tick(void);

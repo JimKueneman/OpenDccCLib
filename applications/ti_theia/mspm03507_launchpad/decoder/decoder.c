@@ -87,7 +87,10 @@ const dcc_config_t dcc_config = {
      * The library bit-bangs the cutout reply: railcom_tx_pin_set drives the
      * current source and railcom_delay_us provides the cycle-accurate 4 us bit
      * timing. lock_shared_resources masks the DCC edge IRQ during the cutout,
-     * so the decoder's injected current cannot self-trigger it. */
+     * so the decoder's injected current cannot self-trigger it.
+     * NOT FINISHED: the demo has no current-source circuit (pin left NULL) and
+     * decoder.syscfg lacks the DELAY_TIMER instance the delay driver needs;
+     * see the note above TI_DccDriver_railcom_delay_us(). */
     .railcom_tx_pin_set            = NULL,
     .railcom_delay_us              = &TI_DccDriver_railcom_delay_us,
 

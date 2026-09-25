@@ -108,6 +108,14 @@ void TIMESTAMP_TIMER_INST_IRQHandler(void) {
  * 20 MHz hardware timer (20 ticks/us, 50 ns resolution) so the 4 us bit period
  * is accurate -- the 1 MHz timestamp timer is too coarse (1 us = 25% of a bit).
  *
+ * NOT FINISHED (2026-09-25): DELAY_TIMER_INST is not defined for this demo.
+ * decoder.syscfg has only TIMESTAMP_TIMER and ACK_PULSE_TIMER, so this file
+ * does not compile as committed.  Add a third TIMER instance in SysConfig
+ * named DELAY_TIMER with a 50.00 ns period (SysConfig places it on TIMG0,
+ * one-shot, fed by the 20 MHz low-power bus clock).  The HIL decoder firmware
+ * at test/compliance/mobile_decoder/saleae_hil_compliance/decoder.syscfg has
+ * the working instance (TIMER3) and uses this identical driver file.
+ *
  * PORTING: Replace with your MCU's equivalent one-shot timer or a cycle-accurate
  * busy-wait.  The requirement is sub-microsecond accuracy at a 4 us bit. */
 void TI_DccDriver_railcom_delay_us(uint16_t us) {

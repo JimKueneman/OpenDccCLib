@@ -898,6 +898,7 @@ void DccConfig_initialize(const dcc_config_t *config) {
      * Uses ref-counted shared timer wrappers. */
     _service_application_interface.timer_start = &_shared_timer_acquire;
     _service_application_interface.timer_stop = &_shared_timer_release;
+    _service_application_interface.track_power_set = config->service_track.track_power_set;
     _service_application_interface.encoder_start = &_service_encoder_start;
     _service_application_interface.encoder_stop = &_service_encoder_stop;
     _service_application_interface.enter_service_mode = &_service_enter_service_mode;

@@ -62,6 +62,9 @@ extern "C" {
     /** @brief Interface struct — wired by dcc_config.c during initialization. */
 typedef struct {
 
+        /** @brief Enable or disable service track power (H-bridge). */
+    void (*track_power_set)(bool enabled);
+
         /** @brief Start the DCC timer for this channel. */
     void (*timer_start)(uint16_t half_bit_period_usec);
 
@@ -193,11 +196,14 @@ typedef struct {
 
         /**
          * @brief Enter service mode on the service track.
+         * @details Powers the service track, starts the timer and encoder, then
+         *  enters the service-mode core; power_on() is not needed first.
          * @return true if service mode was activated, false if busy.
          */
     extern bool DccApplicationCommandStationServiceTrack_enter_service_mode(void);
 
-        /** @brief Exit service mode on the service track. */
+        /** @brief Exit service mode on the service track, stop the signal and
+         *  remove track power. */
     extern void DccApplicationCommandStationServiceTrack_exit_service_mode(void);
 
         /** @brief Check if service mode is currently active. */

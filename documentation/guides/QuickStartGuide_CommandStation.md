@@ -36,7 +36,7 @@ The pin assignments come from the project's SysConfig file.
 | PB1 | Main-track DCC signal out (`DCC_SIGNAL`); to the H-bridge input, or to decoder PB1 |
 | PB4 | Service-track DCC signal out; to decoder PB4 |
 | PB12 | ACK current-sense in; from decoder PB12 |
-| PB17 | Track-select out; to decoder PB17. Configured, but the firmware never switches it: it stays at its reset level, which selects the main track on the decoder |
+| PB17 | Track-select out; to decoder PB17. High while the service track is powered or service mode is active (the decoder then listens on PB4), low otherwise |
 | PB2 | DCC mirror out (scope aid) |
 | PB3 | Debug pulse (scope aid) |
 | PA15 | ISR timing pulse (scope aid) |

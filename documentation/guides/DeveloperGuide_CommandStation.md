@@ -175,7 +175,7 @@ static const dcc_config_t dcc_config = {
                        .track_power_set = &TI_DccDriver_track_power_set,
                        .railcom = NULL },              /* detector not fitted on the demo */
     .service_track = { .pin_toggle = &TI_DccDriver_svc_pin_toggle,
-                       .track_power_set = &TI_DccDriver_svc_track_power_set, /* not called in this release, see 5.2 */
+                       .track_power_set = &TI_DccDriver_svc_track_power_set,
                        .current_sense_read = &TI_DccDriver_current_sense_read },
 
     /* OPTIONAL application callbacks (NULL = no notification) */
@@ -185,13 +185,12 @@ static const dcc_config_t dcc_config = {
 
 ### 5.2 Per-Channel Hardware (dcc_output_hw_t)
 
-Each DCC output channel, main track and service track, has its own set of pointers. With the shared-timer architecture `pin_toggle` does the work; the header still marks the per-channel `timer_start` and `timer_stop` REQUIRED, but `dcc_config.c` substitutes its own shared-timer wrappers and never calls them.
+Each DCC output channel, main track and service track, has its own set of pointers. Both channels are clocked by the shared 58 µs timer, so there is no per-channel timer field; `pin_toggle` does the work.
 
 | Field | Required? | Description |
 |---|---|---|
 | `pin_toggle` | REQUIRED | Toggle this channel's DCC output pin. ISR context; keep it to one register write |
-| `track_power_set` | REQUIRED | Enable or disable the H-bridge for this channel. Called only for the main track; the service-track power hook is not wired in this release, so service-track `power_on/off` leave it untouched |
-| `timer_start` / `timer_stop` | Marked REQUIRED, never called | Per-channel timer; the library uses the shared timer instead |
+| `track_power_set` | REQUIRED | Enable or disable the H-bridge for this channel. Called by `power_on/off` on both tracks and by `enter/exit_service_mode` on the service track |
 | `current_sense_read` | Service track | Return milliamps (ADC) or 0 / non-zero (comparator). Used for ACK detection; `main_track.current_sense_read` is never read |
 | `railcom` | NULL if no detector | Pointer to a `dcc_railcom_hw_t`; only `main_track.railcom` is read |
 
@@ -267,7 +266,7 @@ The driver files are the only hardware-specific code in a project. This section 
 | `shared_timer_start(period)` / `shared_timer_stop` | main loop | Start or stop the 58 µs periodic timer whose ISR calls `DccConfig_58us_timer_isr()` |
 | `railcom_timer_start(period)` / `railcom_timer_stop` | ISR | One-shot timer whose ISR calls `DccConfig_railcom_oneshot_timer_isr()` |
 | `pin_toggle` | ISR | One register write that toggles the channel's DCC pin |
-| `track_power_set(bool)` | main loop | Enable or disable the H-bridge (main track; see 5.2 for the service track) |
+| `track_power_set(bool)` | main loop | Enable or disable the H-bridge for the channel |
 | `current_sense_read` | ISR (58 µs) | Return the service-track current. The demo returns 100 or 0 from a digital pin |
 
 ## 8. The Bit Encoder
@@ -416,7 +415,7 @@ All functions are in the three `dcc_application_command_station_*.h` headers. Bu
 
 ### 13.3 Service Track (`DccApplicationCommandStationServiceTrack_`)
 
-`power_on/off`, `enter_service_mode`, `exit_service_mode`, `is_service_mode_active`, and the per-mode tasks listed in section 10. `power_on/off` start and stop the service-track encoder and timer only; they do not call `track_power_set` in this release. `exit_service_mode` is ignored by the service-mode core while an operation is running, although the encoder and timer are still stopped.
+`power_on/off`, `enter_service_mode`, `exit_service_mode`, `is_service_mode_active`, and the per-mode tasks listed in section 10. `power_on/off` switch the service-track H-bridge and start or stop its encoder and timer; `enter_service_mode` does the same before entering, so `power_on` is not needed first, and `exit_service_mode` removes power after leaving. `exit_service_mode` is ignored by the service-mode core while an operation is running, although the encoder and timer are still stopped and power removed.
 
 ## 14. Porting to a New MCU
 
@@ -438,7 +437,7 @@ cd test
 make            # configures CMake, builds, runs every binary serially, writes test/coverage.html
 ```
 
-At generation time: 29 test binaries, 1246 tests, 0 failures, 0 warnings; line coverage 99.7 %, function coverage 100 %, branch coverage 98.2 % (gcovr). The build also compiles six single-role configurations so a missing `DCC_COMPILE_*` guard fails as a compile or link error.
+At generation time: 29 test binaries, 1248 tests, 0 failures, 0 warnings; line coverage 99.7 %, function coverage 100 %, branch coverage 98.2 % (gcovr). The build also compiles six single-role configurations so a missing `DCC_COMPILE_*` guard fails as a compile or link error.
 
 | Test file | What it tests |
 |---|---|
