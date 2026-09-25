@@ -142,10 +142,11 @@ programming from POM.
 | `dcc_application_accessory_decoder_railcom` | RAILCOM + ACCESSORY | `DccApplicationAccessoryDecoderRailcom_` — `get_srq_state`, SRQ, status (1/4/extended), time/error report, cutout/stop hooks |
 
 > **Not wired in this release:** `DccConfig_initialize()` does not call
-> `DccApplicationDecoderCv_initialize`, `DccApplicationDecoderRailcom_initialize` or
+> `DccApplicationDecoderRailcom_initialize` or
 > `DccApplicationAccessoryDecoderRailcom_initialize`, although their headers say it does.
-> Without an interface their calls return false or transmit nothing, and the transmit
-> engine has no sink for the RailCom helpers; decoders answer through `on_railcom_request`.
+> Without an interface their calls transmit nothing, and the transmit engine has no
+> sink for them; decoders answer through `on_railcom_request`. The decoder CV module
+> is wired (onto `dcc_cv_storage`, so the lock, CV 29 filter and CV 8 reset apply).
 
 > **Migration note:** the pre-refactor modules `dcc_application_main_track` and
 > `dcc_application_service_track` still exist and are still compiled/tested
@@ -178,7 +179,7 @@ programming from POM.
 
 Most modules own an `interface_dcc_<module>_t` of function pointers, populated by
 `dcc_config.c` (`dcc_railcom_utilities` and the packet builders have none, and the
-five application modules noted in §5 are not populated). This makes every dependency
+two RailCom application modules and two legacy modules noted in §5 are not populated). This makes every dependency
 mockable in unit tests and lets an MCU swap touch only the config struct.
 
 ## 7. Execution contexts

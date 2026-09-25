@@ -273,7 +273,7 @@ All CV traffic goes through `dcc_cv_storage`, which wraps your `cv_read` / `cv_w
 - **Indexed CVs.** CVs 257–512 are routed to `cv_read_indexed` / `cv_write_indexed` with the page from CV 31:32, when those hooks are wired.
 - **CV 29 feature mask.** On every CV 29 write the library forces the reserved bit 6 clear, decodes the byte into a `dcc_cv29_flags_t` (direction reversed, 28/128 steps, analog conversion, RailCom, speed table, extended address, accessory), and calls `cv29_apply_supported_features()`. Clear the flags your product does not implement; per S-9.2.2 an unsupported feature bit must never be settable, and only the application knows what it supports.
 
-The application API module `dcc_application_decoder_cv` (`_initialize`, `_read`, `_write`, `_is_locked`) is not initialized by `DccConfig_initialize()` in this release, despite its header comment; without an interface its calls return false. Its `_write` checks the lock and then calls `cv_write` directly, bypassing the CV 29 filter, the CV 8 reset and the address-cache refresh.
+The application API is `DccApplicationDecoderCv_read`, `_write` and `_is_locked`, wired by `DccConfig_initialize()` onto the storage module, so the decoder lock, the CV 29 filter and the CV 8 reset apply to application writes too. Two differences from a write that arrives by DCC packet: the application path refuses every write while the decoder is locked, including the CV 8 reset, and it does not refresh the packet decoder's address-CV cache.
 
 ## 11. Service Mode (Decoder Side)
 
@@ -307,7 +307,7 @@ S-9.2.4 requires a decoder to stop everything when no packet addressed to it arr
 
 ## 15. Unit Testing
 
-Decoder-role tests, GoogleTest with mocked drivers, run with the rest of the suite: `cd test && make`. At generation time the whole suite is 29 binaries, 1244 tests, 0 failures, with 99.7 % line coverage.
+Decoder-role tests, GoogleTest with mocked drivers, run with the rest of the suite: `cd test && make`. At generation time the whole suite is 29 binaries, 1246 tests, 0 failures, with 99.7 % line coverage.
 
 | Test file | What it tests |
 |---|---|
@@ -315,7 +315,7 @@ Decoder-role tests, GoogleTest with mocked drivers, run with the rest of the sui
 | `dcc_packet_decoder_Test` | XOR, address matching for every address type, instruction dispatch, queue |
 | `dcc_cv_storage_Test`, `dcc_application_decoder_cv_Test` | Lock, factory reset, indexed CVs, CV 29 feature mask |
 | `dcc_failsafe_Test` | CV 11 time-out, enter and exit |
-| `dcc_config_Test` | Wiring and lifecycle, edge dispatch on run, the 6 ms ACK pulse (auto-stop, restart ignored, NULL hooks) |
+| `dcc_config_Test` | Wiring and lifecycle, edge dispatch on run, the 6 ms ACK pulse (auto-stop, restart ignored, NULL hooks), the CV application API routed through storage and the lock |
 | `dcc_railcom_decoder_Test`, `dcc_railcom_utilities_Test`, `dcc_application_decoder_railcom_Test` | Reply engine, 4/8 encoding against the spec table, reply builders |
 | `dcc_application_accessory_decoder_railcom_Test` | Accessory SRQ, status, time and error replies |
 

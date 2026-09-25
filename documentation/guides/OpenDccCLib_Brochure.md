@@ -66,7 +66,7 @@ Two ready-to-run projects ship with the library. Porting to a new platform means
 | Metric | Value, measured at generation (2026-09-25) |
 |---|---|
 | Unit-test binaries | 29 GoogleTest binaries, one per module |
-| Test cases | 1244, all passing, zero warnings |
+| Test cases | 1246, all passing, zero warnings |
 | Coverage (gcovr) | 99.7 % lines, 100 % functions, 98.2 % branches |
 | Compile-gate matrix | Six single-role configurations built and linked on every run |
 | Source | 60 files, 18 399 lines in `src/dcc/` |

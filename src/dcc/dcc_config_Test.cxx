@@ -10,6 +10,9 @@
 #include "dcc/dcc_config.h"
 #include "dcc/dcc_application_command_station_main_track.h"
 #include "dcc/dcc_application_command_station_service_track.h"
+#ifdef DCC_COMPILE_DECODER
+#include "dcc/dcc_application_decoder_cv.h"
+#endif
 #include "dcc/dcc_types.h"
 #include "dcc/dcc_defines.h"
 
@@ -968,6 +971,63 @@ TEST(DccConfig, decoder_edge_does_not_crash) {
     dcc_config_t cfg = make_test_config();
     DccConfig_initialize(&cfg);
     DccConfig_decoder_edge_isr(1000);
+}
+
+static uint16_t _cv_app_last_read_cv;
+static uint16_t _cv_app_last_write_cv;
+static uint8_t _cv_app_last_write_value;
+static uint8_t _cv_app_store[64];
+
+static bool mock_cv_app_read(uint16_t cv, uint8_t *val) {
+    _cv_app_last_read_cv = cv;
+    *val = (cv < 64) ? _cv_app_store[cv] : 0;
+    return true;
+}
+
+static bool mock_cv_app_write(uint16_t cv, uint8_t val) {
+    _cv_app_last_write_cv = cv;
+    _cv_app_last_write_value = val;
+    if (cv < 64) _cv_app_store[cv] = val;
+    return true;
+}
+
+TEST(DccConfig, decoder_cv_application_api_is_wired_by_initialize) {
+    memset(_cv_app_store, 0, sizeof(_cv_app_store));
+    _cv_app_store[3] = 0x5A;
+    _cv_app_last_read_cv = 0;
+    _cv_app_last_write_cv = 0;
+
+    dcc_config_t cfg = make_test_config();
+    cfg.cv_read = mock_cv_app_read;
+    cfg.cv_write = mock_cv_app_write;
+    DccConfig_initialize(&cfg);
+
+    /* Read routes through cv_storage to the driver */
+    uint8_t value = 0;
+    EXPECT_TRUE(DccApplicationDecoderCv_read(3, &value));
+    EXPECT_EQ(value, 0x5A);
+    EXPECT_EQ(_cv_app_last_read_cv, 3);
+
+    /* CV 15 == CV 16 (both 0): unlocked, write reaches the driver */
+    EXPECT_FALSE(DccApplicationDecoderCv_is_locked());
+    EXPECT_TRUE(DccApplicationDecoderCv_write(5, 0x42));
+    EXPECT_EQ(_cv_app_last_write_cv, 5);
+    EXPECT_EQ(_cv_app_last_write_value, 0x42);
+}
+
+TEST(DccConfig, decoder_cv_application_write_honours_decoder_lock) {
+    memset(_cv_app_store, 0, sizeof(_cv_app_store));
+    _cv_app_store[DCC_CV_DECODER_LOCK_1] = 1;    /* CV 15 != CV 16: locked */
+    _cv_app_last_write_cv = 0;
+
+    dcc_config_t cfg = make_test_config();
+    cfg.cv_read = mock_cv_app_read;
+    cfg.cv_write = mock_cv_app_write;
+    DccConfig_initialize(&cfg);
+
+    EXPECT_TRUE(DccApplicationDecoderCv_is_locked());
+    EXPECT_FALSE(DccApplicationDecoderCv_write(5, 0x42));
+    EXPECT_EQ(_cv_app_last_write_cv, 0);
 }
 
 #endif /* DCC_COMPILE_DECODER */

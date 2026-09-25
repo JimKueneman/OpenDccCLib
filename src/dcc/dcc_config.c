@@ -97,6 +97,7 @@
 #include "dcc_bit_decoder.h"
 #include "dcc_packet_decoder.h"
 #include "dcc_cv_storage.h"
+#include "dcc_application_decoder_cv.h"
 #if defined(DCC_COMPILE_RAILCOM)
 #include "dcc_railcom_decoder.h"
 #endif
@@ -265,6 +266,9 @@ static interface_dcc_packet_decoder_t _packet_decoder_interface;
 
     /** @brief Interface struct for the CV storage module */
 static interface_dcc_cv_storage_t _cv_storage_interface;
+
+    /** @brief Interface struct for the decoder CV application layer */
+static interface_dcc_application_decoder_cv_t _decoder_cv_application_interface;
 
 #if defined(DCC_COMPILE_RAILCOM)
     /** @brief Interface struct for the RailCom encoder module */
@@ -1065,6 +1069,14 @@ void DccConfig_initialize(const dcc_config_t *config) {
     _cv_storage_interface.cv29_apply_supported_features = config->cv29_apply_supported_features;
 
     DccCvStorage_initialize(&_cv_storage_interface);
+
+    /* Wire decoder CV application layer -- routed through cv_storage so the
+     * decoder lock, the CV 29 feature filter and the CV 8 reset apply. */
+    _decoder_cv_application_interface.cv_read = &DccCvStorage_read;
+    _decoder_cv_application_interface.cv_write = &DccCvStorage_write;
+    _decoder_cv_application_interface.is_locked = &DccCvStorage_is_locked;
+
+    DccApplicationDecoderCv_initialize(&_decoder_cv_application_interface);
 
     /* Wire packet decoder interface — CV access routed through cv_storage */
     _packet_decoder_interface.cv_read = &DccCvStorage_read;
