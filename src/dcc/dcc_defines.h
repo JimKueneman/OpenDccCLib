@@ -343,6 +343,11 @@ extern "C" {
 #define DCC_CV_EXTENDED_ADDRESS_HIGH        17
 #define DCC_CV_EXTENDED_ADDRESS_LOW         18
 #define DCC_CV_CONSIST_ADDRESS              19
+#define DCC_CV_CONSIST_FUNCTIONS_F1_F8      21  /**< Consist address active for F1-F8: bit 0 = F1 .. bit 7 = F8 */
+#define DCC_CV_CONSIST_FUNCTIONS_FL_F9_F12  22  /**< Consist address active for FL (bits 0-1) and F9-F12 (bits 2-5) */
+#define DCC_CV22_FL_FORWARD_BIT             0x01  /**< CV22 bit 0: FL answers the consist address when travelling forward */
+#define DCC_CV22_FL_REVERSE_BIT             0x02  /**< CV22 bit 1: FL answers the consist address when travelling in reverse */
+#define DCC_CV22_F9_BIT                     0x04  /**< CV22 bit 2: F9; bits 3-5 are F10-F12 */
 #define DCC_CV_RAILCOM_CONFIG               28  /**< RailCom configuration */
 #define DCC_CV_CONFIG                       29  /**< Primary config register */
 #define DCC_CV_INDEX_HIGH                   31  /**< Indexed CV page pointer high */

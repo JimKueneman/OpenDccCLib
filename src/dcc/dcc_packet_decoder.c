@@ -65,6 +65,15 @@ static bool _consist_direction_reversed;
     /** @brief True while dispatching a packet that matched the consist address. */
 static bool _via_consist;
 
+    /** @brief Cached CV21: which of F1-F8 answer the consist address (bit 0 = F1). */
+static uint8_t _consist_functions_f1_f8;
+
+    /** @brief Cached CV22: FL (bits 0-1, by direction) and F9-F12 (bits 2-5). */
+static uint8_t _consist_functions_fl_f9_f12;
+
+    /** @brief Direction last reported to on_speed_command; selects the FL bit of CV22. */
+static bool _last_direction;
+
     /** @brief Received-packet FIFO. The end-bit ISR enqueues; DccConfig_run drains.
      *  Single-producer (ISR) / single-consumer (poll): head/tail are volatile and one
      *  slot is reserved, so no shared counter and no lock is needed. */
@@ -112,6 +121,8 @@ static bool _is_address_cv(uint16_t cv_number) {
            cv_number == DCC_CV_EXTENDED_ADDRESS_HIGH ||
            cv_number == DCC_CV_EXTENDED_ADDRESS_LOW ||
            cv_number == DCC_CV_CONSIST_ADDRESS ||
+           cv_number == DCC_CV_CONSIST_FUNCTIONS_F1_F8 ||
+           cv_number == DCC_CV_CONSIST_FUNCTIONS_FL_F9_F12 ||
            cv_number == DCC_CV_ACC_CONFIG ||
            cv_number == DCC_CV_ACC_ADDRESS_LSB ||
            cv_number == DCC_CV_ACC_ADDRESS_MSB ||
@@ -138,6 +149,34 @@ static bool _effective_direction(bool packet_direction) {
 }
 
     /**
+     * @brief Does this function answer the consist address (S-9.2.2 CV21/CV22)?
+     * @param function_number Function number; FL is 0.
+     */
+static bool _consist_function_enabled(uint8_t function_number) {
+
+    if (function_number == 0) {
+
+        return (_consist_functions_fl_f9_f12 & (_last_direction ? DCC_CV22_FL_FORWARD_BIT : DCC_CV22_FL_REVERSE_BIT)) ? true : false;
+
+    }
+
+    if (function_number >= 1 && function_number <= 8) {
+
+        return (_consist_functions_f1_f8 & (1u << (function_number - 1))) ? true : false;
+
+    }
+
+    if (function_number >= 9 && function_number <= 12) {
+
+        return (_consist_functions_fl_f9_f12 & (DCC_CV22_F9_BIT << (function_number - 9))) ? true : false;
+
+    }
+
+    return false;    /* F13 and above have no consist enable bits */
+
+}
+
+    /**
      * @brief Read CV19 and cache the consist address and its direction bit.
      */
 static void _update_consist_address(void) {
@@ -146,11 +185,25 @@ static void _update_consist_address(void) {
 
     _consist_address = 0;
     _consist_direction_reversed = false;
+    _consist_functions_f1_f8 = 0;
+    _consist_functions_fl_f9_f12 = 0;
 
     if (_interface->cv_read(DCC_CV_CONSIST_ADDRESS, &cv19_value)) {
 
         _consist_address = cv19_value & 0x7F;
         _consist_direction_reversed = (cv19_value & 0x80) ? true : false;
+
+    }
+
+    if (!_interface->cv_read(DCC_CV_CONSIST_FUNCTIONS_F1_F8, &_consist_functions_f1_f8)) {
+
+        _consist_functions_f1_f8 = 0;
+
+    }
+
+    if (!_interface->cv_read(DCC_CV_CONSIST_FUNCTIONS_FL_F9_F12, &_consist_functions_fl_f9_f12)) {
+
+        _consist_functions_fl_f9_f12 = 0;
 
     }
 
@@ -327,6 +380,7 @@ static void _dispatch_speed_128(uint16_t address, uint8_t speed_byte) {
 
     bool direction = (speed_byte & 0x80) ? true : false;
     direction = _effective_direction(direction);
+    _last_direction = direction;
     uint8_t speed = speed_byte & 0x7F;
 
     if (speed == DCC_SPEED_128_ESTOP) {
@@ -378,6 +432,7 @@ static void _dispatch_speed_28(uint16_t address, uint8_t instruction) {
 
     bool direction = (instruction & 0x20) ? true : false;
     direction = _effective_direction(direction);
+    _last_direction = direction;
     uint8_t speed_c = (instruction >> 4) & 0x01;
     uint8_t speed_ssss = instruction & 0x0F;
     uint8_t encoded = (speed_ssss << 1) | speed_c;
@@ -412,6 +467,7 @@ static void _dispatch_speed_14(uint16_t address, uint8_t instruction) {
 
     bool direction = (instruction & 0x20) ? true : false;
     direction = _effective_direction(direction);
+    _last_direction = direction;
     uint8_t speed = instruction & 0x0F;
 
     if (speed == 1) {
@@ -474,6 +530,12 @@ static void _dispatch_functions(uint16_t address, uint8_t start_function, uint8_
 
     for (function_index = 0; function_index < count; function_index++) {
 
+        if (_via_consist && !_consist_function_enabled((uint8_t)(start_function + function_index))) {
+
+            continue;
+
+        }
+
         _interface->on_function_command(address, start_function + function_index, (bits & (1 << function_index)) ? true : false);
 
     }
@@ -496,7 +558,11 @@ static void _dispatch_func_group1(uint16_t address, uint8_t instruction) {
     }
 
     /* FL is in bit 4, F1-F4 are in bits 0-3 */
-    _interface->on_function_command(address, 0, (instruction & 0x10) ? true : false);
+    if (!_via_consist || _consist_function_enabled(0)) {
+
+        _interface->on_function_command(address, 0, (instruction & 0x10) ? true : false);
+
+    }
 
     bits = instruction & 0x0F;
     _dispatch_functions(address, 1, 4, bits);
@@ -1305,6 +1371,9 @@ void DccPacketDecoder_initialize(const interface_dcc_packet_decoder_t *interface
     _consist_address = 0;
     _consist_direction_reversed = false;
     _via_consist = false;
+    _consist_functions_f1_f8 = 0;
+    _consist_functions_fl_f9_f12 = 0;
+    _last_direction = true;
     _reset_count = 0;
     _service_mode_active = false;
     _packet_queue_head = 0;
@@ -1365,13 +1434,16 @@ static void _dispatch_accessory(const uint8_t *data, uint8_t byte_count) {
 
     /**
      * @brief True for the instructions a consist address answers: 14/28-step
-     *  speed (01xxxxxx) and 128-step speed (advanced ops 0x3F). S-9.2.1: a decoder
-     *  in a consist takes speed and direction from the consist address only.
+     *  speed (01xxxxxx), 128-step speed (advanced ops 0x3F), and function groups 1
+     *  and 2, whose individual functions are then gated by CV21/CV22 (S-9.2.2).
      * @param first First instruction byte.
      */
 static bool _is_consist_instruction(uint8_t first) {
 
-    return ((first & 0xC0) == 0x40) || (first == DCC_ADV_OPS_128_SPEED);
+    return ((first & 0xC0) == 0x40) ||              /* 14/28-step speed */
+           (first == DCC_ADV_OPS_128_SPEED) ||      /* 128-step speed */
+           ((first & 0xE0) == 0x80) ||              /* function group 1: FL, F1-F4 */
+           ((first & 0xE0) == 0xA0);                /* function group 2: F5-F8, F9-F12 */
 
 }
 

@@ -5371,11 +5371,11 @@ window.COMPLIANCE =
             "draftDelta": null
           },
           "supported": {
-            "state": "no",
+            "state": "ok",
             "note": ""
           },
           "gtest": {
-            "state": "no",
+            "state": "ok",
             "note": ""
           },
           "hil": {
@@ -5383,14 +5383,55 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Not implemented: function packets addressed to the consist address are ignored regardless of CV21/CV22.",
-          "supported": "Deferred; consist functions are ignored",
+            "impl": "_update_consist_address caches CV21/CV22 with CV19; _is_consist_instruction admits function groups 1 and 2 at the consist address and _consist_function_enabled gates each function: F1-F8 by CV21 bits 0-7, F9-F12 by CV22 bits 2-5, FL by CV22 bit 0 (forward) or bit 1 (reverse) using the direction last reported to on_speed_command. F13+ have no enable bits and stay ignored at the consist address; own-address function packets are unaffected.",
             "gtest": "",
             "hil": ""
           },
           "refs": {
-            "symbols": [],
-            "tests": [],
+            "symbols": [
+            "DCC_CV_CONSIST_FUNCTIONS_F1_F8",
+            "DCC_CV_CONSIST_FUNCTIONS_FL_F9_F12",
+            "DCC_CV22_FL_FORWARD_BIT",
+            "DCC_CV22_FL_REVERSE_BIT",
+            "DCC_CV22_F9_BIT"
+          ],
+            "tests": [
+            {
+              "name": "DccPacketDecoder.consist_functions_f1_f8_gated_by_cv21",
+              "file": "dcc_packet_decoder_Test.cxx",
+              "desc": "CV21 bits select which of F1-F8 answer the consist address"
+            },
+            {
+              "name": "DccPacketDecoder.consist_functions_f5_f12_gated_by_cv21_cv22",
+              "file": "dcc_packet_decoder_Test.cxx",
+              "desc": "CV21 bits 4-7 and CV22 bits 2-5 gate F5-F8 and F9-F12"
+            },
+            {
+              "name": "DccPacketDecoder.consist_fl_follows_cv22_direction_bits",
+              "file": "dcc_packet_decoder_Test.cxx",
+              "desc": "FL uses CV22 bit 0 when travelling forward and bit 1 in reverse"
+            },
+            {
+              "name": "DccPacketDecoder.consist_functions_all_gated_out_when_cv21_cv22_zero",
+              "file": "dcc_packet_decoder_Test.cxx",
+              "desc": "with both CVs 0 a consist function packet is accepted but nothing is dispatched"
+            },
+            {
+              "name": "DccPacketDecoder.consist_functions_f13_and_above_ignored",
+              "file": "dcc_packet_decoder_Test.cxx",
+              "desc": "feature-expansion functions at the consist address are ignored"
+            },
+            {
+              "name": "DccPacketDecoder.own_address_functions_unaffected_by_cv21_cv22",
+              "file": "dcc_packet_decoder_Test.cxx",
+              "desc": "own-address function packets are dispatched regardless of CV21/CV22"
+            },
+            {
+              "name": "DccPacketDecoder.cv21_written_by_packet_refreshes_the_consist_mask",
+              "file": "dcc_packet_decoder_Test.cxx",
+              "desc": "a POM write of CV21 takes effect on the next consist function packet"
+            }
+          ],
             "hilChecks": []
           }
         }

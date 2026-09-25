@@ -66,8 +66,8 @@ Two ready-to-run projects ship with the library. Porting to a new platform means
 | Metric | Value, measured at generation (2026-09-25) |
 |---|---|
 | Unit-test binaries | 28 GoogleTest binaries, one per module |
-| Test cases | 1230, all passing, zero warnings |
-| Coverage (gcovr) | 99.6 % lines, 100 % functions, 97.8 % branches |
+| Test cases | 1237, all passing, zero warnings |
+| Coverage (gcovr) | 99.5 % lines, 100 % functions, 97.5 % branches |
 | Compile-gate matrix | Six single-role configurations built and linked on every run |
 | Source | 60 files, 18 399 lines in `src/dcc/` |
 | Hardware-in-the-loop | 6 Saleae suites plus a 14-check bench preflight, 396 on-wire checks: S-9.1, S-9.2, S-9.2.1, S-9.2.3, S-9.3.2, scheduler (incl. refresh pacing); one expected FAIL records the Channel 2-only limitation |

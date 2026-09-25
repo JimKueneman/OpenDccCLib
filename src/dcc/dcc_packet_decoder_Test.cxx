@@ -1756,6 +1756,145 @@ TEST(DccPacketDecoder, consist_set_by_packet_takes_effect_immediately) {
 }
 
 // ============================================================================
+// Consist function enables (S-9.2.2 CV21 / CV22)
+// ============================================================================
+
+static void set_consist_functions(interface_dcc_packet_decoder_t *interface, uint8_t cv21, uint8_t cv22) {
+    mock_cv_values[DCC_CV_CONSIST_FUNCTIONS_F1_F8 - 1] = cv21;
+    mock_cv_values[DCC_CV_CONSIST_FUNCTIONS_FL_F9_F12 - 1] = cv22;
+    DccPacketDecoder_initialize(interface);
+}
+
+static void send_group1_to(uint8_t address, uint8_t bits) {   /* 100DDDDD: FL bit4, F1-F4 bits 0-3 */
+    uint8_t data[] = {address, (uint8_t)(0x80 | (bits & 0x1F)), 0x00};
+    data[2] = xor_bytes(data, 2);
+    DccPacketDecoder_process_packet(data, 3);
+}
+
+// @compliance DCC-S9.2.2-DEC-007
+TEST(DccPacketDecoder, consist_functions_f1_f8_gated_by_cv21) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 10);
+    set_consist_functions(&interface, 0x05, 0x00);            /* F1 and F3 follow the consist */
+
+    send_group1_to(10, 0x1F);                                 /* FL, F1-F4 all on */
+    EXPECT_EQ(func_callback_count, (uint32_t)2);
+    EXPECT_EQ(func_numbers[0], (uint8_t)1);
+    EXPECT_EQ(func_numbers[1], (uint8_t)3);
+    EXPECT_TRUE(func_states[0]);
+    EXPECT_TRUE(func_states[1]);
+}
+
+// @compliance DCC-S9.2.2-DEC-007
+TEST(DccPacketDecoder, consist_functions_f5_f12_gated_by_cv21_cv22) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 10);
+    set_consist_functions(&interface, 0x90, 0x24);            /* F5, F8 (CV21 bits 4,7); F9, F12 (CV22 bits 2,5) */
+
+    uint8_t g2a[] = {10, 0xBF, 0x00};                          /* F5-F8 on */
+    g2a[2] = xor_bytes(g2a, 2);
+    DccPacketDecoder_process_packet(g2a, 3);
+    uint8_t g2b[] = {10, 0xAF, 0x00};                          /* F9-F12 on */
+    g2b[2] = xor_bytes(g2b, 2);
+    DccPacketDecoder_process_packet(g2b, 3);
+
+    EXPECT_EQ(func_callback_count, (uint32_t)4);
+    EXPECT_EQ(func_numbers[0], (uint8_t)5);
+    EXPECT_EQ(func_numbers[1], (uint8_t)8);
+    EXPECT_EQ(func_numbers[2], (uint8_t)9);
+    EXPECT_EQ(func_numbers[3], (uint8_t)12);
+}
+
+// @compliance DCC-S9.2.2-DEC-007
+TEST(DccPacketDecoder, consist_fl_follows_cv22_direction_bits) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 10);
+    set_consist_functions(&interface, 0x00, DCC_CV22_FL_FORWARD_BIT);
+
+    send_group1_to(10, 0x10);                                 /* FL on; direction forward by default */
+    EXPECT_EQ(func_callback_count, (uint32_t)1);
+    EXPECT_EQ(func_numbers[0], (uint8_t)0);
+
+    /* Reverse the consist: 128-step reverse to the consist address */
+    uint8_t rev[] = {10, DCC_ADV_OPS_128_SPEED, 0x10, 0x00};
+    rev[3] = xor_bytes(rev, 3);
+    DccPacketDecoder_process_packet(rev, 4);
+    EXPECT_FALSE(last_speed_direction);
+
+    func_callback_count = 0;                                  /* counters only; cache and CVs stay */
+    func_call_index = 0;
+    send_group1_to(10, 0x10);
+    EXPECT_EQ(func_callback_count, (uint32_t)0);              /* FL forward-only: gated out in reverse */
+
+    mock_cv_values[DCC_CV_CONSIST_FUNCTIONS_FL_F9_F12 - 1] = DCC_CV22_FL_REVERSE_BIT;
+    DccPacketDecoder_on_cv_written(DCC_CV_CONSIST_FUNCTIONS_FL_F9_F12);
+    send_group1_to(10, 0x10);
+    EXPECT_EQ(func_callback_count, (uint32_t)1);              /* reverse bit: delivered */
+}
+
+// @compliance DCC-S9.2.2-DEC-007
+TEST(DccPacketDecoder, consist_functions_all_gated_out_when_cv21_cv22_zero) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 10);
+    set_consist_functions(&interface, 0x00, 0x00);
+
+    send_group1_to(10, 0x1F);
+    EXPECT_EQ(func_callback_count, (uint32_t)0);
+    EXPECT_EQ(addressed_packet_callback_count, (uint32_t)1); /* still an addressed packet */
+}
+
+// @compliance DCC-S9.2.2-DEC-007
+TEST(DccPacketDecoder, consist_functions_f13_and_above_ignored) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 10);
+    set_consist_functions(&interface, 0xFF, 0xFF);
+
+    uint8_t data[] = {10, DCC_FEAT_F13_F20, 0xFF, 0x00};      /* F13-F20 all on */
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+    EXPECT_EQ(func_callback_count, (uint32_t)0);
+}
+
+// @compliance DCC-S9.2.2-DEC-007
+TEST(DccPacketDecoder, own_address_functions_unaffected_by_cv21_cv22) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 10);
+    set_consist_functions(&interface, 0x00, 0x00);
+
+    send_group1_to(3, 0x1F);
+    EXPECT_EQ(func_callback_count, (uint32_t)5);               /* FL, F1-F4 */
+}
+
+// @compliance DCC-S9.2.2-DEC-007
+TEST(DccPacketDecoder, cv21_written_by_packet_refreshes_the_consist_mask) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_short_address(&interface, 3);
+    set_consist(&interface, 10);
+    set_consist_functions(&interface, 0x00, 0x00);
+
+    uint8_t pom[] = {0x03, 0xEC, (uint8_t)(DCC_CV_CONSIST_FUNCTIONS_F1_F8 - 1), 0x02, 0x00};   /* CV21 = F2 */
+    pom[4] = xor_bytes(pom, 4);
+    DccPacketDecoder_process_packet(pom, 5);
+
+    send_group1_to(10, 0x1F);
+    EXPECT_EQ(func_callback_count, (uint32_t)1);
+    EXPECT_EQ(func_numbers[0], (uint8_t)2);
+}
+
+// ============================================================================
 // Address cache reload for CV writes made outside the library
 // ============================================================================
 

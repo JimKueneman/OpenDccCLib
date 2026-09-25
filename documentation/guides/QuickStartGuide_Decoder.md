@@ -131,7 +131,7 @@ void CallbacksDcc_on_function_command(uint16_t address, uint8_t function_number,
 | `on_function_command` | Function on or off, F0–F68 |
 | `on_accessory_basic_command`, `on_accessory_extended_command` | Turnout, signal aspect, for packets addressed to this decoder's CV 513/521 address |
 | `on_cv_write_command`, `on_cv_verify_command`, `on_cv_bit_command` | Loco CV access, main track (POM) and programming track; the `service_mode` flag tells them apart. Accessory operations-mode CV access is not delivered in this release |
-| `on_consist_command` | Consist set or clear. The library has already written CV 19 through your `cv_write`; speed, direction and emergency-stop packets to the consist address then reach the speed callbacks with the consist direction applied |
+| `on_consist_command` | Consist set or clear. The library has already written CV 19 through your `cv_write`; speed, direction and emergency-stop packets to the consist address then reach the speed callbacks with the consist direction applied, and the functions enabled in CV 21/22 reach `on_function_command` |
 | `on_binary_state_short_command`, `on_binary_state_long_command`, `on_analog_function_command` | Binary state (feature expansion) and analog function (advanced operations) |
 | `on_failsafe_entered`, `on_failsafe_exited` | No multifunction packet for this decoder or broadcast within CV 11 × 100 ms; such a packet resumed. Your callbacks stop and restart the outputs |
 | `cv29_apply_supported_features` | Required: clear the CV 29 feature bits this product does not implement |

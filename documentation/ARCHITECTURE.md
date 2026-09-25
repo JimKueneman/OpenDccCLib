@@ -162,7 +162,7 @@ programming from POM.
 | `dcc_service_mode_{direct,paged,register,address}` | CS | Per-mode programming primitives |
 | `dcc_service_mode_task_{direct,paged,register,address,detect}` | CS + own `TASK_*` flag | Read/write/verify orchestration on the primitives; mode detection |
 | `dcc_bit_decoder` | DECODER | Edge-timestamp → bit classification → byte assembly |
-| `dcc_packet_decoder` | DECODER | Parse bytes → structured commands, XOR, address match (own, broadcast, the CV19 consist address for speed/direction/e-stop; accessory board or output address for accessory packets), consist set/clear writes CV19, deferred dispatch queue |
+| `dcc_packet_decoder` | DECODER | Parse bytes → structured commands, XOR, address match (own, broadcast, the CV19 consist address for speed/direction/e-stop and the functions CV21/CV22 enable; accessory board or output address for accessory packets), consist set/clear writes CV19, deferred dispatch queue |
 | `dcc_cv_storage` | DECODER | CV abstraction, decoder lock, factory reset, indexed CVs, CV29 feature mask |
 | `dcc_failsafe` | DECODER | S-9.2.4 packet time-out (CV11 in 100 ms units) |
 | `dcc_railcom_decoder` | DECODER + RAILCOM | RailCom transmit engine (bit-bang) and reply arming |
