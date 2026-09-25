@@ -35,7 +35,7 @@ in `dcc_config.h` and `dcc_types.h`.
 |---|---|
 | `DCC_COMPILE_COMMAND_STATION` | Packet encoding, bit framing, scheduler, service-mode core; with `DCC_COMPILE_RAILCOM` the RailCom cutout + receive |
 | `DCC_COMPILE_DECODER` | Packet decoding, CV storage, fail-safe; with `DCC_COMPILE_RAILCOM` the RailCom transmit engine |
-| `DCC_COMPILE_ACCESSORY_DECODER` | Accessory-decoder RailCom reply helpers (SRQ, status, time, error); needs `DCC_COMPILE_RAILCOM`, and packet reception needs `DCC_COMPILE_DECODER` |
+| `DCC_COMPILE_ACCESSORY_DECODER` | Reserved for the accessory-decoder RailCom feature (not implemented); today it only enables the RailCom 4/8 encoders and satisfies the role check. Packet reception needs `DCC_COMPILE_DECODER` |
 | `DCC_COMPILE_RAILCOM` | Every RailCom module, config field and function; must be paired with a role flag (`dcc_types.h`) |
 | `DCC_COMPILE_SERVICE_MODE_DIRECT` | Direct byte/bit programming (requires CS) |
 | `DCC_COMPILE_SERVICE_MODE_PAGED` | Paged programming (requires CS) |
@@ -136,15 +136,7 @@ programming from POM.
 | `dcc_application_command_station_service_track` | CS | `DccApplicationCommandStationServiceTrack_` — `power_on/off`, `enter/exit_service_mode`, `is_service_mode_active`; `direct_{read,write}_{cv,bit}`, `paged_{read,write}_{cv,bit}`, `register_{read,write}_{cv,bit}`, `register_verify_value`, `register_factory_reset`, `address_{read,write,verify}`, `address_{read,write}_bit`, `detect_mode`, each group gated by its `DCC_COMPILE_SERVICE_MODE_TASK_*` flag |
 | `dcc_application_command_station_packet` | CS | `DccApplicationCommandStationPacket_load_*` — packet builders |
 | `dcc_application_decoder_cv` | DECODER | `DccApplicationDecoderCv_` — `read`, `write`, `is_locked` |
-| `dcc_application_decoder_railcom` | RAILCOM + (DECODER or ACCESSORY) | `DccApplicationDecoderRailcom_send_*` — address feedback, POM response, dynamic data, ack/nack, track search, cv auto transfer, raw |
-| `dcc_application_accessory_decoder_railcom` | RAILCOM + ACCESSORY | `DccApplicationAccessoryDecoderRailcom_` — `get_srq_state`, SRQ, status (1/4/extended), time/error report, cutout/stop hooks |
-
-> **Not wired in this release:** `DccConfig_initialize()` does not call
-> `DccApplicationDecoderRailcom_initialize` or
-> `DccApplicationAccessoryDecoderRailcom_initialize`, although their headers say it does.
-> Without an interface their calls transmit nothing, and the transmit engine has no
-> sink for them; decoders answer through `on_railcom_request`. The decoder CV module
-> is wired (onto `dcc_cv_storage`, so the lock, CV 29 filter and CV 8 reset apply).
+| `dcc_application_decoder_railcom` | RAILCOM + DECODER | `DccApplicationDecoderRailcom_` — `pom_response`, `dynamic_data`, `cv_auto_transfer`, `raw`: stateless builders that fill the `out` response inside `on_railcom_request` |
 
 > **Migration note:** the pre-refactor modules `dcc_application_main_track` and
 > `dcc_application_service_track` still exist and are still compiled/tested
@@ -177,7 +169,7 @@ programming from POM.
 
 Most modules own an `interface_dcc_<module>_t` of function pointers, populated by
 `dcc_config.c` (`dcc_railcom_utilities` and the packet builders have none, and the
-two RailCom application modules and two legacy modules noted in §5 are not populated). This makes every dependency
+two legacy modules noted in §5 are not populated). This makes every dependency
 mockable in unit tests and lets an MCU swap touch only the config struct.
 
 ## 7. Execution contexts

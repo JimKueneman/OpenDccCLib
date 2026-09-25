@@ -435,7 +435,7 @@ cd test
 make            # configures CMake, builds, runs every binary serially, writes test/coverage.html
 ```
 
-At generation time: 29 test binaries, 1272 tests, 0 failures, 0 warnings; line coverage 99.6 %, function coverage 100 %, branch coverage 97.8 % (gcovr). The build also compiles six single-role configurations so a missing `DCC_COMPILE_*` guard fails as a compile or link error.
+At generation time: 28 test binaries, 1230 tests, 0 failures, 0 warnings; line coverage 99.6 %, function coverage 100 %, branch coverage 97.8 % (gcovr). The build also compiles six single-role configurations so a missing `DCC_COMPILE_*` guard fails as a compile or link error.
 
 | Test file | What it tests |
 |---|---|

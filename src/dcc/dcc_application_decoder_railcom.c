@@ -25,276 +25,134 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * @file dcc_application_decoder_railcom.c
- * @brief Application-layer implementation for decoder RailCom responses.
+ * @brief Channel 2 reply builders for the decoder's RailCom callback.
  *
  * @author Jim Kueneman
  * @date 25 Sep 2026
  */
 
-/*
- * NOTE: RailCom datagram IDs and special code words in this module follow the
- * 2026 draft S-9.3.2.  Address framing (Table 19): ADR1/ID1 carries the HIGH
- * bits, ADR2/ID2 carries the LOW bits.  ACK/NACK are raw 4/8 special code words
- * (transmitted verbatim, NOT run through the 4/8 encode table).
- */
-
 #include "dcc_application_decoder_railcom.h"
 #include "dcc_defines.h"
 
-#if defined(DCC_COMPILE_RAILCOM) && (defined(DCC_COMPILE_DECODER) || defined(DCC_COMPILE_ACCESSORY_DECODER))
-
-#include <string.h>   /* memset — used by both the decoder and accessory paths */
-
-// =============================================================================
-// Static state
-// =============================================================================
-
-    /** @brief Stored pointer to the interface struct wired by dcc_config.c */
-static const interface_dcc_application_decoder_railcom_t *_interface = (void *)0;
-
-    /** @brief Alternates between ADR1 and ADR2 on successive address calls */
-static bool _adr_alternate = false;
+#if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_DECODER)
 
 // =============================================================================
 // Public API
 // =============================================================================
 
     /**
+     * @brief Fill a POM reply (ID 0).
      * @verbatim
-     * @param interface  Pointer to populated interface struct (wired by dcc_config.c).
+     * @param response Response to fill.
+     * @param cv_address CV address; the low 8 bits are sent.
+     * @param value CV value.
      * @endverbatim
+     * @return true if filled, false if response is NULL.
      */
-void DccApplicationDecoderRailcom_initialize(const interface_dcc_application_decoder_railcom_t *interface) {
+bool DccApplicationDecoderRailcom_pom_response(dcc_railcom_response_t *response, uint16_t cv_address, uint8_t value) {
 
-    _interface = interface;
-    _adr_alternate = false;
+    if (!response) {
 
-}
-
-// =============================================================================
-// Mobile Decoder Only
-// =============================================================================
-
-#ifdef DCC_COMPILE_DECODER
-
-    /**
-     * @verbatim
-     * @param address  The decoder address (0-10239).
-     * @endverbatim
-     */
-void DccApplicationDecoderRailcom_send_address_feedback(uint16_t address) {
-
-    if (!_interface) {
-
-        return;
+        return false;
 
     }
 
-    if (!_adr_alternate) {
+    response->datagram_id = DCC_RAILCOM_ID_POM;
+    response->data[0] = (uint8_t)(cv_address & 0xFF);
+    response->data[1] = value;
+    response->count = 2;
 
-        /* ADR1 (ID 1): HIGH bits of address (Table 19) */
-        _interface->send_ch1(DCC_RAILCOM_ID_ADR1_HIGH, (uint8_t)((address >> 8) & 0x3F));
-
-    } else {
-
-        /* ADR2 (ID 2): LOW bits of address (Table 19) */
-        _interface->send_ch1(DCC_RAILCOM_ID_ADR2_LOW, (uint8_t)(address & 0xFF));
-
-    }
-
-    _adr_alternate = !_adr_alternate;
+    return true;
 
 }
 
     /**
+     * @brief Fill a dynamic-data reply (ID 7).
      * @verbatim
-     * @param address               The decoder address.
-     * @param seconds_since_powerup Seconds elapsed since decoder power-up.
+     * @param response Response to fill.
+     * @param subid Dynamic variable sub-index.
+     * @param value Variable value.
      * @endverbatim
+     * @return true if filled, false if response is NULL.
      */
-void DccApplicationDecoderRailcom_send_track_search_response(uint16_t address, uint8_t seconds_since_powerup) {
+bool DccApplicationDecoderRailcom_dynamic_data(dcc_railcom_response_t *response, uint8_t subid, uint8_t value) {
 
-    dcc_railcom_response_t response;
-    memset(&response, 0, sizeof(response));
+    if (!response) {
 
-    if (!_interface) {
-
-        return;
+        return false;
 
     }
 
-    /* Track-search response = three datagrams sent together (2026 draft
-     * S-9.3.2): ID1 (ADR1, HIGH bits), ID2 (ADR2, LOW bits), ID14 (Time). */
+    response->datagram_id = DCC_RAILCOM_ID_DYN;
+    response->data[0] = subid;
+    response->data[1] = value;
+    response->count = 2;
 
-    /* Datagram 1: ID1 (ADR1) — HIGH bits of address */
-    response.datagram_id = DCC_RAILCOM_ID_ADR1_HIGH;
-    response.data[0] = (uint8_t)((address >> 8) & 0x3F);
-    response.count = 1;
-    _interface->send_ch2(&response);
-
-    /* Datagram 2: ID2 (ADR2) — LOW bits of address */
-    response.datagram_id = DCC_RAILCOM_ID_ADR2_LOW;
-    response.data[0] = (uint8_t)(address & 0xFF);
-    response.count = 1;
-    _interface->send_ch2(&response);
-
-    /* Datagram 3: ID14 (Time) */
-    response.datagram_id = DCC_RAILCOM_ID_TIME;
-    response.data[0] = seconds_since_powerup;
-    response.count = 1;
-    _interface->send_ch2(&response);
+    return true;
 
 }
 
     /**
+     * @brief Fill a CV automatic-transfer reply (ID 12): 24-bit indexed CV address, low
+     *  byte first, then the value.
      * @verbatim
-     * @param indexed_cv_address  The indexed CV address (up to 24 bits).
-     * @param value               The CV value.
+     * @param response Response to fill.
+     * @param indexed_cv_address Indexed CV address (page index and offset).
+     * @param value CV value.
      * @endverbatim
+     * @return true if filled, false if response is NULL.
      */
-void DccApplicationDecoderRailcom_send_cv_auto_transfer(uint32_t indexed_cv_address, uint8_t value) {
+bool DccApplicationDecoderRailcom_cv_auto_transfer(dcc_railcom_response_t *response, uint32_t indexed_cv_address, uint8_t value) {
 
-    dcc_railcom_response_t response;
-    memset(&response, 0, sizeof(response));
+    if (!response) {
 
-    if (!_interface) {
-
-        return;
+        return false;
 
     }
 
-    /* ID 12: 36-bit payload = 24-bit indexed CV address + 8-bit value */
-    response.datagram_id = DCC_RAILCOM_ID_CV_AUTO;
-    response.data[0] = (uint8_t)(indexed_cv_address & 0xFF);
-    response.data[1] = (uint8_t)((indexed_cv_address >> 8) & 0xFF);
-    response.data[2] = (uint8_t)((indexed_cv_address >> 16) & 0xFF);
-    response.data[3] = value;
-    response.count = 4;
+    response->datagram_id = DCC_RAILCOM_ID_CV_AUTO;
+    response->data[0] = (uint8_t)(indexed_cv_address & 0xFF);
+    response->data[1] = (uint8_t)((indexed_cv_address >> 8) & 0xFF);
+    response->data[2] = (uint8_t)((indexed_cv_address >> 16) & 0xFF);
+    response->data[3] = value;
+    response->count = 4;
 
-    _interface->send_ch2(&response);
-
-}
-
-#endif /* DCC_COMPILE_DECODER */
-
-// =============================================================================
-// Shared — POM, dynamic data, ACK/NACK, raw (mobile + accessory decoder)
-// =============================================================================
-
-    /**
-     * @verbatim
-     * @param cv_address  The CV address being read.
-     * @param value       The CV value to report.
-     * @endverbatim
-     */
-void DccApplicationDecoderRailcom_send_pom_response(uint16_t cv_address, uint8_t value) {
-
-    dcc_railcom_response_t response;
-    memset(&response, 0, sizeof(response));
-
-    if (!_interface) {
-
-        return;
-
-    }
-
-    response.datagram_id = DCC_RAILCOM_ID_POM;
-    response.data[0] = (uint8_t)(cv_address & 0xFF);
-    response.data[1] = value;
-    response.count = 2;
-
-    _interface->send_ch2(&response);
+    return true;
 
 }
 
     /**
+     * @brief Fill an arbitrary reply from a datagram id and raw bytes.
      * @verbatim
-     * @param subid  Sub-index identifying the dynamic data type.
-     * @param value  The dynamic data value.
+     * @param response Response to fill.
+     * @param datagram_id 4-bit datagram id.
+     * @param data Data bytes to copy; may be NULL when count is 0.
+     * @param count Number of data bytes.
      * @endverbatim
+     * @return true if filled; false (response untouched) if response is NULL, data is
+     *  NULL with a non-zero count, or count exceeds DCC_RAILCOM_DATAGRAM_MAX_BYTES.
      */
-void DccApplicationDecoderRailcom_send_dynamic_data(uint8_t subid, uint8_t value) {
+bool DccApplicationDecoderRailcom_raw(dcc_railcom_response_t *response, uint8_t datagram_id, const uint8_t *data, uint8_t count) {
 
-    dcc_railcom_response_t response;
-    memset(&response, 0, sizeof(response));
-
-    if (!_interface) {
-
-        return;
-
-    }
-
-    response.datagram_id = DCC_RAILCOM_ID_DYN;
-    response.data[0] = subid;
-    response.data[1] = value;
-    response.count = 2;
-
-    _interface->send_ch2(&response);
-
-}
-
-void DccApplicationDecoderRailcom_send_ack(void) {
-
-    if (!_interface || !_interface->send_code_word) {
-
-        return;
-
-    }
-
-    /* ACK is a raw special code word (2026 draft S-9.3.2), not a datagram. */
-    _interface->send_code_word(DCC_RAILCOM_CODE_WORD_ACK);
-
-}
-
-void DccApplicationDecoderRailcom_send_nack(void) {
-
-    if (!_interface || !_interface->send_code_word) {
-
-        return;
-
-    }
-
-    /* NACK is a raw special code word (2026 draft S-9.3.2), not a datagram. */
-    _interface->send_code_word(DCC_RAILCOM_CODE_WORD_NACK);
-
-}
-
-    /**
-     * @verbatim
-     * @param datagram_id  Datagram ID (0-15).
-     * @param data         Pointer to data bytes to send.
-     * @param count        Number of data bytes (max DCC_RAILCOM_DATAGRAM_MAX_BYTES).
-     * @endverbatim
-     */
-void DccApplicationDecoderRailcom_send_raw(uint8_t datagram_id, const uint8_t *data, uint8_t count) {
-
-    dcc_railcom_response_t response;
-    memset(&response, 0, sizeof(response));
     uint8_t byte_index;
 
-    if (!_interface) {
+    if (!response || (count > 0 && !data) || count > DCC_RAILCOM_DATAGRAM_MAX_BYTES) {
 
-        return;
-
-    }
-
-    if (count > DCC_RAILCOM_DATAGRAM_MAX_BYTES) {
-
-        count = DCC_RAILCOM_DATAGRAM_MAX_BYTES;
+        return false;
 
     }
 
-    response.datagram_id = datagram_id;
-    response.count = count;
+    response->datagram_id = (uint8_t)(datagram_id & 0x0F);
+    response->count = count;
 
     for (byte_index = 0; byte_index < count; byte_index++) {
 
-        response.data[byte_index] = data[byte_index];
+        response->data[byte_index] = data[byte_index];
 
     }
 
-    _interface->send_ch2(&response);
+    return true;
 
 }
 
-#endif /* DCC_COMPILE_RAILCOM && (DCC_COMPILE_DECODER || DCC_COMPILE_ACCESSORY_DECODER) */
+#endif /* DCC_COMPILE_RAILCOM && DCC_COMPILE_DECODER */

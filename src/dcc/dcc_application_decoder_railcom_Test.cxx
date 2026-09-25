@@ -24,474 +24,96 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  *
- * Test suite for DCC Application Decoder RailCom
+ * Test suite for the decoder RailCom Channel 2 reply builders
  */
 
 #include "test/main_Test.hxx"
 
 #include "dcc/dcc_application_decoder_railcom.h"
+#include "dcc/dcc_railcom_utilities.h"
 #include "dcc/dcc_types.h"
 #include "dcc/dcc_defines.h"
 
-#if defined(DCC_COMPILE_DECODER) || defined(DCC_COMPILE_ACCESSORY_DECODER)
+#if defined(DCC_COMPILE_RAILCOM) && defined(DCC_COMPILE_DECODER)
 
-// ============================================================================
-// Mock / tracking state
-// ============================================================================
-
-static uint32_t send_ch1_count = 0;
-static uint8_t last_ch1_datagram_id = 0;
-static uint8_t last_ch1_data = 0;
-
-static uint32_t send_ch2_count = 0;
-static dcc_railcom_response_t last_ch2_response;
-/* Records every Ch2 datagram in order so multi-datagram responses can be
- * verified (e.g. the 3-datagram track-search form). */
-static dcc_railcom_response_t ch2_history[8];
-
-static uint32_t send_code_word_count = 0;
-static uint8_t last_code_word = 0;
-
-static void mock_send_ch1(uint8_t datagram_id, uint8_t data) {
-
-    send_ch1_count++;
-    last_ch1_datagram_id = datagram_id;
-    last_ch1_data = data;
-
+static dcc_railcom_response_t make_response(void) {
+    dcc_railcom_response_t r;
+    memset(&r, 0xAA, sizeof(r));     /* poison so untouched fields are visible */
+    return r;
 }
 
-static void mock_send_ch2(const dcc_railcom_response_t *response) {
-
-    if (send_ch2_count < 8) {
-
-        ch2_history[send_ch2_count] = *response;
-
-    }
-
-    send_ch2_count++;
-    last_ch2_response = *response;
-
+TEST(DccApplicationDecoderRailcom, pom_response_layout) {
+    dcc_railcom_response_t r = make_response();
+    EXPECT_TRUE(DccApplicationDecoderRailcom_pom_response(&r, 0x0123, 0x5A));
+    EXPECT_EQ(r.datagram_id, (uint8_t)DCC_RAILCOM_ID_POM);
+    EXPECT_EQ(r.data[0], (uint8_t)0x23);     /* CV address low byte */
+    EXPECT_EQ(r.data[1], (uint8_t)0x5A);
+    EXPECT_EQ(r.count, (uint8_t)2);
 }
 
-static void mock_send_code_word(uint8_t code_word) {
-
-    send_code_word_count++;
-    last_code_word = code_word;
-
+TEST(DccApplicationDecoderRailcom, dynamic_data_layout) {
+    dcc_railcom_response_t r = make_response();
+    EXPECT_TRUE(DccApplicationDecoderRailcom_dynamic_data(&r, 26, 0x40));
+    EXPECT_EQ(r.datagram_id, (uint8_t)DCC_RAILCOM_ID_DYN);
+    EXPECT_EQ(r.data[0], (uint8_t)26);
+    EXPECT_EQ(r.data[1], (uint8_t)0x40);
+    EXPECT_EQ(r.count, (uint8_t)2);
 }
 
-static void reset_mocks(void) {
-
-    send_ch1_count = 0;
-    last_ch1_datagram_id = 0;
-    last_ch1_data = 0;
-    send_ch2_count = 0;
-    memset(&last_ch2_response, 0, sizeof(last_ch2_response));
-    memset(ch2_history, 0, sizeof(ch2_history));
-    send_code_word_count = 0;
-    last_code_word = 0;
-
+TEST(DccApplicationDecoderRailcom, cv_auto_transfer_layout) {
+    dcc_railcom_response_t r = make_response();
+    EXPECT_TRUE(DccApplicationDecoderRailcom_cv_auto_transfer(&r, 0x00ABCDEF, 0x77));
+    EXPECT_EQ(r.datagram_id, (uint8_t)DCC_RAILCOM_ID_CV_AUTO);
+    EXPECT_EQ(r.data[0], (uint8_t)0xEF);     /* low byte first */
+    EXPECT_EQ(r.data[1], (uint8_t)0xCD);
+    EXPECT_EQ(r.data[2], (uint8_t)0xAB);
+    EXPECT_EQ(r.data[3], (uint8_t)0x77);
+    EXPECT_EQ(r.count, (uint8_t)4);
 }
 
-static interface_dcc_application_decoder_railcom_t make_interface(void) {
-
-    interface_dcc_application_decoder_railcom_t iface;
-    memset(&iface, 0, sizeof(iface));
-
-    iface.send_ch1 = mock_send_ch1;
-    iface.send_ch2 = mock_send_ch2;
-    iface.send_code_word = mock_send_code_word;
-
-    return iface;
-
+TEST(DccApplicationDecoderRailcom, raw_copies_bytes_and_masks_id) {
+    dcc_railcom_response_t r = make_response();
+    const uint8_t bytes[] = {0x11, 0x22, 0x33};
+    EXPECT_TRUE(DccApplicationDecoderRailcom_raw(&r, 0xF8, bytes, 3));   /* id 8 = XPOM */
+    EXPECT_EQ(r.datagram_id, (uint8_t)0x08);
+    EXPECT_EQ(r.data[0], (uint8_t)0x11);
+    EXPECT_EQ(r.data[1], (uint8_t)0x22);
+    EXPECT_EQ(r.data[2], (uint8_t)0x33);
+    EXPECT_EQ(r.count, (uint8_t)3);
 }
 
-// ============================================================================
-// Initialization
-// ============================================================================
-
-TEST(DccApplicationDecoderRailcom, initialize_does_not_crash) {
-
-    reset_mocks();
-    interface_dcc_application_decoder_railcom_t iface = make_interface();
-    DccApplicationDecoderRailcom_initialize(&iface);
-
+TEST(DccApplicationDecoderRailcom, raw_with_zero_count_and_null_data_is_fine) {
+    dcc_railcom_response_t r = make_response();
+    EXPECT_TRUE(DccApplicationDecoderRailcom_raw(&r, 3, NULL, 0));
+    EXPECT_EQ(r.datagram_id, (uint8_t)3);
+    EXPECT_EQ(r.count, (uint8_t)0);
 }
 
-// ============================================================================
-// Mobile Decoder Only tests
-// ============================================================================
-
-#ifdef DCC_COMPILE_DECODER
-
-// --- send_address_feedback ---
-
-TEST(DccApplicationDecoderRailcom, send_address_feedback_null_guard) {
-
-    reset_mocks();
-    DccApplicationDecoderRailcom_initialize(NULL);
-
-    DccApplicationDecoderRailcom_send_address_feedback(0x1234);
-
-    EXPECT_EQ(send_ch1_count, (uint32_t)0);
-
+TEST(DccApplicationDecoderRailcom, raw_refuses_oversize_and_null_data) {
+    dcc_railcom_response_t r = make_response();
+    const uint8_t bytes[DCC_RAILCOM_DATAGRAM_MAX_BYTES + 1] = {0};
+    EXPECT_FALSE(DccApplicationDecoderRailcom_raw(&r, 3, bytes, DCC_RAILCOM_DATAGRAM_MAX_BYTES + 1));
+    EXPECT_EQ(r.count, (uint8_t)0xAA);        /* untouched */
+    EXPECT_FALSE(DccApplicationDecoderRailcom_raw(&r, 3, NULL, 2));
+    EXPECT_EQ(r.count, (uint8_t)0xAA);
 }
 
-TEST(DccApplicationDecoderRailcom, send_address_feedback_first_call_sends_adr1) {
-
-    reset_mocks();
-    interface_dcc_application_decoder_railcom_t iface = make_interface();
-    DccApplicationDecoderRailcom_initialize(&iface);
-
-    uint16_t address = 0x0A5B;
-    DccApplicationDecoderRailcom_send_address_feedback(address);
-
-    /* ADR1 (ID 1) carries the HIGH bits (2026 draft S-9.3.2, Table 19) */
-    EXPECT_EQ(send_ch1_count, (uint32_t)1);
-    EXPECT_EQ(last_ch1_datagram_id, (uint8_t)1);
-    EXPECT_EQ(last_ch1_data, (uint8_t)((address >> 8) & 0x3F));
-
+TEST(DccApplicationDecoderRailcom, null_response_is_refused_by_every_builder) {
+    EXPECT_FALSE(DccApplicationDecoderRailcom_pom_response(NULL, 1, 1));
+    EXPECT_FALSE(DccApplicationDecoderRailcom_dynamic_data(NULL, 1, 1));
+    EXPECT_FALSE(DccApplicationDecoderRailcom_cv_auto_transfer(NULL, 1, 1));
+    const uint8_t b = 0;
+    EXPECT_FALSE(DccApplicationDecoderRailcom_raw(NULL, 1, &b, 1));
 }
 
-TEST(DccApplicationDecoderRailcom, send_address_feedback_second_call_sends_adr2) {
-
-    reset_mocks();
-    interface_dcc_application_decoder_railcom_t iface = make_interface();
-    DccApplicationDecoderRailcom_initialize(&iface);
-
-    uint16_t address = 0x0A5B;
-    DccApplicationDecoderRailcom_send_address_feedback(address);
-    DccApplicationDecoderRailcom_send_address_feedback(address);
-
-    /* ADR2 (ID 2) carries the LOW bits (2026 draft S-9.3.2, Table 19) */
-    EXPECT_EQ(send_ch1_count, (uint32_t)2);
-    EXPECT_EQ(last_ch1_datagram_id, (uint8_t)2);
-    EXPECT_EQ(last_ch1_data, (uint8_t)(address & 0xFF));
-
+TEST(DccApplicationDecoderRailcom, builder_output_encodes_for_the_engine) {
+    /* The engine turns a DATA reply into count + 1 code words (id + data[0] share two) */
+    dcc_railcom_response_t r = make_response();
+    uint8_t encoded[DCC_RAILCOM_DATAGRAM_MAX_BYTES + 1];
+    ASSERT_TRUE(DccApplicationDecoderRailcom_pom_response(&r, 5, 0x3C));
+    EXPECT_EQ(DccRailcomUtilities_encode_ch2(&r, encoded), (uint8_t)3);
+    ASSERT_TRUE(DccApplicationDecoderRailcom_cv_auto_transfer(&r, 0x010203, 4));
+    EXPECT_EQ(DccRailcomUtilities_encode_ch2(&r, encoded), (uint8_t)5);
 }
 
-TEST(DccApplicationDecoderRailcom, send_address_feedback_alternates) {
-
-    reset_mocks();
-    interface_dcc_application_decoder_railcom_t iface = make_interface();
-    DccApplicationDecoderRailcom_initialize(&iface);
-
-    uint16_t address = 0x0A5B;
-
-    /* 1st call: ADR1 */
-    DccApplicationDecoderRailcom_send_address_feedback(address);
-    EXPECT_EQ(last_ch1_datagram_id, (uint8_t)1);
-
-    /* 2nd call: ADR2 */
-    DccApplicationDecoderRailcom_send_address_feedback(address);
-    EXPECT_EQ(last_ch1_datagram_id, (uint8_t)2);
-
-    /* 3rd call: back to ADR1 (HIGH bits) */
-    DccApplicationDecoderRailcom_send_address_feedback(address);
-    EXPECT_EQ(last_ch1_datagram_id, (uint8_t)1);
-    EXPECT_EQ(last_ch1_data, (uint8_t)((address >> 8) & 0x3F));
-
-}
-
-TEST(DccApplicationDecoderRailcom, send_address_feedback_reinitialize_resets_alternate) {
-
-    reset_mocks();
-    interface_dcc_application_decoder_railcom_t iface = make_interface();
-    DccApplicationDecoderRailcom_initialize(&iface);
-
-    uint16_t address = 0x0A5B;
-
-    /* Advance to ADR2 state */
-    DccApplicationDecoderRailcom_send_address_feedback(address);
-
-    /* Re-initialize should reset the alternate flag */
-    DccApplicationDecoderRailcom_initialize(&iface);
-    DccApplicationDecoderRailcom_send_address_feedback(address);
-
-    /* Should be ADR1 again (id=1) after re-init */
-    EXPECT_EQ(last_ch1_datagram_id, (uint8_t)1);
-
-}
-
-// --- send_track_search_response ---
-
-TEST(DccApplicationDecoderRailcom, send_track_search_null_guard) {
-
-    reset_mocks();
-    DccApplicationDecoderRailcom_initialize(NULL);
-
-    DccApplicationDecoderRailcom_send_track_search_response(0x1234, 42);
-
-    EXPECT_EQ(send_ch2_count, (uint32_t)0);
-
-}
-
-TEST(DccApplicationDecoderRailcom, send_track_search_delegates) {
-
-    reset_mocks();
-    interface_dcc_application_decoder_railcom_t iface = make_interface();
-    DccApplicationDecoderRailcom_initialize(&iface);
-
-    uint16_t address = 0x1A3C;
-    uint8_t seconds = 55;
-    DccApplicationDecoderRailcom_send_track_search_response(address, seconds);
-
-    /* Three datagrams sent together (2026 draft S-9.3.2):
-     * ID1 (ADR1 HIGH), ID2 (ADR2 LOW), ID14 (Time). */
-    EXPECT_EQ(send_ch2_count, (uint32_t)3);
-
-    /* Datagram 1: ID1 (ADR1) — HIGH bits */
-    EXPECT_EQ(ch2_history[0].datagram_id, (uint8_t)1);
-    EXPECT_EQ(ch2_history[0].data[0], (uint8_t)((address >> 8) & 0x3F));
-    EXPECT_EQ(ch2_history[0].count, (uint8_t)1);
-
-    /* Datagram 2: ID2 (ADR2) — LOW bits */
-    EXPECT_EQ(ch2_history[1].datagram_id, (uint8_t)2);
-    EXPECT_EQ(ch2_history[1].data[0], (uint8_t)(address & 0xFF));
-    EXPECT_EQ(ch2_history[1].count, (uint8_t)1);
-
-    /* Datagram 3: ID14 (Time) */
-    EXPECT_EQ(ch2_history[2].datagram_id, (uint8_t)14);
-    EXPECT_EQ(ch2_history[2].data[0], seconds);
-    EXPECT_EQ(ch2_history[2].count, (uint8_t)1);
-
-}
-
-// --- send_cv_auto_transfer ---
-
-TEST(DccApplicationDecoderRailcom, send_cv_auto_transfer_null_guard) {
-
-    reset_mocks();
-    DccApplicationDecoderRailcom_initialize(NULL);
-
-    DccApplicationDecoderRailcom_send_cv_auto_transfer(0x123456, 0xAB);
-
-    EXPECT_EQ(send_ch2_count, (uint32_t)0);
-
-}
-
-TEST(DccApplicationDecoderRailcom, send_cv_auto_transfer_delegates) {
-
-    reset_mocks();
-    interface_dcc_application_decoder_railcom_t iface = make_interface();
-    DccApplicationDecoderRailcom_initialize(&iface);
-
-    uint32_t indexed_cv = 0x1A2B3C;
-    uint8_t value = 0xDD;
-    DccApplicationDecoderRailcom_send_cv_auto_transfer(indexed_cv, value);
-
-    EXPECT_EQ(send_ch2_count, (uint32_t)1);
-    EXPECT_EQ(last_ch2_response.datagram_id, (uint8_t)12);
-    EXPECT_EQ(last_ch2_response.data[0], (uint8_t)(indexed_cv & 0xFF));
-    EXPECT_EQ(last_ch2_response.data[1], (uint8_t)((indexed_cv >> 8) & 0xFF));
-    EXPECT_EQ(last_ch2_response.data[2], (uint8_t)((indexed_cv >> 16) & 0xFF));
-    EXPECT_EQ(last_ch2_response.data[3], value);
-    EXPECT_EQ(last_ch2_response.count, (uint8_t)4);
-
-}
-
-#endif /* DCC_COMPILE_DECODER */
-
-// ============================================================================
-// Shared tests (mobile + accessory decoder)
-// ============================================================================
-
-// --- send_pom_response ---
-
-TEST(DccApplicationDecoderRailcom, send_pom_response_null_guard) {
-
-    reset_mocks();
-    DccApplicationDecoderRailcom_initialize(NULL);
-
-    DccApplicationDecoderRailcom_send_pom_response(0x00FF, 0x42);
-
-    EXPECT_EQ(send_ch2_count, (uint32_t)0);
-
-}
-
-TEST(DccApplicationDecoderRailcom, send_pom_response_delegates) {
-
-    reset_mocks();
-    interface_dcc_application_decoder_railcom_t iface = make_interface();
-    DccApplicationDecoderRailcom_initialize(&iface);
-
-    uint16_t cv_addr = 0x01FF;
-    uint8_t value = 0xAB;
-    DccApplicationDecoderRailcom_send_pom_response(cv_addr, value);
-
-    EXPECT_EQ(send_ch2_count, (uint32_t)1);
-    EXPECT_EQ(last_ch2_response.datagram_id, (uint8_t)0);
-    EXPECT_EQ(last_ch2_response.data[0], (uint8_t)(cv_addr & 0xFF));
-    EXPECT_EQ(last_ch2_response.data[1], value);
-    EXPECT_EQ(last_ch2_response.count, (uint8_t)2);
-
-}
-
-// --- send_dynamic_data ---
-
-TEST(DccApplicationDecoderRailcom, send_dynamic_data_null_guard) {
-
-    reset_mocks();
-    DccApplicationDecoderRailcom_initialize(NULL);
-
-    DccApplicationDecoderRailcom_send_dynamic_data(3, 100);
-
-    EXPECT_EQ(send_ch2_count, (uint32_t)0);
-
-}
-
-TEST(DccApplicationDecoderRailcom, send_dynamic_data_delegates) {
-
-    reset_mocks();
-    interface_dcc_application_decoder_railcom_t iface = make_interface();
-    DccApplicationDecoderRailcom_initialize(&iface);
-
-    uint8_t subid = 5;
-    uint8_t value = 200;
-    DccApplicationDecoderRailcom_send_dynamic_data(subid, value);
-
-    EXPECT_EQ(send_ch2_count, (uint32_t)1);
-    EXPECT_EQ(last_ch2_response.datagram_id, (uint8_t)7);
-    EXPECT_EQ(last_ch2_response.data[0], subid);
-    EXPECT_EQ(last_ch2_response.data[1], value);
-    EXPECT_EQ(last_ch2_response.count, (uint8_t)2);
-
-}
-
-// --- send_ack ---
-
-TEST(DccApplicationDecoderRailcom, send_ack_null_guard) {
-
-    reset_mocks();
-    DccApplicationDecoderRailcom_initialize(NULL);
-
-    DccApplicationDecoderRailcom_send_ack();
-
-    EXPECT_EQ(send_code_word_count, (uint32_t)0);
-
-}
-
-TEST(DccApplicationDecoderRailcom, send_ack_sends_raw_code_word) {
-
-    reset_mocks();
-    interface_dcc_application_decoder_railcom_t iface = make_interface();
-    DccApplicationDecoderRailcom_initialize(&iface);
-
-    DccApplicationDecoderRailcom_send_ack();
-
-    /* ACK is a raw special code word 0xF0 (2026 draft S-9.3.2), not a datagram */
-    EXPECT_EQ(send_ch2_count, (uint32_t)0);
-    EXPECT_EQ(send_code_word_count, (uint32_t)1);
-    EXPECT_EQ(last_code_word, (uint8_t)DCC_RAILCOM_CODE_WORD_ACK);
-    EXPECT_EQ(last_code_word, (uint8_t)0xF0);
-
-}
-
-TEST(DccApplicationDecoderRailcom, send_ack_null_code_word_fn_guard) {
-
-    reset_mocks();
-    /* Interface is non-NULL but the send_code_word slot is unwired —
-     * exercises the second term of the guard (!_interface->send_code_word). */
-    interface_dcc_application_decoder_railcom_t iface = make_interface();
-    iface.send_code_word = NULL;
-    DccApplicationDecoderRailcom_initialize(&iface);
-
-    DccApplicationDecoderRailcom_send_ack();
-
-    EXPECT_EQ(send_code_word_count, (uint32_t)0);
-
-}
-
-// --- send_nack ---
-
-TEST(DccApplicationDecoderRailcom, send_nack_null_guard) {
-
-    reset_mocks();
-    DccApplicationDecoderRailcom_initialize(NULL);
-
-    DccApplicationDecoderRailcom_send_nack();
-
-    EXPECT_EQ(send_code_word_count, (uint32_t)0);
-
-}
-
-TEST(DccApplicationDecoderRailcom, send_nack_sends_raw_code_word) {
-
-    reset_mocks();
-    interface_dcc_application_decoder_railcom_t iface = make_interface();
-    DccApplicationDecoderRailcom_initialize(&iface);
-
-    DccApplicationDecoderRailcom_send_nack();
-
-    /* NACK is a raw special code word 0x3C (2026 draft S-9.3.2), not a datagram */
-    EXPECT_EQ(send_ch2_count, (uint32_t)0);
-    EXPECT_EQ(send_code_word_count, (uint32_t)1);
-    EXPECT_EQ(last_code_word, (uint8_t)DCC_RAILCOM_CODE_WORD_NACK);
-    EXPECT_EQ(last_code_word, (uint8_t)0x3C);
-
-}
-
-TEST(DccApplicationDecoderRailcom, send_nack_null_code_word_fn_guard) {
-
-    reset_mocks();
-    /* Interface is non-NULL but the send_code_word slot is unwired —
-     * exercises the second term of the guard (!_interface->send_code_word). */
-    interface_dcc_application_decoder_railcom_t iface = make_interface();
-    iface.send_code_word = NULL;
-    DccApplicationDecoderRailcom_initialize(&iface);
-
-    DccApplicationDecoderRailcom_send_nack();
-
-    EXPECT_EQ(send_code_word_count, (uint32_t)0);
-
-}
-
-// --- send_raw ---
-
-TEST(DccApplicationDecoderRailcom, send_raw_null_guard) {
-
-    reset_mocks();
-    DccApplicationDecoderRailcom_initialize(NULL);
-
-    uint8_t data[] = {0x11, 0x22};
-    DccApplicationDecoderRailcom_send_raw(5, data, 2);
-
-    EXPECT_EQ(send_ch2_count, (uint32_t)0);
-
-}
-
-TEST(DccApplicationDecoderRailcom, send_raw_delegates) {
-
-    reset_mocks();
-    interface_dcc_application_decoder_railcom_t iface = make_interface();
-    DccApplicationDecoderRailcom_initialize(&iface);
-
-    uint8_t data[] = {0xAA, 0xBB, 0xCC};
-    DccApplicationDecoderRailcom_send_raw(9, data, 3);
-
-    EXPECT_EQ(send_ch2_count, (uint32_t)1);
-    EXPECT_EQ(last_ch2_response.datagram_id, (uint8_t)9);
-    EXPECT_EQ(last_ch2_response.data[0], (uint8_t)0xAA);
-    EXPECT_EQ(last_ch2_response.data[1], (uint8_t)0xBB);
-    EXPECT_EQ(last_ch2_response.data[2], (uint8_t)0xCC);
-    EXPECT_EQ(last_ch2_response.count, (uint8_t)3);
-
-}
-
-TEST(DccApplicationDecoderRailcom, send_raw_clamps_count) {
-
-    reset_mocks();
-    interface_dcc_application_decoder_railcom_t iface = make_interface();
-    DccApplicationDecoderRailcom_initialize(&iface);
-
-    uint8_t data[] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A};
-    DccApplicationDecoderRailcom_send_raw(3, data, 10);
-
-    EXPECT_EQ(send_ch2_count, (uint32_t)1);
-    EXPECT_EQ(last_ch2_response.count, (uint8_t)DCC_RAILCOM_DATAGRAM_MAX_BYTES);
-    EXPECT_EQ(last_ch2_response.data[0], (uint8_t)0x01);
-    EXPECT_EQ(last_ch2_response.data[5], (uint8_t)0x06);
-
-}
-
-#endif /* DCC_COMPILE_DECODER || DCC_COMPILE_ACCESSORY_DECODER */
+#endif /* DCC_COMPILE_RAILCOM && DCC_COMPILE_DECODER */

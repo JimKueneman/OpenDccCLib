@@ -41,7 +41,7 @@ The full NMRA DCC protocol stack, written in plain C, for command stations and d
 | Bit decoder | Edge-timing classification with an 80 µs threshold, stretched-zero tolerance, 10 ms no-signal recovery |
 | Packet decoder | Preamble ≥ 10, byte assembly, XOR check, matching for short and long addresses, the CV 19 consist address for speed, direction and e-stop, and the accessory address in both board and output modes, deferred dispatch queue so command callbacks never run in an interrupt |
 | CV storage | Function-pointer storage with decoder lock (CV 15/16), factory reset on CV 8, CV 19 consist address written by the consist instruction, indexed CVs (CV 31/32, 257–512), CV 29 feature mask hook |
-| RailCom transmit | Decoder reply engine: automatic Channel 1 address broadcast after this decoder's own commands, application-filled Channel 2 through `on_railcom_request` (called on the edge path), ACK/BUSY/NACK tokens; accessory SRQ and status helpers exist but are not yet wired into the transmit engine |
+| RailCom transmit | Decoder reply engine: automatic Channel 1 address broadcast after this decoder's own commands, application-filled Channel 2 through `on_railcom_request` (called on the edge path), ACK/BUSY/NACK tokens, builders for the common Channel 2 datagrams; accessory-decoder RailCom is a future feature |
 | Fail-safe | S-9.2.4 packet time-out from CV 11 in 100 ms units, with enter and exit callbacks |
 
 ## Example Platforms
@@ -65,8 +65,8 @@ Two ready-to-run projects ship with the library. Porting to a new platform means
 
 | Metric | Value, measured at generation (2026-09-25) |
 |---|---|
-| Unit-test binaries | 29 GoogleTest binaries, one per module |
-| Test cases | 1272, all passing, zero warnings |
+| Unit-test binaries | 28 GoogleTest binaries, one per module |
+| Test cases | 1230, all passing, zero warnings |
 | Coverage (gcovr) | 99.6 % lines, 100 % functions, 97.8 % branches |
 | Compile-gate matrix | Six single-role configurations built and linked on every run |
 | Source | 60 files, 18 399 lines in `src/dcc/` |

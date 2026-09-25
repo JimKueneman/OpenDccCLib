@@ -99,8 +99,7 @@ decoder/                                 <- your project folder
     dcc_railcom_decoder.h/c              - RailCom transmit engine (bit-bang)
     dcc_railcom_utilities.h/c            - 4/8 code words
     dcc_application_decoder_cv.h/c       - CV read/write API
-    dcc_application_decoder_railcom.h/c  - RailCom reply API
-    dcc_application_accessory_decoder_railcom.h/c - accessory-decoder RailCom API
+    dcc_application_decoder_railcom.h/c  - Channel 2 reply builders for on_railcom_request
 ```
 
 ## 4. dcc_user_config.h in Depth
@@ -117,7 +116,7 @@ decoder/                                 <- your project folder
 |---|---|
 | `DCC_COMPILE_DECODER` | Bit decoder, packet decoder, CV storage, fail-safe |
 | `DCC_COMPILE_RAILCOM` | Compiles the RailCom transmit engine and its config fields (`railcom_tx_pin_set`, `railcom_delay_us`, `on_railcom_request`); active only when `railcom_tx_pin_set` is wired |
-| `DCC_COMPILE_ACCESSORY_DECODER` | Accessory-decoder RailCom reply helpers (SRQ, status, time, error); needs `DCC_COMPILE_RAILCOM`. Packet reception lives under `DCC_COMPILE_DECODER`, so an accessory-only build has no receive path |
+| `DCC_COMPILE_ACCESSORY_DECODER` | Reserved for the accessory-decoder RailCom feature (SRQ, status, time, error), which is not implemented yet. Today it only enables the RailCom 4/8 encoders and satisfies the role check; packet reception lives under `DCC_COMPILE_DECODER` |
 | `USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH` | Packets that can wait for main-loop dispatch; one slot is reserved, so ≥ 2 and the queue holds depth − 1. A full queue drops the newest packet |
 
 A decoder project must not define `DCC_COMPILE_COMMAND_STATION` unless it really is both, as a booster or repeater would be.
@@ -285,8 +284,8 @@ With `railcom_tx_pin_set` and `railcom_delay_us` wired, the library transmits du
 
 - **Channel 1** carries the address broadcast, alternating ADR1 and ADR2, sent automatically after a multifunction command addressed to this decoder whose length the recognizer can size. Broadcast and accessory packets, decoder control, XPOM, time and date, and system time get no reply. CV 28 and CV 29 bit 3 are not consulted.
 - **Channel 2** is yours: `on_railcom_request()` is called as soon as a command addressed to this decoder is recognized, before its XOR byte, and returns a reply status. Return `DCC_RAILCOM_REPLY_DATA` with a `dcc_railcom_response_t` (the id and the first byte share the first two code words, each further byte carries 6 bits, and the encoded reply is limited to six code words, so at most five data bytes), or ACK, BUSY, NACK, or NONE.
-- The helper API `DccApplicationDecoderRailcom_send_*` (address feedback, POM response, dynamic data, track-search response, CV auto-transfer, ACK, NACK, raw) exists, but `DccConfig_initialize()` does not initialize it and the transmit engine has no sink for it in this release, so its calls return without transmitting; answer through `on_railcom_request` instead.
-- The accessory helper module `DccApplicationAccessoryDecoderRailcom_*` (`_get_srq_state`, `_send_srq`, `_send_status`, `_send_status_extended`, `_send_status_4`, `_send_time_report`, `_send_error_report`, and the stop-command and cutout hooks) has the same status, and the transmit engine does not answer accessory packets.
+- The builders in `dcc_application_decoder_railcom.h` (`DccApplicationDecoderRailcom_pom_response`, `_dynamic_data`, `_cv_auto_transfer`, `_raw`) fill the `out` response inside `on_railcom_request`, so a callback body is one builder call and a `DCC_RAILCOM_REPLY_DATA` return. They are stateless: nothing to initialize or wire. ACK, NACK and BUSY are reply statuses, not builders.
+- Accessory-decoder RailCom (SRQ, status, time and error reports) is not implemented: the transmit engine does not answer accessory packets. It is recorded as a future feature to be built together with the command-station polling side.
 
 > The shipped decoder board has no current-source circuit, so the demo leaves `railcom_tx_pin_set` NULL and no reply is transmitted. The engine and encoders are unit-tested; the on-track side is a known open item, and the compliance overview's RailCom entries predate the transmit engine. Known limitation: a reply carrying only Channel 2 data is read as Channel 1 by this library's own command station.
 
@@ -305,7 +304,7 @@ S-9.2.4 requires a decoder to stop everything when no packet addressed to it arr
 
 ## 15. Unit Testing
 
-Decoder-role tests, GoogleTest with mocked drivers, run with the rest of the suite: `cd test && make`. At generation time the whole suite is 29 binaries, 1272 tests, 0 failures, with 99.6 % line coverage.
+Decoder-role tests, GoogleTest with mocked drivers, run with the rest of the suite: `cd test && make`. At generation time the whole suite is 28 binaries, 1230 tests, 0 failures, with 99.6 % line coverage.
 
 | Test file | What it tests |
 |---|---|
@@ -315,7 +314,6 @@ Decoder-role tests, GoogleTest with mocked drivers, run with the rest of the sui
 | `dcc_failsafe_Test` | CV 11 time-out, enter and exit |
 | `dcc_config_Test` | Wiring and lifecycle, edge dispatch on run, the 6 ms ACK pulse (auto-stop, restart ignored, NULL hooks), the CV application API routed through storage and the lock |
 | `dcc_railcom_decoder_Test`, `dcc_railcom_utilities_Test`, `dcc_application_decoder_railcom_Test` | Reply engine, 4/8 encoding against the spec table, reply builders |
-| `dcc_application_accessory_decoder_railcom_Test` | Accessory SRQ, status, time and error replies |
 
 ## 16. Troubleshooting
 
