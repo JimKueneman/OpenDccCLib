@@ -129,7 +129,7 @@ void CallbacksDcc_on_function_command(uint16_t address, uint8_t function_number,
 | `on_speed_command` | Speed and direction for this address |
 | `on_emergency_stop_command` | Emergency stop, addressed or broadcast |
 | `on_function_command` | Function on or off, F0–F68 |
-| `on_accessory_basic_command`, `on_accessory_extended_command` | Turnout, signal aspect. Delivered for every accessory packet on the track; compare the address with yours in the callback, the library does not filter accessory addresses |
+| `on_accessory_basic_command`, `on_accessory_extended_command` | Turnout, signal aspect, for packets addressed to this decoder's CV 513/521 address |
 | `on_cv_write_command`, `on_cv_verify_command`, `on_cv_bit_command` | Loco CV access, main track (POM) and programming track; the `service_mode` flag tells them apart. Accessory operations-mode CV access is not delivered in this release |
 | `on_consist_command` | Consist set or clear. The library has already written CV 19 through your `cv_write`; speed, direction and emergency-stop packets to the consist address then reach the speed callbacks with the consist direction applied |
 | `on_binary_state_short_command`, `on_binary_state_long_command`, `on_analog_function_command` | Binary state (feature expansion) and analog function (advanced operations) |

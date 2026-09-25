@@ -2450,6 +2450,44 @@ TEST(DccPacketDecoder, accessory_basic_null_callback) {
 
 }
 
+TEST(DccPacketDecoder, accessory_basic_other_board_ignored) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, false);
+
+    /* Board 2, pair 0, activate: byte0 = 0x82, byte1 = 0xF8 */
+    uint8_t data[] = {0x82, 0xF8, 0x00};
+    data[2] = xor_bytes(data, 2);
+    DccPacketDecoder_process_packet(data, 3);
+    EXPECT_EQ(acc_basic_callback_count, (uint32_t)0);
+
+    /* Board 1 still arrives */
+    uint8_t mine[] = {0x81, 0xF8, 0x00};
+    mine[2] = xor_bytes(mine, 2);
+    DccPacketDecoder_process_packet(mine, 3);
+    EXPECT_EQ(acc_basic_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_acc_board_address, (uint16_t)1);
+}
+
+TEST(DccPacketDecoder, accessory_extended_other_address_ignored) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, true);
+
+    /* Extended: byte0 = 10AAAAAA (low 6), byte1 = 0AAA0AA1 (high 3 inverted, bits 9-10), byte2 = aspect */
+    uint8_t other[] = {0x82, 0x71, 0x05, 0x00};       /* address 2 */
+    other[3] = xor_bytes(other, 3);
+    DccPacketDecoder_process_packet(other, 4);
+    EXPECT_EQ(acc_ext_callback_count, (uint32_t)0);
+
+    uint8_t mine[] = {0x81, 0x71, 0x05, 0x00};        /* address 1 */
+    mine[3] = xor_bytes(mine, 3);
+    DccPacketDecoder_process_packet(mine, 4);
+    EXPECT_EQ(acc_ext_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_acc_ext_address, (uint16_t)1);
+    EXPECT_EQ(last_acc_ext_aspect, (uint8_t)5);
+}
+
 TEST(DccPacketDecoder, accessory_decoder_ignores_loco_packet_with_same_number) {
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();

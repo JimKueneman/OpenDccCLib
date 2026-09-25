@@ -319,6 +319,13 @@ bool DccScheduler_insert(dcc_scheduler_context_t *context, const dcc_packet_t *p
     int16_t slot_index;
     uint8_t byte_index;
 
+    /* A one-shot with repeat_count 0 would never be sent and never freed. */
+    if (!auto_refresh && packet->repeat_count == 0) {
+
+        return false;
+
+    }
+
     /* Duplicate combining: look for existing (address, tag) slot */
     slot_index = _find_slot(context, address, tag);
 

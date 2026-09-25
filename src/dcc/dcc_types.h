@@ -44,6 +44,21 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// =============================================================================
+// Compiler barrier
+// =============================================================================
+
+    /** @brief Compiler-only memory barrier: the stores before it are emitted
+     *  before the stores after it. Used for the single-producer / single-consumer
+     *  packet handoff between the main loop and the bit-timer ISR, where a
+     *  volatile flag publishes a packet written with plain stores. No hardware
+     *  fence is needed on the single-core targets this library runs on. */
+#if defined(__GNUC__) || defined(__clang__)
+#define DCC_COMPILER_BARRIER()  __asm__ __volatile__("" ::: "memory")
+#else
+#define DCC_COMPILER_BARRIER()  ((void)0)
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */

@@ -866,6 +866,12 @@ static void _dispatch_accessory_basic(const uint8_t *data, uint8_t byte_count) {
         uint16_t output_address = (board_address << 2) | (data[1] & 0x03);
         output_pair = (data[1] >> 2) & 0x01;
 
+        if (output_address != _my_address) {
+
+            return;
+
+        }
+
         if (_interface->on_accessory_basic_command) {
 
             _interface->on_accessory_basic_command(output_address, output_pair, activate);
@@ -876,6 +882,12 @@ static void _dispatch_accessory_basic(const uint8_t *data, uint8_t byte_count) {
 
         /* Decoder-address mode: DDD is the 3-bit output pair field */
         output_pair = data[1] & 0x07;
+
+        if (board_address != _my_address) {
+
+            return;
+
+        }
 
         if (_interface->on_accessory_basic_command) {
 
@@ -935,6 +947,12 @@ static void _dispatch_accessory_extended(const uint8_t *data, uint8_t byte_count
     address |= (uint16_t)((data[1] >> 1) & 0x03) << 9;
 
     aspect = data[2];
+
+    if (address != _my_address) {
+
+        return;
+
+    }
 
     if (_interface->on_accessory_extended_command) {
 

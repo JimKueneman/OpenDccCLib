@@ -161,7 +161,7 @@ programming from POM.
 | `dcc_config` | always | Wiring: builds the interface structs of the modules it wires and owns their contexts (the service-mode task modules and the decoder-side modules keep their own static state), `initialize()`/`run()`/ISR dispatch |
 | `dcc_types` | always | Typedefs, user-constant validation |
 | `dcc_defines` | always | Protocol constants: timing, instruction masks, CV numbers, RailCom IDs |
-| `dcc_scheduler` | CS | Priority queue, duplicate combining, paced auto-refresh: a changed slot is sent `DCC_REFRESH_PROMPT_SENDS` times at full rate, then kept alive every `DCC_REFRESH_COLD_CYCLES` packet cycles and never later than `DCC_REFRESH_COLD_MAX_CYCLES` (selection order overdue, in-burst, due; `DCC_REFRESH_COLD_CYCLES = 0` is the flat round-robin ring); one-shots are sent `repeat_count` times (the builders set the `DCC_REPEAT_*` defaults; 0 = never sent, and in this release never freed). Pending one-shots always go before refresh slots and priority ranks only one-shots; the prompt burst is re-armed on every insert; an idle spacer separates back-to-back packets to the same short address 112–127 |
+| `dcc_scheduler` | CS | Priority queue, duplicate combining, paced auto-refresh: a changed slot is sent `DCC_REFRESH_PROMPT_SENDS` times at full rate, then kept alive every `DCC_REFRESH_COLD_CYCLES` packet cycles and never later than `DCC_REFRESH_COLD_MAX_CYCLES` (selection order overdue, in-burst, due; `DCC_REFRESH_COLD_CYCLES = 0` is the flat round-robin ring); one-shots are sent `repeat_count` times (the builders set the `DCC_REPEAT_*` defaults; a one-shot with 0 is refused at insert). Pending one-shots always go before refresh slots and priority ranks only one-shots; the prompt burst is re-armed on every insert; an idle spacer separates back-to-back packets to the same short address 112–127 |
 | `dcc_bit_encoder` | CS | ISR bit framing from the shared fixed-period timer |
 | `dcc_railcom_cutout` | CS + RAILCOM | RailCom cutout timer state machine |
 | `dcc_railcom_command_station` | CS + RAILCOM | Receive drain after each cutout, Ch1/Ch2 datagram assembly (split by byte count), receive ring, tagging with loco addresses |
@@ -170,7 +170,7 @@ programming from POM.
 | `dcc_service_mode_{direct,paged,register,address}` | CS | Per-mode programming primitives |
 | `dcc_service_mode_task_{direct,paged,register,address,detect}` | CS + own `TASK_*` flag | Read/write/verify orchestration on the primitives; mode detection |
 | `dcc_bit_decoder` | DECODER | Edge-timestamp → bit classification → byte assembly |
-| `dcc_packet_decoder` | DECODER | Parse bytes → structured commands, XOR, address match (own, broadcast, and the CV19 consist address for speed/direction/e-stop), consist set/clear writes CV19, deferred dispatch queue |
+| `dcc_packet_decoder` | DECODER | Parse bytes → structured commands, XOR, address match (own, broadcast, the CV19 consist address for speed/direction/e-stop; accessory board or output address for accessory packets), consist set/clear writes CV19, deferred dispatch queue |
 | `dcc_cv_storage` | DECODER | CV abstraction, decoder lock, factory reset, indexed CVs, CV29 feature mask |
 | `dcc_failsafe` | DECODER | S-9.2.4 packet time-out (CV11 in 100 ms units) |
 | `dcc_railcom_decoder` | DECODER + RAILCOM | RailCom transmit engine (bit-bang) and reply arming |
@@ -200,7 +200,9 @@ Three contexts, with a deliberately small locked region:
 The handoff between the ISR-level bit encoder and the main-loop scheduler is
 single-buffered: the encoder holds one active packet and a `packet_loaded` flag; the ISR
 clears the flag at the end bit and the main loop loads the next packet without taking
-a lock (the only lock calls in the library surround the decoder's RailCom transmit). The cutout arm is deferred one tick so it
+a lock: a single producer and consumer hand off through the volatile flag, with
+`DCC_COMPILER_BARRIER()` keeping the packet stores ahead of the flag store on both
+sides (the only lock calls in the library surround the decoder's RailCom transmit). The cutout arm is deferred one tick so it
 lands on the end bit's last edge, because the encoder's state machine runs a half-bit ahead
 of the wire.
 

@@ -141,7 +141,8 @@ typedef struct {
          * @param tag Sub-key for duplicate combining (@ref dcc_tag_enum).
          * @param priority Packet priority level (@ref dcc_priority_enum).
          * @param auto_refresh true = keep in refresh cycle indefinitely.
-         * @return true if packet was scheduled, false if no free slots.
+         * @return true if packet was scheduled, false if no free slots or if a
+         *  one-shot was handed over with repeat_count 0 (it would never be sent).
          */
     extern bool DccScheduler_insert(dcc_scheduler_context_t *context, const dcc_packet_t *packet, dcc_address_t address, dcc_tag_enum tag, dcc_priority_enum priority, bool auto_refresh);
 

@@ -9,7 +9,7 @@ OpenDccCLib is a C library that implements the NMRA DCC protocol for microcontro
 
 ### 1.1 What the Library Does (and Does Not Do)
 
-The library classifies one and zero bits from edge timing, assembles packets and validates the XOR byte, matches locomotive addresses against the CVs (accessory commands are delivered unfiltered for you to match), dispatches commands to your callbacks from the main loop, wraps CV storage with the decoder lock and factory reset, answers service-mode programming with the 6 ms ACK pulse, runs the S-9.2.4 packet time-out, and, when wired, transmits RailCom replies during the cutout.
+The library classifies one and zero bits from edge timing, assembles packets and validates the XOR byte, matches locomotive and accessory addresses against the CVs, dispatches commands to your callbacks from the main loop, wraps CV storage with the decoder lock and factory reset, answers service-mode programming with the 6 ms ACK pulse, runs the S-9.2.4 packet time-out, and, when wired, transmits RailCom replies during the cutout.
 
 It does not include motor control, lighting, servos, sound, or persistent storage. You supply those through function pointers in one `dcc_config_t` struct, and the library calls them.
 
@@ -58,7 +58,7 @@ The library reads its addressing CVs at `DccConfig_initialize()` and again whene
 | CV 513, 521 | Accessory decoder address: low 6 bits and high 3 bits in decoder-address mode; in output-address mode (CV 541 bit 6) the flat address is CV 513 + 256 × CV 521 − 1 |
 | CV 541 | Accessory configuration: bit 7 accessory decoder, bit 6 output-address mode, bit 5 extended |
 
-Broadcast (address 0) is always accepted for multifunction packets. A decoder configured as an accessory decoder (CV 541 bit 7) ignores multifunction packets altogether, broadcast included, so a locomotive packet whose short address equals the board address is never mistaken for a command. Accessory packets are not filtered: every basic and extended accessory command on the track reaches the accessory callbacks, and the application compares the address.
+Broadcast (address 0) is always accepted for multifunction packets. A decoder configured as an accessory decoder (CV 541 bit 7) ignores multifunction packets altogether, broadcast included, so a locomotive packet whose short address equals the board address is never mistaken for a command. Accessory packets are matched against the address from CV 513/521, as a board address or, with CV 541 bit 6, as an output address; S-9.2.1 defines no accessory broadcast, so none is accepted.
 
 ### 2.5 Configuration Variables
 
@@ -256,7 +256,7 @@ Completed packets are queued (`USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH`) and
 | Speed 14/28/128 | `on_speed_command(address, speed, direction, mode)`; `mode` is a `dcc_speed_mode_enum`. `direction` already has CV 29 bit 0 applied, and CV 19 bit 7 for a packet that arrived on the consist address; `speed` is 0 (stop) or 2 and up (e-stop goes to the next row), and 14 versus 28 steps follows CV 29 bit 1 |
 | Emergency stop | `on_emergency_stop_command(address)` |
 | Functions F0–F68 | `on_function_command(address, function_number, state)` |
-| Basic / extended accessory | `on_accessory_basic_command(board, pair, activate)`, `on_accessory_extended_command(address, aspect)`; delivered for every accessory packet, no address filter. In output-address mode (CV 541 bit 6) `board` is the 11-bit output address and `pair` is the R bit |
+| Basic / extended accessory | `on_accessory_basic_command(board, pair, activate)`, `on_accessory_extended_command(address, aspect)`; delivered only for packets that match this decoder's accessory address. In output-address mode (CV 541 bit 6) `board` is the 11-bit output address and `pair` is the R bit |
 | CV write / verify / bit, main track or service track | `on_cv_write_command(cv, value, service_mode)`, `on_cv_verify_command(...)`, `on_cv_bit_command(cv, bit, value, service_mode)`. An operations-mode verify only notifies (nothing is read or compared); a service-mode bit write fires both the write and the bit callback; accessory operations-mode CV access is not delivered in this release |
 | Consist | `on_consist_command(address, consist_address, direction_normal)`; fired after CV 19 has been written through `cv_write` (0 = cleared), and not fired when the decoder lock refuses the write |
 | Binary state short / long | `on_binary_state_short_command(address, state, active)`, `on_binary_state_long_command(...)` |
@@ -305,7 +305,7 @@ S-9.2.4 requires a decoder to stop everything when no packet addressed to it arr
 
 ## 15. Unit Testing
 
-Decoder-role tests, GoogleTest with mocked drivers, run with the rest of the suite: `cd test && make`. At generation time the whole suite is 29 binaries, 1269 tests, 0 failures, with 99.6 % line coverage.
+Decoder-role tests, GoogleTest with mocked drivers, run with the rest of the suite: `cd test && make`. At generation time the whole suite is 29 binaries, 1272 tests, 0 failures, with 99.6 % line coverage.
 
 | Test file | What it tests |
 |---|---|

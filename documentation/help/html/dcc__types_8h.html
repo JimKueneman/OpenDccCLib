@@ -127,6 +127,9 @@ Data Structures</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="define-members" name="define-members"></a>
 Macros</h2></td></tr>
+<tr class="memitem:adbfcbba8d92bfd3124eac2725a8ea15a" id="r_adbfcbba8d92bfd3124eac2725a8ea15a"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adbfcbba8d92bfd3124eac2725a8ea15a">DCC_COMPILER_BARRIER</a>()</td></tr>
+<tr class="memdesc:adbfcbba8d92bfd3124eac2725a8ea15a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compiler-only memory barrier: the stores before it are emitted before the stores after it. Used for the single-producer / single-consumer packet handoff between the main loop and the bit-timer ISR, where a volatile flag publishes a packet written with plain stores. No hardware fence is needed on the single-core targets this library runs on.  <br /></td></tr>
+<tr class="separator:adbfcbba8d92bfd3124eac2725a8ea15a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4dbba2bbe2fc61781a09adfec1318043" id="r_a4dbba2bbe2fc61781a09adfec1318043"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4dbba2bbe2fc61781a09adfec1318043">DCC_PACKET_MAX_BYTES</a>&#160;&#160;&#160;6</td></tr>
 <tr class="memdesc:a4dbba2bbe2fc61781a09adfec1318043"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum bytes in a DCC packet (2 addr + 3 instruction + 1 XOR)  <br /></td></tr>
 <tr class="separator:a4dbba2bbe2fc61781a09adfec1318043"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -311,6 +314,26 @@ Enumerations</h2></td></tr>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
 <dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
 </div><h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="adbfcbba8d92bfd3124eac2725a8ea15a" name="adbfcbba8d92bfd3124eac2725a8ea15a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adbfcbba8d92bfd3124eac2725a8ea15a">&#9670;&#160;</a></span>DCC_COMPILER_BARRIER</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define DCC_COMPILER_BARRIER</td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Value:</b><div class="fragment"><div class="line">((void)0)</div>
+</div><!-- fragment -->
+<p>Compiler-only memory barrier: the stores before it are emitted before the stores after it. Used for the single-producer / single-consumer packet handoff between the main loop and the bit-timer ISR, where a volatile flag publishes a packet written with plain stores. No hardware fence is needed on the single-core targets this library runs on. </p>
+
+</div>
+</div>
 <a id="a4dbba2bbe2fc61781a09adfec1318043" name="a4dbba2bbe2fc61781a09adfec1318043"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4dbba2bbe2fc61781a09adfec1318043">&#9670;&#160;</a></span>DCC_PACKET_MAX_BYTES</h2>
 

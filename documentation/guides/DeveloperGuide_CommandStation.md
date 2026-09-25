@@ -300,7 +300,7 @@ A new command for the same (address, tag) overwrites the packet in the existing 
 
 ### 9.4 Repeat Counts
 
-A one-shot slot is sent `repeat_count` times; the scheduler decrements after each send and drops the slot at zero. A packet handed over with a count of 0 is therefore **never sent**, and in this release never freed either: it holds its slot until removed by address. Every packet builder sets a spec-correct default from the `DCC_REPEAT_*` table in `dcc_defines.h`, and an application may overwrite the field after the builder returns.
+A one-shot slot is sent `repeat_count` times; the scheduler decrements after each send and drops the slot at zero. A one-shot handed over with a count of 0 is **refused**: `send_packet` returns false and no slot is taken, since it could never be sent. Every packet builder sets a spec-correct default from the `DCC_REPEAT_*` table in `dcc_defines.h`, and an application may overwrite the field after the builder returns.
 
 | Builders | Default | Basis |
 |---|---|---|
@@ -435,7 +435,7 @@ cd test
 make            # configures CMake, builds, runs every binary serially, writes test/coverage.html
 ```
 
-At generation time: 29 test binaries, 1269 tests, 0 failures, 0 warnings; line coverage 99.6 %, function coverage 100 %, branch coverage 98.0 % (gcovr). The build also compiles six single-role configurations so a missing `DCC_COMPILE_*` guard fails as a compile or link error.
+At generation time: 29 test binaries, 1272 tests, 0 failures, 0 warnings; line coverage 99.6 %, function coverage 100 %, branch coverage 97.8 % (gcovr). The build also compiles six single-role configurations so a missing `DCC_COMPILE_*` guard fails as a compile or link error.
 
 | Test file | What it tests |
 |---|---|
@@ -460,7 +460,7 @@ At generation time: 29 test binaries, 1269 tests, 0 failures, 0 warnings; line c
 | No DCC on the scope | Track power is off; type `POWER ON`. Check `pin_toggle` wiring |
 | Bit timing wrong | Shared timer period is not 58 µs; check the MCU clock tree |
 | Decoder does not respond | H-bridge wiring, or the address in `SPEED` does not match the decoder |
-| A one-shot command never appears | Its `repeat_count` is 0; the builders set defaults, an override to 0 means never send |
+| A one-shot command never appears | `send_packet` returned false: the scheduler is full, or `repeat_count` was overridden to 0, which the scheduler refuses |
 | `SVC RESULT: NO ACK` | Direct mode: no decoder on the programming track, `current_sense_read` not wired, or threshold too high |
 | `SVC RESULT: ERROR` | Paged, register or address read scanned every value without an ACK: no decoder, or threshold too high |
 | `ERR: service mode operation failed to start` | Another service-mode operation is running, or `SVC ENTER` was not issued; wait for the result or enter service mode |

@@ -111,6 +111,28 @@ TEST(DccScheduler, run_waits_for_encoder_idle) {
 // One-shot packet tests
 // ============================================================================
 
+TEST(DccScheduler, one_shot_with_zero_repeat_is_refused_and_takes_no_slot) {
+    reset_mocks();
+    dcc_scheduler_context_t context;
+    interface_dcc_scheduler_t interface = make_interface();
+    DccScheduler_initialize(&context, &interface);
+
+    dcc_packet_t pkt;
+    DccApplicationCommandStationPacket_load_speed_128(&pkt, 3, DCC_ADDRESS_SHORT, 50, true);
+    pkt.repeat_count = 0;
+    EXPECT_FALSE(DccScheduler_insert(&context, &pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false));
+
+    DccScheduler_run(&context);
+    EXPECT_EQ(on_packet_sent_count, (uint32_t)0);       /* nothing but idle went out */
+
+    /* The same key inserts normally afterwards: no ghost slot was left behind */
+    pkt.repeat_count = 1;
+    EXPECT_TRUE(DccScheduler_insert(&context, &pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false));
+    DccScheduler_on_packet_complete(&context);
+    DccScheduler_run(&context);
+    EXPECT_EQ(on_packet_sent_count, (uint32_t)1);
+}
+
 TEST(DccScheduler, insert_and_send_one_shot) {
     reset_mocks();
     dcc_scheduler_context_t context;
@@ -636,11 +658,11 @@ TEST(DccScheduler, one_shot_skips_zero_repeat_and_refresh_scans_non_refresh) {
     interface_dcc_scheduler_t interface = make_interface();
     DccScheduler_initialize(&context, &interface);
 
-    /* Insert a non-refresh slot with repeat_count=0 — active but exhausted */
+    /* A non-refresh slot with repeat_count=0 is refused at insert (it would never be sent) */
     dcc_packet_t pkt_zero;
     DccApplicationCommandStationPacket_load_speed_128(&pkt_zero, 3, DCC_ADDRESS_SHORT, 50, true);
     pkt_zero.repeat_count = 0;
-    DccScheduler_insert(&context, &pkt_zero, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false);
+    EXPECT_FALSE(DccScheduler_insert(&context, &pkt_zero, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED, false));
 
     /* Insert a refresh slot for a different address */
     dcc_packet_t pkt_refresh;

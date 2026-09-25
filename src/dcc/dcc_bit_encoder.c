@@ -63,6 +63,8 @@ void DccBitEncoder_load_packet(dcc_bit_encoder_context_t *context, const dcc_pac
     context->active_packet.preamble_bits = packet->preamble_bits;
     context->active_packet.repeat_count = packet->repeat_count;
 
+    /* Publish only after every byte of the packet is stored. */
+    DCC_COMPILER_BARRIER();
     context->packet_loaded = true;
 
 }
@@ -165,6 +167,8 @@ static void _tick_handle_end_bit(dcc_bit_encoder_context_t *context) {
 
     }
 
+    /* All reads of the finished packet are done; release it to the main loop. */
+    DCC_COMPILER_BARRIER();
     context->packet_loaded = false;
     context->state = DCC_BIT_STATE_IDLE;
 
@@ -258,6 +262,8 @@ void DccBitEncoder_tick_isr(dcc_bit_encoder_context_t *context) {
 
             if (context->packet_loaded) {
 
+                /* Read the packet only after the flag has been seen. */
+                DCC_COMPILER_BARRIER();
                 context->preamble_count = context->active_packet.preamble_bits;
                 context->state = DCC_BIT_STATE_PREAMBLE;
                 _set_bit_type(context, true);
