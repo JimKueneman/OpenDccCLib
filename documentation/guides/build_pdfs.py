@@ -2,10 +2,12 @@
 """
 Build the OpenDccCLib PDF guides from the Markdown sources in this folder.
 
-    python3 documentation/guides/build_pdfs.py            # all five
+    python3 documentation/guides/build_pdfs.py            # all six
     python3 documentation/guides/build_pdfs.py DeveloperGuide_CommandStation
 
-Each <name>.md here renders to ../<name>.pdf (documentation/<name>.pdf) with the
+Each <name>.md here renders to ../<name>.pdf (documentation/<name>.pdf), as does
+each source listed in EXTRA_SOURCES (documents that live outside this folder
+because other files link to them by path, e.g. ../ARCHITECTURE.md). Rendering uses the
 house style from PDF_Regeneration_Guide.md section 4: Helvetica/Courier, navy
 titles, steel-blue headings and table header rows, blue note boxes, gray code
 blocks, a title page, a table of contents, one section per page break, and a
@@ -16,11 +18,12 @@ Markdown subset understood (deliberately small, so this file stays small):
     ---                         front matter: title, subtitle, tagline, footer,
     title: ...                  footer2 (brochure), section_breaks (yes/no),
     ---                         toc (yes/no)
+    # Title                     title when there is no front matter (line dropped)
     ## 1. Section               H1  (page break before it when section_breaks)
     ### 1.1 Subsection          H2
     #### Heading                H3
-    paragraph text              inline **bold**, *italic*, `code`
-    - bullet / 1. numbered
+    paragraph text              inline **bold**, *italic*, `code`, [text](url) -> text
+    - bullet / 1. numbered      indented continuation lines belong to the item
     > note text                 blue italic callout (may span lines)
     ```                         fenced code block
     | a | b |  + |---|---|      table, first row is the header
@@ -43,6 +46,11 @@ from reportlab.platypus.tableofcontents import TableOfContents
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_DIR = os.path.dirname(HERE)                       # documentation/
+
+# Sources outside this folder, keyed by output name: <key>.pdf lands in OUT_DIR like the guides.
+EXTRA_SOURCES = {
+    "ARCHITECTURE": os.path.join(OUT_DIR, "ARCHITECTURE.md"),
+}
 
 NAVY, STEEL, NOTE_BG = colors.HexColor("#2C3E5A"), colors.HexColor("#3B6FA0"), colors.HexColor("#E8F0FE")
 ALT_ROW, CODE_BG, BODY, FOOT = colors.HexColor("#F5F7FA"), colors.HexColor("#F5F5F5"), colors.HexColor("#333333"), colors.HexColor("#999999")
@@ -77,6 +85,7 @@ def esc(t):
 def inline(t):
     """Markdown inline -> ReportLab paragraph markup."""
     t = esc(t)
+    t = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", t)          # [text](url) -> text
     t = re.sub(r"`([^`]+)`", r'<font face="Courier" size="8.5">\1</font>', t)
     t = re.sub(r"\*\*([^*]+)\*\*", r"<b>\1</b>", t)
     t = re.sub(r"(?<![\w*])\*([^*]+)\*(?![\w*])", r"<i>\1</i>", t)
@@ -148,6 +157,9 @@ def parse(md_text):
                 k, v = l.split(":", 1)
                 meta[k.strip()] = v.strip()
         lines = lines[end + 1:]
+    elif lines and lines[0].startswith("# "):
+        meta["title"] = lines[0][2:].strip()
+        lines = lines[1:]
     return meta, lines
 
 
@@ -163,12 +175,18 @@ def build_story(meta, lines, avail_width):
     story.append(Spacer(1, 0.3 * inch))
     story.append(Paragraph(esc("Generated %s from the repository sources by documentation/guides/build_pdfs.py"
                                % datetime.date.today().isoformat()), S["tagline"]))
+    # Content before the first "## " (a preface note) starts its own page after the TOC and the
+    # first H1 then follows it on that page instead of forcing a page break of its own.
+    first_body = next((l.strip() for l in lines if l.strip()), "")
+    preface = bool(first_body) and not first_body.startswith("## ")
     if meta.get("toc", "yes").lower() != "no":
         story.append(PageBreak())
         story.append(Paragraph("Table of Contents", S["h1toc"]))
         toc = TableOfContents()
         toc.levelStyles = [S["toc0"], S["toc1"]]
         story.append(toc)
+        if preface:
+            story.append(PageBreak())
     first_h1 = True
     para, i = [], 0
 
@@ -188,7 +206,7 @@ def build_story(meta, lines, avail_width):
             flush()
             if breaks and not first_h1:
                 story.append(PageBreak())
-            elif first_h1 and meta.get("toc", "yes").lower() != "no":
+            elif first_h1 and not preface and meta.get("toc", "yes").lower() != "no":
                 story.append(PageBreak())
             first_h1 = False
             story.append(Paragraph(inline(s[3:]), S["h1"])); i += 1; continue
@@ -223,7 +241,11 @@ def build_story(meta, lines, avail_width):
                 if not m:
                     break
                 bullet = "•" if m.group(1) == "-" else m.group(1)
-                story.append(Paragraph(inline(m.group(2)), S["bullet"], bulletText=bullet)); i += 1
+                text, i = [m.group(2)], i + 1
+                while i < len(lines) and lines[i].startswith(" ") and lines[i].strip() \
+                        and not re.match(r"^(-|\d+\.)\s+", lines[i].strip()):
+                    text.append(lines[i].strip()); i += 1
+                story.append(Paragraph(inline(" ".join(text)), S["bullet"], bulletText=bullet))
             story.append(Spacer(1, 4)); continue
         para.append(s); i += 1
     flush()
@@ -231,7 +253,7 @@ def build_story(meta, lines, avail_width):
 
 
 def build(name):
-    src = os.path.join(HERE, name + ".md")
+    src = EXTRA_SOURCES.get(name, os.path.join(HERE, name + ".md"))
     out = os.path.join(OUT_DIR, name + ".pdf")
     meta, lines = parse(open(src, encoding="utf-8").read())
     doc = GuideDoc(out, meta)
@@ -241,6 +263,6 @@ def build(name):
 
 
 if __name__ == "__main__":
-    names = sys.argv[1:] or sorted(f[:-3] for f in os.listdir(HERE) if f.endswith(".md"))
+    names = sys.argv[1:] or sorted(list(EXTRA_SOURCES) + [f[:-3] for f in os.listdir(HERE) if f.endswith(".md")])
     for n in names:
         print("wrote", build(n))

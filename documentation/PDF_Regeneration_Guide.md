@@ -1,7 +1,7 @@
 # PDF Regeneration Guide
 
 > **Verified against commit `a451be7` (2026-09-23); written 2026-06-22, mechanism rebuilt 2026-09-23.**
-> This document explains how to regenerate the five OpenDccCLib PDFs and — more
+> This document explains how to regenerate the six OpenDccCLib PDFs and — more
 > importantly — **what to pull from the current source** so each rebuild reflects
 > the latest code. It describes the *general* content and structure of each
 > document, not the exact prose. Treat the code as the source of truth; if this
@@ -11,11 +11,13 @@ The PDFs are now built from Markdown sources in `documentation/guides/` by
 `documentation/guides/build_pdfs.py` (ReportLab only):
 
 ```
-python3 documentation/guides/build_pdfs.py                      # all five
+python3 documentation/guides/build_pdfs.py                      # all six
 python3 documentation/guides/build_pdfs.py DeveloperGuide_Decoder
 ```
 
-Each `guides/<name>.md` renders to `documentation/<name>.pdf`. The generator understands a
+Each `guides/<name>.md` renders to `documentation/<name>.pdf`, and so does each source in the
+generator's `EXTRA_SOURCES` table (currently `ARCHITECTURE.md`, which stays in `documentation/`
+because other documents link to it by path). The generator understands a
 small Markdown subset (front matter, `##`/`###`/`####` headings, paragraphs, lists, pipe
 tables, fenced code, `>` note boxes) and applies the house style of §4 automatically. The
 PDFs are tracked in git so readers get them without a build; regenerate and commit them
@@ -24,7 +26,7 @@ code reference from the files listed below** instead of trusting the prose that 
 
 ---
 
-## 1. The five documents
+## 1. The six documents
 
 | File | Type | Audience | One-line purpose |
 |---|---|---|---|
@@ -33,8 +35,9 @@ code reference from the files listed below** instead of trusting the prose that 
 | `DeveloperGuide_CommandStation.pdf` | Developer guide | Integrators / porters | Full explanation of the CS-side stack and how to port it |
 | `DeveloperGuide_Decoder.pdf` | Developer guide | Integrators / porters | Full explanation of the decoder-side stack and how to port it |
 | `OpenDccCLib_Brochure.pdf` | Marketing one-pager | Evaluators | Sell the library: features, coverage, getting started |
+| `ARCHITECTURE.pdf` | Reference | Maintainers / contributors | PDF rendering of `ARCHITECTURE.md`, the as-built design (source is `documentation/ARCHITECTURE.md`, not `guides/`) |
 
-All five are **generated artifacts**, but they are committed alongside their Markdown sources so the repository always carries a readable copy; regenerate them whenever a source in §3 changes.
+All six are **generated artifacts**, but they are committed alongside their Markdown sources so the repository always carries a readable copy; regenerate them whenever a source in §3 changes.
 
 ---
 

@@ -13,7 +13,7 @@ tells you which one is authoritative for what.
 |---|---|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | **As-built** design: modules, feature flags, interface-struct DI, execution contexts, scheduler/bit-encoder. The source of truth for how the library is structured today. |
 | [ComplianceOverview.md](compliance/ComplianceOverview.md) | **Compliance narrative & design memory:** snapshot, per-feature NMRA spec (released + draft) → implementation summary, the backlog (released-vs-draft tagged), known defects, recently resolved, plus the service-mode and RailCom design appendices. *Machine-checked per-feature status lives in `compliance/compliance.data.js`, rendered by `index.html` — that is the status source of truth.* |
-| [guides/](guides/) | Markdown sources of the five PDF guides plus `build_pdfs.py`, the ReportLab generator that renders them into this folder (`python3 documentation/guides/build_pdfs.py`). |
+| [guides/](guides/) | Markdown sources of the five PDF guides plus `build_pdfs.py`, the ReportLab generator that renders them (and `ARCHITECTURE.md` as `ARCHITECTURE.pdf`) into this folder (`python3 documentation/guides/build_pdfs.py`). |
 | [PDF_Regeneration_Guide.md](PDF_Regeneration_Guide.md) | How to regenerate the guide/brochure PDFs and what to pull from the current source so a rebuild stays accurate. |
 
 ## Reference material (stable, external truth)

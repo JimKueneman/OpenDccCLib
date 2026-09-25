@@ -19,7 +19,7 @@
  *
  * <h2 style="margin-left: 10px; margin-right: 10px;">Architecture</h2>
  *   <p style="margin-left: 50px; margin-right: 50px;">
- *     <a href="../../ARCHITECTURE.md">Architecture</a> — As-built design: modules, feature flags, interface-struct dependency injection, execution contexts, and the scheduler / bit-encoder pipeline.
+ *     <a href="../../ARCHITECTURE.pdf">Architecture</a> — As-built design: modules, feature flags, interface-struct dependency injection, execution contexts, and the scheduler / bit-encoder pipeline.
  *   </p>
  *
  * <hr>
