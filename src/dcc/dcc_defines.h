@@ -429,6 +429,11 @@ extern "C" {
     /** @brief RailCom Channel 2 max bytes */
 #define DCC_RAILCOM_CH2_MAX_BYTES           6
 
+    /** @brief Most uart_read() calls one cutout's decode makes (runaway guard for a
+     *  hook that never returns false). Twice a full cutout, so a channel that
+     *  overflows is still counted and reported as DCC_RAILCOM_RESULT_TOO_MANY_BYTES. */
+#define DCC_RAILCOM_MAX_READS_PER_CUTOUT    (2 * (DCC_RAILCOM_CH1_MAX_BYTES + DCC_RAILCOM_CH2_MAX_BYTES))
+
 // =============================================================================
 // RailCom Mobile Channel 2 Datagram IDs (2026 draft S-9.3.2, Table 19)
 // =============================================================================

@@ -51,7 +51,7 @@ static void mock_begin_railcom_cutout(void) {}
 static void mock_end_railcom_cutout(void) {}
 static void mock_uart_rx_enable(void) {}
 static void mock_uart_rx_disable(void) {}
-static bool mock_uart_read(uint8_t *byte) { (void)byte; return false; }
+static bool mock_uart_read(uint8_t *byte, dcc_railcom_channel_enum *channel) { (void)byte; (void)channel; return false; }
 
 // Dedicated to the address race-condition regression test below (PR #1 review,
 // commit 4). mock_uart_read above always returns false and is shared by every
@@ -59,20 +59,27 @@ static bool mock_uart_read(uint8_t *byte) { (void)byte; return false; }
 // wired in only by that one test (overridden on its own dcc_railcom_hw_t after
 // make_railcom_hw()), so it never changes what any other test sees.
 static uint8_t railcom_race_uart_buffer[16];
+static dcc_railcom_channel_enum railcom_race_uart_channel = DCC_RAILCOM_CH1;   /* tag for every served byte */
 static uint8_t railcom_race_uart_count = 0;
 static uint8_t railcom_race_uart_index = 0;
-static bool mock_uart_read_from_buffer(uint8_t *byte) {
+static bool mock_uart_read_from_buffer(uint8_t *byte, dcc_railcom_channel_enum *channel) {
     if (railcom_race_uart_index >= railcom_race_uart_count) return false;
     *byte = railcom_race_uart_buffer[railcom_race_uart_index];
+    *channel = railcom_race_uart_channel;
     railcom_race_uart_index++;
     return true;
 }
 
 static uint16_t railcom_race_result_address = 0xFFFF;
 static uint32_t railcom_race_result_count = 0;
+static uint8_t railcom_race_result_channel = 0xFF;
+static dcc_railcom_result_enum railcom_race_result_result = DCC_RAILCOM_RESULT_INVALID_CHANNEL;
+static uint8_t railcom_race_result_data = 0;
 static void mock_railcom_datagram_result(uint16_t address, uint8_t channel, const dcc_railcom_datagram_t *datagram) {
-    (void)channel; (void)datagram;
     railcom_race_result_address = address;
+    railcom_race_result_channel = channel;
+    railcom_race_result_result = datagram->result;
+    railcom_race_result_data = datagram->data[0];
     railcom_race_result_count++;
 }
 
@@ -697,6 +704,7 @@ TEST(DccConfig, railcom_cutout_address_survives_a_packet_dispatched_during_the_c
 
     railcom_race_uart_count = 0;
     railcom_race_uart_index = 0;
+    railcom_race_uart_channel = DCC_RAILCOM_CH1;
     railcom_race_result_address = 0xFFFF;
     railcom_race_result_count = 0;
 
@@ -1266,6 +1274,7 @@ TEST(DccConfig, railcom_cutout_is_active_tracks_state_and_cancel_clears_it) {
 TEST(DccConfig, railcom_cutout_tags_long_address_packets) {
     railcom_race_uart_count = 0;
     railcom_race_uart_index = 0;
+    railcom_race_uart_channel = DCC_RAILCOM_CH1;
     railcom_race_result_address = 0xFFFF;
     railcom_race_result_count = 0;
 
@@ -1305,6 +1314,55 @@ TEST(DccConfig, railcom_cutout_tags_long_address_packets) {
 
     EXPECT_EQ(railcom_race_result_count, (uint32_t)1);
     EXPECT_EQ(railcom_race_result_address, (uint16_t)1000);
+
+    DccApplicationCommandStationMainTrack_power_off();
+}
+
+// @compliance DCC-S9.3.2-CS-014
+TEST(DccConfig, railcom_channel_2_only_reply_reaches_app_as_channel_2) {
+    /* Issue #7 through the wiring: the app's uart_read tags a POM read-back
+     * (id 0, value 0x2A) as Channel 2 with Channel 1 silent; the app's
+     * on_railcom_datagram_result must see Channel 2, not Channel 1. */
+    railcom_race_uart_count = 0;
+    railcom_race_uart_index = 0;
+    railcom_race_uart_channel = DCC_RAILCOM_CH2;
+    railcom_race_result_address = 0xFFFF;
+    railcom_race_result_count = 0;
+    railcom_race_result_channel = 0xFF;
+
+    dcc_config_t cfg = make_test_config();
+    dcc_railcom_hw_t rc = make_railcom_hw();
+    rc.uart_read = mock_uart_read_from_buffer;
+    rc.on_railcom_datagram_result = mock_railcom_datagram_result;
+    cfg.main_track.railcom = &rc;
+    cfg.railcom_timer_start = mock_railcom_timer_start;
+    cfg.railcom_timer_stop = mock_railcom_timer_stop;
+    DccConfig_initialize(&cfg);
+    DccApplicationCommandStationMainTrack_power_on();
+
+    dcc_packet_t pkt = make_idle_packet();
+    pkt.data[0] = 3;
+    DccApplicationCommandStationMainTrack_send_packet(&pkt, 3, DCC_TAG_SPEED, DCC_PRIORITY_SPEED);
+    DccConfig_run();
+    pump_main_track_until_idle(200);
+
+    railcom_race_uart_buffer[0] = 0xAC;   /* 0x00 */
+    railcom_race_uart_buffer[1] = 0xC9;   /* 0x2A */
+    railcom_race_uart_count = 2;
+    railcom_race_uart_index = 0;
+
+    DccConfig_railcom_oneshot_timer_isr();
+    DccConfig_railcom_oneshot_timer_isr();
+    DccConfig_railcom_oneshot_timer_isr();
+    DccConfig_railcom_oneshot_timer_isr();
+    DccConfig_railcom_oneshot_timer_isr();
+    DccConfig_run();
+
+    EXPECT_EQ(railcom_race_result_count, (uint32_t)1);
+    EXPECT_EQ(railcom_race_result_address, (uint16_t)3);
+    EXPECT_EQ(railcom_race_result_channel, (uint8_t)DCC_RAILCOM_CH2);
+    EXPECT_EQ(railcom_race_result_result, DCC_RAILCOM_RESULT_OK);
+    EXPECT_EQ(railcom_race_result_data, (uint8_t)0x2A);
 
     DccApplicationCommandStationMainTrack_power_off();
 }

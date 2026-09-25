@@ -202,10 +202,12 @@ Each DCC output channel, main track and service track, has its own set of pointe
 | `end_railcom_cutout` | T_CE | Restore normal drive |
 | `uart_rx_enable` | T_TS1 and T_TS2 | Open the receiver for the Channel 1, then the Channel 2, window |
 | `uart_rx_disable` | T_TC1 and T_CE | Close it |
-| `uart_read` | after the cutout, from `DccConfig_run()` | Pop one received byte; return false when empty |
-| `on_railcom_datagram_result` | after decoding, main loop | Receive `(address, channel, datagram)` |
+| `uart_read(byte, channel)` | after the cutout, from `DccConfig_run()` | Pop one received byte and set `*channel` to `DCC_RAILCOM_CH1` or `DCC_RAILCOM_CH2` for the window it arrived in; return false when empty |
+| `on_railcom_datagram_result` | after decoding, main loop | Receive `(address, channel, datagram)` once per channel that received bytes; check `datagram->result` first |
 
 > **Receive contract.** The library reads whatever `uart_read` returns after a cutout and cannot tell a window byte from a stray one. Accept receiver bytes only between an enable and the following disable, discard anything outside (the DCC drive waveform seen by the detector between cutouts, or a stale byte from an earlier cutout), and flush at `begin_railcom_cutout`. Gate in the RX interrupt or toggle the peripheral's receiver; the bench firmware in `test/compliance` does it in the RX interrupt and is verified on the wire.
+>
+> **Channel tag.** Count the `uart_rx_enable` calls since `begin_railcom_cutout`: the first opens Channel 1, the second Channel 2. Store that channel with each accepted byte and return it from `uart_read`. The library decodes each channel only from its own bytes, so a reply with Channel 1 silent (the Channel 1 broadcast switched off through CV 28) is still reported on Channel 2. A tag that is neither channel is reported as `DCC_RAILCOM_RESULT_INVALID_CHANNEL`.
 
 ### 5.4 Setup and Main Loop
 
@@ -367,9 +369,22 @@ After each main-track packet the command station opens a cutout by tri-stating t
 
 The five durations are configurable in `dcc_config_t` (0 selects the default from `dcc_defines.h`) and at runtime with `DccConfig_set_railcom_cutout_timing()`. `DccConfig_cancel_railcom_cutout()` aborts an in-progress cutout and restores the bridge; `DccConfig_railcom_cutout_is_active()` reports state.
 
-Decoded datagrams carry a 4-bit id (`DCC_RAILCOM_ID_*`: POM 0, ADR1 1, ADR2 2, EXT 3, DYN 7, XPOM 8–11, CV auto 12, time 14, logon enable 15) and up to six data bytes. ACK (`0x0F` or `0xF0`) and NACK (`0x3C`) are code words, not datagrams; BUSY (`0xE1`) is defined but decodes as invalid on the receive side; a datagram followed by ACK padding is kept. The 4/8 table follows the S-9.3.2 draft's Table 2 (the released 2012 table is identical for the 64 data words).
+Decoded datagrams carry a 4-bit id (`DCC_RAILCOM_ID_*`: POM 0, ADR1 1, ADR2 2, EXT 3, DYN 7, XPOM 8–11, CV auto 12, time 14, logon enable 15) and up to six data bytes. ACK (`0x0F` or `0xF0`) and NACK (`0x3C`) are code words, not datagrams; BUSY (`0xE1`) is defined but decodes as invalid on the receive side; a datagram followed by ACK padding or a NACK is kept. The 4/8 table follows the S-9.3.2 draft's Table 2 (the released 2012 table is identical for the 64 data words).
 
-> **Known limitation.** Received bytes are split into channels by count: the first two are treated as Channel 1, the rest as Channel 2. A reply that contains only Channel 2 data (a decoder with the Channel 1 broadcast disabled through CV 28) is reported as a Channel 1 datagram. Tracked as an open issue; the bench suite keeps a deliberately failing case for it.
+Each channel that received bytes is reported once through `on_railcom_datagram_result`, with a `dcc_railcom_result_enum` in `datagram->result` (the data fields are meaningful only for `OK`). A channel with no bytes is legal silence and is not reported.
+
+| `result` | Meaning |
+|---|---|
+| `DCC_RAILCOM_RESULT_OK` | A datagram decoded; `datagram_id`, `data`, `count` are valid |
+| `DCC_RAILCOM_RESULT_ACK` | Control words only, all ACK |
+| `DCC_RAILCOM_RESULT_NACK` | Control words only, at least one NACK |
+| `DCC_RAILCOM_RESULT_INVALID_CODEWORD` | A byte is neither a 4/8 code word nor a control word; a corrupted byte inside a longer datagram is never reported as a shorter good one |
+| `DCC_RAILCOM_RESULT_DATA_AFTER_CONTROL_WORD` | A data word follows an ACK or NACK; only control words may follow one |
+| `DCC_RAILCOM_RESULT_TOO_FEW_BYTES` | Fewer than two data words before the first control word (datagrams are 12 bits minimum, draft §3.4) |
+| `DCC_RAILCOM_RESULT_TOO_MANY_BYTES` | More bytes than the channel holds (Channel 1: 2, Channel 2: 6) |
+| `DCC_RAILCOM_RESULT_INVALID_CHANNEL` | `uart_read` tagged a byte with neither channel (an application bug) |
+
+Only `OK` datagrams go into the receive buffer read by `DccRailcomCommandStation_read()`; each carries its `channel`.
 
 ## 12. Callbacks — Where Your Application Lives
 
@@ -378,7 +393,7 @@ Command-station callbacks live in `dcc_config_t` and fire from `DccConfig_run()`
 | Callback | Fires when |
 |---|---|
 | `on_packet_sent(const dcc_packet_t *)` | The scheduler has dispatched a packet to the encoder (transmit start), on either track, service-mode resets included; main-track idle packets do not fire it. The bench firmware uses it to pulse a scope trigger |
-| `on_railcom_datagram_result(address, channel, datagram)` | In `dcc_railcom_hw_t`; a datagram was decoded |
+| `on_railcom_datagram_result(address, channel, datagram)` | In `dcc_railcom_hw_t`; one channel of a cutout was decoded (check `datagram->result`) |
 | `on_complete` / `on_progress` / `on_detect` | Per service-mode call; see section 10 |
 
 ## 13. Application API Reference

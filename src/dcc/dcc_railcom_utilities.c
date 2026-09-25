@@ -238,102 +238,107 @@ uint8_t DccRailcomUtilities_decode_byte(uint8_t encoded) {
 }
 
     /**
-     * @brief Decode RailCom Channel 1 (2 codewords) into a 12-bit datagram.
+     * @brief Decode the bytes one channel window captured into a datagram or a result code.
      *
-     * @details Clears the output first. Both codewords must decode to data
-     * values (below 0x40); ACK, NACK and invalid words fail the decode. The
-     * 12-bit result is split into datagram_id (upper 4 bits) and data[0], with
-     * count 1 and valid set.
-     *
-     * @verbatim
-     * @param byte0 First received codeword.
-     * @param byte1 Second received codeword.
-     * @param out Out: decoded dcc_railcom_datagram_t (valid only when true).
-     * @endverbatim
-     *
-     * @return true if both codewords decoded; false on an invalid codeword.
-     */
-bool DccRailcomUtilities_decode_ch1(uint8_t byte0, uint8_t byte1, dcc_railcom_datagram_t *out) {
-
-    uint8_t decoded_0 = DccRailcomUtilities_decode_byte(byte0);
-    uint8_t decoded_1 = DccRailcomUtilities_decode_byte(byte1);
-    uint16_t combined;
-
-    memset(out, 0, sizeof(*out));
-
-    if (decoded_0 >= 0x40 || decoded_1 >= 0x40) {
-
-        return false;
-
-    }
-
-    combined = ((uint16_t)decoded_0 << 6) | decoded_1;
-
-    out->datagram_id = (uint8_t)((combined >> 8) & 0x0F);
-    out->data[0] = (uint8_t)(combined & 0xFF);
-    out->count = 1;
-    out->valid = true;
-
-    return true;
-
-}
-
-    /**
-     * @brief Decode RailCom Channel 2 (up to 6 codewords) into a datagram.
-     *
-     * @details Algorithm:
-     * -# Clear the output
-     * -# Decode codewords in order, at most DCC_RAILCOM_CH2_MAX_BYTES, stopping at
-     *    the first ACK / NACK / invalid word (S-9.3.2 allows ACK filler after a
-     *    short datagram, so what came before is kept)
-     * -# Fail if fewer than two data words were decoded
-     * -# Split the first two 6-bit values into datagram_id and data[0]
-     * -# Append each further value as one data byte, up to DCC_RAILCOM_DATAGRAM_MAX_BYTES
-     * -# Set valid and return true
+     * @details Algorithm (S-9.3.2 draft 3.2 - 3.4):
+     * -# Clear the output and record the channel
+     * -# More than max_bytes bytes: DCC_RAILCOM_RESULT_TOO_MANY_BYTES
+     * -# Any byte that is neither a 4/8 codeword nor a control word:
+     *    DCC_RAILCOM_RESULT_INVALID_CODEWORD. Only a control word ends a datagram,
+     *    so a corrupted byte inside a longer datagram is never reported as a
+     *    shorter good one
+     * -# The datagram is the run of data words before the first control word
+     *    (ACK filler, or a NACK, may follow it); a data word after a control word:
+     *    DCC_RAILCOM_RESULT_DATA_AFTER_CONTROL_WORD
+     * -# Control words only: DCC_RAILCOM_RESULT_NACK if any is a NACK, else
+     *    DCC_RAILCOM_RESULT_ACK
+     * -# Fewer than two data words (including no bytes at all):
+     *    DCC_RAILCOM_RESULT_TOO_FEW_BYTES (a datagram is 12 bits minimum,
+     *    draft 3.4)
+     * -# Otherwise split the first two 6-bit values into datagram_id and
+     *    data[0], append each further value as one data byte, and return
+     *    DCC_RAILCOM_RESULT_OK
      *
      * @verbatim
-     * @param raw_bytes Received Channel 2 codewords (after the 2 Channel 1 bytes).
-     * @param raw_count Number of Channel 2 codewords available.
-     * @param out Out: decoded dcc_railcom_datagram_t (valid only when true).
+     * @param raw_bytes Codewords captured in this channel's window.
+     * @param raw_count Number of codewords captured (may exceed max_bytes).
+     * @param max_bytes Channel capacity (DCC_RAILCOM_CH1_MAX_BYTES or DCC_RAILCOM_CH2_MAX_BYTES).
+     * @param channel Channel the bytes arrived in.
+     * @param out Out: decoded dcc_railcom_datagram_t; result is always set.
      * @endverbatim
      *
-     * @return true if at least two codewords decoded validly; false otherwise.
+     * @return The decode result, also stored in out->result.
      */
-bool DccRailcomUtilities_decode_ch2(const uint8_t *raw_bytes, uint8_t raw_count, dcc_railcom_datagram_t *out) {
+static dcc_railcom_result_enum _decode_channel(const uint8_t *raw_bytes, uint8_t raw_count, uint8_t max_bytes, dcc_railcom_channel_enum channel, dcc_railcom_datagram_t *out) {
 
     uint8_t decoded_bytes[DCC_RAILCOM_CH2_MAX_BYTES];
-    uint8_t valid_count = 0;
+    uint8_t data_count = 0;
+    bool control_seen = false;
+    bool nack_seen = false;
     uint8_t byte_index;
     uint8_t decoded_value;
     uint16_t combined;
 
     memset(out, 0, sizeof(*out));
+    out->channel = channel;
 
-    for (byte_index = 0; byte_index < raw_count && byte_index < DCC_RAILCOM_CH2_MAX_BYTES; byte_index++) {
+    if (raw_count > max_bytes) {
 
-        decoded_value = DccRailcomUtilities_decode_byte(raw_bytes[byte_index]);
+        out->result = DCC_RAILCOM_RESULT_TOO_MANY_BYTES;
 
-        if (decoded_value >= 0x40) {
-
-            /* ACK (0xFE), NACK (0xFD), or invalid (0xFF). S-9.3.2 lets a
-             * decoder fill the unused remainder of the 36-bit Channel 2 data
-             * channel with ACK, so a datagram shorter than the window is
-             * normally followed by ACK bytes. Stop consuming bytes here and
-             * decode whatever came before, instead of discarding an already-
-             * decoded valid datagram (e.g. a 2-byte POM reply) because ACK
-             * filler follows it. */
-            break;
-
-        }
-
-        decoded_bytes[valid_count] = decoded_value;
-        valid_count++;
+        return out->result;
 
     }
 
-    if (valid_count < 2) {
+    for (byte_index = 0; byte_index < raw_count; byte_index++) {
 
-        return false;
+        decoded_value = DccRailcomUtilities_decode_byte(raw_bytes[byte_index]);
+
+        if (decoded_value == DCC_RAILCOM_DECODE_INVALID) {
+
+            out->result = DCC_RAILCOM_RESULT_INVALID_CODEWORD;
+
+            return out->result;
+
+        }
+
+        if (decoded_value == DCC_RAILCOM_DECODE_ACK) {
+
+            control_seen = true;
+
+        } else if (decoded_value == DCC_RAILCOM_DECODE_NACK) {
+
+            control_seen = true;
+            nack_seen = true;
+
+        } else if (control_seen) {
+
+            out->result = DCC_RAILCOM_RESULT_DATA_AFTER_CONTROL_WORD;
+
+            return out->result;
+
+        } else {
+
+            decoded_bytes[data_count] = decoded_value;
+            data_count++;
+
+        }
+
+    }
+
+    if (data_count == 0 && control_seen) {
+
+        out->result = nack_seen ? DCC_RAILCOM_RESULT_NACK : DCC_RAILCOM_RESULT_ACK;
+
+        return out->result;
+
+    }
+
+    if (data_count < 2) {
+
+        out->result = DCC_RAILCOM_RESULT_TOO_FEW_BYTES;
+
+        return out->result;
 
     }
 
@@ -343,16 +348,57 @@ bool DccRailcomUtilities_decode_ch2(const uint8_t *raw_bytes, uint8_t raw_count,
     out->data[0] = (uint8_t)(combined & 0xFF);
     out->count = 1;
 
-    for (byte_index = 2; byte_index < valid_count && out->count < DCC_RAILCOM_DATAGRAM_MAX_BYTES; byte_index++) {
+    for (byte_index = 2; byte_index < data_count && out->count < DCC_RAILCOM_DATAGRAM_MAX_BYTES; byte_index++) {
 
         out->data[out->count] = decoded_bytes[byte_index];
         out->count++;
 
     }
 
-    out->valid = true;
+    out->result = DCC_RAILCOM_RESULT_OK;
 
-    return true;
+    return out->result;
+
+}
+
+    /**
+     * @brief Decode the bytes captured in the Channel 1 window.
+     *
+     * @details Channel 1 holds exactly one 12-bit datagram (2 codewords), or ACK
+     * filler. See _decode_channel() for the result rules.
+     *
+     * @verbatim
+     * @param raw_bytes Codewords captured in the Channel 1 window.
+     * @param raw_count Number of codewords captured.
+     * @param out Out: decoded dcc_railcom_datagram_t; result is always set.
+     * @endverbatim
+     *
+     * @return The decode result, also stored in out->result.
+     */
+dcc_railcom_result_enum DccRailcomUtilities_decode_ch1(const uint8_t *raw_bytes, uint8_t raw_count, dcc_railcom_datagram_t *out) {
+
+    return _decode_channel(raw_bytes, raw_count, DCC_RAILCOM_CH1_MAX_BYTES, DCC_RAILCOM_CH1, out);
+
+}
+
+    /**
+     * @brief Decode the bytes captured in the Channel 2 window.
+     *
+     * @details Channel 2 holds up to 6 codewords: a 12- to 36-bit datagram,
+     * optionally followed by ACK filler or a NACK, or control words alone. See
+     * _decode_channel() for the result rules.
+     *
+     * @verbatim
+     * @param raw_bytes Codewords captured in the Channel 2 window.
+     * @param raw_count Number of codewords captured.
+     * @param out Out: decoded dcc_railcom_datagram_t; result is always set.
+     * @endverbatim
+     *
+     * @return The decode result, also stored in out->result.
+     */
+dcc_railcom_result_enum DccRailcomUtilities_decode_ch2(const uint8_t *raw_bytes, uint8_t raw_count, dcc_railcom_datagram_t *out) {
+
+    return _decode_channel(raw_bytes, raw_count, DCC_RAILCOM_CH2_MAX_BYTES, DCC_RAILCOM_CH2, out);
 
 }
 

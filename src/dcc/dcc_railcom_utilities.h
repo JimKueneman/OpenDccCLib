@@ -95,26 +95,28 @@ extern "C" {
     extern uint8_t DccRailcomUtilities_decode_byte(uint8_t encoded);
 
         /**
-         * @brief Decode RailCom Channel 1 (2 codewords) into a 12-bit datagram.
+         * @brief Decode the bytes captured in the Channel 1 window.
          *
-         * @param byte0 First received codeword.
-         * @param byte1 Second received codeword.
-         * @param out Out: decoded @ref dcc_railcom_datagram_t (valid only when true).
+         * @param raw_bytes Codewords captured in the Channel 1 window.
+         * @param raw_count Number of codewords captured (more than DCC_RAILCOM_CH1_MAX_BYTES is an error).
+         * @param out Out: decoded @ref dcc_railcom_datagram_t; channel and result are always set,
+         *            datagram_id / data / count only for DCC_RAILCOM_RESULT_OK.
          *
-         * @return true if both codewords decoded; false on an invalid codeword.
+         * @return The @ref dcc_railcom_result_enum outcome, also stored in out->result.
          */
-    extern bool DccRailcomUtilities_decode_ch1(uint8_t byte0, uint8_t byte1, dcc_railcom_datagram_t *out);
+    extern dcc_railcom_result_enum DccRailcomUtilities_decode_ch1(const uint8_t *raw_bytes, uint8_t raw_count, dcc_railcom_datagram_t *out);
 
         /**
-         * @brief Decode RailCom Channel 2 (up to 6 codewords) into a datagram.
+         * @brief Decode the bytes captured in the Channel 2 window.
          *
-         * @param raw_bytes Received Channel 2 codewords (after the 2 Channel 1 bytes).
-         * @param raw_count Number of Channel 2 codewords available.
-         * @param out Out: decoded @ref dcc_railcom_datagram_t (valid only when true).
+         * @param raw_bytes Codewords captured in the Channel 2 window.
+         * @param raw_count Number of codewords captured (more than DCC_RAILCOM_CH2_MAX_BYTES is an error).
+         * @param out Out: decoded @ref dcc_railcom_datagram_t; channel and result are always set,
+         *            datagram_id / data / count only for DCC_RAILCOM_RESULT_OK.
          *
-         * @return true if at least two codewords decoded validly; false otherwise.
+         * @return The @ref dcc_railcom_result_enum outcome, also stored in out->result.
          */
-    extern bool DccRailcomUtilities_decode_ch2(const uint8_t *raw_bytes, uint8_t raw_count, dcc_railcom_datagram_t *out);
+    extern dcc_railcom_result_enum DccRailcomUtilities_decode_ch2(const uint8_t *raw_bytes, uint8_t raw_count, dcc_railcom_datagram_t *out);
 
 #endif /* DCC_COMPILE_COMMAND_STATION */
 

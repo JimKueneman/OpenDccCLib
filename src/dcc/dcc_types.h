@@ -374,13 +374,28 @@ typedef enum {
 
 } dcc_railcom_channel_enum;
 
-    /** @brief A decoded RailCom datagram */
+    /** @brief Outcome of decoding one RailCom channel of one cutout (S-9.3.2 draft 3.2 - 3.4). */
+typedef enum {
+
+    DCC_RAILCOM_RESULT_OK,                /**< A datagram decoded; datagram_id, data and count are valid */
+    DCC_RAILCOM_RESULT_ACK,               /**< Only control words, all ACK: command understood */
+    DCC_RAILCOM_RESULT_NACK,              /**< Only control words, at least one NACK: command or CV not supported */
+    DCC_RAILCOM_RESULT_INVALID_CODEWORD,  /**< A byte is not a valid 4/8 codeword or control word */
+    DCC_RAILCOM_RESULT_DATA_AFTER_CONTROL_WORD, /**< A data word follows an ACK or NACK (only control words may follow one) */
+    DCC_RAILCOM_RESULT_TOO_FEW_BYTES,     /**< Fewer than two data words before the first control word (datagrams are 12 bits minimum) */
+    DCC_RAILCOM_RESULT_TOO_MANY_BYTES,    /**< More bytes than the channel holds (Channel 1: 2, Channel 2: 6) */
+    DCC_RAILCOM_RESULT_INVALID_CHANNEL    /**< The application's uart_read tagged a byte with neither channel */
+
+} dcc_railcom_result_enum;
+
+    /** @brief A decoded RailCom datagram, or the reason one channel did not decode */
 typedef struct {
 
+    dcc_railcom_channel_enum channel;           /**< Channel the bytes arrived in (the raw tag for DCC_RAILCOM_RESULT_INVALID_CHANNEL) */
+    dcc_railcom_result_enum result;             /**< Decode outcome; datagram_id, data and count are meaningful only for DCC_RAILCOM_RESULT_OK */
     uint8_t datagram_id;                        /**< Datagram ID (0-15) */
     uint8_t data[DCC_RAILCOM_DATAGRAM_MAX_BYTES]; /**< Decoded data bytes */
     uint8_t count;                              /**< Number of valid data bytes */
-    bool valid;                                 /**< true if datagram decoded ok */
 
 } dcc_railcom_datagram_t;
 

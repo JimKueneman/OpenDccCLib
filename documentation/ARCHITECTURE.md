@@ -156,7 +156,7 @@ programming from POM.
 | `dcc_scheduler` | CS | Priority queue, duplicate combining, paced auto-refresh: a changed slot is sent `DCC_REFRESH_PROMPT_SENDS` times at full rate, then kept alive every `DCC_REFRESH_COLD_CYCLES` packet cycles and never later than `DCC_REFRESH_COLD_MAX_CYCLES` (selection order overdue, in-burst, due; `DCC_REFRESH_COLD_CYCLES = 0` is the flat round-robin ring); one-shots are sent `repeat_count` times (the builders set the `DCC_REPEAT_*` defaults; a one-shot with 0 is refused at insert). Pending one-shots always go before refresh slots and priority ranks only one-shots; the prompt burst is re-armed on every insert; an idle spacer separates back-to-back packets to the same short address 112–127 |
 | `dcc_bit_encoder` | CS | ISR bit framing from the shared fixed-period timer |
 | `dcc_railcom_cutout` | CS + RAILCOM | RailCom cutout timer state machine |
-| `dcc_railcom_command_station` | CS + RAILCOM | Receive drain after each cutout, Ch1/Ch2 datagram assembly (split by byte count), receive ring, tagging with loco addresses |
+| `dcc_railcom_command_station` | CS + RAILCOM | Receive drain after each cutout, Ch1/Ch2 datagram assembly from each byte's channel tag, a `dcc_railcom_result_enum` per channel, receive ring, tagging with loco addresses |
 | `dcc_railcom_utilities` | RAILCOM, any role | 4/8 code words (S-9.3.2 Table 2): encode for the decoder roles, decode for the command station |
 | `dcc_service_mode_common` | CS | Shared ACK detection, reset sequencing, retry |
 | `dcc_service_mode_{direct,paged,register,address}` | CS | Per-mode programming primitives |

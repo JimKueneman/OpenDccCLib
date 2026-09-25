@@ -67,118 +67,121 @@ static void _buffer_push(dcc_railcom_command_station_context_t *context, const d
 }
 
     /**
-     * @brief Decode RailCom Channel 1 (first 2 bytes → 12 data bits).
+     * @brief Report one channel's decode result and buffer it if it is a good datagram.
      *
-     * @details Needs at least DCC_RAILCOM_CH1_MAX_BYTES bytes; on a valid
-     * decode the datagram is buffered and on_datagram fires with DCC_RAILCOM_CH1.
-     * An invalid codeword drops the channel silently.
+     * @details Fires on_datagram with the result, whatever it is; only a
+     * DCC_RAILCOM_RESULT_OK datagram goes into the buffer.
      *
      * @param context Decoder context.
-     * @param raw_bytes Raw UART bytes from cutout.
-     * @param raw_count Number of raw bytes received.
+     * @param datagram Decoded channel (channel and result set).
      */
-static void _decode_channel_1(dcc_railcom_command_station_context_t *context, const uint8_t *raw_bytes, uint8_t raw_count) {
+static void _report_channel(dcc_railcom_command_station_context_t *context, const dcc_railcom_datagram_t *datagram) {
 
-    dcc_railcom_datagram_t datagram;
-    memset(&datagram, 0, sizeof(datagram));
+    if (datagram->result == DCC_RAILCOM_RESULT_OK) {
 
-    if (raw_count < DCC_RAILCOM_CH1_MAX_BYTES) {
-
-        return;
+        _buffer_push(context, datagram);
 
     }
-
-    if (!DccRailcomUtilities_decode_ch1(raw_bytes[0], raw_bytes[1], &datagram)) {
-
-        return;
-
-    }
-
-    _buffer_push(context, &datagram);
 
     if (context->interface->on_datagram) {
 
-        context->interface->on_datagram(context->cutout_address, DCC_RAILCOM_CH1, &datagram);
+        context->interface->on_datagram(context->cutout_address, (uint8_t)datagram->channel, datagram);
 
     }
 
 }
 
     /**
-     * @brief Decode RailCom Channel 2 (remaining bytes, up to 6 → up to 36 data bits).
+     * @brief Drain the UART for one cutout and decode each channel from its own bytes.
      *
-     * @details Skips the first DCC_RAILCOM_CH1_MAX_BYTES bytes; needs at least
-     * one byte beyond them. On a valid decode the datagram is buffered and
-     * on_datagram fires with DCC_RAILCOM_CH2. A failed decode drops the
-     * channel silently.
+     * @details Algorithm:
+     * -# Read until uart_read() returns false (at most
+     *    DCC_RAILCOM_MAX_READS_PER_CUTOUT reads), sorting each byte into the
+     *    Channel 1 or Channel 2 buffer by the tag the application returned
+     *    with it. A channel's count keeps rising past its buffer so an overflow
+     *    is reported rather than truncated
+     * -# Channel 1 received bytes: decode and report it
+     * -# Channel 2 received bytes: decode and report it
+     * -# Any byte tagged with neither channel: report one
+     *    DCC_RAILCOM_RESULT_INVALID_CHANNEL carrying the first bad tag
      *
-     * @param context Decoder context.
-     * @param raw_bytes Raw UART bytes from cutout (Channel 1 bytes first).
-     * @param raw_count Number of raw bytes received.
-     */
-static void _decode_channel_2(dcc_railcom_command_station_context_t *context, const uint8_t *raw_bytes, uint8_t raw_count) {
-
-    dcc_railcom_datagram_t datagram;
-    memset(&datagram, 0, sizeof(datagram));
-
-    if (raw_count <= DCC_RAILCOM_CH1_MAX_BYTES) {
-
-        return;
-
-    }
-
-    if (!DccRailcomUtilities_decode_ch2(&raw_bytes[DCC_RAILCOM_CH1_MAX_BYTES],
-            (uint8_t)(raw_count - DCC_RAILCOM_CH1_MAX_BYTES), &datagram)) {
-
-        return;
-
-    }
-
-    _buffer_push(context, &datagram);
-
-    if (context->interface->on_datagram) {
-
-        context->interface->on_datagram(context->cutout_address, DCC_RAILCOM_CH2, &datagram);
-
-    }
-
-}
-
-    /**
-     * @brief Drain the UART for one cutout and decode both channels.
-     *
-     * @details Reads until uart_read() returns false or 8 bytes
-     * (DCC_RAILCOM_CH1_MAX_BYTES + DCC_RAILCOM_CH2_MAX_BYTES) are collected,
-     * then hands the buffer to the Channel 1 and Channel 2 decoders. Nothing
-     * is decoded when no bytes were received.
+     * A channel with no bytes is legal silence (for example Channel 1 address
+     * broadcast switched off by CV 28) and is not reported.
      *
      * @param context Decoder context.
      */
 static void _process_cutout(dcc_railcom_command_station_context_t *context) {
 
-    uint8_t raw_bytes[DCC_RAILCOM_CH1_MAX_BYTES + DCC_RAILCOM_CH2_MAX_BYTES];
-    uint8_t raw_count = 0;
+    uint8_t ch1_raw[DCC_RAILCOM_CH1_MAX_BYTES];
+    uint8_t ch2_raw[DCC_RAILCOM_CH2_MAX_BYTES];
+    uint8_t ch1_count = 0;
+    uint8_t ch2_count = 0;
+    bool invalid_channel_seen = false;
+    dcc_railcom_channel_enum invalid_channel = DCC_RAILCOM_CH1;
+    dcc_railcom_datagram_t datagram;
+    uint8_t read_count;
+    uint8_t byte;
+    dcc_railcom_channel_enum channel;
 
-    while (raw_count < (DCC_RAILCOM_CH1_MAX_BYTES + DCC_RAILCOM_CH2_MAX_BYTES)) {
+    for (read_count = 0; read_count < DCC_RAILCOM_MAX_READS_PER_CUTOUT; read_count++) {
 
-        if (!context->interface->uart_read(&raw_bytes[raw_count])) {
+        if (!context->interface->uart_read(&byte, &channel)) {
 
             break;
 
         }
 
-        raw_count++;
+        if (channel == DCC_RAILCOM_CH1) {
+
+            if (ch1_count < DCC_RAILCOM_CH1_MAX_BYTES) {
+
+                ch1_raw[ch1_count] = byte;
+
+            }
+
+            ch1_count++;
+
+        } else if (channel == DCC_RAILCOM_CH2) {
+
+            if (ch2_count < DCC_RAILCOM_CH2_MAX_BYTES) {
+
+                ch2_raw[ch2_count] = byte;
+
+            }
+
+            ch2_count++;
+
+        } else if (!invalid_channel_seen) {
+
+            invalid_channel_seen = true;
+            invalid_channel = channel;
+
+        }
 
     }
 
-    if (raw_count == 0) {
+    if (ch1_count > 0) {
 
-        return;
+        DccRailcomUtilities_decode_ch1(ch1_raw, ch1_count, &datagram);
+        _report_channel(context, &datagram);
 
     }
 
-    _decode_channel_1(context, raw_bytes, raw_count);
-    _decode_channel_2(context, raw_bytes, raw_count);
+    if (ch2_count > 0) {
+
+        DccRailcomUtilities_decode_ch2(ch2_raw, ch2_count, &datagram);
+        _report_channel(context, &datagram);
+
+    }
+
+    if (invalid_channel_seen) {
+
+        memset(&datagram, 0, sizeof(datagram));
+        datagram.channel = invalid_channel;
+        datagram.result = DCC_RAILCOM_RESULT_INVALID_CHANNEL;
+        _report_channel(context, &datagram);
+
+    }
 
 }
 

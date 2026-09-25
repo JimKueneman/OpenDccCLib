@@ -7665,7 +7665,7 @@ window.COMPLIANCE =
           "detail": {
             "impl": "decode_byte inverts the 4/8 mapping and rejects invalid words.",
             "gtest": "",
-            "hil": "Wire: mock reply through the DUT's real receive path (PB6->PB16 loopback, ch6). Valid words decode to the expected datagram; a non-4/8 byte (0xFF) and reserved 0xE1 are rejected on the wire."
+            "hil": "Wire: mock reply through the DUT's real receive path (PB6->PB16 loopback, ch6). Valid words decode to the expected datagram; a non-4/8 byte (0xFF) and reserved 0xE1 are reported as INVALID_CODEWORD on the wire."
           },
           "refs": {
             "symbols": [
@@ -7686,6 +7686,11 @@ window.COMPLIANCE =
                 "name": "DccRailcomUtilities.decode_byte_reserved_codewords_invalid",
                 "file": "dcc_railcom_utilities_Test.cxx",
                 "desc": "rejects the three S-9.3.2 Table 2 reserved four-ones code words (0xE1, 0xC3, 0x87)"
+              },
+              {
+                "name": "DccRailcomUtilities.decode_ch2_invalid_byte_after_datagram",
+                "file": "dcc_railcom_utilities_Test.cxx",
+                "desc": "a bad word inside a datagram reports INVALID_CODEWORD, never a shorter good datagram"
               }
             ],
             "hilChecks": [
@@ -7697,7 +7702,7 @@ window.COMPLIANCE =
               {
                 "label": "invalid-codeword rejection",
                 "file": "command_station/s9_3_2_compliance.py",
-                "desc": "0xFF in Ch1 and reserved 0xE1 leading Ch2 yield no datagram"
+                "desc": "0xFF in Ch1 and reserved 0xE1 leading Ch2 reported as INVALID_CODEWORD"
               }
             ]
           }
@@ -7727,7 +7732,7 @@ window.COMPLIANCE =
           "detail": {
             "impl": "ACK is transmitted raw as 0xF0.",
             "gtest": "",
-            "hil": "Wire: Ch2 datagram followed by ACK 0x0F and 0xF0 padding is kept; an all-ACK Ch2 yields no datagram."
+            "hil": "Wire: Ch2 datagram followed by ACK 0x0F and 0xF0 padding is kept; an all-ACK Ch2 is reported as ACK with no datagram."
           },
           "refs": {
             "symbols": [
@@ -7738,13 +7743,18 @@ window.COMPLIANCE =
                 "name": "DccRailcomUtilities.decode_byte_ack_0xF0",
                 "file": "dcc_railcom_utilities_Test.cxx",
                 "desc": "decodes 0xF0 as ACK"
+              },
+              {
+                "name": "DccRailcomUtilities.decode_ch2_all_ack_reports_ack",
+                "file": "dcc_railcom_utilities_Test.cxx",
+                "desc": "an all-ACK channel reports DCC_RAILCOM_RESULT_ACK"
               }
             ],
             "hilChecks": [
               {
                 "label": "ACK padding after a Ch2 datagram",
                 "file": "command_station/s9_3_2_compliance.py",
-                "desc": "datagram kept when followed by 0x0F 0xF0; all-ACK Channel 2 yields none"
+                "desc": "datagram kept when followed by 0x0F 0xF0; all-ACK Channel 2 reported as ACK"
               }
             ]
           }
@@ -7774,7 +7784,7 @@ window.COMPLIANCE =
           "detail": {
             "impl": "NACK is transmitted raw as 0x3C.",
             "gtest": "",
-            "hil": "Wire: a NACK-only Channel 2 (0x3C 0x3C) yields no data datagram while Ch1 still decodes."
+            "hil": "Wire: a NACK-only Channel 2 (0x3C 0x3C) is reported as NACK with no datagram while Ch1 still decodes."
           },
           "refs": {
             "symbols": [
@@ -7785,13 +7795,18 @@ window.COMPLIANCE =
                 "name": "DccRailcomUtilities.decode_byte_nack_0x3C",
                 "file": "dcc_railcom_utilities_Test.cxx",
                 "desc": "decodes 0x3C as NACK"
+              },
+              {
+                "name": "DccRailcomUtilities.decode_ch2_nack_only_reports_nack",
+                "file": "dcc_railcom_utilities_Test.cxx",
+                "desc": "a NACK-only channel reports DCC_RAILCOM_RESULT_NACK"
               }
             ],
             "hilChecks": [
               {
                 "label": "NACK-only Channel 2",
                 "file": "command_station/s9_3_2_compliance.py",
-                "desc": "0x3C words produce no data datagram; Ch1 unaffected"
+                "desc": "0x3C words reported as NACK, no datagram; Ch1 unaffected"
               }
             ]
           }
@@ -7819,7 +7834,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Ch1 is a 2-byte datagram carrying a 12-bit payload.",
+            "impl": "Ch1 is a 2-byte datagram carrying a 12-bit payload, decoded only from bytes the application tagged as Channel 1.",
             "gtest": "",
             "hil": "Wire: a 2-byte Ch1 ADR1 reply decodes as id=1 data=00 and is tagged with the address of the packet before its cutout; bytes framed at 250 kbaud inside the Ch1 window (ch5)."
           },
@@ -7832,6 +7847,11 @@ window.COMPLIANCE =
                 "name": "DccRailcomCommandStation.ch1_valid_2_bytes",
                 "file": "dcc_railcom_command_station_Test.cxx",
                 "desc": "assembles a valid 2-byte Ch1 datagram"
+              },
+              {
+                "name": "DccRailcomCommandStation.ch1_only_reply_has_no_channel_2",
+                "file": "dcc_railcom_command_station_Test.cxx",
+                "desc": "Ch1-tagged bytes alone yield a Ch1 datagram and no Ch2 report"
               }
             ],
             "hilChecks": [
@@ -7866,9 +7886,9 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Ch2 is a multi-byte (4+) datagram.",
+            "impl": "Ch2 is a 2- to 6-byte datagram, decoded only from bytes the application tagged as Channel 2, so a Ch2-only reply is never read as Ch1.",
             "gtest": "",
-            "hil": "Wire: 2-byte POM read-back and a 4-byte DYN datagram decode with the expected id/data; bytes inside the Ch2 window (ch5)."
+            "hil": "Wire: 2-byte POM read-back, a 4-byte DYN datagram and a Ch2-only reply (Ch1 silent) decode on Channel 2 with the expected id/data; bytes inside the Ch2 window (ch5)."
           },
           "refs": {
             "symbols": [
@@ -7879,13 +7899,23 @@ window.COMPLIANCE =
                 "name": "DccRailcomCommandStation.ch2_valid_4_bytes",
                 "file": "dcc_railcom_command_station_Test.cxx",
                 "desc": "assembles a valid 4-byte Ch2 datagram"
+              },
+              {
+                "name": "DccRailcomCommandStation.ch2_only_reply_decodes_as_channel_2",
+                "file": "dcc_railcom_command_station_Test.cxx",
+                "desc": "Ch2-tagged bytes with Ch1 silent decode as Channel 2 (issue #7)"
+              },
+              {
+                "name": "DccConfig.railcom_channel_2_only_reply_reaches_app_as_channel_2",
+                "file": "dcc_config_Test.cxx",
+                "desc": "through the wiring, a Ch2-only reply reaches on_railcom_datagram_result as Channel 2"
               }
             ],
             "hilChecks": [
               {
                 "label": "Ch2 datagram on the wire",
                 "file": "command_station/s9_3_2_compliance.py",
-                "desc": "POM read-back (2 bytes) and DYN (4 bytes) decoded; inside the Ch2 window"
+                "desc": "POM read-back (2 bytes), DYN (4 bytes) and a Ch2-only reply decoded on Channel 2; inside the Ch2 window"
               }
             ]
           }

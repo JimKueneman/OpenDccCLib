@@ -113,7 +113,7 @@ Data Structures</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A single scheduler slot holding a packet and its metadata.  <a href="structdcc__scheduler__slot__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A decoded RailCom datagram.  <a href="structdcc__railcom__datagram__t.html#details">More...</a><br /></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A decoded RailCom datagram, or the reason one channel did not decode.  <a href="structdcc__railcom__datagram__t.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structdcc__decoded__packet__t.html">dcc_decoded_packet_t</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A decoded DCC packet with parsed fields.  <a href="structdcc__decoded__packet__t.html#details">More...</a><br /></td></tr>
@@ -275,6 +275,19 @@ Enumerations</h2></td></tr>
  }</td></tr>
 <tr class="memdesc:a22b37869fafebb7264d4f933c78b973f"><td class="mdescLeft">&#160;</td><td class="mdescRight">RailCom channel identifier.  <a href="#a22b37869fafebb7264d4f933c78b973f">More...</a><br /></td></tr>
 <tr class="separator:a22b37869fafebb7264d4f933c78b973f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc7527260dab57c2d93110859a633b1e" id="r_adc7527260dab57c2d93110859a633b1e"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adc7527260dab57c2d93110859a633b1e">dcc_railcom_result_enum</a> { <br />
+&#160;&#160;<a class="el" href="#adc7527260dab57c2d93110859a633b1ea5f4f5006a373474d9cf1d1088cd52b53">DCC_RAILCOM_RESULT_OK</a>
+, <a class="el" href="#adc7527260dab57c2d93110859a633b1ea12e4f3b518386934fa92ff02e73832ee">DCC_RAILCOM_RESULT_ACK</a>
+, <a class="el" href="#adc7527260dab57c2d93110859a633b1ea22e9b2ddf2a4f3812131c453fb03877c">DCC_RAILCOM_RESULT_NACK</a>
+, <a class="el" href="#adc7527260dab57c2d93110859a633b1ea697c040043e1656364cdc50154476855">DCC_RAILCOM_RESULT_INVALID_CODEWORD</a>
+, <br />
+&#160;&#160;<a class="el" href="#adc7527260dab57c2d93110859a633b1ea1d35f699bc6ff309e07dbfb8a4f0382d">DCC_RAILCOM_RESULT_TOO_FEW_BYTES</a>
+, <a class="el" href="#adc7527260dab57c2d93110859a633b1ea0448dbc72c5190d361ed334876e71331">DCC_RAILCOM_RESULT_TOO_MANY_BYTES</a>
+, <a class="el" href="#adc7527260dab57c2d93110859a633b1ead70bc290ac7f16aec038a88f3eba9c49">DCC_RAILCOM_RESULT_INVALID_CHANNEL</a>
+<br />
+ }</td></tr>
+<tr class="memdesc:adc7527260dab57c2d93110859a633b1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Outcome of decoding one RailCom channel of one cutout (S-9.3.2 draft 3.2 - 3.4).  <a href="#adc7527260dab57c2d93110859a633b1e">More...</a><br /></td></tr>
+<tr class="separator:adc7527260dab57c2d93110859a633b1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a40f48a2fb86218bc011573f909203992" id="r_a40f48a2fb86218bc011573f909203992"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a40f48a2fb86218bc011573f909203992">dcc_bit_state_enum</a> { <br />
 &#160;&#160;<a class="el" href="#a40f48a2fb86218bc011573f909203992aa55bd3e1e20da93b0a05611991e40390">DCC_BIT_STATE_IDLE</a>
 , <a class="el" href="#a40f48a2fb86218bc011573f909203992ad5060ae7d641cb013b94073fa699308e">DCC_BIT_STATE_PREAMBLE</a>
@@ -802,6 +815,38 @@ Enumerations</h2></td></tr>
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a22b37869fafebb7264d4f933c78b973fa806b9271b8fe36aac48cbf6a85692b29" name="a22b37869fafebb7264d4f933c78b973fa806b9271b8fe36aac48cbf6a85692b29"></a>DCC_RAILCOM_CH1&#160;</td><td class="fielddoc"><p>Channel 1 (2 bytes, address/mobility feedback) </p>
 </td></tr>
 <tr><td class="fieldname"><a id="a22b37869fafebb7264d4f933c78b973fa3158cccb1965ec28c3e88a4904bbe6f8" name="a22b37869fafebb7264d4f933c78b973fa3158cccb1965ec28c3e88a4904bbe6f8"></a>DCC_RAILCOM_CH2&#160;</td><td class="fielddoc"><p>Channel 2 (up to 6 bytes, CV readback, etc.) </p>
+</td></tr>
+</table>
+
+</div>
+</div>
+<a id="adc7527260dab57c2d93110859a633b1e" name="adc7527260dab57c2d93110859a633b1e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adc7527260dab57c2d93110859a633b1e">&#9670;&#160;</a></span>dcc_railcom_result_enum</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="#adc7527260dab57c2d93110859a633b1e">dcc_railcom_result_enum</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Outcome of decoding one RailCom channel of one cutout (S-9.3.2 draft 3.2 - 3.4). </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="adc7527260dab57c2d93110859a633b1ea5f4f5006a373474d9cf1d1088cd52b53" name="adc7527260dab57c2d93110859a633b1ea5f4f5006a373474d9cf1d1088cd52b53"></a>DCC_RAILCOM_RESULT_OK&#160;</td><td class="fielddoc"><p>A datagram decoded; datagram_id, data and count are valid </p>
+</td></tr>
+<tr><td class="fieldname"><a id="adc7527260dab57c2d93110859a633b1ea12e4f3b518386934fa92ff02e73832ee" name="adc7527260dab57c2d93110859a633b1ea12e4f3b518386934fa92ff02e73832ee"></a>DCC_RAILCOM_RESULT_ACK&#160;</td><td class="fielddoc"><p>Only control words, all ACK: command understood </p>
+</td></tr>
+<tr><td class="fieldname"><a id="adc7527260dab57c2d93110859a633b1ea22e9b2ddf2a4f3812131c453fb03877c" name="adc7527260dab57c2d93110859a633b1ea22e9b2ddf2a4f3812131c453fb03877c"></a>DCC_RAILCOM_RESULT_NACK&#160;</td><td class="fielddoc"><p>Only control words, at least one NACK: command or CV not supported </p>
+</td></tr>
+<tr><td class="fieldname"><a id="adc7527260dab57c2d93110859a633b1ea697c040043e1656364cdc50154476855" name="adc7527260dab57c2d93110859a633b1ea697c040043e1656364cdc50154476855"></a>DCC_RAILCOM_RESULT_INVALID_CODEWORD&#160;</td><td class="fielddoc"><p>A byte is not a valid 4/8 codeword or control word </p>
+</td></tr>
+<tr><td class="fieldname"><a id="adc7527260dab57c2d93110859a633b1ea1d35f699bc6ff309e07dbfb8a4f0382d" name="adc7527260dab57c2d93110859a633b1ea1d35f699bc6ff309e07dbfb8a4f0382d"></a>DCC_RAILCOM_RESULT_TOO_FEW_BYTES&#160;</td><td class="fielddoc"><p>Fewer than two data words before the first control word (datagrams are 12 bits minimum) </p>
+</td></tr>
+<tr><td class="fieldname"><a id="adc7527260dab57c2d93110859a633b1ea0448dbc72c5190d361ed334876e71331" name="adc7527260dab57c2d93110859a633b1ea0448dbc72c5190d361ed334876e71331"></a>DCC_RAILCOM_RESULT_TOO_MANY_BYTES&#160;</td><td class="fielddoc"><p>More bytes than the channel holds (Channel 1: 2, Channel 2: 6) </p>
+</td></tr>
+<tr><td class="fieldname"><a id="adc7527260dab57c2d93110859a633b1ead70bc290ac7f16aec038a88f3eba9c49" name="adc7527260dab57c2d93110859a633b1ead70bc290ac7f16aec038a88f3eba9c49"></a>DCC_RAILCOM_RESULT_INVALID_CHANNEL&#160;</td><td class="fielddoc"><p>The application's uart_read tagged a byte with neither channel </p>
 </td></tr>
 </table>
 

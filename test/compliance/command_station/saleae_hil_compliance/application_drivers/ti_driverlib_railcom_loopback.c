@@ -28,7 +28,8 @@
  * @brief RailCom loopback for the HIL bench. See the header for the design.
  *
  * @details ISR vs MAIN-LOOP SAFETY: the receive ring is single-producer (RX ISR writes
- * _rx_head) / single-consumer (uart_read, main loop, writes _rx_tail). The one
+ * _rx_head, and each entry's window tag in _rx_window) / single-consumer (uart_read,
+ * main loop, writes _rx_tail). The one
  * exception is the flush at cutout begin, which resets _rx_tail from the cutout
  * timer ISR; the library only reads the ring after a cutout COMPLETES, ~7 ms
  * before the next one begins, so on this bench the flush never races a read.
@@ -57,6 +58,8 @@
 /* --- receive side ------------------------------------------------------- */
     /** @brief Receive ring: bytes accepted while a window was open. */
 static volatile uint8_t  _rx_ring[RC_RX_RING_SIZE];
+    /** @brief Channel tag for each ring entry: the window it was accepted in (1 = Ch1, 2 = Ch2). */
+static volatile uint8_t  _rx_window[RC_RX_RING_SIZE];
     /** @brief Ring write index; RX ISR writes. */
 static volatile uint8_t  _rx_head = 0;          /* RX ISR writes */
     /** @brief Ring read index; uart_read (main loop) writes, the cutout-begin flush resets. */
@@ -151,21 +154,23 @@ void TI_RailcomLoopback_initialize(void) {
 }
 
     /**
-     * @brief The library .uart_read hook: pop one byte from the receive ring.
+     * @brief The library .uart_read hook: pop one byte and the channel window it arrived in.
      *
      * @verbatim
-     * @param byte  Receives the next byte when one is available.
+     * @param byte     Receives the next byte when one is available.
+     * @param channel  Receives DCC_RAILCOM_CH1 or DCC_RAILCOM_CH2 for that byte.
      * @endverbatim
      *
      * @return true when a byte was returned, false when the ring is empty.
      */
-bool TI_RailcomLoopback_uart_read(uint8_t *byte) {
+bool TI_RailcomLoopback_uart_read(uint8_t *byte, dcc_railcom_channel_enum *channel) {
 
     if (_rx_tail == _rx_head) {
         return false;
     }
 
     *byte = _rx_ring[_rx_tail];
+    *channel = (_rx_window[_rx_tail] == 1u) ? DCC_RAILCOM_CH1 : DCC_RAILCOM_CH2;
     _rx_tail = (uint8_t)((_rx_tail + 1u) % RC_RX_RING_SIZE);
     return true;
 }
@@ -328,6 +333,7 @@ void RAILCOM_RX_INST_IRQHandler(void) {
                 uint8_t next_head = (uint8_t)((_rx_head + 1u) % RC_RX_RING_SIZE);
                 if (next_head != _rx_tail) {
                     _rx_ring[_rx_head] = byte;
+                    _rx_window[_rx_head] = _window_index;   /* 1 = Ch1, 2 = Ch2 */
                     _rx_head = next_head;
                     _rx_accepted++;
                 }
@@ -368,11 +374,12 @@ void TI_RailcomLoopback_initialize(void) {}
     /**
      * @brief Stub: loopback compiled out.
      *
-     * @param byte  Unused.
+     * @param byte     Unused.
+     * @param channel  Unused.
      *
      * @return Always false.
      */
-bool TI_RailcomLoopback_uart_read(uint8_t *byte) { (void)byte; return false; }
+bool TI_RailcomLoopback_uart_read(uint8_t *byte, dcc_railcom_channel_enum *channel) { (void)byte; (void)channel; return false; }
     /** @brief Stub: loopback compiled out. */
 void TI_RailcomLoopback_on_cutout_begin(void) {}
     /** @brief Stub: loopback compiled out. */

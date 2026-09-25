@@ -106,7 +106,9 @@ typedef struct {
          *  between cutouts, or a stale byte from an earlier cutout). The library
          *  reads whatever uart_read() returns at cutout complete and cannot tell a
          *  window byte from a stray one. Gate in the RX interrupt or toggle the
-         *  peripheral's receiver; either way, flush at begin_railcom_cutout. */
+         *  peripheral's receiver; either way, flush at begin_railcom_cutout. Count
+         *  the enables since begin_railcom_cutout: the first opens Channel 1, the
+         *  second Channel 2; tag each accepted byte with that channel for uart_read. */
     void (*uart_rx_enable)(void);
 
         /** @brief Disable UART Rx after RailCom data reception.
@@ -114,13 +116,21 @@ typedef struct {
          *  = cutout end). Required if using RailCom. See the gating contract above. */
     void (*uart_rx_disable)(void);
 
-        /** @brief Read one byte from the RailCom 250 kbaud UART. Returns true if byte available.
+        /** @brief Read one byte from the RailCom 250 kbaud UART and the channel window it
+         *  arrived in. Returns true if a byte was available.
          *  Called from DccConfig_run() (main loop) after a cutout completes, repeatedly
          *  until it returns false. Must return only bytes captured inside the two
-         *  channel windows of the cutout that just ended (see uart_rx_enable). */
-    bool (*uart_read)(uint8_t *byte);
+         *  channel windows of the cutout that just ended (see uart_rx_enable), each
+         *  with *channel set to DCC_RAILCOM_CH1 or DCC_RAILCOM_CH2 for the window it
+         *  was captured in. The library decodes each channel from its own bytes; any
+         *  other tag is reported as DCC_RAILCOM_RESULT_INVALID_CHANNEL. */
+    bool (*uart_read)(uint8_t *byte, dcc_railcom_channel_enum *channel);
 
-        /** @brief RailCom datagram decoded. Fired from DccConfig_run(), NOT ISR. NULL = no notification. */
+        /** @brief One channel of a cutout decoded. Fired from DccConfig_run(), NOT ISR,
+         *  once per channel that received bytes (Channel 1 first). datagram->result
+         *  says what arrived: DCC_RAILCOM_RESULT_OK (a datagram), ACK / NACK (control
+         *  words only), or an error code; the data fields are meaningful only for OK.
+         *  A channel with no bytes is not reported. NULL = no notification. */
     void (*on_railcom_datagram_result)(uint16_t address, uint8_t channel, const dcc_railcom_datagram_t *datagram);
 
 } dcc_railcom_hw_t;

@@ -164,22 +164,65 @@ TEST(DccRailcomUtilities, decode_byte_value_0x3F_codeword_0x33) {
 TEST(DccRailcomUtilities, decode_ch1_basic) {
 
     dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0xAC, 0xAA };
 
     /* 0xAC->0x00, 0xAA->0x01 -> combined 0x001 -> id 0, data[0] 0x01 */
-    EXPECT_TRUE(DccRailcomUtilities_decode_ch1(0xAC, 0xAA, &datagram));
+    EXPECT_EQ(DccRailcomUtilities_decode_ch1(raw, 2, &datagram), DCC_RAILCOM_RESULT_OK);
+    EXPECT_EQ(datagram.result, DCC_RAILCOM_RESULT_OK);
+    EXPECT_EQ(datagram.channel, DCC_RAILCOM_CH1);
     EXPECT_EQ(datagram.datagram_id, (uint8_t)0);
     EXPECT_EQ(datagram.data[0], (uint8_t)0x01);
     EXPECT_EQ(datagram.count, (uint8_t)1);
-    EXPECT_TRUE(datagram.valid);
 
 }
 
 TEST(DccRailcomUtilities, decode_ch1_invalid_codeword) {
 
     dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0x00, 0xAA };   /* 0x00 is not a valid codeword */
 
-    /* 0x00 is not a valid codeword */
-    EXPECT_FALSE(DccRailcomUtilities_decode_ch1(0x00, 0xAA, &datagram));
+    EXPECT_EQ(DccRailcomUtilities_decode_ch1(raw, 2, &datagram), DCC_RAILCOM_RESULT_INVALID_CODEWORD);
+    EXPECT_EQ(datagram.result, DCC_RAILCOM_RESULT_INVALID_CODEWORD);
+    EXPECT_EQ(datagram.channel, DCC_RAILCOM_CH1);
+    EXPECT_EQ(datagram.count, (uint8_t)0);
+
+}
+
+TEST(DccRailcomUtilities, decode_ch1_one_byte_too_few) {
+
+    dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0xAC };
+
+    EXPECT_EQ(DccRailcomUtilities_decode_ch1(raw, 1, &datagram), DCC_RAILCOM_RESULT_TOO_FEW_BYTES);
+
+}
+
+TEST(DccRailcomUtilities, decode_ch1_three_bytes_too_many) {
+
+    dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0xAC, 0xAA, 0xA9 };
+
+    EXPECT_EQ(DccRailcomUtilities_decode_ch1(raw, 3, &datagram), DCC_RAILCOM_RESULT_TOO_MANY_BYTES);
+    EXPECT_EQ(datagram.count, (uint8_t)0);
+
+}
+
+TEST(DccRailcomUtilities, decode_ch1_ack_filler) {
+
+    dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0xF0, 0x0F };
+
+    EXPECT_EQ(DccRailcomUtilities_decode_ch1(raw, 2, &datagram), DCC_RAILCOM_RESULT_ACK);
+
+}
+
+TEST(DccRailcomUtilities, decode_ch1_zero_bytes_too_few) {
+
+    dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0xAC };
+
+    /* Callers skip silent channels; a zero count still has a defined result */
+    EXPECT_EQ(DccRailcomUtilities_decode_ch1(raw, 0, &datagram), DCC_RAILCOM_RESULT_TOO_FEW_BYTES);
 
 }
 
@@ -188,7 +231,8 @@ TEST(DccRailcomUtilities, decode_ch2_multi_byte) {
     dcc_railcom_datagram_t datagram;
     uint8_t raw[] = { 0xAC, 0xAA, 0xAC, 0x33 };   /* 0x00, 0x01, 0x00, 0x3F */
 
-    EXPECT_TRUE(DccRailcomUtilities_decode_ch2(raw, 4, &datagram));
+    EXPECT_EQ(DccRailcomUtilities_decode_ch2(raw, 4, &datagram), DCC_RAILCOM_RESULT_OK);
+    EXPECT_EQ(datagram.channel, DCC_RAILCOM_CH2);
     EXPECT_EQ(datagram.datagram_id, (uint8_t)0);
     EXPECT_EQ(datagram.data[0], (uint8_t)0x01);
     EXPECT_EQ(datagram.count, (uint8_t)3);
@@ -197,12 +241,32 @@ TEST(DccRailcomUtilities, decode_ch2_multi_byte) {
 
 }
 
+TEST(DccRailcomUtilities, decode_ch2_six_data_bytes) {
+
+    dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0xAC, 0xAA, 0xA9, 0xA5, 0xA3, 0xA6 };   /* 0x00 - 0x05 */
+
+    EXPECT_EQ(DccRailcomUtilities_decode_ch2(raw, 6, &datagram), DCC_RAILCOM_RESULT_OK);
+    EXPECT_EQ(datagram.count, (uint8_t)5);
+    EXPECT_EQ(datagram.data[4], (uint8_t)0x05);
+
+}
+
 TEST(DccRailcomUtilities, decode_ch2_too_few_bytes) {
 
     dcc_railcom_datagram_t datagram;
     uint8_t raw[] = { 0xAC };
 
-    EXPECT_FALSE(DccRailcomUtilities_decode_ch2(raw, 1, &datagram));
+    EXPECT_EQ(DccRailcomUtilities_decode_ch2(raw, 1, &datagram), DCC_RAILCOM_RESULT_TOO_FEW_BYTES);
+
+}
+
+TEST(DccRailcomUtilities, decode_ch2_too_many_bytes) {
+
+    dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0xAC, 0xAA, 0xA9, 0xA5, 0xA3, 0xA6, 0x9A };
+
+    EXPECT_EQ(DccRailcomUtilities_decode_ch2(raw, 7, &datagram), DCC_RAILCOM_RESULT_TOO_MANY_BYTES);
 
 }
 
@@ -211,7 +275,27 @@ TEST(DccRailcomUtilities, decode_ch2_invalid_byte) {
     dcc_railcom_datagram_t datagram;
     uint8_t raw[] = { 0xAC, 0x00 };   /* 0x00 is an invalid codeword */
 
-    EXPECT_FALSE(DccRailcomUtilities_decode_ch2(raw, 2, &datagram));
+    EXPECT_EQ(DccRailcomUtilities_decode_ch2(raw, 2, &datagram), DCC_RAILCOM_RESULT_INVALID_CODEWORD);
+
+}
+
+// @compliance DCC-S9.3.2-CS-010
+TEST(DccRailcomUtilities, decode_ch2_invalid_byte_after_datagram) {
+
+    dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0xAC, 0xAA, 0xA9, 0x00 };
+
+    EXPECT_EQ(DccRailcomUtilities_decode_ch2(raw, 4, &datagram), DCC_RAILCOM_RESULT_INVALID_CODEWORD);
+    EXPECT_EQ(datagram.count, (uint8_t)0);
+
+}
+
+TEST(DccRailcomUtilities, decode_ch2_invalid_byte_after_ack_filler) {
+
+    dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0xAC, 0xAA, 0x0F, 0x00 };
+
+    EXPECT_EQ(DccRailcomUtilities_decode_ch2(raw, 4, &datagram), DCC_RAILCOM_RESULT_INVALID_CODEWORD);
 
 }
 
@@ -221,11 +305,10 @@ TEST(DccRailcomUtilities, decode_ch2_ack_padding_after_datagram) {
     /* 0x00, 0x01, then the rest of the 6-byte window filled with ACK */
     uint8_t raw[] = { 0xAC, 0xAA, 0x0F, 0x0F, 0x0F, 0x0F };
 
-    EXPECT_TRUE(DccRailcomUtilities_decode_ch2(raw, 6, &datagram));
+    EXPECT_EQ(DccRailcomUtilities_decode_ch2(raw, 6, &datagram), DCC_RAILCOM_RESULT_OK);
     EXPECT_EQ(datagram.datagram_id, (uint8_t)0);
     EXPECT_EQ(datagram.data[0], (uint8_t)0x01);
     EXPECT_EQ(datagram.count, (uint8_t)1);
-    EXPECT_TRUE(datagram.valid);
 
 }
 
@@ -236,19 +319,78 @@ TEST(DccRailcomUtilities, decode_ch2_pom_reply_from_real_decoder) {
      * (0x28): id 0, value 0x28, remaining window bytes ACK (0x0F). */
     uint8_t raw[] = { 0xAC, 0xE2, 0x0F, 0x0F, 0x0F, 0x0F };
 
-    EXPECT_TRUE(DccRailcomUtilities_decode_ch2(raw, 6, &datagram));
+    EXPECT_EQ(DccRailcomUtilities_decode_ch2(raw, 6, &datagram), DCC_RAILCOM_RESULT_OK);
     EXPECT_EQ(datagram.datagram_id, (uint8_t)0);
     EXPECT_EQ(datagram.data[0], (uint8_t)0x28);
     EXPECT_EQ(datagram.count, (uint8_t)1);
 
 }
 
-TEST(DccRailcomUtilities, decode_ch2_all_ack_returns_false) {
+TEST(DccRailcomUtilities, decode_ch2_datagram_then_nack) {
 
     dcc_railcom_datagram_t datagram;
-    uint8_t raw[] = { 0x0F, 0x0F, 0x0F, 0x0F, 0x0F, 0x0F };
+    uint8_t raw[] = { 0xAC, 0xE2, 0x3C };
 
-    EXPECT_FALSE(DccRailcomUtilities_decode_ch2(raw, 6, &datagram));
+    EXPECT_EQ(DccRailcomUtilities_decode_ch2(raw, 3, &datagram), DCC_RAILCOM_RESULT_OK);
+    EXPECT_EQ(datagram.data[0], (uint8_t)0x28);
+
+}
+
+// @compliance DCC-S9.3.2-CS-011
+TEST(DccRailcomUtilities, decode_ch2_all_ack_reports_ack) {
+
+    dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0x0F, 0x0F, 0xF0, 0x0F, 0x0F, 0x0F };
+
+    EXPECT_EQ(DccRailcomUtilities_decode_ch2(raw, 6, &datagram), DCC_RAILCOM_RESULT_ACK);
+    EXPECT_EQ(datagram.count, (uint8_t)0);
+
+}
+
+// @compliance DCC-S9.3.2-CS-012
+TEST(DccRailcomUtilities, decode_ch2_nack_only_reports_nack) {
+
+    dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0x3C };
+
+    EXPECT_EQ(DccRailcomUtilities_decode_ch2(raw, 1, &datagram), DCC_RAILCOM_RESULT_NACK);
+
+}
+
+TEST(DccRailcomUtilities, decode_ch2_ack_and_nack_reports_nack) {
+
+    dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0x0F, 0x3C };
+
+    EXPECT_EQ(DccRailcomUtilities_decode_ch2(raw, 2, &datagram), DCC_RAILCOM_RESULT_NACK);
+
+}
+
+TEST(DccRailcomUtilities, decode_ch2_data_after_control_word_reports_error) {
+
+    dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0xAC, 0xAA, 0x0F, 0xA9 };
+
+    EXPECT_EQ(DccRailcomUtilities_decode_ch2(raw, 4, &datagram), DCC_RAILCOM_RESULT_DATA_AFTER_CONTROL_WORD);
+    EXPECT_EQ(datagram.count, (uint8_t)0);
+
+}
+
+TEST(DccRailcomUtilities, decode_ch2_data_after_nack_reports_error) {
+
+    dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0x3C, 0xA9 };
+
+    EXPECT_EQ(DccRailcomUtilities_decode_ch2(raw, 2, &datagram), DCC_RAILCOM_RESULT_DATA_AFTER_CONTROL_WORD);
+
+}
+
+TEST(DccRailcomUtilities, decode_ch1_data_after_ack_reports_error) {
+
+    dcc_railcom_datagram_t datagram;
+    uint8_t raw[] = { 0xF0, 0xAC };
+
+    EXPECT_EQ(DccRailcomUtilities_decode_ch1(raw, 2, &datagram), DCC_RAILCOM_RESULT_DATA_AFTER_CONTROL_WORD);
 
 }
 
