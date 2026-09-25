@@ -74,7 +74,6 @@ decoder/
 #define DCC_COMPILE_DECODER
 #define DCC_COMPILE_RAILCOM                          // RailCom Tx (comment out to strip); inert until wired
 
-#define USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS       29   // required by the build, but not used by the library: F0-F68 are always dispatched
 #define USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH   8   // deferred dispatch queue; holds depth - 1 packets, a full queue drops the newest
 ```
 

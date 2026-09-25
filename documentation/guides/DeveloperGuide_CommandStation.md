@@ -38,7 +38,7 @@ The DCC signal is a square wave whose bit value is encoded in the half-period du
 | Bit | Half-period (library) | NMRA range | Define |
 |---|---|---|---|
 | One | 58 µs | 55–61 µs | `DCC_ONE_BIT_HALF_PERIOD_US` |
-| Zero | 116 µs (two ticks) | ≥ 95 µs, total ≤ 12 000 µs | `DCC_ZERO_BIT_MAX_TOTAL_DURATION_US`; the 100 µs `DCC_ZERO_BIT_HALF_PERIOD_US` define is not used by the encoder |
+| Zero | 116 µs (two ticks) | ≥ 95 µs, total ≤ 12 000 µs | `DCC_ZERO_BIT_MAX_TOTAL_DURATION_US`; `DCC_ZERO_BIT_HALF_PERIOD_US` (100) is the S-9.1 nominal used as a decoder stimulus, not the encoder period |
 
 ### 2.2 Packet Format
 
@@ -348,7 +348,6 @@ Every task except `detect_mode`, which takes `on_detect(result, supported_modes)
 | `DCC_SERVICE_MODE_VERIFY_FAIL` | Verify after write did not match, or a direct read's final byte verify did not confirm the bits |
 | `DCC_SERVICE_MODE_BUSY` | A later step's primitive could not start (a concurrent start makes the task call return false instead) |
 | `DCC_SERVICE_MODE_ERROR` | A paged, register or address read scanned every candidate value without an ACK; no decoder in those modes |
-| `DCC_SERVICE_MODE_NOT_IN_SERVICE_MODE` | Defined but not produced in this release; a task started outside service mode returns false instead |
 
 ### 10.1 ACK Detection
 

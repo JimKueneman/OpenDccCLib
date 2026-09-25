@@ -55,7 +55,9 @@ extern "C" {
     /** @brief One-bit half period maximum (command station transmit) */
 #define DCC_ONE_BIT_HALF_PERIOD_MAX_US      61
 
-    /** @brief Zero-bit half period in microseconds (command station minimum) */
+    /** @brief Zero-bit half period in microseconds: the S-9.1 nominal (95 us
+     *  minimum). The shared-timer encoder sends two 58 us ticks = 116 us; this
+     *  value is used as a decoder stimulus, not as the encoder period. */
 #define DCC_ZERO_BIT_HALF_PERIOD_US         100
 
     /** @brief Zero-bit half period minimum for decoder acceptance */
@@ -176,13 +178,6 @@ extern "C" {
 
     /** @brief Minimum preamble bits a decoder must accept */
 #define DCC_PREAMBLE_BITS_DECODER_MIN       10
-
-// =============================================================================
-// Packet Timing
-// =============================================================================
-
-    /** @brief Minimum inter-packet gap in milliseconds */
-#define DCC_INTER_PACKET_GAP_MS             5
 
 // =============================================================================
 // Address Ranges (S-9.2)

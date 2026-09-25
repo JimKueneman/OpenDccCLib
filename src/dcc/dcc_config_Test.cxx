@@ -1104,7 +1104,6 @@ TEST(DccDefines, user_config_constants_are_set) {
     EXPECT_EQ(USER_DEFINED_DCC_SCHEDULER_SLOT_COUNT, 16);
     EXPECT_EQ(USER_DEFINED_DCC_MAX_LOCOS, 8);
     EXPECT_EQ(USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH, 4);
-    EXPECT_EQ(USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS, 29);
 }
 
 // ============================================================================

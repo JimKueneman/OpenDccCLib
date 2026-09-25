@@ -143,13 +143,6 @@ extern "C" {
 
 #ifdef DCC_COMPILE_DECODER
 
-#ifndef USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS
-#error "USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS must be defined in dcc_user_config.h"
-#endif
-#if USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS < 1
-#error "USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS must be >= 1"
-#endif
-
 #ifndef USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH
 #error "USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH must be defined in dcc_user_config.h"
 #endif
@@ -289,8 +282,7 @@ typedef enum {
     DCC_SERVICE_MODE_NO_ACK,       /**< No acknowledgement from decoder */
     DCC_SERVICE_MODE_VERIFY_FAIL,  /**< Verify operation failed */
     DCC_SERVICE_MODE_BUSY,         /**< Service mode is already in progress */
-    DCC_SERVICE_MODE_ERROR,        /**< General error (e.g., no current sense) */
-    DCC_SERVICE_MODE_NOT_IN_SERVICE_MODE /**< Not in service mode */
+    DCC_SERVICE_MODE_ERROR         /**< General error (e.g., no current sense) */
 
 } dcc_service_mode_result_enum;
 

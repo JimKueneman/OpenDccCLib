@@ -63,7 +63,7 @@ Set in `dcc_user_config.h`:
 - `USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH` — RailCom receive ring-buffer depth
 - `USER_DEFINED_DCC_SERVICE_MODE_RETRIES`
 - `USER_DEFINED_DCC_ACK_THRESHOLD_MA`, `..._ACK_MIN_DURATION_US`, `..._ACK_MAX_DURATION_US`; `..._ACK_DROPOUT_TOLERANCE_US` is optional (default 116)
-- `USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS` (required, >= 1, but not used by the library: F0–F68 are always dispatched), `..._DECODER_PACKET_QUEUE_DEPTH` (>= 2, one slot reserved; a full queue drops the newest packet)
+- `USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH` (>= 2, one slot reserved; a full queue drops the newest packet). F0–F68 are always dispatched; there is no function-count constant
 
 Every count is validated >= 1; the command-station constants are required only with
 `DCC_COMPILE_COMMAND_STATION`; a preamble of 16–17 with RailCom raises a `#warning`.

@@ -100,8 +100,6 @@
 
 #ifdef DCC_COMPILE_DECODER
 
-/** @brief Max function number supported (F0-F28 = 29) */
-#define USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS   29
 
     /* Decoder received-packet FIFO depth (>= 2; one slot reserved). The
      * end-bit ISR enqueues; DccConfig_run drains and dispatches. */

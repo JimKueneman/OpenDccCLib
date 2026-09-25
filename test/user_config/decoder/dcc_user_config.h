@@ -23,7 +23,6 @@
 #define USER_DEFINED_DCC_ACK_MIN_DURATION_US     5000
 #define USER_DEFINED_DCC_ACK_MAX_DURATION_US     7000
 #define USER_DEFINED_DCC_ACK_DROPOUT_TOLERANCE_US 116
-#define USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS     29
 
     /* Decoder received-packet FIFO depth (>= 2; one slot reserved). The
      * end-bit ISR enqueues; DccConfig_run drains and dispatches. */

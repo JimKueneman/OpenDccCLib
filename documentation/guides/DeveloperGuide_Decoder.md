@@ -110,7 +110,6 @@ decoder/                                 <- your project folder
 #define DCC_COMPILE_RAILCOM                          // RailCom transmit; comment out to strip
 // #define DCC_COMPILE_ACCESSORY_DECODER            // accessory-decoder RailCom helpers; needs DCC_COMPILE_RAILCOM
 
-#define USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS       29   // required by the build; not used by the library, F0-F68 are always dispatched
 #define USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH   8   // deferred dispatch queue, >= 2
 ```
 
@@ -119,7 +118,6 @@ decoder/                                 <- your project folder
 | `DCC_COMPILE_DECODER` | Bit decoder, packet decoder, CV storage, fail-safe |
 | `DCC_COMPILE_RAILCOM` | Compiles the RailCom transmit engine and its config fields (`railcom_tx_pin_set`, `railcom_delay_us`, `on_railcom_request`); active only when `railcom_tx_pin_set` is wired |
 | `DCC_COMPILE_ACCESSORY_DECODER` | Accessory-decoder RailCom reply helpers (SRQ, status, time, error); needs `DCC_COMPILE_RAILCOM`. Packet reception lives under `DCC_COMPILE_DECODER`, so an accessory-only build has no receive path |
-| `USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS` | Required by the build (≥ 1) but not used by the library; F0–F68 are always dispatched |
 | `USER_DEFINED_DCC_DECODER_PACKET_QUEUE_DEPTH` | Packets that can wait for main-loop dispatch; one slot is reserved, so ≥ 2 and the queue holds depth − 1. A full queue drops the newest packet |
 
 A decoder project must not define `DCC_COMPILE_COMMAND_STATION` unless it really is both, as a booster or repeater would be.

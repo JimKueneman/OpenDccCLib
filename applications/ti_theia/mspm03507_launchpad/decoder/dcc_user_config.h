@@ -56,10 +56,6 @@
 
 #ifdef DCC_COMPILE_DECODER
 
-/* How many function outputs the decoder tracks (F0 through F28 = 29).
- * Increase this if your hardware has more outputs; the library allocates
- * a bool array of this size. */
-#define USER_DEFINED_DCC_DECODER_MAX_FUNCTIONS  29
 
     /* Decoder received-packet FIFO depth (>= 2; one slot reserved). The
      * end-bit ISR enqueues; DccConfig_run drains and dispatches. */

@@ -113,7 +113,7 @@ Macros</h2></td></tr>
 <tr class="memdesc:a7962d59ac6265c69f57f9cdc118ad7cc"><td class="mdescLeft">&#160;</td><td class="mdescRight">One-bit half period maximum (command station transmit)  <br /></td></tr>
 <tr class="separator:a7962d59ac6265c69f57f9cdc118ad7cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0caeb02a8acfae4b998e5e58dad1a0e9" id="r_a0caeb02a8acfae4b998e5e58dad1a0e9"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0caeb02a8acfae4b998e5e58dad1a0e9">DCC_ZERO_BIT_HALF_PERIOD_US</a>&#160;&#160;&#160;100</td></tr>
-<tr class="memdesc:a0caeb02a8acfae4b998e5e58dad1a0e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Zero-bit half period in microseconds (command station minimum)  <br /></td></tr>
+<tr class="memdesc:a0caeb02a8acfae4b998e5e58dad1a0e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Zero-bit half period in microseconds: the S-9.1 nominal (95 us minimum). The shared-timer encoder sends two 58 us ticks = 116 us; this value is used as a decoder stimulus, not as the encoder period.  <br /></td></tr>
 <tr class="separator:a0caeb02a8acfae4b998e5e58dad1a0e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac6f383ccb695b243f7b6a6ed83cd173b" id="r_ac6f383ccb695b243f7b6a6ed83cd173b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac6f383ccb695b243f7b6a6ed83cd173b">DCC_ZERO_BIT_HALF_PERIOD_DECODER_MIN_US</a>&#160;&#160;&#160;90</td></tr>
 <tr class="memdesc:ac6f383ccb695b243f7b6a6ed83cd173b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Zero-bit half period minimum for decoder acceptance.  <br /></td></tr>
@@ -163,9 +163,6 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
 <tr class="memitem:a2f6c5e9a028a311e0b76b3ea47eab7f2" id="r_a2f6c5e9a028a311e0b76b3ea47eab7f2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2f6c5e9a028a311e0b76b3ea47eab7f2">DCC_PREAMBLE_BITS_DECODER_MIN</a>&#160;&#160;&#160;10</td></tr>
 <tr class="memdesc:a2f6c5e9a028a311e0b76b3ea47eab7f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimum preamble bits a decoder must accept.  <br /></td></tr>
 <tr class="separator:a2f6c5e9a028a311e0b76b3ea47eab7f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af8f08cf3c92863ff75adcd7366003812" id="r_af8f08cf3c92863ff75adcd7366003812"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af8f08cf3c92863ff75adcd7366003812">DCC_INTER_PACKET_GAP_MS</a>&#160;&#160;&#160;5</td></tr>
-<tr class="memdesc:af8f08cf3c92863ff75adcd7366003812"><td class="mdescLeft">&#160;</td><td class="mdescRight">Minimum inter-packet gap in milliseconds.  <br /></td></tr>
-<tr class="separator:af8f08cf3c92863ff75adcd7366003812"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2801c2ddc54dd77c1183e9dab83ee16f" id="r_a2801c2ddc54dd77c1183e9dab83ee16f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2801c2ddc54dd77c1183e9dab83ee16f">DCC_ADDRESS_BROADCAST_VALUE</a>&#160;&#160;&#160;0</td></tr>
 <tr class="memdesc:a2801c2ddc54dd77c1183e9dab83ee16f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Broadcast address.  <br /></td></tr>
 <tr class="separator:a2801c2ddc54dd77c1183e9dab83ee16f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -609,7 +606,7 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
       </table>
 </div><div class="memdoc">
 
-<p>Zero-bit half period in microseconds (command station minimum) </p>
+<p>Zero-bit half period in microseconds: the S-9.1 nominal (95 us minimum). The shared-timer encoder sends two 58 us ticks = 116 us; this value is used as a decoder stimulus, not as the encoder period. </p>
 
 </div>
 </div>
@@ -865,22 +862,6 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
 </div><div class="memdoc">
 
 <p>Minimum preamble bits a decoder must accept. </p>
-
-</div>
-</div>
-<a id="af8f08cf3c92863ff75adcd7366003812" name="af8f08cf3c92863ff75adcd7366003812"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af8f08cf3c92863ff75adcd7366003812">&#9670;&#160;</a></span>DCC_INTER_PACKET_GAP_MS</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define DCC_INTER_PACKET_GAP_MS&#160;&#160;&#160;5</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Minimum inter-packet gap in milliseconds. </p>
 
 </div>
 </div>
