@@ -1004,10 +1004,11 @@ static void _dispatch_accessory_basic(const uint8_t *data, uint8_t byte_count) {
 
     if (_use_output_address) {
 
-        /* Output-address mode: DDD bits 0-1 are A0-A1, fold into 11-bit
-         * flat address.  DDD bit 2 is the R (direction) bit. */
-        uint16_t output_address = (board_address << 2) | (data[1] & 0x03);
-        output_pair = (data[1] >> 2) & 0x01;
+        /* Output-address mode (S-9.2.1 2.4.1, byte 2 = 1 A10 A9 A8 D A1 A0 R):
+         * bits 2-1 are the two low address bits, bit 0 is R, the output of the
+         * pair. Fold into the 11-bit flat output address. */
+        uint16_t output_address = (board_address << 2) | ((data[1] >> 1) & 0x03);
+        output_pair = data[1] & 0x01;
 
         if (output_address != _my_address) {
 

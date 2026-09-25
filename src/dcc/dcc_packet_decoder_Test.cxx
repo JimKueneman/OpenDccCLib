@@ -3496,10 +3496,10 @@ TEST(DccPacketDecoder, output_address_mode_with_r_bit) {
     interface_dcc_packet_decoder_t interface = make_interface();
     set_decoder_accessory_output_address(&interface, 4, false);
 
-    /* Same address 4 but with R bit set (DDD bit 2)
+    /* Same address 4 but with R bit set (byte 2 bit 0 per S-9.2.1 2.4.1)
      * Byte 0: 10 000001 = 0x81
-     * Byte 1: 1 111 1 100 = 0xFC (A8-A10 inv=111, D=1, R=1, A0-A1=00) */
-    uint8_t data[] = {0x81, 0xFC, 0x00};
+     * Byte 1: 1 111 1 00 1 = 0xF9 (A8-A10 inv=111, D=1, A1A0=00, R=1) */
+    uint8_t data[] = {0x81, 0xF9, 0x00};
     data[2] = xor_bytes(data, 2);
     DccPacketDecoder_process_packet(data, 3);
 
