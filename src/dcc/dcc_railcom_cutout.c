@@ -74,7 +74,7 @@ void DccRailcomCutout_initialize(dcc_railcom_cutout_context_t *context, const in
      * @param context Pointer to dcc_railcom_cutout_context_t instance.
      * @endverbatim
      */
-void DccRailcomCutout_begin(dcc_railcom_cutout_context_t *context) {
+void DCC_ISR_FUNC(DccRailcomCutout_begin)(dcc_railcom_cutout_context_t *context) {
 
     if (!context->interface) {
 
@@ -168,7 +168,7 @@ void DccRailcomCutout_cancel(dcc_railcom_cutout_context_t *context) {
      * @param context Pointer to dcc_railcom_cutout_context_t instance.
      * @endverbatim
      */
-void DccRailcomCutout_timer_isr(dcc_railcom_cutout_context_t *context) {
+void DCC_ISR_FUNC(DccRailcomCutout_timer_isr)(dcc_railcom_cutout_context_t *context) {
 
     if (!context->interface) {
 

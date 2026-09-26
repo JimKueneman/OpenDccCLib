@@ -83,6 +83,16 @@ extern "C" {
   #include "dcc_user_config.h"
 #endif
 
+// Placement of the functions the 58 us timer ISR and the RailCom
+// one-shot timer ISR run. A definition is written `void DCC_ISR_FUNC(name)(args) {`. By
+// default it is just the name. A port whose code runs from flash through a cache (RP2040/RP2350
+// XIP, ESP32) can place them in RAM from dcc_user_config.h, so another core's flash traffic
+// cannot stall the DCC bit timing, e.g. for the Pico SDK:
+//   #define DCC_ISR_FUNC(func_name) __not_in_flash_func(func_name)
+#ifndef DCC_ISR_FUNC
+#define DCC_ISR_FUNC(func_name) func_name
+#endif
+
 // RailCom is an add-on to a role, not a role itself: it only compiles alongside a
 // command-station, decoder, or accessory-decoder build. Catch a lone definition early.
 #if defined(DCC_COMPILE_RAILCOM) && \
