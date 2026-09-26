@@ -449,7 +449,7 @@ static dcc_address_t _decode_main_packet_address(const dcc_packet_t *packet) {
      * follows (see the two-stage capture note further down), then hands the completion
      * to DccScheduler_on_packet_complete() so the next packet can be dispatched.
      */
-static void _main_on_packet_complete(void) {
+static void DCC_ISR_FUNC(_main_on_packet_complete)(void) {
 
 #if defined(DCC_COMPILE_RAILCOM)
     /* The just-finished packet's address is frozen here, before the cutout
@@ -546,7 +546,7 @@ static void _main_scheduler_clear(void) {
  * ========================================================================= */
 
     /** @brief Service track encoder on_packet_complete hook: advance the service mode common state machine. */
-static void _service_on_packet_complete(void) {
+static void DCC_ISR_FUNC(_service_on_packet_complete)(void) {
 
     DccServiceModeCommon_on_packet_complete(&_service_common_context);
 
@@ -767,7 +767,7 @@ static void _shared_timer_release(void) {
  * ========================================================================= */
 
     /** @brief Bit encoder railcom_cutout_begin hook: arm the cutout one-shot state machine at the packet end bit. */
-static void _railcom_cutout_begin_wrapper(void) {
+static void DCC_ISR_FUNC(_railcom_cutout_begin_wrapper)(void) {
 
     DccRailcomCutout_begin(&_railcom_cutout_context);
 
@@ -1449,7 +1449,7 @@ void DccConfig_run(void) {
      *    which compute the toggle flags for the next tick
      * -# Sample the service track current sense (when provided) for ACK detection
      */
-void DccConfig_58us_timer_isr(void) {
+void DCC_ISR_FUNC(DccConfig_58us_timer_isr)(void) {
 
     /* Deterministic pin toggles — fire both channels immediately on
      * ISR entry using the look-ahead flags computed on the previous tick.
@@ -1482,7 +1482,7 @@ void DccConfig_58us_timer_isr(void) {
 
 #if defined(DCC_COMPILE_RAILCOM)
     /** @brief RailCom cutout one-shot timer ISR entry point: advance the cutout state machine. */
-void DccConfig_railcom_oneshot_timer_isr(void) {
+void DCC_ISR_FUNC(DccConfig_railcom_oneshot_timer_isr)(void) {
 
     DccRailcomCutout_timer_isr(&_railcom_cutout_context);
 
@@ -1530,7 +1530,7 @@ void DccConfig_cancel_railcom_cutout(void) {
      *
      * @return true while the cutout state machine is in any state other than IDLE.
      */
-bool DccConfig_railcom_cutout_is_active(void) {
+bool DCC_ISR_FUNC(DccConfig_railcom_cutout_is_active)(void) {
 
     return _railcom_cutout_context.state != DCC_RAILCOM_CUTOUT_IDLE;
 
