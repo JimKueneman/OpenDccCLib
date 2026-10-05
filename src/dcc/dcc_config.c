@@ -774,7 +774,7 @@ static void DCC_ISR_FUNC(_railcom_cutout_begin_wrapper)(void) {
 }
 
     /** @brief Cutout on_cutout_complete hook: tell the command station RailCom module which address the captured bytes belong to. */
-static void _railcom_cutout_complete_wrapper(void) {
+static void DCC_ISR_FUNC(_railcom_cutout_complete_wrapper)(void) {
 
     DccRailcomCommandStation_begin_cutout(&_main_railcom_context, _main_railcom_completed_address);
 

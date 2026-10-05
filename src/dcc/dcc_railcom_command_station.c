@@ -252,7 +252,7 @@ void DccRailcomCommandStation_run(dcc_railcom_command_station_context_t *context
      * @param address The DCC address associated with this cutout.
      * @endverbatim
      */
-void DccRailcomCommandStation_begin_cutout(dcc_railcom_command_station_context_t *context, dcc_address_t address) {
+void DCC_ISR_FUNC(DccRailcomCommandStation_begin_cutout)(dcc_railcom_command_station_context_t *context, dcc_address_t address) {
 
     context->cutout_address = address;
     context->cutout_pending = true;

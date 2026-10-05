@@ -634,6 +634,20 @@ extern "C" {
 // Packet-Timeout Fail-Safe (S-9.2.4 §4)
 // =============================================================================
 
+// =============================================================================
+// Placement of the timer ISR paths
+// =============================================================================
+
+    /** @brief Placement of every function the 58 us timer ISR and the RailCom one-shot
+     *  timer ISR run: a definition is written `void DCC_ISR_FUNC(name)(args)`. By default
+     *  it is just the name. A port whose code runs from flash through a cache (RP2040/RP2350
+     *  XIP, ESP32) can place them in RAM from dcc_user_config.h, so another core's flash
+     *  traffic cannot stall the DCC bit timing, e.g. for the Pico SDK:
+     *  `#define DCC_ISR_FUNC(func_name) __not_in_flash_func(func_name)` */
+#ifndef DCC_ISR_FUNC
+#define DCC_ISR_FUNC(func_name) func_name
+#endif
+
     /** @brief Real-time value of one CV11 (DCC_CV_PACKET_TIMEOUT) least-
      *  significant bit, in microseconds.
      *
