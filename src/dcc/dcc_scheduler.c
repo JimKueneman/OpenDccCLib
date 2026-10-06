@@ -500,7 +500,7 @@ void DccScheduler_clear(dcc_scheduler_context_t *context) {
      * @param context Pointer to dcc_scheduler_context_t instance.
      * @endverbatim
      */
-void DccScheduler_on_packet_complete(dcc_scheduler_context_t *context) {
+void DCC_ISR_FUNC(DccScheduler_on_packet_complete)(dcc_scheduler_context_t *context) {
 
     context->packet_complete_flag = true;
 

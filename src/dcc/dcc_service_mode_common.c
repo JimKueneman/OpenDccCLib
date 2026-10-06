@@ -170,7 +170,7 @@ void DccServiceModeCommon_initialize(dcc_service_mode_common_context_t *context,
      *
      * @param context Pointer to the service mode common context.
      */
-static void _ack_sample_elevated(dcc_service_mode_common_context_t *context) {
+static void DCC_ISR_FUNC(_ack_sample_elevated)(dcc_service_mode_common_context_t *context) {
 
     if (!context->ack_overrun) {
 
@@ -200,7 +200,7 @@ static void _ack_sample_elevated(dcc_service_mode_common_context_t *context) {
      *
      * @param context Pointer to the service mode common context.
      */
-static void _ack_sample_dropout(dcc_service_mode_common_context_t *context) {
+static void DCC_ISR_FUNC(_ack_sample_dropout)(dcc_service_mode_common_context_t *context) {
 
     context->ack_low_run++;
 
@@ -239,7 +239,7 @@ static void _ack_sample_dropout(dcc_service_mode_common_context_t *context) {
      * @param sense_value Raw reading from current sense hardware.
      * @endverbatim
      */
-void DccServiceModeCommon_ack_sample(dcc_service_mode_common_context_t *context, uint16_t sense_value) {
+void DCC_ISR_FUNC(DccServiceModeCommon_ack_sample)(dcc_service_mode_common_context_t *context, uint16_t sense_value) {
 
     if (context->ack_detected) {
 
@@ -282,7 +282,7 @@ void DccServiceModeCommon_ack_sample(dcc_service_mode_common_context_t *context,
      * @param context Pointer to dcc_service_mode_common_context_t instance.
      * @endverbatim
      */
-void DccServiceModeCommon_on_packet_complete(dcc_service_mode_common_context_t *context) {
+void DCC_ISR_FUNC(DccServiceModeCommon_on_packet_complete)(dcc_service_mode_common_context_t *context) {
 
     context->packet_complete_flag = true;
 

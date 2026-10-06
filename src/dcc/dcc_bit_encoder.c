@@ -172,7 +172,7 @@ void DccBitEncoder_stop(dcc_bit_encoder_context_t *context) {
      * @param context Pointer to the instance context.
      * @param is_one_bit true for one-bit (1 tick/half), false for zero-bit (2 ticks/half).
      */
-static void _set_bit_type(dcc_bit_encoder_context_t *context, bool is_one_bit) {
+static void DCC_ISR_FUNC(_set_bit_type)(dcc_bit_encoder_context_t *context, bool is_one_bit) {
 
     context->current_bit_is_one = is_one_bit;
 
@@ -187,7 +187,7 @@ static void _set_bit_type(dcc_bit_encoder_context_t *context, bool is_one_bit) {
      *
      * @param context Pointer to the instance context.
      */
-static void _tick_handle_data(dcc_bit_encoder_context_t *context) {
+static void DCC_ISR_FUNC(_tick_handle_data)(dcc_bit_encoder_context_t *context) {
 
     if (context->bit_index == 0) {
 
@@ -224,7 +224,7 @@ static void _tick_handle_data(dcc_bit_encoder_context_t *context) {
      *
      * @param context Pointer to the instance context.
      */
-static void _tick_handle_end_bit(dcc_bit_encoder_context_t *context) {
+static void DCC_ISR_FUNC(_tick_handle_end_bit)(dcc_bit_encoder_context_t *context) {
 
     /* Continuous-clock RailCom: when the output stage is RailCom-capable
      * (railcom_cutout_begin wired), arm the cutout timer, which emits the
@@ -284,7 +284,7 @@ static void _tick_handle_end_bit(dcc_bit_encoder_context_t *context) {
      * @param context Pointer to dcc_bit_encoder_context_t instance.
      * @endverbatim
      */
-void DccBitEncoder_tick_isr(dcc_bit_encoder_context_t *context) {
+void DCC_ISR_FUNC(DccBitEncoder_tick_isr)(dcc_bit_encoder_context_t *context) {
 
     /* Pin toggle has already been performed by the caller using
      * toggle_next. This function only advances the state machine
