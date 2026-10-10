@@ -3494,14 +3494,17 @@ TEST(DccPacketDecoder, svc_direct_bit_clear) {
 // Output-address mode (CV541 bit 6) for accessory decoders
 // ============================================================================
 
+// S-9.2.2 draft, CV1 [513] / CV9 [521] output-address method: CV513 holds the
+// Output Address mod 256 and CV521 the Output Address div 256 (0-7). The decoder
+// answers Packet Address = Output Address + 3 (mod 2048); see Table 9, where
+// user address 1 is Output Address 1 (CV513 = 1, CV521 = 0) and packet address 4.
 static void set_decoder_accessory_output_address(
     interface_dcc_packet_decoder_t *interface,
     uint16_t output_address,
     bool extended) {
 
-    uint16_t cv_value = output_address + 1;
-    mock_cv_values[DCC_CV_ACC_ADDRESS_LSB - 1] = (uint8_t)(cv_value & 0xFF);
-    mock_cv_values[DCC_CV_ACC_ADDRESS_MSB - 1] = (uint8_t)((cv_value >> 8) & 0xFF);
+    mock_cv_values[DCC_CV_ACC_ADDRESS_LSB - 1] = (uint8_t)(output_address % 256);
+    mock_cv_values[DCC_CV_ACC_ADDRESS_MSB - 1] = (uint8_t)(output_address / 256);
     mock_cv_values[DCC_CV_ACC_CONFIG - 1] = DCC_CV541_ACCESSORY_DECODER_BIT
         | DCC_CV541_ADDRESS_METHOD_BIT
         | (extended ? DCC_CV541_BASIC_EXTENDED_BIT : 0);
@@ -3513,7 +3516,7 @@ static void set_decoder_accessory_output_address(
 TEST(DccPacketDecoder, accessory_extended_output_mode_exact_match) {
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    set_decoder_accessory_output_address(&interface, 5, true);
+    set_decoder_accessory_output_address(&interface, 2, true);   /* Output Address 2 = packet address 5 */
 
     uint8_t four[] = {0x81, 0x71, 0x05, 0x00};        /* packet address 4 */
     four[3] = xor_bytes(four, 3);
@@ -3536,7 +3539,7 @@ TEST(DccPacketDecoder, accessory_extended_output_mode_exact_match) {
 TEST(DccPacketDecoder, acc_extended_cv_output_mode_exact_match) {
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    set_decoder_accessory_output_address(&interface, 1501, true);
+    set_decoder_accessory_output_address(&interface, 1498, true);   /* Output Address 1498 = packet address 1501 */
 
     /* Packet address 1500 = 101 110111 00: byte1 = 0 010 0 00 1 = 0x21 -- not ours */
     uint8_t other[] = {0xB7, 0x21, 0xEC, 0x00, 0x42, 0x00};
@@ -3556,9 +3559,9 @@ TEST(DccPacketDecoder, output_address_mode_basic_accessory) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    set_decoder_accessory_output_address(&interface, 4, false);
+    set_decoder_accessory_output_address(&interface, 1, false);   /* Output Address 1 = packet address 4 */
 
-    /* Output address 4 = 9-bit board 1 with A0-A1 = 00
+    /* Packet address 4 = 9-bit board 1 with A0-A1 = 00
      * Byte 0: 10 000001 = 0x81 (A2=1, A3-A7=0)
      * Byte 1: 1 111 1 000 = 0xF8 (A8-A10 inv=111, D=1, R=0, A0-A1=00) */
     uint8_t data[] = {0x81, 0xF8, 0x00};
@@ -3576,9 +3579,9 @@ TEST(DccPacketDecoder, output_address_mode_address_zero) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    set_decoder_accessory_output_address(&interface, 0, false);
+    set_decoder_accessory_output_address(&interface, 2045, false);   /* Output Address 2045 = packet address 0 */
 
-    /* Output address 0 = 9-bit board 0 with A0-A1 = 00
+    /* Packet address 0 = 9-bit board 0 with A0-A1 = 00
      * Byte 0: 10 000000 = 0x80
      * Byte 1: 1 111 1 000 = 0xF8 */
     uint8_t data[] = {0x80, 0xF8, 0x00};
@@ -3594,9 +3597,9 @@ TEST(DccPacketDecoder, output_address_mode_max_2047) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    set_decoder_accessory_output_address(&interface, 2047, false);
+    set_decoder_accessory_output_address(&interface, 2044, false);   /* Output Address 2044 = packet address 2047 */
 
-    /* Output address 2047 = A0-A10 all ones
+    /* Packet address 2047 = A0-A10 all ones
      * Byte 0: 10 111111 = 0xBF (A2-A7 = 111111)
      * Byte 1: 1 000 1 111 = 0x8F (A8-A10 inv=000, D=1, R=1, A0-A1=11) */
     uint8_t data[] = {0xBF, 0x8F, 0x00};
@@ -3615,7 +3618,7 @@ TEST(DccPacketDecoder, output_address_mode_with_r_bit) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    set_decoder_accessory_output_address(&interface, 4, false);
+    set_decoder_accessory_output_address(&interface, 1, false);   /* Output Address 1 = packet address 4 */
 
     /* Same address 4 but with R bit set (byte 2 bit 0 per S-9.2.1 2.4.1)
      * Byte 0: 10 000001 = 0x81
@@ -3627,6 +3630,70 @@ TEST(DccPacketDecoder, output_address_mode_with_r_bit) {
     EXPECT_EQ(acc_basic_callback_count, (uint32_t)1);
     EXPECT_EQ(last_acc_board_address, (uint16_t)4);
     EXPECT_EQ(last_acc_output_pair, (uint8_t)1);
+
+}
+
+// @compliance DCC-S9.2.1-ACC-003
+TEST(DccPacketDecoder, output_address_mode_factory_default_matches_decoder_mode) {
+
+    /* S-9.2.2 draft: "Decoders using either storage format will respond to the same
+     * Accessory Decoder Control Packet when CV1 [513] = 1 and CV9 [521] = 0."
+     * That packet is packet address 4: byte 0 = 10 000001, byte 1 = 1 111 1 00 0 */
+    uint8_t data[] = {0x81, 0xF8, 0x00};
+    data[2] = xor_bytes(data, 2);
+
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_output_address(&interface, 1, false);   /* CV513 = 1, CV521 = 0 */
+    DccPacketDecoder_process_packet(data, 3);
+    EXPECT_EQ(acc_basic_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_acc_board_address, (uint16_t)4);
+
+    reset_mocks();
+    interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, false);          /* CV513 = 1, CV521 = 0 */
+    DccPacketDecoder_process_packet(data, 3);
+    EXPECT_EQ(acc_basic_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_acc_board_address, (uint16_t)1);
+
+}
+
+TEST(DccPacketDecoder, output_address_mode_wraps_past_2047) {
+
+    /* S-9.2.2 draft: Packet Address 0-2 = Output Address 2045-2047 (mod 2048).
+     * Output Address 2047 -> packet address 2: byte 1 = 1 111 1 10 0 */
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_output_address(&interface, 2047, false);
+
+    uint8_t data[] = {0x80, 0xFC, 0x00};
+    data[2] = xor_bytes(data, 2);
+    DccPacketDecoder_process_packet(data, 3);
+
+    EXPECT_EQ(acc_basic_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_acc_board_address, (uint16_t)2);
+
+}
+
+TEST(DccPacketDecoder, output_address_mode_uses_cv521_bits_0_to_2) {
+
+    /* S-9.2.2 draft: CV9 [521] holds Output Address div 256, valid 0-7; 8-255 are
+     * invalid. Only bits 0-2 are used, as in decoder-address mode.
+     * CV513 = 1, CV521 = 0x09 -> Output Address 257 -> packet address 260
+     * = 001 000001 00: byte 0 = 10 000001, byte 1 = 1 110 1 00 0 */
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    mock_cv_values[DCC_CV_ACC_ADDRESS_LSB - 1] = 1;
+    mock_cv_values[DCC_CV_ACC_ADDRESS_MSB - 1] = 0x09;
+    mock_cv_values[DCC_CV_ACC_CONFIG - 1] = DCC_CV541_ACCESSORY_DECODER_BIT | DCC_CV541_ADDRESS_METHOD_BIT;
+    DccPacketDecoder_initialize(&interface);
+
+    uint8_t data[] = {0x81, 0xE8, 0x00};
+    data[2] = xor_bytes(data, 2);
+    DccPacketDecoder_process_packet(data, 3);
+
+    EXPECT_EQ(acc_basic_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_acc_board_address, (uint16_t)260);
 
 }
 
@@ -3748,7 +3815,7 @@ TEST(DccPacketDecoder, acc_basic_cv_write_output_address_mode) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    set_decoder_accessory_output_address(&interface, 4, false);
+    set_decoder_accessory_output_address(&interface, 1, false);   /* Output Address 1 = packet address 4 */
 
     /* Output address 4 = board 1, A1A0 = 00
      * Byte 0: 10 000001 = 0x81
@@ -3769,7 +3836,7 @@ TEST(DccPacketDecoder, acc_basic_cv_write_output_address_wrong_ignored) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
-    set_decoder_accessory_output_address(&interface, 5, false);
+    set_decoder_accessory_output_address(&interface, 2, false);   /* Output Address 2 = packet address 5 */
 
     /* Same packet as above targets output address 4 — we are 5 */
     uint8_t data[] = {0x81, 0xF8, 0xEC, 0x00, 0xAB, 0x00};
@@ -4850,24 +4917,30 @@ TEST(DccPacketDecoder, acc_cv_write_to_each_address_cv_refreshes_cache) {
 
 }
 
-TEST(DccPacketDecoder, output_address_mode_raw_zero_clamps_to_zero) {
+TEST(DccPacketDecoder, output_address_mode_output_zero_is_packet_3) {
 
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
 
-    /* Output-address method with CV513/CV521 both 0: the 1-based store value
-     * is 0, which must clamp to output address 0 rather than wrap. */
+    /* S-9.2.2 draft: Output Address 0 (CV513 = 0, CV521 = 0) is valid and is
+     * packet address 3. The 2012 "CV - 1" rule that clamped it to 0 is gone. */
     mock_cv_values[DCC_CV_ACC_ADDRESS_LSB - 1] = 0;
     mock_cv_values[DCC_CV_ACC_ADDRESS_MSB - 1] = 0;
     mock_cv_values[DCC_CV_ACC_CONFIG - 1] = DCC_CV541_ACCESSORY_DECODER_BIT | DCC_CV541_ADDRESS_METHOD_BIT;
     DccPacketDecoder_initialize(&interface);
 
-    uint8_t data[] = {0x80, 0xF8, 0x00};
-    data[2] = xor_bytes(data, 2);
-    DccPacketDecoder_process_packet(data, 3);
+    /* Packet address 0: byte 1 = 1 111 1 00 0 -- not ours */
+    uint8_t zero[] = {0x80, 0xF8, 0x00};
+    zero[2] = xor_bytes(zero, 2);
+    DccPacketDecoder_process_packet(zero, 3);
+    EXPECT_EQ(acc_basic_callback_count, (uint32_t)0);
 
+    /* Packet address 3: byte 1 = 1 111 1 11 0 */
+    uint8_t three[] = {0x80, 0xFE, 0x00};
+    three[2] = xor_bytes(three, 2);
+    DccPacketDecoder_process_packet(three, 3);
     EXPECT_EQ(acc_basic_callback_count, (uint32_t)1);
-    EXPECT_EQ(last_acc_board_address, (uint16_t)0);
+    EXPECT_EQ(last_acc_board_address, (uint16_t)3);
 
 }
 
@@ -4876,7 +4949,7 @@ TEST(DccPacketDecoder, output_address_mode_null_basic_callback_no_crash) {
     reset_mocks();
     interface_dcc_packet_decoder_t interface = make_interface();
     interface.on_accessory_basic_command = NULL;
-    set_decoder_accessory_output_address(&interface, 4, false);
+    set_decoder_accessory_output_address(&interface, 1, false);   /* Output Address 1 = packet address 4 */
 
     uint8_t data[] = {0x81, 0xF8, 0x00};
     data[2] = xor_bytes(data, 2);

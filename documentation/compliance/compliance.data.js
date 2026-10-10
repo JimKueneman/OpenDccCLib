@@ -3375,7 +3375,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Decoder reconstructs address from inverted bits and fires accessory callback.",
+            "impl": "Decoder reconstructs address from inverted bits and fires accessory callback. Output-address mode answers packet address = CV513 + 256*CV521 + 3 (mod 2048), per the S-9.2.2 draft.",
             "gtest": "",
             "hil": "Accessory-side HIL requires a rig that does not exist. Needs accessory-HIL rig (none exists)."
           },
@@ -3393,6 +3393,11 @@ window.COMPLIANCE =
                 "name": "DccPacketDecoder.output_address_mode_basic_accessory",
                 "file": "dcc_packet_decoder_Test.cxx",
                 "desc": "asserts output-address-mode decode"
+              },
+              {
+                "name": "DccPacketDecoder.output_address_mode_factory_default_matches_decoder_mode",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "CV513=1, CV521=0 answers packet address 4 in both addressing modes"
               }
             ],
             "hilChecks": []
@@ -5445,7 +5450,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "_update_accessory_address parses CV541 mode bits and combines CV513/CV521 into the cached address.",
+            "impl": "_update_accessory_address parses CV541 mode bits and combines CV513/CV521 into the cached address: the board in decoder-address mode, or packet address = Output Address + 3 (mod 2048, CV521 bits 0-2) in output-address mode (S-9.2.2 draft).",
             "gtest": "Host test sets an accessory address exercising both CV513 (low 6 bits) and CV521 (high 3 bits) with CV541 basic mode, then confirms the decoder matches a packet to the combined address.",
             "hil": "Accessory CV access on the wire covered under S-9.2.1."
           },

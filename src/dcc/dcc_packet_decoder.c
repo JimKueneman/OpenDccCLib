@@ -29,7 +29,7 @@
  * dispatch for decoders.
  *
  * @author Jim Kueneman
- * @date 06 Oct 2026
+ * @date 10 Oct 2026
  */
 
 #include "dcc_packet_decoder.h"
@@ -43,7 +43,7 @@
 
     /** @brief Injected callbacks and CV access; set by DccPacketDecoder_initialize. */
 static const interface_dcc_packet_decoder_t *_interface;
-    /** @brief Cached decoder address: CV1, CV17/CV18, or the accessory board/output address from CV513/CV521. */
+    /** @brief Cached decoder address: CV1, CV17/CV18, or from CV513/CV521 the accessory board address (decoder-address mode) or packet address A10..A0 (output-address mode). */
 static dcc_address_t _my_address;
     /** @brief Kind of address held in _my_address; selects which packet types this decoder answers. */
 static dcc_address_type_enum _my_address_type;
@@ -252,10 +252,12 @@ static void _update_primary_address(void) {
      * -# CV521 bits 0-2 = 3 MSBs of 9-bit board address
      * -# 512 board addresses, each with 4 output pairs
      *
-     * Output-address (bit 6 = 1):
-     * -# Accessory-Output = (CV513 + CV521 * 256) - 1
-     * -# 11-bit flat output address (0-2047)
-     * -# Per NMRA S-9.2.2, factory default CV513=1, CV521=0 => output 0
+     * Output-address (bit 6 = 1, S-9.2.2 draft CV1 [513] / CV9 [521]):
+     * -# Output Address = CV513 + (CV521 bits 0-2) * 256 (0-2047)
+     * -# Packet Address A10..A0 = (Output Address + 3) mod 2048
+     * -# Factory default CV513=1, CV521=0 => packet address 4, the same packet
+     *    decoder-address mode answers with CV513=1
+     * -# The cached address is the packet address
      */
 static void _update_accessory_address(void) {
 
@@ -274,8 +276,8 @@ static void _update_accessory_address(void) {
 
         if (_use_output_address) {
 
-            uint16_t raw = ((uint16_t)address_high_byte << 8) | address_low_byte;
-            _my_address = (raw > 0) ? (raw - 1) : 0;
+            uint16_t output_address = ((uint16_t)(address_high_byte & 0x07) << 8) | address_low_byte;
+            _my_address = (output_address + 3) & 0x07FF;
 
         } else {
 
@@ -951,8 +953,8 @@ static uint16_t _accessory_packet_address(const uint8_t *data) {
      * @brief Does an accessory packet's address select this decoder under the active
      *  addressing method?
      *
-     * @details Output-address method: the packet address must equal the cached output
-     * address. Decoder-address method: the board address A10..A2 must equal the cached
+     * @details Output-address method: the packet address must equal the cached packet
+     * address (Output Address + 3, see _update_accessory_address). Decoder-address method: the board address A10..A2 must equal the cached
      * board address, so all four A1 A0 values select this decoder (S-9.2.2 Table 9).
      * Used by basic CV access and by both extended accessory forms.
      *
@@ -981,7 +983,7 @@ static bool _accessory_packet_is_for_me(const uint8_t *data) {
      * starts with 1110 is ops-mode CV access and goes to _dispatch_acc_cv_access when
      * _accessory_packet_is_for_me. Otherwise the 9-bit board address is rebuilt from the
      * inverted high bits and matched against _my_address: in output-address mode (CV541
-     * bit 6) byte 1 bits 2-1 (A1 A0) are folded into an 11-bit output address and bit 0
+     * bit 6) byte 1 bits 2-1 (A1 A0) are folded into the 11-bit packet address and bit 0
      * (R) is reported as output_pair (S-9.2.1 2.4.1); in decoder-address mode the 3-bit
      * field in bits 2-0 is reported as output_pair.
      *
@@ -1029,11 +1031,11 @@ static void _dispatch_accessory_basic(const uint8_t *data, uint8_t byte_count) {
 
         /* Output-address mode (S-9.2.1 2.4.1, byte 2 = 1 A10 A9 A8 D A1 A0 R):
          * bits 2-1 are the two low address bits, bit 0 is R, the output of the
-         * pair. Fold into the 11-bit flat output address. */
-        uint16_t output_address = (board_address << 2) | ((data[1] >> 1) & 0x03);
+         * pair. Fold into the 11-bit packet address A10..A0. */
+        uint16_t packet_address = (board_address << 2) | ((data[1] >> 1) & 0x03);
         output_pair = data[1] & 0x01;
 
-        if (output_address != _my_address) {
+        if (packet_address != _my_address) {
 
             return;
 
@@ -1041,7 +1043,7 @@ static void _dispatch_accessory_basic(const uint8_t *data, uint8_t byte_count) {
 
         if (_interface->on_accessory_basic_command) {
 
-            _interface->on_accessory_basic_command(output_address, output_pair, activate);
+            _interface->on_accessory_basic_command(packet_address, output_pair, activate);
 
         }
 
