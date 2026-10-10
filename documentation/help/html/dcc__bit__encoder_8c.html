@@ -116,9 +116,9 @@ Functions</h2></td></tr>
 <tr class="memitem:aff2d6151714900e676b1485c6c9ca191" id="r_aff2d6151714900e676b1485c6c9ca191"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aff2d6151714900e676b1485c6c9ca191">DccBitEncoder_stop</a> (<a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *context)</td></tr>
 <tr class="memdesc:aff2d6151714900e676b1485c6c9ca191"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop the bit encoder. Halts DCC signal generation.  <br /></td></tr>
 <tr class="separator:aff2d6151714900e676b1485c6c9ca191"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a12ce60dafd4a9139a399288ae6ad49dc" id="r_a12ce60dafd4a9139a399288ae6ad49dc"><td class="memItemLeft" align="right" valign="top">void <a class="el" href="dcc__defines_8h.html#abd2b23761d394a072519e4685bddf9b8">DCC_ISR_FUNC</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a12ce60dafd4a9139a399288ae6ad49dc">DccBitEncoder_tick_isr</a> (<a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *context)</td></tr>
-<tr class="memdesc:a12ce60dafd4a9139a399288ae6ad49dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fixed-period tick ISR entry point — call every 58us from shared timer.  <br /></td></tr>
-<tr class="separator:a12ce60dafd4a9139a399288ae6ad49dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0d4b31b66daad042b600ec4382e90dcb" id="r_a0d4b31b66daad042b600ec4382e90dcb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0d4b31b66daad042b600ec4382e90dcb">DccBitEncoder_tick_isr</a> (<a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *context)</td></tr>
+<tr class="memdesc:a0d4b31b66daad042b600ec4382e90dcb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fixed-period tick ISR entry point — call every 58us from shared timer.  <br /></td></tr>
+<tr class="separator:a0d4b31b66daad042b600ec4382e90dcb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>ISR-level bit encoder for DCC packet transmission. </p>
@@ -245,19 +245,19 @@ Functions</h2></td></tr>
 
 <p>Stop the bit encoder. Halts DCC signal generation. </p>
 <p>Clears running and forces IDLE; the next tick leaves the pin where it is. A packet in flight is abandoned and packet_loaded is left as is.</p>
-<p>Also clears toggle_next. The shared-timer ISR fires the pin toggle for a tick before calling <a class="el" href="#a12ce60dafd4a9139a399288ae6ad49dc" title="Fixed-period tick ISR entry point — call every 58us from shared timer.">DccBitEncoder_tick_isr()</a> to check running (see DccConfig_58us_timer_isr), so a toggle_next left set from the in-flight bit would otherwise survive stop() and fire one more, unwanted edge on the following tick.</p>
+<p>Also clears toggle_next. The shared-timer ISR fires the pin toggle for a tick before calling <a class="el" href="#a0d4b31b66daad042b600ec4382e90dcb" title="Fixed-period tick ISR entry point — call every 58us from shared timer.">DccBitEncoder_tick_isr()</a> to check running (see DccConfig_58us_timer_isr), so a toggle_next left set from the in-flight bit would otherwise survive stop() and fire one more, unwanted edge on the following tick.</p>
 <pre class="fragment">* @param context Pointer to dcc_bit_encoder_context_t instance.
 * </pre> 
 </div>
 </div>
-<a id="a12ce60dafd4a9139a399288ae6ad49dc" name="a12ce60dafd4a9139a399288ae6ad49dc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a12ce60dafd4a9139a399288ae6ad49dc">&#9670;&#160;</a></span>DccBitEncoder_tick_isr()</h2>
+<a id="a0d4b31b66daad042b600ec4382e90dcb" name="a0d4b31b66daad042b600ec4382e90dcb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0d4b31b66daad042b600ec4382e90dcb">&#9670;&#160;</a></span>DccBitEncoder_tick_isr()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="dcc__defines_8h.html#abd2b23761d394a072519e4685bddf9b8">DCC_ISR_FUNC</a> DccBitEncoder_tick_isr </td>
+          <td class="memname">void DccBitEncoder_tick_isr </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structdcc__bit__encoder__context__t.html">dcc_bit_encoder_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
           <td></td>

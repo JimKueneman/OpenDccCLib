@@ -135,12 +135,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a94e59bf10985fbf45281c99d97074f69" id="r_a94e59bf10985fbf45281c99d97074f69"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a94e59bf10985fbf45281c99d97074f69">DccServiceModeCommon_initialize</a> (<a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *context, const <a class="el" href="structinterface__dcc__service__mode__common__t.html">interface_dcc_service_mode_common_t</a> *interface)</td></tr>
 <tr class="memdesc:a94e59bf10985fbf45281c99d97074f69"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the service mode common module.  <br /></td></tr>
 <tr class="separator:a94e59bf10985fbf45281c99d97074f69"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8d045882b9788ed198497c0a7e4dc570" id="r_a8d045882b9788ed198497c0a7e4dc570"><td class="memItemLeft" align="right" valign="top">void <a class="el" href="dcc__defines_8h.html#abd2b23761d394a072519e4685bddf9b8">DCC_ISR_FUNC</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8d045882b9788ed198497c0a7e4dc570">DccServiceModeCommon_ack_sample</a> (<a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *context, uint16_t sense_value)</td></tr>
-<tr class="memdesc:a8d045882b9788ed198497c0a7e4dc570"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sample the current sense input from the timer ISR.  <br /></td></tr>
-<tr class="separator:a8d045882b9788ed198497c0a7e4dc570"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a376a421cef4e04842b73c81e6545047e" id="r_a376a421cef4e04842b73c81e6545047e"><td class="memItemLeft" align="right" valign="top">void <a class="el" href="dcc__defines_8h.html#abd2b23761d394a072519e4685bddf9b8">DCC_ISR_FUNC</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a376a421cef4e04842b73c81e6545047e">DccServiceModeCommon_on_packet_complete</a> (<a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *context)</td></tr>
-<tr class="memdesc:a376a421cef4e04842b73c81e6545047e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Notify that the encoder has finished transmitting a packet.  <br /></td></tr>
-<tr class="separator:a376a421cef4e04842b73c81e6545047e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad657d2ababd994685ae449ff0cff0830" id="r_ad657d2ababd994685ae449ff0cff0830"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad657d2ababd994685ae449ff0cff0830">DccServiceModeCommon_ack_sample</a> (<a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *context, uint16_t sense_value)</td></tr>
+<tr class="memdesc:ad657d2ababd994685ae449ff0cff0830"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sample the current sense input from the timer ISR.  <br /></td></tr>
+<tr class="separator:ad657d2ababd994685ae449ff0cff0830"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a35263ca7dfa36e097a9e16a274a41f5d" id="r_a35263ca7dfa36e097a9e16a274a41f5d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a35263ca7dfa36e097a9e16a274a41f5d">DccServiceModeCommon_on_packet_complete</a> (<a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *context)</td></tr>
+<tr class="memdesc:a35263ca7dfa36e097a9e16a274a41f5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Notify that the encoder has finished transmitting a packet.  <br /></td></tr>
+<tr class="separator:a35263ca7dfa36e097a9e16a274a41f5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad1058492b17c7f3183ebcdd4f47a6abf" id="r_ad1058492b17c7f3183ebcdd4f47a6abf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad1058492b17c7f3183ebcdd4f47a6abf">DccServiceModeCommon_run</a> (<a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *context)</td></tr>
 <tr class="memdesc:ad1058492b17c7f3183ebcdd4f47a6abf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main loop processing for service mode state machine.  <br /></td></tr>
 <tr class="separator:ad1058492b17c7f3183ebcdd4f47a6abf"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -295,14 +295,14 @@ Functions</h2></td></tr>
 * </pre> 
 </div>
 </div>
-<a id="a8d045882b9788ed198497c0a7e4dc570" name="a8d045882b9788ed198497c0a7e4dc570"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8d045882b9788ed198497c0a7e4dc570">&#9670;&#160;</a></span>DccServiceModeCommon_ack_sample()</h2>
+<a id="ad657d2ababd994685ae449ff0cff0830" name="ad657d2ababd994685ae449ff0cff0830"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad657d2ababd994685ae449ff0cff0830">&#9670;&#160;</a></span>DccServiceModeCommon_ack_sample()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="dcc__defines_8h.html#abd2b23761d394a072519e4685bddf9b8">DCC_ISR_FUNC</a> DccServiceModeCommon_ack_sample </td>
+          <td class="memname">void DccServiceModeCommon_ack_sample </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span>, </td>
         </tr>
@@ -327,14 +327,14 @@ Functions</h2></td></tr>
 * </pre> 
 </div>
 </div>
-<a id="a376a421cef4e04842b73c81e6545047e" name="a376a421cef4e04842b73c81e6545047e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a376a421cef4e04842b73c81e6545047e">&#9670;&#160;</a></span>DccServiceModeCommon_on_packet_complete()</h2>
+<a id="a35263ca7dfa36e097a9e16a274a41f5d" name="a35263ca7dfa36e097a9e16a274a41f5d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a35263ca7dfa36e097a9e16a274a41f5d">&#9670;&#160;</a></span>DccServiceModeCommon_on_packet_complete()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="dcc__defines_8h.html#abd2b23761d394a072519e4685bddf9b8">DCC_ISR_FUNC</a> DccServiceModeCommon_on_packet_complete </td>
+          <td class="memname">void DccServiceModeCommon_on_packet_complete </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structdcc__service__mode__common__context__t.html">dcc_service_mode_common_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
           <td></td>

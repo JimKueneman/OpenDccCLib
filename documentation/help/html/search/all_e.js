@@ -8,7 +8,7 @@ var searchData=
   ['service_5ftrack_5',['service_track',['../structdcc__config__t.html#af2fd7842c3df0d9a284dffef270b3b7a',1,'dcc_config_t']]],
   ['shared_5ftimer_5fstart_6',['shared_timer_start',['../structdcc__config__t.html#a29f14d198b5fb55d496ded4a9d50ffa7',1,'dcc_config_t']]],
   ['shared_5ftimer_5fstop_7',['shared_timer_stop',['../structdcc__config__t.html#af67077f96d8c6934b45f1c16c5e381bf',1,'dcc_config_t']]],
-  ['slots_8',['slots',['../structdcc__scheduler__context__t.html#a648576fc316ba14ecea4023f009e8134',1,'dcc_scheduler_context_t']]],
+  ['slots_8',['slots',['../structdcc__scheduler__context__t.html#affea9947f784ef0fd0dd4be1e13ea2a0',1,'dcc_scheduler_context_t']]],
   ['speed_5fsteps_5f28_5f128_9',['speed_steps_28_128',['../structdcc__cv29__flags__t.html#a5529f78cac1b7ea64d33443d3f225c24',1,'dcc_cv29_flags_t']]],
   ['speed_5ftable_5fenabled_10',['speed_table_enabled',['../structdcc__cv29__flags__t.html#a3d5042f37ffee6c88580b6f991938140',1,'dcc_cv29_flags_t']]],
   ['start_5fack_5fpulse_11',['start_ack_pulse',['../structdcc__config__t.html#a802343c7cb8da7591a3d7293a28859da',1,'dcc_config_t::start_ack_pulse'],['../structinterface__dcc__packet__decoder__t.html#a802343c7cb8da7591a3d7293a28859da',1,'interface_dcc_packet_decoder_t::start_ack_pulse']]],

@@ -100,9 +100,9 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a2fb2097027f74c3b7453fde630446b90" id="r_a2fb2097027f74c3b7453fde630446b90"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="structinterface__dcc__railcom__command__station__t.html">interface_dcc_railcom_command_station_t</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2fb2097027f74c3b7453fde630446b90">interface</a></td></tr>
 <tr class="memdesc:a2fb2097027f74c3b7453fde630446b90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Injected dependencies; NULL until <a class="el" href="dcc__railcom__command__station_8c.html#a776e693a4e8313b27479e82317d660f6" title="Initialize the RailCom decoder module.">DccRailcomCommandStation_initialize()</a>.  <br /></td></tr>
 <tr class="separator:a2fb2097027f74c3b7453fde630446b90"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a51154f7bada0345b478ac4b9506626e3" id="r_a51154f7bada0345b478ac4b9506626e3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a51154f7bada0345b478ac4b9506626e3">buffer</a> [USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH]</td></tr>
-<tr class="memdesc:a51154f7bada0345b478ac4b9506626e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Circular buffer of decoded datagrams; the oldest is overwritten when full.  <br /></td></tr>
-<tr class="separator:a51154f7bada0345b478ac4b9506626e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade9f0a3757314e438cddd8790cbe8983" id="r_ade9f0a3757314e438cddd8790cbe8983"><td class="memItemLeft" align="right" valign="top"><a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ade9f0a3757314e438cddd8790cbe8983">buffer</a> [4]</td></tr>
+<tr class="memdesc:ade9f0a3757314e438cddd8790cbe8983"><td class="mdescLeft">&#160;</td><td class="mdescRight">Circular buffer of decoded datagrams; the oldest is overwritten when full.  <br /></td></tr>
+<tr class="separator:ade9f0a3757314e438cddd8790cbe8983"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af239449afdda7f6ab670d3c7a51c097c" id="r_af239449afdda7f6ab670d3c7a51c097c"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af239449afdda7f6ab670d3c7a51c097c">buffer_head</a></td></tr>
 <tr class="memdesc:af239449afdda7f6ab670d3c7a51c097c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Index the next decoded datagram is written at.  <br /></td></tr>
 <tr class="separator:af239449afdda7f6ab670d3c7a51c097c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -116,7 +116,7 @@ Data Fields</h2></td></tr>
 <tr class="memdesc:a37d85179ed533c0cc6a726b70b4123e1"><td class="mdescLeft">&#160;</td><td class="mdescRight">DCC address the next decoded reply is tagged with.  <br /></td></tr>
 <tr class="separator:a37d85179ed533c0cc6a726b70b4123e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a567980c9cf9a73a760490541571501ce" id="r_a567980c9cf9a73a760490541571501ce"><td class="memItemLeft" align="right" valign="top">volatile bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a567980c9cf9a73a760490541571501ce">cutout_pending</a></td></tr>
-<tr class="memdesc:a567980c9cf9a73a760490541571501ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set from ISR context by <a class="el" href="dcc__railcom__command__station_8c.html#aecbeb591700314dcce5a989a0185e11e" title="Begin a RailCom cutout window for a given address.">DccRailcomCommandStation_begin_cutout()</a>; <a class="el" href="dcc__railcom__command__station_8c.html#ac95ba16ba05c0348803ea3c05057b5d7" title="Main loop processing for the RailCom decoder.">DccRailcomCommandStation_run()</a> clears it and drains the UART.  <br /></td></tr>
+<tr class="memdesc:a567980c9cf9a73a760490541571501ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set from ISR context by <a class="el" href="dcc__railcom__command__station_8c.html#ac9bbb255fc79519b1c30026334382ea1" title="Begin a RailCom cutout window for a given address.">DccRailcomCommandStation_begin_cutout()</a>; <a class="el" href="dcc__railcom__command__station_8c.html#ac95ba16ba05c0348803ea3c05057b5d7" title="Main loop processing for the RailCom decoder.">DccRailcomCommandStation_run()</a> clears it and drains the UART.  <br /></td></tr>
 <tr class="separator:a567980c9cf9a73a760490541571501ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -139,14 +139,14 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
-<a id="a51154f7bada0345b478ac4b9506626e3" name="a51154f7bada0345b478ac4b9506626e3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a51154f7bada0345b478ac4b9506626e3">&#9670;&#160;</a></span>buffer</h2>
+<a id="ade9f0a3757314e438cddd8790cbe8983" name="ade9f0a3757314e438cddd8790cbe8983"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade9f0a3757314e438cddd8790cbe8983">&#9670;&#160;</a></span>buffer</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a> buffer[USER_DEFINED_DCC_RAILCOM_BUFFER_DEPTH]</td>
+          <td class="memname"><a class="el" href="structdcc__railcom__datagram__t.html">dcc_railcom_datagram_t</a> buffer[4]</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -231,7 +231,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Set from ISR context by <a class="el" href="dcc__railcom__command__station_8c.html#aecbeb591700314dcce5a989a0185e11e" title="Begin a RailCom cutout window for a given address.">DccRailcomCommandStation_begin_cutout()</a>; <a class="el" href="dcc__railcom__command__station_8c.html#ac95ba16ba05c0348803ea3c05057b5d7" title="Main loop processing for the RailCom decoder.">DccRailcomCommandStation_run()</a> clears it and drains the UART. </p>
+<p>Set from ISR context by <a class="el" href="dcc__railcom__command__station_8c.html#ac9bbb255fc79519b1c30026334382ea1" title="Begin a RailCom cutout window for a given address.">DccRailcomCommandStation_begin_cutout()</a>; <a class="el" href="dcc__railcom__command__station_8c.html#ac95ba16ba05c0348803ea3c05057b5d7" title="Main loop processing for the RailCom decoder.">DccRailcomCommandStation_run()</a> clears it and drains the UART. </p>
 
 </div>
 </div>

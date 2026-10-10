@@ -104,15 +104,15 @@ Functions</h2></td></tr>
 <tr class="memitem:aaa55fa6f8d99cdff46a0f89a30b0e52f" id="r_aaa55fa6f8d99cdff46a0f89a30b0e52f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aaa55fa6f8d99cdff46a0f89a30b0e52f">DccRailcomCutout_initialize</a> (<a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *context, const <a class="el" href="structinterface__dcc__railcom__cutout__t.html">interface_dcc_railcom_cutout_t</a> *interface, uint16_t start_delay, uint16_t uart_rx_delay, uint16_t ch1, uint16_t gap, uint16_t ch2)</td></tr>
 <tr class="memdesc:aaa55fa6f8d99cdff46a0f89a30b0e52f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialize the RailCom cutout module.  <br /></td></tr>
 <tr class="separator:aaa55fa6f8d99cdff46a0f89a30b0e52f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a95229dad0d25611c25564b43e77b3be1" id="r_a95229dad0d25611c25564b43e77b3be1"><td class="memItemLeft" align="right" valign="top">void <a class="el" href="dcc__defines_8h.html#abd2b23761d394a072519e4685bddf9b8">DCC_ISR_FUNC</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a95229dad0d25611c25564b43e77b3be1">DccRailcomCutout_begin</a> (<a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *context)</td></tr>
-<tr class="memdesc:a95229dad0d25611c25564b43e77b3be1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Begin the cutout sequence. Called at the end bit's last edge.  <br /></td></tr>
-<tr class="separator:a95229dad0d25611c25564b43e77b3be1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2decea107226d69c2d5f662246d4b21f" id="r_a2decea107226d69c2d5f662246d4b21f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2decea107226d69c2d5f662246d4b21f">DccRailcomCutout_begin</a> (<a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *context)</td></tr>
+<tr class="memdesc:a2decea107226d69c2d5f662246d4b21f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Begin the cutout sequence. Called at the end bit's last edge.  <br /></td></tr>
+<tr class="separator:a2decea107226d69c2d5f662246d4b21f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a892f38fa631962328f459673999e7b43" id="r_a892f38fa631962328f459673999e7b43"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a892f38fa631962328f459673999e7b43">DccRailcomCutout_cancel</a> (<a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *context)</td></tr>
 <tr class="memdesc:a892f38fa631962328f459673999e7b43"><td class="mdescLeft">&#160;</td><td class="mdescRight">Cancel the cutout sequence. Called on power-off or error.  <br /></td></tr>
 <tr class="separator:a892f38fa631962328f459673999e7b43"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8a2d20d7c809755492ae6ac8f41b18b4" id="r_a8a2d20d7c809755492ae6ac8f41b18b4"><td class="memItemLeft" align="right" valign="top">void <a class="el" href="dcc__defines_8h.html#abd2b23761d394a072519e4685bddf9b8">DCC_ISR_FUNC</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8a2d20d7c809755492ae6ac8f41b18b4">DccRailcomCutout_timer_isr</a> (<a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *context)</td></tr>
-<tr class="memdesc:a8a2d20d7c809755492ae6ac8f41b18b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Timer 2 ISR entry point. Call from the one-shot timer ISR.  <br /></td></tr>
-<tr class="separator:a8a2d20d7c809755492ae6ac8f41b18b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a26bb5c72d9ed137df0092afd80bc42bb" id="r_a26bb5c72d9ed137df0092afd80bc42bb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a26bb5c72d9ed137df0092afd80bc42bb">DccRailcomCutout_timer_isr</a> (<a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *context)</td></tr>
+<tr class="memdesc:a26bb5c72d9ed137df0092afd80bc42bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Timer 2 ISR entry point. Call from the one-shot timer ISR.  <br /></td></tr>
+<tr class="separator:a26bb5c72d9ed137df0092afd80bc42bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a915559a4fb60ff21ef079a3f64a69653" id="r_a915559a4fb60ff21ef079a3f64a69653"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a915559a4fb60ff21ef079a3f64a69653">DccRailcomCutout_is_idle</a> (const <a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *context)</td></tr>
 <tr class="memdesc:a915559a4fb60ff21ef079a3f64a69653"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check if the cutout is idle (no cutout in progress).  <br /></td></tr>
 <tr class="separator:a915559a4fb60ff21ef079a3f64a69653"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -185,14 +185,14 @@ Functions</h2></td></tr>
 * </pre> 
 </div>
 </div>
-<a id="a95229dad0d25611c25564b43e77b3be1" name="a95229dad0d25611c25564b43e77b3be1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a95229dad0d25611c25564b43e77b3be1">&#9670;&#160;</a></span>DccRailcomCutout_begin()</h2>
+<a id="a2decea107226d69c2d5f662246d4b21f" name="a2decea107226d69c2d5f662246d4b21f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2decea107226d69c2d5f662246d4b21f">&#9670;&#160;</a></span>DccRailcomCutout_begin()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="dcc__defines_8h.html#abd2b23761d394a072519e4685bddf9b8">DCC_ISR_FUNC</a> DccRailcomCutout_begin </td>
+          <td class="memname">void DccRailcomCutout_begin </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
           <td></td>
@@ -232,14 +232,14 @@ Functions</h2></td></tr>
 * </pre> 
 </div>
 </div>
-<a id="a8a2d20d7c809755492ae6ac8f41b18b4" name="a8a2d20d7c809755492ae6ac8f41b18b4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8a2d20d7c809755492ae6ac8f41b18b4">&#9670;&#160;</a></span>DccRailcomCutout_timer_isr()</h2>
+<a id="a26bb5c72d9ed137df0092afd80bc42bb" name="a26bb5c72d9ed137df0092afd80bc42bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a26bb5c72d9ed137df0092afd80bc42bb">&#9670;&#160;</a></span>DccRailcomCutout_timer_isr()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void <a class="el" href="dcc__defines_8h.html#abd2b23761d394a072519e4685bddf9b8">DCC_ISR_FUNC</a> DccRailcomCutout_timer_isr </td>
+          <td class="memname">void DccRailcomCutout_timer_isr </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structdcc__railcom__cutout__context__t.html">dcc_railcom_cutout_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
           <td></td>
