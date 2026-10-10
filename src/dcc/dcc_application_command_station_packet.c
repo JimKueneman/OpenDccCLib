@@ -33,7 +33,7 @@
  * with the correct byte layout and XOR error detection byte per NMRA S-9.2.
  *
  * @author Jim Kueneman
- * @date 25 Sep 2026
+ * @date 06 Oct 2026
  */
 
 #include "dcc_application_command_station_packet.h"
@@ -814,14 +814,14 @@ bool DccApplicationCommandStationPacket_load_accessory_basic(dcc_packet_t *packe
      *
      * @details Algorithm:
      * -# Return false unless address <= 2047
-     * -# Byte 0 = 10AAAAAA: low 6 bits of the address
-     * -# Byte 1 = 0AAA0AA1: address bits 8-6 inverted in bits 6-4, bits 10-9 in bits 2-1
+     * -# Byte 0 = 10AAAAAA: address bits A7-A2
+     * -# Byte 1 = 0AAA0AA1: address bits A10-A8 inverted in bits 6-4, A1-A0 in bits 2-1 (S-9.2.1 2.4.2)
      * -# Byte 2 = aspect
      * -# Set byte_count, append the XOR error byte, set the ops preamble length and the default one-shot repeat count
      *
      * @verbatim
      * @param packet Pointer to a dcc_packet_t struct to fill.
-     * @param address 11-bit accessory address (0-2047).
+     * @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.2.
      * @param aspect Signal aspect value (0-255).
      * @endverbatim
      *
@@ -835,11 +835,11 @@ bool DccApplicationCommandStationPacket_load_accessory_extended(dcc_packet_t *pa
 
     }
 
-    /* Byte 1: 10AAAAAA — lower 6 bits of address */
-    packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)(address & 0x3F);
+    /* Byte 1: 10AAAAAA — address bits A7-A2 */
+    packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)((address >> 2) & 0x3F);
 
-    /* Byte 2: 0AAA0AA1 — upper 3 bits inverted (bits 6-4), next 2 bits (bits 2-1) */
-    packet->data[1] = DCC_ACCESSORY_EXTENDED_PREFIX | (uint8_t)((~(address >> 6) & 0x07) << 4) | (uint8_t)(((address >> 9) & 0x03) << 1);
+    /* Byte 2: 0AAA0AA1 — A10-A8 inverted (bits 6-4), A1-A0 (bits 2-1) */
+    packet->data[1] = DCC_ACCESSORY_EXTENDED_PREFIX | (uint8_t)((~(address >> 8) & 0x07) << 4) | (uint8_t)((address & 0x03) << 1);
 
     /* Byte 3: signal aspect */
     packet->data[2] = aspect;
@@ -859,13 +859,13 @@ bool DccApplicationCommandStationPacket_load_accessory_extended(dcc_packet_t *pa
      *
      * @details Algorithm:
      * -# Return false unless address <= 2047
-     * -# Byte 0 = 10AAAAAA: low 6 bits of the address
-     * -# Byte 1 = 0AAA1AAT: address bits 8-6 inverted, bit 3 set (NOP marker), address bits 10-9, T = is_extended
+     * -# Byte 0 = 10AAAAAA: address bits A7-A2
+     * -# Byte 1 = 0AAA1AAT: A10-A8 inverted, bit 3 set (NOP marker), A1-A0, T = is_extended (S-9.2.1 2.4.6)
      * -# Set byte_count, append the XOR error byte, set the ops preamble length and the accessory NOP repeat count (one send)
      *
      * @verbatim
      * @param packet Pointer to a dcc_packet_t struct to fill.
-     * @param address 11-bit accessory address (0-2047).
+     * @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.6.
      * @param is_extended false = basic accessory decoder (T=0); true = extended (T=1).
      * @endverbatim
      *
@@ -879,12 +879,12 @@ bool DccApplicationCommandStationPacket_load_accessory_nop(dcc_packet_t *packet,
 
     }
 
-    /* Byte 1: 10AAAAAA — lower 6 bits of address */
-    packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)(address & 0x3F);
+    /* Byte 1: 10AAAAAA — address bits A7-A2 */
+    packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)((address >> 2) & 0x3F);
 
-    /* Byte 2: 0AAA1AAT — upper 3 bits inverted (bits 6-4), bit 3 = 1 (NOP marker),
-     * next 2 address bits (bits 2-1), T (bit 0): 0 = basic, 1 = extended */
-    packet->data[1] = (uint8_t)((~(address >> 6) & 0x07) << 4) | 0x08 | (uint8_t)(((address >> 9) & 0x03) << 1) | (is_extended ? 0x01 : 0x00);
+    /* Byte 2: 0AAA1AAT — A10-A8 inverted (bits 6-4), bit 3 = 1 (NOP marker),
+     * A1-A0 (bits 2-1), T (bit 0): 0 = basic, 1 = extended */
+    packet->data[1] = (uint8_t)((~(address >> 8) & 0x07) << 4) | 0x08 | (uint8_t)((address & 0x03) << 1) | (is_extended ? 0x01 : 0x00);
 
     packet->byte_count = 2;
     _append_xor(packet);
@@ -954,7 +954,7 @@ bool DccApplicationCommandStationPacket_load_accessory_basic_stop(dcc_packet_t *
      *
      * @verbatim
      * @param packet Pointer to a dcc_packet_t struct to fill.
-     * @param address 11-bit accessory address (0-2047).
+     * @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.2.
      * @endverbatim
      *
      * @return true if the packet was built; false if a parameter is out of range.
@@ -967,11 +967,11 @@ bool DccApplicationCommandStationPacket_load_accessory_extended_stop(dcc_packet_
 
     }
 
-    /* Byte 1: 10AAAAAA — lower 6 bits of address */
-    packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)(address & 0x3F);
+    /* Byte 1: 10AAAAAA — address bits A7-A2 */
+    packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)((address >> 2) & 0x3F);
 
-    /* Byte 2: 0AAA0AA1 — upper 3 bits inverted (bits 6-4), next 2 bits (bits 2-1) */
-    packet->data[1] = DCC_ACCESSORY_EXTENDED_PREFIX | (uint8_t)((~(address >> 6) & 0x07) << 4) | (uint8_t)(((address >> 9) & 0x03) << 1);
+    /* Byte 2: 0AAA0AA1 — A10-A8 inverted (bits 6-4), A1-A0 (bits 2-1) */
+    packet->data[1] = DCC_ACCESSORY_EXTENDED_PREFIX | (uint8_t)((~(address >> 8) & 0x07) << 4) | (uint8_t)((address & 0x03) << 1);
 
     /* Byte 3: aspect 0 (all stop) */
     packet->data[2] = 0x00;
@@ -1047,10 +1047,11 @@ static bool _acc_basic_cv_common(dcc_packet_t *packet, uint16_t board_address, u
      * @brief Common implementation for extended accessory CV ops-mode packets.
      *
      * Builds the 5-byte payload (+ XOR) for extended accessory CV access.
-     * Byte 0-1 encoding matches the extended operating command format.
+     * Byte 0-1 encoding matches the extended operating command format
+     * (S-9.2.1 2.4.3.2).
      *
      * @param packet Pointer to packet struct to fill.
-     * @param address 11-bit address (0-2047).
+     * @param address 11-bit packet address A10..A0 (0-2047).
      * @param cv_instruction_prefix CV instruction prefix byte.
      * @param wire_cv 0-based CV number (cv_number - 1).
      * @param data_byte Data or bit-manipulation byte.
@@ -1060,11 +1061,11 @@ static bool _acc_basic_cv_common(dcc_packet_t *packet, uint16_t board_address, u
      */
 static bool _acc_extended_cv_common(dcc_packet_t *packet, uint16_t address, uint8_t cv_instruction_prefix, uint16_t wire_cv, uint8_t data_byte, bool is_write) {
 
-    /* Byte 0: 10AAAAAA — lower 6 bits of address */
-    packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)(address & 0x3F);
+    /* Byte 0: 10AAAAAA — address bits A7-A2 */
+    packet->data[0] = DCC_ACCESSORY_BASIC_PREFIX | (uint8_t)((address >> 2) & 0x3F);
 
-    /* Byte 1: 0AAA0AA1 — upper 3 bits inverted, next 2 bits */
-    packet->data[1] = DCC_ACCESSORY_EXTENDED_PREFIX | (uint8_t)((~(address >> 6) & 0x07) << 4) | (uint8_t)(((address >> 9) & 0x03) << 1);
+    /* Byte 1: 0AAA0AA1 — A10-A8 inverted (bits 6-4), A1-A0 (bits 2-1) */
+    packet->data[1] = DCC_ACCESSORY_EXTENDED_PREFIX | (uint8_t)((~(address >> 8) & 0x07) << 4) | (uint8_t)((address & 0x03) << 1);
 
     /* Byte 2: 1110CCDD — CV instruction prefix + CV address high 2 bits */
     packet->data[2] = cv_instruction_prefix | (uint8_t)((wire_cv >> 8) & 0x03);
@@ -1189,7 +1190,7 @@ bool DccApplicationCommandStationPacket_load_accessory_basic_cv_bit(dcc_packet_t
      *
      * @verbatim
      * @param packet Pointer to a dcc_packet_t struct to fill.
-     * @param address 11-bit accessory address (0-2047).
+     * @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.3.2.
      * @param cv_number CV number (1-1024, 1-based).
      * @param value Byte value to write.
      * @endverbatim
@@ -1215,7 +1216,7 @@ bool DccApplicationCommandStationPacket_load_accessory_extended_cv_write(dcc_pac
      *
      * @verbatim
      * @param packet Pointer to a dcc_packet_t struct to fill.
-     * @param address 11-bit accessory address (0-2047).
+     * @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.3.2.
      * @param cv_number CV number (1-1024, 1-based).
      * @param value Expected byte value to verify.
      * @endverbatim
@@ -1244,7 +1245,7 @@ bool DccApplicationCommandStationPacket_load_accessory_extended_cv_verify(dcc_pa
      *
      * @verbatim
      * @param packet Pointer to a dcc_packet_t struct to fill.
-     * @param address 11-bit accessory address (0-2047).
+     * @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.3.2.
      * @param cv_number CV number (1-1024, 1-based).
      * @param bit_position Bit position within the CV byte (0-7).
      * @param bit_value Desired bit value (true=1, false=0).

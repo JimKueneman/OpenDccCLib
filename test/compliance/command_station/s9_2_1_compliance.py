@@ -177,29 +177,37 @@ def accessory_basic(board, pair, activate, output=0):
     return framed([b1, b2])
 
 
+def _bits_to_byte(bits):
+    """Pack a list of 8 bits, most significant first, into a byte."""
+    value = 0
+    for bit in bits:
+        value = (value << 1) | (bit & 1)
+    return value
+
+
+def _ext_accessory_address_bytes(address, bit3, bit0):
+    # The two address bytes of every extended-form accessory packet, built bit by bit
+    # from the S-9.2.1 diagrams (2.4.2 p.18, 2.4.3.2, 2.4.6):
+    #   byte 1:  1  0  A7  A6  A5  A4  A3  A2
+    #   byte 2:  0 ~A10 ~A9 ~A8 <bit3> A1 A0 <bit0>
+    # 'address' is the 11-bit packet address A10..A0 (0-2047), the value S-9.2.2
+    # calls the "DCC Packet 11-bit Address". User address N is packet address N + 3
+    # (S-9.2.2 Table 9); the spec's "user address 1" example is 10000001 01110001.
+    a = [(address >> n) & 1 for n in range(11)]      # a[n] = An
+    b1 = _bits_to_byte([1, 0, a[7], a[6], a[5], a[4], a[3], a[2]])
+    b2 = _bits_to_byte([0, 1 - a[10], 1 - a[9], 1 - a[8], bit3, a[1], a[0], bit0])
+    return [b1, b2]
+
+
 def accessory_extended(address, aspect):
-    # S-9.2.1 2.4.2 (p.17):  10 A7A6A5A4A3A2  0  0 Ā10Ā9Ā8 0 A1A0 1  DDDDDDDD
-    # 'address' (0-2047) is the decoder address as the UART/library takes it: bits
-    # 8..0 are the 9-bit board address that sits at wire A10..A2 (2.4.2: user address
-    # 1 = 10000001 01110001, so A1A0 = 00 for 1-511 -- the same address space as
-    # basic; the aspect byte carries the data). For 512-2047 the two extra bits
-    # (address bits 10..9) go to byte 2 bits 2-1, the A1A0 slot 2.4.2 defines there.
-    # byte1's low 6 bits ARE A7..A2 because the board address already sits 2 bits
-    # above the wire LSBs. See project memory "accessory address convention".
-    b1 = 0x80 | (address & 0x3F)                       # A7..A2
-    b2 = (((~(address >> 6) & 0x07) << 4)              # ~A10..A8 (ones' complement)
-          | (((address >> 9) & 0x03) << 1) | 0x01)     # A1A0 = extra bits ; bit0 = 1
-    return framed([b1, b2, aspect & 0xFF])
+    # S-9.2.1 2.4.2:  10 A7..A2  0  0 Ā10Ā9Ā8 0 A1A0 1  XXXXXXXX (aspect)
+    return framed(_ext_accessory_address_bytes(address, 0, 1) + [aspect & 0xFF])
 
 
-def accessory_nop(addr, is_extended):
-    # 10AAAAAA 0 0AAA1AAT : NOP (S-9.2.1 2.4.6), library address convention:
-    # low6 -> byte1, high3 inverted -> byte2[6:4], next2 -> byte2[2:1];
-    # bit3 = 1 (NOP marker), bit0 = T (0 basic, 1 extended).
-    b1 = 0x80 | (addr & 0x3F)
-    b2 = (((~(addr >> 6) & 0x07) << 4) | 0x08
-          | (((addr >> 9) & 0x03) << 1) | (1 if is_extended else 0))
-    return framed([b1, b2])
+def accessory_nop(address, is_extended):
+    # S-9.2.1 2.4.6:  10AAAAAA 0 0ĀĀĀ1AAT : bit 3 = 1 (NOP), T = 0 basic / 1 extended.
+    # 2.4.6 does not label the AA bits; they are A1A0, as in 2.4.1 and 2.4.2.
+    return framed(_ext_accessory_address_bytes(address, 1, 1 if is_extended else 0))
 
 
 def _cv_bit_byte(bit, val, write=True):
@@ -239,12 +247,11 @@ def accessory_basic_cv(board, pair, cv, data, prefix):
 
 
 def accessory_extended_cv(address, cv, data, prefix):
-    # 10AAAAAA 0AAA0AA1 1110CCDD VVVVVVVV DDDDDDDD : extended accessory CV access (S-9.2.1 2.4.2).
-    # byte1: bit7=0, high-3 addr INVERTED, bit3=0, next-2 addr bits, bit0=1.
+    # 10A7..A2 0Ā10Ā9Ā80A1A01 1110CCDD VVVVVVVV DDDDDDDD : extended accessory CV access
+    # (S-9.2.1 2.4.3.2): the same address bytes as the operating packet.
     n = cv - 1
-    b0 = 0x80 | (address & 0x3F)
-    b1 = 0x01 | ((~(address >> 6) & 0x07) << 4) | (((address >> 9) & 0x03) << 1)
-    return framed([b0, b1, prefix | ((n >> 8) & 0x03), n & 0xFF, data & 0xFF])
+    return framed(_ext_accessory_address_bytes(address, 0, 1)
+                  + [prefix | ((n >> 8) & 0x03), n & 0xFF, data & 0xFF])
 
 
 # ----------------------------------------------------------------------------
@@ -310,34 +317,37 @@ EXACT = [
     # @compliance DCC-S9.2.1-CS-008
     ("ACC 1 0 ON",          accessory_basic(1, 0, True), "§2.4",   "accessory basic (inverted high addr bits)"),
     # @compliance DCC-S9.2.1-CS-009
-    ("ACCE 1 5",            accessory_extended(1, 5),  "§2.4",     "accessory extended (inverted high addr bits)"),
+    ("ACCE 1 5",            accessory_extended(1, 5),  "§2.4.2",   "accessory extended packet addr 1 (A1A0 = 01, issue #18)"),
     # @compliance DCC-S9.2.1-CS-012
     ("NOP 1",               accessory_nop(1, False),   "§2.4.6",   "accessory NOP basic (0AAA1AAT, T=0)"),
     # @compliance DCC-S9.2.1-CS-012
     ("NOP 1 E",             accessory_nop(1, True),    "§2.4.6",   "accessory NOP extended (T=1)"),
-    ("NOP 1500 E",          accessory_nop(1500, True), "§2.4.6",   "accessory NOP high addr (mid-2 bits)"),
+    ("NOP 1500 E",          accessory_nop(1500, True), "§2.4.6",   "accessory NOP packet addr 1500 (~A10..A8 = 010)"),
     # --- accessory address boundary coverage ---
-    # The accessory address param is the 9-bit BOARD address (wire A10..A0 = board<<2),
-    # NOT a raw 11-bit value. board >= 64 is the 6-bit rollover where the board vs
-    # raw-11-bit conventions first diverge -- exactly the case addr=1 hid.
+    # BASIC: the address param is the 9-bit BOARD address (wire A10..A0 = board<<2 | pair).
+    # board >= 64 is the 6-bit rollover where the high-3 inverted bits first change.
+    # EXTENDED and NOP: the address param is the 11-bit packet address A10..A0
+    # (S-9.2.1 2.4.2 / S-9.2.2 Table 9), so A1A0 are the two lowest address bits.
     ("ACC 64 0 ON",         accessory_basic(64, 0, True),  "§2.4",   "accessory basic board 64 (6-bit rollover, high-3 inv=1)"),
     ("ACC 256 0 ON",        accessory_basic(256, 0, True), "§2.4",   "accessory basic board 256 (high-3 inv=4)"),
     # @compliance DCC-S9.2.1-CS-008
     ("ACC 511 0 ON",        accessory_basic(511, 0, True), "§2.4",   "accessory basic board 511 (9-bit max)"),
-    ("ACCE 64 5",           accessory_extended(64, 5),     "§2.4.2", "accessory extended board 64 (catches board-vs-raw11 split)"),
-    ("ACCE 256 5",          accessory_extended(256, 5),    "§2.4.2", "accessory extended board 256"),
     # @compliance DCC-S9.2.1-CS-009
-    ("ACCE 511 5",          accessory_extended(511, 5),    "§2.4.2", "accessory extended board 511 (9-bit max)"),
-    # Above 511 the two extra address bits land in byte 2 bits 2-1 (the A1A0 slot of
-    # 2.4.2): 512 is the first such address (bits 2-1 = 01), 2047 the 11-bit maximum.
-    ("ACCE 512 5",          accessory_extended(512, 5),    "§2.4.2", "accessory extended 512 (extra bits -> byte2 bits 2-1 = 01)"),
+    ("ACCE 4 5",            accessory_extended(4, 5),      "§2.4.2", "accessory extended packet addr 4 = spec 'user address 1' (81 71)"),
+    ("ACCE 2 5",            accessory_extended(2, 5),      "§2.4.2", "accessory extended packet addr 2 (A1A0 = 10)"),
+    ("ACCE 3 5",            accessory_extended(3, 5),      "§2.4.2", "accessory extended packet addr 3 (A1A0 = 11)"),
+    ("ACCE 64 5",           accessory_extended(64, 5),     "§2.4.2", "accessory extended packet addr 64 (A7..A2 = 010000)"),
+    ("ACCE 256 5",          accessory_extended(256, 5),    "§2.4.2", "accessory extended packet addr 256 (~A10..A8 = 110)"),
+    ("ACCE 511 5",          accessory_extended(511, 5),    "§2.4.2", "accessory extended packet addr 511 (~A10..A8 = 110, A1A0 = 11)"),
+    ("ACCE 512 5",          accessory_extended(512, 5),    "§2.4.2", "accessory extended packet addr 512 (~A10..A8 = 101)"),
+    ("ACCE 1024 5",         accessory_extended(1024, 5),   "§2.4.2", "accessory extended packet addr 1024 (~A10..A8 = 011)"),
     # @compliance DCC-S9.2.1-CS-009
-    ("ACCE 2047 5",         accessory_extended(2047, 5),   "§2.4.2", "accessory extended 2047 (11-bit max, byte2 bits 2-1 = 11)"),
+    ("ACCE 2047 5",         accessory_extended(2047, 5),   "§2.4.2", "accessory extended 2047 (11-bit max, ~A10..A8 = 000, A1A0 = 11)"),
     # @compliance DCC-S9.2.1-CS-008
     ("ACC 0 0 ON",          accessory_basic(0, 0, True),   "§2.4",   "accessory basic board 0 (low6 = 0, high-3 inv = 111)"),
-    ("NOP 64",              accessory_nop(64, False),      "§2.4.6", "accessory NOP basic board 64"),
-    ("NOP 256 E",           accessory_nop(256, True),      "§2.4.6", "accessory NOP extended board 256"),
-    ("NOP 511 E",           accessory_nop(511, True),      "§2.4.6", "accessory NOP extended board 511"),
+    ("NOP 64",              accessory_nop(64, False),      "§2.4.6", "accessory NOP basic packet addr 64"),
+    ("NOP 256 E",           accessory_nop(256, True),      "§2.4.6", "accessory NOP extended packet addr 256"),
+    ("NOP 511 E",           accessory_nop(511, True),      "§2.4.6", "accessory NOP extended packet addr 511 (A1A0 = 11)"),
     # --- system time (broadcast, S-9.2.1 §2.3.6.3) boundary coverage ---
     ("SYSTIME 0",           system_time(0),       "§2.3.6.3", "system time ms=0 (00 C2 00 00)"),
     ("SYSTIME 1",           system_time(1),       "§2.3.6.3", "system time ms=1 (MSB clear, 00 01)"),

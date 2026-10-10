@@ -33,7 +33,7 @@
  * calls these via an interface struct to build packets on demand.
  *
  * @author Jim Kueneman
- * @date 25 Sep 2026
+ * @date 06 Oct 2026
  */
 
 #ifndef __DCC_APPLICATION_COMMAND_STATION_PACKET__
@@ -310,7 +310,7 @@ extern "C" {
          *     displayed by the addressed decoder.
          *
          * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-         * @param address 11-bit extended accessory address (0-2047).
+         * @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.2.
          * @param aspect Signal aspect value (0-255).
          * @return true if packet was built successfully, false if invalid parameters.
          */
@@ -325,7 +325,7 @@ extern "C" {
          *     the RailCom cutout. The T bit selects the addressed decoder type.
          *
          * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-         * @param address 11-bit accessory address (0-2047).
+         * @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.6.
          * @param is_extended false = basic accessory decoder (T=0); true = extended (T=1).
          *
          * @note Loaded with repeat_count 1 (one send).
@@ -362,7 +362,7 @@ extern "C" {
          *     aspect-0 command.
          *
          * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-         * @param address 11-bit address (0-2047).
+         * @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.2.
          *
          * @note Loaded with repeat_count 1 (one send).
          *
@@ -440,7 +440,7 @@ extern "C" {
          *     while it remains on the main track.
          *
          * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-         * @param address 11-bit address (0-2047).
+         * @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.3.2.
          * @param cv_number CV number (1-1024, 1-based).
          * @param value Byte value to write.
          *
@@ -458,7 +458,7 @@ extern "C" {
          *     the value matches.
          *
          * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-         * @param address 11-bit address (0-2047).
+         * @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.3.2.
          * @param cv_number CV number (1-1024, 1-based).
          * @param value Expected byte value to verify.
          *
@@ -475,7 +475,7 @@ extern "C" {
          *     accessory (signal) decoder on the main track.
          *
          * @param packet Pointer to a @ref dcc_packet_t struct to fill.
-         * @param address 11-bit address (0-2047).
+         * @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.3.2.
          * @param cv_number CV number (1-1024, 1-based).
          * @param bit_position Bit position within the CV byte (0-7).
          * @param bit_value Desired bit value (true=1, false=0).

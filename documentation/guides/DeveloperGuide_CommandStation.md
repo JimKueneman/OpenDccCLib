@@ -53,9 +53,9 @@ Every packet is: preamble (one-bits) | start bit 0 | address byte | start bit 0 
 | Long (14-bit) | 128–10239 | 2, first byte 0xC0–0xE7 | `DCC_ADDRESS_LONG` |
 | Idle | 255 | 1 | `DCC_ADDRESS_IDLE` |
 | Basic accessory | 0–511 (board) | 2 | `DCC_ADDRESS_ACCESSORY` |
-| Extended accessory | 0–2047 | 2 | `DCC_ADDRESS_ACCESSORY_EXTENDED` |
+| Extended accessory | 0–2047 (packet address) | 2 | `DCC_ADDRESS_ACCESSORY_EXTENDED` |
 
-> Accessory builders take the 9-bit **board** address plus an output pair, not a flat 11-bit output number. The library encodes the wire form; do not pre-shift addresses yourself.
+> Basic accessory builders take the 9-bit **board** address plus an output pair. Extended accessory builders and `accessory_nop` take the 11-bit **packet address** A10..A0 that S-9.2.1 2.4.2 puts on the wire (S-9.2.2 Table 9: user address N is packet address N + 3, so user address 1 is packet address 4). The library encodes the wire form; do not pre-shift addresses yourself.
 
 ### 2.4 Instruction Types
 

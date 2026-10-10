@@ -127,7 +127,7 @@ Type `HELP` for the full list. Commands answer `OK: ...` or `ERR: ...`; `STATUS`
 | `ESTOP [addr]` | Emergency stop, one loco or broadcast. An addressed ESTOP replaces that loco's speed refresh slot with a one-shot, so issue `SPEED` again afterwards |
 | `STOP` | Broadcast controlled stop |
 | `FUNC <addr> <0-68> <ON|OFF>` | Function on or off; auto-refreshed the same way |
-| `ACC <board> <pair> <ON|OFF>` / `ACCE <addr> <aspect>` / `NOP <addr> [E]` | Basic accessory, extended accessory, accessory NOP |
+| `ACC <board> <pair> <ON|OFF>` / `ACCE <addr> <aspect>` / `NOP <addr> [E]` | Basic accessory (board address), extended accessory and accessory NOP (11-bit packet address A10..A0) |
 | `ACC CV ...` / `ACCE CV ...` | Accessory operations-mode CV write, verify, bit |
 | `CV WRITE|VERIFY <addr> <cv> <value>` / `CV BIT <addr> <cv> <bit> <0|1>` | Loco operations-mode CV access |
 | `CONSIST <addr> SET <ca> [NORMAL|REVERSE]` / `CONSIST <addr> CLEAR` | Advanced consist |

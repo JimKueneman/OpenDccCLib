@@ -1194,16 +1194,18 @@ TEST(DccPacketDecoder, extended_accessory) {
     interface_dcc_packet_decoder_t interface = make_interface();
     set_decoder_accessory_address(&interface, 1, true);
 
-    /* Extended accessory: 10AAAAAA 0AAA0AA1 DDDDDDDD
-     * Byte 0: 10 000001 = 0x81 (low 6 addr bits = 1)
-     * Byte 1: 0111 0001 = 0x71 (high inv=111→real=000, addr ext bits=00, format=1)
+    /* Extended accessory (S-9.2.1 2.4.2): 10 A7..A2, 0 ~A10~A9~A8 0 A1 A0 1, aspect
+     * Byte 0: 10 000001 = 0x81 (A7..A2 = 000001)
+     * Byte 1: 0 111 0 00 1 = 0x71 (A10..A8 = 000, A1A0 = 00)
      * Byte 2: aspect = 0x05
+     * Packet address 4 = board 1, A1A0 = 00
      */
     uint8_t data[] = {0x81, 0x71, 0x05, 0x00};
     data[3] = xor_bytes(data, 3);
     DccPacketDecoder_process_packet(data, 4);
 
     EXPECT_EQ(acc_ext_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_acc_ext_address, (uint16_t)4);
     EXPECT_EQ(last_acc_ext_aspect, (uint8_t)0x05);
 
 }
@@ -2615,17 +2617,17 @@ TEST(DccPacketDecoder, accessory_extended_other_address_ignored) {
     interface_dcc_packet_decoder_t interface = make_interface();
     set_decoder_accessory_address(&interface, 1, true);
 
-    /* Extended: byte0 = 10AAAAAA (low 6), byte1 = 0AAA0AA1 (high 3 inverted, bits 9-10), byte2 = aspect */
-    uint8_t other[] = {0x82, 0x71, 0x05, 0x00};       /* address 2 */
+    /* Extended: byte0 = 10 A7..A2, byte1 = 0 ~A10~A9~A8 0 A1 A0 1, byte2 = aspect */
+    uint8_t other[] = {0x82, 0x71, 0x05, 0x00};       /* packet address 8 = board 2 */
     other[3] = xor_bytes(other, 3);
     DccPacketDecoder_process_packet(other, 4);
     EXPECT_EQ(acc_ext_callback_count, (uint32_t)0);
 
-    uint8_t mine[] = {0x81, 0x71, 0x05, 0x00};        /* address 1 */
+    uint8_t mine[] = {0x81, 0x71, 0x05, 0x00};        /* packet address 4 = board 1 */
     mine[3] = xor_bytes(mine, 3);
     DccPacketDecoder_process_packet(mine, 4);
     EXPECT_EQ(acc_ext_callback_count, (uint32_t)1);
-    EXPECT_EQ(last_acc_ext_address, (uint16_t)1);
+    EXPECT_EQ(last_acc_ext_address, (uint16_t)4);
     EXPECT_EQ(last_acc_ext_aspect, (uint8_t)5);
 }
 
@@ -2680,6 +2682,78 @@ TEST(DccPacketDecoder, accessory_extended_null_callback) {
 
     EXPECT_EQ(acc_ext_callback_count, (uint32_t)0);
 
+}
+
+// ============================================================================
+// Extended accessory address layout (S-9.2.1 2.4.2, S-9.2.2 Table 9)
+// Packet address A10..A0: byte0 = 10 A7..A2, byte1 = 0 ~A10~A9~A8 0 A1 A0 1
+// ============================================================================
+
+// @compliance DCC-S9.2.1-ACC-004
+TEST(DccPacketDecoder, accessory_extended_board_mode_accepts_all_four_a1_a0) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, true);   /* board 1 = packet addresses 4-7 */
+
+    const uint8_t byte1[] = {0x71, 0x73, 0x75, 0x77};     /* A1A0 = 00, 01, 10, 11 */
+
+    for (int index = 0; index < 4; index++) {
+
+        uint8_t data[] = {0x81, byte1[index], 0x05, 0x00};
+        data[3] = xor_bytes(data, 3);
+        DccPacketDecoder_process_packet(data, 4);
+        EXPECT_EQ(acc_ext_callback_count, (uint32_t)(index + 1));
+        EXPECT_EQ(last_acc_ext_address, (uint16_t)(4 + index));
+
+    }
+}
+
+// @compliance DCC-S9.2.1-DEC-018
+TEST(DccPacketDecoder, accessory_extended_board_mode_ignores_neighbour_boards) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, true);
+
+    uint8_t below[] = {0x80, 0x77, 0x05, 0x00};       /* packet address 3 = board 0 */
+    below[3] = xor_bytes(below, 3);
+    DccPacketDecoder_process_packet(below, 4);
+
+    uint8_t above[] = {0x82, 0x71, 0x05, 0x00};       /* packet address 8 = board 2 */
+    above[3] = xor_bytes(above, 3);
+    DccPacketDecoder_process_packet(above, 4);
+
+    EXPECT_EQ(acc_ext_callback_count, (uint32_t)0);
+}
+
+// @compliance DCC-S9.2.1-ACC-004
+TEST(DccPacketDecoder, accessory_extended_board_mode_high_board_inverted_bits) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 375, true); /* board 375 = packet addresses 1500-1503 */
+
+    /* Packet address 1503 = 101 110111 11: byte0 = 10 110111, byte1 = 0 010 0 11 1 */
+    uint8_t data[] = {0xB7, 0x27, 0x09, 0x00};
+    data[3] = xor_bytes(data, 3);
+    DccPacketDecoder_process_packet(data, 4);
+
+    EXPECT_EQ(acc_ext_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_acc_ext_address, (uint16_t)1503);
+    EXPECT_EQ(last_acc_ext_aspect, (uint8_t)0x09);
+}
+
+TEST(DccPacketDecoder, acc_extended_cv_board_mode_any_a1_a0) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_address(&interface, 1, true);
+
+    /* S-9.2.1 2.4.3.2: same address bytes as the operating packet.
+     * Packet address 7 (board 1, A1A0 = 11), CV 1 write 0x42 */
+    uint8_t data[] = {0x81, 0x77, 0xEC, 0x00, 0x42, 0x00};
+    data[5] = xor_bytes(data, 5);
+    DccPacketDecoder_process_packet(data, 6);
+
+    EXPECT_EQ(acc_cv_write_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_acc_cv_write_value, (uint8_t)0x42);
 }
 
 // ============================================================================
@@ -3435,6 +3509,48 @@ static void set_decoder_accessory_output_address(
 
 }
 
+// @compliance DCC-S9.2.1-DEC-018
+TEST(DccPacketDecoder, accessory_extended_output_mode_exact_match) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_output_address(&interface, 5, true);
+
+    uint8_t four[] = {0x81, 0x71, 0x05, 0x00};        /* packet address 4 */
+    four[3] = xor_bytes(four, 3);
+    DccPacketDecoder_process_packet(four, 4);
+
+    uint8_t six[] = {0x81, 0x75, 0x05, 0x00};         /* packet address 6 */
+    six[3] = xor_bytes(six, 3);
+    DccPacketDecoder_process_packet(six, 4);
+
+    EXPECT_EQ(acc_ext_callback_count, (uint32_t)0);
+
+    uint8_t five[] = {0x81, 0x73, 0x05, 0x00};        /* packet address 5 */
+    five[3] = xor_bytes(five, 3);
+    DccPacketDecoder_process_packet(five, 4);
+
+    EXPECT_EQ(acc_ext_callback_count, (uint32_t)1);
+    EXPECT_EQ(last_acc_ext_address, (uint16_t)5);
+}
+
+TEST(DccPacketDecoder, acc_extended_cv_output_mode_exact_match) {
+    reset_mocks();
+    interface_dcc_packet_decoder_t interface = make_interface();
+    set_decoder_accessory_output_address(&interface, 1501, true);
+
+    /* Packet address 1500 = 101 110111 00: byte1 = 0 010 0 00 1 = 0x21 -- not ours */
+    uint8_t other[] = {0xB7, 0x21, 0xEC, 0x00, 0x42, 0x00};
+    other[5] = xor_bytes(other, 5);
+    DccPacketDecoder_process_packet(other, 6);
+    EXPECT_EQ(acc_cv_write_callback_count, (uint32_t)0);
+
+    /* Packet address 1501: A1A0 = 01 -> byte1 = 0x23 */
+    uint8_t mine[] = {0xB7, 0x23, 0xEC, 0x00, 0x42, 0x00};
+    mine[5] = xor_bytes(mine, 5);
+    DccPacketDecoder_process_packet(mine, 6);
+    EXPECT_EQ(acc_cv_write_callback_count, (uint32_t)1);
+}
+
 // @compliance DCC-S9.2.1-ACC-003
 TEST(DccPacketDecoder, output_address_mode_basic_accessory) {
 
@@ -3675,8 +3791,8 @@ TEST(DccPacketDecoder, acc_extended_cv_write) {
     set_decoder_accessory_address(&interface, 1, true);
 
     /* Extended accessory CV write: 6-byte packet
-     * Byte 0: 10 000001 = 0x81 (low 6 addr bits = 1)
-     * Byte 1: 0 111 0 00 1 = 0x71 (high inv=111→real=000, bits 9-10=00)
+     * Byte 0: 10 000001 = 0x81 (A7..A2 = 000001)
+     * Byte 1: 0 111 0 00 1 = 0x71 (A10..A8 = 000, A1A0 = 00): packet address 4 = board 1
      * Byte 2: 0xEC (CV long write, CV high bits = 00)
      * Byte 3: 0x00 (CV low → CV 1)
      * Byte 4: 0x99 (value)
@@ -3739,7 +3855,7 @@ TEST(DccPacketDecoder, acc_extended_cv_wrong_address_ignored) {
     interface_dcc_packet_decoder_t interface = make_interface();
     set_decoder_accessory_address(&interface, 2, true);
 
-    /* CV write for extended address 1 — we are 2 */
+    /* CV write for packet address 4 (board 1) — we are board 2 */
     uint8_t data[] = {0x81, 0x71, 0xEC, 0x00, 0x99, 0x00};
     data[5] = xor_bytes(data, 5);
     DccPacketDecoder_process_packet(data, 6);

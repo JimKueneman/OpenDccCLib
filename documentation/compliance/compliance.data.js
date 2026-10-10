@@ -3419,13 +3419,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "ok",
+            "state": "planned",
             "note": ""
           },
           "detail": {
-            "impl": "load_accessory_extended builds two address bytes plus an aspect byte.",
+            "impl": "load_accessory_extended takes the 11-bit packet address A10..A0: byte 1 = 10 A7..A2, byte 2 = 0 ~A10..A8 0 A1A0 1, then the aspect byte (issue #18, 2026-10-06).",
             "gtest": "",
-            "hil": ""
+            "hil": "Vectors updated 2026-10-06 for issue #18 (extended/NOP address = 11-bit packet address A10..A0); awaiting a bench run on reflashed CS firmware."
           },
           "refs": {
             "symbols": [
@@ -3436,18 +3436,33 @@ window.COMPLIANCE =
                 "name": "DccPacketEncoder.accessory_extended_addr0_aspect5",
                 "file": "dcc_application_command_station_packet_Test.cxx",
                 "desc": "asserts aspect/address layout"
+              },
+              {
+                "name": "DccPacketEncoder.accessory_extended_spec_user_address_1",
+                "file": "dcc_application_command_station_packet_Test.cxx",
+                "desc": "packet address 4 = spec 'user address 1' (81 71)"
+              },
+              {
+                "name": "DccPacketEncoder.accessory_extended_low_two_bits_are_a1_a0",
+                "file": "dcc_application_command_station_packet_Test.cxx",
+                "desc": "packet addresses 1-3 set A1A0 in byte 2 bits 2-1"
               }
             ],
             "hilChecks": [
               {
-                "label": "accessory extended (inverted high addr bits)",
+                "label": "accessory extended packet addr 1 (A1A0 = 01, issue #18)",
                 "file": "command_station/s9_2_1_compliance.py",
                 "desc": "exact-byte check"
               },
               {
-                "label": "accessory extended board 511 (9-bit max)",
+                "label": "accessory extended packet addr 4 = spec 'user address 1' (81 71)",
                 "file": "command_station/s9_2_1_compliance.py",
-                "desc": "9-bit max boundary"
+                "desc": "spec example"
+              },
+              {
+                "label": "accessory extended 2047 (11-bit max, ~A10..A8 = 000, A1A0 = 11)",
+                "file": "command_station/s9_2_1_compliance.py",
+                "desc": "11-bit max boundary"
               }
             ]
           }
@@ -3477,7 +3492,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "Decoder reconstructs the extended address and fires the aspect callback.",
+            "impl": "Decoder rebuilds the 11-bit packet address A10..A0 (S-9.2.1 2.4.2) and reports it with the aspect; in decoder-address mode all four A1A0 values of the board match (S-9.2.2 Table 9).",
             "gtest": "",
             "hil": "Accessory-side HIL requires a rig that does not exist. Needs accessory-HIL rig (none exists)."
           },
@@ -3490,6 +3505,16 @@ window.COMPLIANCE =
                 "name": "DccPacketDecoder.extended_accessory",
                 "file": "dcc_packet_decoder_Test.cxx",
                 "desc": "asserts decoded extended accessory aspect"
+              },
+              {
+                "name": "DccPacketDecoder.accessory_extended_board_mode_accepts_all_four_a1_a0",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "board 1 answers packet addresses 4-7"
+              },
+              {
+                "name": "DccPacketDecoder.accessory_extended_board_mode_high_board_inverted_bits",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "board 375 decodes packet address 1503"
               }
             ],
             "hilChecks": []
@@ -3565,13 +3590,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "ok",
+            "state": "planned",
             "note": ""
           },
           "detail": {
             "impl": "load_accessory_extended_stop emits aspect byte 0x00.",
             "gtest": "",
-            "hil": "s9_2_1 exact-byte vector: ACCE <addr> 0 emits the aspect-0 all-stop packet, matching the independent extended-accessory encoder. (Validated on the bench 2026-06-26.)"
+            "hil": "Vectors updated 2026-10-06 for issue #18 (extended/NOP address = 11-bit packet address A10..A0); awaiting a bench run on reflashed CS firmware."
           },
           "refs": {
             "symbols": [
@@ -3612,13 +3637,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "ok",
+            "state": "planned",
             "note": ""
           },
           "detail": {
-            "impl": "load_accessory_nop builds two bytes with NOP marker bit3=1 and T basic/extended. Matrix said unimplemented; function exists.",
+            "impl": "load_accessory_nop builds 10 A7..A2, 0 ~A10..A8 1 A1A0 T from the 11-bit packet address A10..A0 (issue #18).",
             "gtest": "",
-            "hil": ""
+            "hil": "Vectors updated 2026-10-06 for issue #18 (extended/NOP address = 11-bit packet address A10..A0); awaiting a bench run on reflashed CS firmware."
           },
           "refs": {
             "symbols": [
@@ -3937,13 +3962,13 @@ window.COMPLIANCE =
             "note": ""
           },
           "hil": {
-            "state": "ok",
+            "state": "planned",
             "note": ""
           },
           "detail": {
-            "impl": "load_accessory_extended_cv_* build a 5-byte extended accessory CV instruction.",
+            "impl": "load_accessory_extended_cv_* build a 5-byte extended accessory CV instruction; address bytes as CS-009 (S-9.2.1 2.4.3.2).",
             "gtest": "",
-            "hil": "s9_2_1 exact-byte vectors: ACCE CV WRITE/VERIFY/BIT emit the 5-byte extended accessory CV instruction, matching the independent encoder. (Validated on the bench 2026-06-26.)"
+            "hil": "Vectors updated 2026-10-06 for issue #18 (extended/NOP address = 11-bit packet address A10..A0); awaiting a bench run on reflashed CS firmware."
           },
           "refs": {
             "symbols": [
@@ -4916,7 +4941,7 @@ window.COMPLIANCE =
             "note": ""
           },
           "detail": {
-            "impl": "_dispatch_accessory_basic compares the board address, or the 11-bit output address (byte 2 bits 2-1 = A1 A0, bit 0 = R per 2.4.1), with the cached CV513/CV521 address; _dispatch_accessory_extended compares the extended address. Non-matching packets are dropped before any callback.",
+            "impl": "_dispatch_accessory_basic compares the board address, or the 11-bit output address (byte 2 bits 2-1 = A1 A0, bit 0 = R per 2.4.1), with the cached CV513/CV521 address; _dispatch_accessory_extended matches the packet address A10..A0 (board = A10..A2 in decoder-address mode). Both use _accessory_packet_is_for_me. Non-matching packets are dropped before any callback.",
             "gtest": "",
             "hil": "Checks written 2026-09-25 (mobile_decoder rig); awaiting a bench run on reflashed decoder firmware."
           },
@@ -4936,6 +4961,16 @@ window.COMPLIANCE =
                 "desc": "extended command to another address is dropped, own address delivered"
               },
               {
+                "name": "DccPacketDecoder.accessory_extended_board_mode_ignores_neighbour_boards",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "packet addresses 3 and 8 are dropped by board 1"
+              },
+              {
+                "name": "DccPacketDecoder.accessory_extended_output_mode_exact_match",
+                "file": "dcc_packet_decoder_Test.cxx",
+                "desc": "output-address mode matches the packet address exactly"
+              },
+              {
                 "name": "DccPacketDecoder.output_address_mode_with_r_bit",
                 "file": "dcc_packet_decoder_Test.cxx",
                 "desc": "output-address mode reads A1A0 from bits 2-1 and R from bit 0"
@@ -4943,9 +4978,9 @@ window.COMPLIANCE =
             ],
             "hilChecks": [
               {
-                "label": "accessory addr filter: board 7 basic + ext 7 decode, board/ext 8 silent",
+                "label": "accessory addr filter: board 7 basic + ext 28/31 decode, board 8 basic and ext 27/32 silent",
                 "file": "mobile_decoder/s9_2_1_compliance.py",
-                "desc": "ADDR 7 ACC/ACCE; packets to 7 produce RECV ACC/ACCE lines, packets to 8 produce nothing"
+                "desc": "ADDR 7 ACC/ACCE; basic board 7 and extended packet addresses 28-31 produce RECV lines, board 8 and packet addresses 27/32 produce nothing"
               }
             ]
           }

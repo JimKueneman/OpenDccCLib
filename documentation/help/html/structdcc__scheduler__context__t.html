@@ -107,7 +107,7 @@ Data Fields</h2></td></tr>
 <tr class="memdesc:af47d517b2957ae1e2c0364dae2f9a3ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Round-robin cursor of the burst pass and of the flat ring; an insert moves it to the changed slot.  <br /></td></tr>
 <tr class="separator:af47d517b2957ae1e2c0364dae2f9a3ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abe8caafdaa8182c51308431fccbd2e26" id="r_abe8caafdaa8182c51308431fccbd2e26"><td class="memItemLeft" align="right" valign="top">volatile bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abe8caafdaa8182c51308431fccbd2e26">packet_complete_flag</a></td></tr>
-<tr class="memdesc:abe8caafdaa8182c51308431fccbd2e26"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set from ISR context by <a class="el" href="dcc__scheduler_8c.html#a0c05e32e078c061010295f17639909a6" title="Notify the scheduler that the bit encoder finished a packet (ISR context).">DccScheduler_on_packet_complete()</a>, consumed by <a class="el" href="dcc__scheduler_8c.html#aff5c8bfa16df3996ed7a481da02393d5" title="Main loop processing. Selects next packet and feeds to bit encoder.">DccScheduler_run()</a>.  <br /></td></tr>
+<tr class="memdesc:abe8caafdaa8182c51308431fccbd2e26"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set from ISR context by <a class="el" href="dcc__scheduler_8c.html#a55e1db65eb104238f8b3c68ee346bd9e" title="Notify the scheduler that the bit encoder finished a packet (ISR context).">DccScheduler_on_packet_complete()</a>, consumed by <a class="el" href="dcc__scheduler_8c.html#aff5c8bfa16df3996ed7a481da02393d5" title="Main loop processing. Selects next packet and feeds to bit encoder.">DccScheduler_run()</a>.  <br /></td></tr>
 <tr class="separator:abe8caafdaa8182c51308431fccbd2e26"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8844f139c2cb92b7aced5cfe1149a95" id="r_af8844f139c2cb92b7aced5cfe1149a95"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af8844f139c2cb92b7aced5cfe1149a95">first_packet_sent</a></td></tr>
 <tr class="memdesc:af8844f139c2cb92b7aced5cfe1149a95"><td class="mdescLeft">&#160;</td><td class="mdescRight">false until the first packet is loaded; <a class="el" href="dcc__scheduler_8c.html#aff5c8bfa16df3996ed7a481da02393d5" title="Main loop processing. Selects next packet and feeds to bit encoder.">DccScheduler_run()</a> does not wait for packet_complete_flag before that.  <br /></td></tr>
@@ -195,7 +195,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Set from ISR context by <a class="el" href="dcc__scheduler_8c.html#a0c05e32e078c061010295f17639909a6" title="Notify the scheduler that the bit encoder finished a packet (ISR context).">DccScheduler_on_packet_complete()</a>, consumed by <a class="el" href="dcc__scheduler_8c.html#aff5c8bfa16df3996ed7a481da02393d5" title="Main loop processing. Selects next packet and feeds to bit encoder.">DccScheduler_run()</a>. </p>
+<p>Set from ISR context by <a class="el" href="dcc__scheduler_8c.html#a55e1db65eb104238f8b3c68ee346bd9e" title="Notify the scheduler that the bit encoder finished a packet (ISR context).">DccScheduler_on_packet_complete()</a>, consumed by <a class="el" href="dcc__scheduler_8c.html#aff5c8bfa16df3996ed7a481da02393d5" title="Main loop processing. Selects next packet and feeds to bit encoder.">DccScheduler_run()</a>. </p>
 
 </div>
 </div>

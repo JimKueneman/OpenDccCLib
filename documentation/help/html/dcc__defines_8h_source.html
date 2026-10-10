@@ -528,13 +528,21 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00634" name="l00634"></a><span class="lineno">  634</span><span class="comment">// Packet-Timeout Fail-Safe (S-9.2.4 §4)</span></div>
 <div class="line"><a id="l00635" name="l00635"></a><span class="lineno">  635</span><span class="comment">// =============================================================================</span></div>
 <div class="line"><a id="l00636" name="l00636"></a><span class="lineno">  636</span> </div>
-<div class="line"><a id="l00645" name="l00645"></a><span class="lineno"><a class="line" href="dcc__defines_8h.html#a0d21a7a37f877e892ec1850c84f5fba7">  645</a></span><span class="preprocessor">#define DCC_FAILSAFE_CV11_UNIT_US           100000u</span></div>
-<div class="line"><a id="l00646" name="l00646"></a><span class="lineno">  646</span> </div>
-<div class="line"><a id="l00647" name="l00647"></a><span class="lineno">  647</span><span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a id="l00648" name="l00648"></a><span class="lineno">  648</span>}</div>
-<div class="line"><a id="l00649" name="l00649"></a><span class="lineno">  649</span><span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00637" name="l00637"></a><span class="lineno">  637</span><span class="comment">// =============================================================================</span></div>
+<div class="line"><a id="l00638" name="l00638"></a><span class="lineno">  638</span><span class="comment">// Placement of the timer ISR paths</span></div>
+<div class="line"><a id="l00639" name="l00639"></a><span class="lineno">  639</span><span class="comment">// =============================================================================</span></div>
+<div class="line"><a id="l00640" name="l00640"></a><span class="lineno">  640</span> </div>
+<div class="line"><a id="l00647" name="l00647"></a><span class="lineno">  647</span><span class="preprocessor">#ifndef DCC_ISR_FUNC</span></div>
+<div class="line"><a id="l00648" name="l00648"></a><span class="lineno"><a class="line" href="dcc__defines_8h.html#abd2b23761d394a072519e4685bddf9b8">  648</a></span><span class="preprocessor">#define DCC_ISR_FUNC(func_name) func_name</span></div>
+<div class="line"><a id="l00649" name="l00649"></a><span class="lineno">  649</span><span class="preprocessor">#endif</span></div>
 <div class="line"><a id="l00650" name="l00650"></a><span class="lineno">  650</span> </div>
-<div class="line"><a id="l00651" name="l00651"></a><span class="lineno">  651</span><span class="preprocessor">#endif </span><span class="comment">/* __DCC_DEFINES__ */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00659" name="l00659"></a><span class="lineno"><a class="line" href="dcc__defines_8h.html#a0d21a7a37f877e892ec1850c84f5fba7">  659</a></span><span class="preprocessor">#define DCC_FAILSAFE_CV11_UNIT_US           100000u</span></div>
+<div class="line"><a id="l00660" name="l00660"></a><span class="lineno">  660</span> </div>
+<div class="line"><a id="l00661" name="l00661"></a><span class="lineno">  661</span><span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a id="l00662" name="l00662"></a><span class="lineno">  662</span>}</div>
+<div class="line"><a id="l00663" name="l00663"></a><span class="lineno">  663</span><span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00664" name="l00664"></a><span class="lineno">  664</span> </div>
+<div class="line"><a id="l00665" name="l00665"></a><span class="lineno">  665</span><span class="preprocessor">#endif </span><span class="comment">/* __DCC_DEFINES__ */</span><span class="preprocessor"></span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!doctype html>
 <html>

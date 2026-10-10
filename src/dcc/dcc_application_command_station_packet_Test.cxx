@@ -666,6 +666,9 @@ TEST(DccPacketEncoder, accessory_basic_rejects_invalid_output) {
 // Extended accessory tests
 // ============================================================================
 
+// S-9.2.1 2.4.2: {preamble} 0 10A7A6A5A4A3A2 0 0~A10~A9~A8 0 A1A0 1 0 XXXXXXXX 0 EEEEEEEE 1
+// The address parameter is the 11-bit packet address A10..A0.
+
 // @compliance DCC-S9.2.1-CS-009
 TEST(DccPacketEncoder, accessory_extended_addr0_aspect5) {
     dcc_packet_t pkt;
@@ -674,9 +677,9 @@ TEST(DccPacketEncoder, accessory_extended_addr0_aspect5) {
     EXPECT_TRUE(ok);
     /* repeat_count: one-shot default */
     EXPECT_EQ(pkt.repeat_count, 2);
-    /* Byte 1: 10 000000 = 0x80 */
+    /* Byte 1: 10 000000 = 0x80 (A7..A2 = 0) */
     EXPECT_EQ(pkt.data[0], 0x80);
-    /* Byte 2: 0 111 0 00 1 = 0x71 (high inverted = ~0 & 7 = 7, bits 9-10 = 0) */
+    /* Byte 2: 0 111 0 00 1 = 0x71 (~A10..A8 = 111, A1A0 = 00) */
     EXPECT_EQ(pkt.data[1], 0x71);
     /* Byte 3: aspect = 5 */
     EXPECT_EQ(pkt.data[2], 0x05);
@@ -684,16 +687,82 @@ TEST(DccPacketEncoder, accessory_extended_addr0_aspect5) {
     verify_xor(&pkt);
 }
 
+// @compliance DCC-S9.2.1-CS-009
+TEST(DccPacketEncoder, accessory_extended_spec_user_address_1) {
+    dcc_packet_t pkt;
+    /* S-9.2.1 2.4.2: user address "1" is 10000001 01110001 = packet address 4
+     * (S-9.2.2 Table 9: user address N = packet address N + 3) */
+    bool ok = DccApplicationCommandStationPacket_load_accessory_extended(&pkt, 4, 0);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[0], 0x81);
+    EXPECT_EQ(pkt.data[1], 0x71);
+    verify_xor(&pkt);
+}
+
+// @compliance DCC-S9.2.1-CS-009
+TEST(DccPacketEncoder, accessory_extended_low_two_bits_are_a1_a0) {
+    dcc_packet_t pkt;
+
+    /* Packet addresses 1-3: A7..A2 = 0, A1A0 = 01/10/11 in byte 2 bits 2-1 */
+    EXPECT_TRUE(DccApplicationCommandStationPacket_load_accessory_extended(&pkt, 1, 0));
+    EXPECT_EQ(pkt.data[0], 0x80);
+    EXPECT_EQ(pkt.data[1], 0x73);
+
+    EXPECT_TRUE(DccApplicationCommandStationPacket_load_accessory_extended(&pkt, 2, 0));
+    EXPECT_EQ(pkt.data[0], 0x80);
+    EXPECT_EQ(pkt.data[1], 0x75);
+
+    EXPECT_TRUE(DccApplicationCommandStationPacket_load_accessory_extended(&pkt, 3, 0));
+    EXPECT_EQ(pkt.data[0], 0x80);
+    EXPECT_EQ(pkt.data[1], 0x77);
+    verify_xor(&pkt);
+}
+
 TEST(DccPacketEncoder, accessory_extended_addr100_aspect0) {
     dcc_packet_t pkt;
-    /* Address 100: low 6 = 0x24, bits 6-8 = 1, bits 9-10 = 0 */
+    /* Address 100 = 000 0110 0100: A10..A8 = 000, A7..A2 = 011001, A1A0 = 00 */
     bool ok = DccApplicationCommandStationPacket_load_accessory_extended(&pkt, 100, 0);
 
     EXPECT_TRUE(ok);
-    EXPECT_EQ(pkt.data[0], 0xA4);
-    /* Byte 2: 0 110 0 00 1 = 0x61 (high inverted = ~1 & 7 = 6) */
-    EXPECT_EQ(pkt.data[1], 0x61);
+    EXPECT_EQ(pkt.data[0], 0x99);
+    /* Byte 2: 0 111 0 00 1 = 0x71 (~000 = 111) */
+    EXPECT_EQ(pkt.data[1], 0x71);
     EXPECT_EQ(pkt.data[2], 0x00);
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, accessory_extended_high_bits_inverted) {
+    dcc_packet_t pkt;
+    /* Address 1024 = 100 0000 0000: A10..A8 = 100 -> ~ = 011 */
+    bool ok = DccApplicationCommandStationPacket_load_accessory_extended(&pkt, 1024, 0);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[0], 0x80);
+    EXPECT_EQ(pkt.data[1], 0x31);
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, accessory_extended_max_address) {
+    dcc_packet_t pkt;
+    /* Address 2047: A10..A8 = 111 -> ~ = 000, A7..A2 = 111111, A1A0 = 11 */
+    bool ok = DccApplicationCommandStationPacket_load_accessory_extended(&pkt, 2047, 0);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[0], 0xBF);
+    EXPECT_EQ(pkt.data[1], 0x07);
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, accessory_extended_issue18_example) {
+    dcc_packet_t pkt;
+    /* GitHub issue #18: the library used to send 81 71 for address 1, which
+     * a spec decoder reads as packet address 4. Address 1 is 80 73. */
+    bool ok = DccApplicationCommandStationPacket_load_accessory_extended(&pkt, 1, 0);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[0], 0x80);
+    EXPECT_EQ(pkt.data[1], 0x73);
     verify_xor(&pkt);
 }
 
@@ -716,8 +785,8 @@ TEST(DccPacketEncoder, accessory_nop_addr1_basic) {
     EXPECT_TRUE(ok);
     /* repeat_count: accessory NOP: once */
     EXPECT_EQ(pkt.repeat_count, 1);
-    EXPECT_EQ(pkt.data[0], 0x81);   /* 10AAAAAA, low 6 = 1 */
-    EXPECT_EQ(pkt.data[1], 0x78);   /* 0AAA1AAT: high3 inv=111, NOP bit3=1, T=0 */
+    EXPECT_EQ(pkt.data[0], 0x80);   /* 10AAAAAA: A7..A2 = 0 */
+    EXPECT_EQ(pkt.data[1], 0x7A);   /* 0AAA1AAT: ~A10..A8 = 111, NOP bit3 = 1, A1A0 = 01, T = 0 */
     EXPECT_EQ(pkt.byte_count, 3);   /* addr + instruction + XOR */
     verify_xor(&pkt);
 }
@@ -728,28 +797,28 @@ TEST(DccPacketEncoder, accessory_nop_addr1_extended) {
     bool ok = DccApplicationCommandStationPacket_load_accessory_nop(&pkt, 1, true);
 
     EXPECT_TRUE(ok);
-    EXPECT_EQ(pkt.data[0], 0x81);
-    EXPECT_EQ(pkt.data[1], 0x79);   /* T=1 */
+    EXPECT_EQ(pkt.data[0], 0x80);
+    EXPECT_EQ(pkt.data[1], 0x7B);   /* A1A0 = 01, T = 1 */
     verify_xor(&pkt);
 }
 
-TEST(DccPacketEncoder, accessory_nop_high3_inverted) {
-    dcc_packet_t pkt;   /* addr 64 -> (64>>6)=1, exercises high-3 inversion */
+TEST(DccPacketEncoder, accessory_nop_a7_a2) {
+    dcc_packet_t pkt;   /* addr 64 = 000 0100 0000: A7..A2 = 010000, A1A0 = 00 */
     bool ok = DccApplicationCommandStationPacket_load_accessory_nop(&pkt, 64, false);
 
     EXPECT_TRUE(ok);
-    EXPECT_EQ(pkt.data[0], 0x80);   /* low 6 = 0 */
-    EXPECT_EQ(pkt.data[1], 0x68);   /* high3 inv of 1 = 6 (0x60) | NOP 0x08 */
+    EXPECT_EQ(pkt.data[0], 0x90);   /* 10 010000 */
+    EXPECT_EQ(pkt.data[1], 0x78);   /* ~000 = 111 (0x70) | NOP 0x08 */
     verify_xor(&pkt);
 }
 
 TEST(DccPacketEncoder, accessory_nop_high_addr_extended) {
-    dcc_packet_t pkt;   /* addr 1500 -> exercises mid-2 bits + T */
+    dcc_packet_t pkt;   /* addr 1500 = 101 1101 1100: A10..A8 = 101, A7..A2 = 110111, A1A0 = 00 */
     bool ok = DccApplicationCommandStationPacket_load_accessory_nop(&pkt, 1500, true);
 
     EXPECT_TRUE(ok);
-    EXPECT_EQ(pkt.data[0], 0x9C);
-    EXPECT_EQ(pkt.data[1], 0x0D);   /* high3 inv=0 | NOP 0x08 | mid2=2 (0x04) | T=1 */
+    EXPECT_EQ(pkt.data[0], 0xB7);
+    EXPECT_EQ(pkt.data[1], 0x29);   /* ~101 = 010 (0x20) | NOP 0x08 | A1A0 = 00 | T = 1 */
     verify_xor(&pkt);
 }
 
@@ -813,9 +882,9 @@ TEST(DccPacketEncoder, accessory_extended_stop_valid) {
     bool ok = DccApplicationCommandStationPacket_load_accessory_extended_stop(&pkt, 100);
 
     EXPECT_TRUE(ok);
-    /* Same address encoding as extended accessory */
-    EXPECT_EQ(pkt.data[0], 0xA4);
-    EXPECT_EQ(pkt.data[1], 0x61);
+    /* Same address encoding as extended accessory (address 100: A7..A2 = 011001) */
+    EXPECT_EQ(pkt.data[0], 0x99);
+    EXPECT_EQ(pkt.data[1], 0x71);
     /* Aspect = 0x00 (all stop) */
     EXPECT_EQ(pkt.data[2], 0x00);
     EXPECT_EQ(pkt.byte_count, 4);
@@ -1555,7 +1624,7 @@ TEST(DccPacketEncoder, acc_extended_cv_write_addr0_cv1) {
     EXPECT_EQ(pkt.repeat_count, 2);
     /* Byte 0: 10 000000 = 0x80 */
     EXPECT_EQ(pkt.data[0], 0x80);
-    /* Byte 1: 0 111 0 00 1 = 0x71 (high inv=~0&7=7, bits 9-10=0) */
+    /* Byte 1: 0 111 0 00 1 = 0x71 (~A10..A8 = 111, A1A0 = 00) */
     EXPECT_EQ(pkt.data[1], 0x71);
     /* Byte 2: 0xEC (CV long write) */
     EXPECT_EQ(pkt.data[2], 0xEC);
@@ -1572,14 +1641,26 @@ TEST(DccPacketEncoder, acc_extended_cv_write_addr100_cv1024) {
     bool ok = DccApplicationCommandStationPacket_load_accessory_extended_cv_write(&pkt, 100, 1024, 0xFF);
 
     EXPECT_TRUE(ok);
-    /* Address 100: low 6 = 0x24, bits 6-8 = 1 */
-    EXPECT_EQ(pkt.data[0], 0xA4);
-    /* Byte 1: high inv=~1&7=6 → 0110, bits 9-10=0 */
-    EXPECT_EQ(pkt.data[1], 0x61);
+    /* Address 100 = 000 0110 0100: A7..A2 = 011001 */
+    EXPECT_EQ(pkt.data[0], 0x99);
+    /* Byte 1: ~A10..A8 = 111, A1A0 = 00 */
+    EXPECT_EQ(pkt.data[1], 0x71);
     /* CV 1024 → wire 1023 = 0x3FF */
     EXPECT_EQ(pkt.data[2], 0xEF);
     EXPECT_EQ(pkt.data[3], 0xFF);
     EXPECT_EQ(pkt.data[4], 0xFF);
+    verify_xor(&pkt);
+}
+
+TEST(DccPacketEncoder, acc_extended_cv_write_max_address) {
+    dcc_packet_t pkt;
+    /* S-9.2.1 2.4.3.2: same address bytes as the operating packet.
+     * Address 2047: A7..A2 = 111111, ~A10..A8 = 000, A1A0 = 11 */
+    bool ok = DccApplicationCommandStationPacket_load_accessory_extended_cv_write(&pkt, 2047, 1, 0);
+
+    EXPECT_TRUE(ok);
+    EXPECT_EQ(pkt.data[0], 0xBF);
+    EXPECT_EQ(pkt.data[1], 0x07);
     verify_xor(&pkt);
 }
 
