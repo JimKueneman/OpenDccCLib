@@ -26,7 +26,7 @@ Markdown subset understood (deliberately small, so this file stays small):
     - bullet / 1. numbered      indented continuation lines belong to the item
     > note text                 blue italic callout (may span lines)
     ```                         fenced code block
-    | a | b |  + |---|---|      table, first row is the header
+    | a | b |  + |---|---|      table, first row is the header; \\| is a literal pipe in a cell
     <<pagebreak>>               explicit page break
 """
 
@@ -228,7 +228,9 @@ def build_story(meta, lines, avail_width):
         if s.startswith("|"):
             flush(); rows = []
             while i < len(lines) and lines[i].strip().startswith("|"):
-                cells = [c.strip() for c in lines[i].strip().strip("|").split("|")]
+                # GFM: a literal pipe inside a cell is written \| (even in `code`)
+                row = re.sub(r"^\||(?<!\\)\|$", "", lines[i].strip())
+                cells = [c.strip().replace("\\|", "|") for c in re.split(r"(?<!\\)\|", row)]
                 if not all(re.fullmatch(r":?-{2,}:?", c) for c in cells):
                     rows.append(cells)
                 i += 1
