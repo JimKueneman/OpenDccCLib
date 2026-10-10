@@ -145,16 +145,29 @@ function(dcc_gate_target cfg)
         target_link_libraries(${exe} -Wl,--whole-archive ${lib} -Wl,--no-whole-archive)
     endif ()
 
+    # Apple clang ignores the -fno-* overrides above, so this smoke run still
+    # writes .gcda counters. Those are never cleared with the test counters (see
+    # the report step below), so once a source's instrumentation changes the old
+    # file can no longer merge, is never rewritten, and the runtime prints
+    # "cannot merge previous GCDA file" on every run. Clear this gate's own
+    # counters first; they are excluded from the report anyway.
+    set(clear_gate_gcda
+        COMMAND find ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${lib}.dir
+                     ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/${exe}.dir
+                     -name *.gcda -delete)
+
     # Remaining args = symbol prefixes of gated-off modules that must not leak.
     set(forbidden ${ARGN})
     if (forbidden)
         add_custom_command(TARGET ${exe} POST_BUILD
+            ${clear_gate_gcda}
             COMMAND ./${exe}
             COMMAND ${CMAKE_SOURCE_DIR}/check_symbol_leakage.sh $<TARGET_FILE:${lib}> ${forbidden}
             VERBATIM
         )
     else ()
         add_custom_command(TARGET ${exe} POST_BUILD
+            ${clear_gate_gcda}
             COMMAND ./${exe}
             VERBATIM
         )
