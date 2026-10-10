@@ -124,9 +124,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a187339bfc669394eb9303717cbc90fa5" id="r_a187339bfc669394eb9303717cbc90fa5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a187339bfc669394eb9303717cbc90fa5">DccScheduler_clear</a> (<a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *context)</td></tr>
 <tr class="memdesc:a187339bfc669394eb9303717cbc90fa5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Remove all active slots and reset both round-robin cursors.  <br /></td></tr>
 <tr class="separator:a187339bfc669394eb9303717cbc90fa5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0c05e32e078c061010295f17639909a6" id="r_a0c05e32e078c061010295f17639909a6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0c05e32e078c061010295f17639909a6">DccScheduler_on_packet_complete</a> (<a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *context)</td></tr>
-<tr class="memdesc:a0c05e32e078c061010295f17639909a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Notify the scheduler that the bit encoder finished a packet (ISR context).  <br /></td></tr>
-<tr class="separator:a0c05e32e078c061010295f17639909a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55e1db65eb104238f8b3c68ee346bd9e" id="r_a55e1db65eb104238f8b3c68ee346bd9e"><td class="memItemLeft" align="right" valign="top">void <a class="el" href="dcc__defines_8h.html#abd2b23761d394a072519e4685bddf9b8">DCC_ISR_FUNC</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a55e1db65eb104238f8b3c68ee346bd9e">DccScheduler_on_packet_complete</a> (<a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *context)</td></tr>
+<tr class="memdesc:a55e1db65eb104238f8b3c68ee346bd9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Notify the scheduler that the bit encoder finished a packet (ISR context).  <br /></td></tr>
+<tr class="separator:a55e1db65eb104238f8b3c68ee346bd9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff5c8bfa16df3996ed7a481da02393d5" id="r_aff5c8bfa16df3996ed7a481da02393d5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aff5c8bfa16df3996ed7a481da02393d5">DccScheduler_run</a> (<a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *context)</td></tr>
 <tr class="memdesc:aff5c8bfa16df3996ed7a481da02393d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Main loop processing. Selects next packet and feeds to bit encoder.  <br /></td></tr>
 <tr class="separator:aff5c8bfa16df3996ed7a481da02393d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -301,14 +301,14 @@ Functions</h2></td></tr>
 * </pre> 
 </div>
 </div>
-<a id="a0c05e32e078c061010295f17639909a6" name="a0c05e32e078c061010295f17639909a6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0c05e32e078c061010295f17639909a6">&#9670;&#160;</a></span>DccScheduler_on_packet_complete()</h2>
+<a id="a55e1db65eb104238f8b3c68ee346bd9e" name="a55e1db65eb104238f8b3c68ee346bd9e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a55e1db65eb104238f8b3c68ee346bd9e">&#9670;&#160;</a></span>DccScheduler_on_packet_complete()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">void DccScheduler_on_packet_complete </td>
+          <td class="memname">void <a class="el" href="dcc__defines_8h.html#abd2b23761d394a072519e4685bddf9b8">DCC_ISR_FUNC</a> DccScheduler_on_packet_complete </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="structdcc__scheduler__context__t.html">dcc_scheduler_context_t</a> *</td>          <td class="paramname"><span class="paramname"><em>context</em></span></td><td>)</td>
           <td></td>

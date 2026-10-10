@@ -188,7 +188,7 @@ Data Fields</h2></td></tr>
 <tr class="memdesc:aae4018b83f2702680069412deefc8635"><td class="mdescLeft">&#160;</td><td class="mdescRight">Basic accessory command received. In decoder-address mode (CV541 bit 6 = 0): board_address is 9-bit board address, output_pair is the 3-bit DDD field. In output-address mode (CV541 bit 6 = 1): board_address is the 11-bit flat output address, output_pair is the R bit (0 or 1).  <br /></td></tr>
 <tr class="separator:aae4018b83f2702680069412deefc8635"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adadfdeb49a5fbbb65d3070b66e78d497" id="r_adadfdeb49a5fbbb65d3070b66e78d497"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adadfdeb49a5fbbb65d3070b66e78d497">on_accessory_extended_command</a> )(uint16_t address, uint8_t aspect)</td></tr>
-<tr class="memdesc:adadfdeb49a5fbbb65d3070b66e78d497"><td class="mdescLeft">&#160;</td><td class="mdescRight">Extended accessory (signal aspect) command received.  <br /></td></tr>
+<tr class="memdesc:adadfdeb49a5fbbb65d3070b66e78d497"><td class="mdescLeft">&#160;</td><td class="mdescRight">Extended accessory (signal aspect) command received. address is the 11-bit packet address A10..A0 (S-9.2.1 2.4.2) in both addressing modes. In decoder-address mode (CV541 bit 6 = 0) all four A1 A0 values of the decoder's board address are delivered.  <br /></td></tr>
 <tr class="separator:adadfdeb49a5fbbb65d3070b66e78d497"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a17ef2dbbd6cbbe99db8094c8011b8939" id="r_a17ef2dbbd6cbbe99db8094c8011b8939"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a17ef2dbbd6cbbe99db8094c8011b8939">on_cv_write_command</a> )(uint16_t cv_number, uint8_t value, bool service_mode)</td></tr>
 <tr class="memdesc:a17ef2dbbd6cbbe99db8094c8011b8939"><td class="mdescLeft">&#160;</td><td class="mdescRight">CV write command received on this decoder.  <br /></td></tr>
@@ -745,7 +745,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Extended accessory (signal aspect) command received. </p>
+<p>Extended accessory (signal aspect) command received. address is the 11-bit packet address A10..A0 (S-9.2.1 2.4.2) in both addressing modes. In decoder-address mode (CV541 bit 6 = 0) all four A1 A0 values of the decoder's board address are delivered. </p>
 
 </div>
 </div>

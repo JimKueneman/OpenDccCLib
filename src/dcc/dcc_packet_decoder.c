@@ -29,7 +29,7 @@
  * dispatch for decoders.
  *
  * @author Jim Kueneman
- * @date 25 Sep 2026
+ * @date 06 Oct 2026
  */
 
 #include "dcc_packet_decoder.h"
@@ -928,27 +928,49 @@ static void _dispatch_acc_cv_access(const uint8_t *instruction_bytes, uint8_t in
 }
 
     /**
-     * @brief Accessory CV-access long form: does the packet's address select this decoder
-     *  under the active addressing method (output address or board address)?
+     * @brief Rebuild the 11-bit packet address A10..A0 from an accessory packet.
+     *
+     * @details Byte 0 = 10 A7..A2, byte 1 bits 6-4 = A10..A8 inverted, byte 1
+     * bits 2-1 = A1 A0 (S-9.2.1 2.4.1 and 2.4.2; both accessory packet types).
+     *
      * @param data Raw packet bytes; the accessory address is in bytes 0-1.
+     *
+     * @return The packet address (0-2047).
+     */
+static uint16_t _accessory_packet_address(const uint8_t *data) {
+
+    uint16_t address_high = (uint16_t)(~(data[1] >> 4) & 0x07);
+    uint16_t address_mid = (uint16_t)(data[0] & 0x3F);
+    uint16_t address_low = (uint16_t)((data[1] >> 1) & 0x03);
+
+    return (address_high << 8) | (address_mid << 2) | address_low;
+
+}
+
+    /**
+     * @brief Does an accessory packet's address select this decoder under the active
+     *  addressing method?
+     *
+     * @details Output-address method: the packet address must equal the cached output
+     * address. Decoder-address method: the board address A10..A2 must equal the cached
+     * board address, so all four A1 A0 values select this decoder (S-9.2.2 Table 9).
+     * Used by basic CV access and by both extended accessory forms.
+     *
+     * @param data Raw packet bytes; the accessory address is in bytes 0-1.
+     *
      * @return true if the address matches the cached decoder address.
      */
-static bool _acc_cv_access_is_for_me(const uint8_t *data) {
+static bool _accessory_packet_is_for_me(const uint8_t *data) {
 
-    uint8_t cv_addr_low = data[0] & 0x3F;
-    uint8_t cv_addr_high_inv = (data[1] >> 4) & 0x07;
-    uint16_t cv_board_address = (uint16_t)cv_addr_low | ((uint16_t)(~cv_addr_high_inv & 0x07) << 6);
+    uint16_t packet_address = _accessory_packet_address(data);
 
     if (_use_output_address) {
 
-        /* A1=bit2, A0=bit1 per S-9.2.1 2025 notation */
-        uint16_t cv_output_address = (cv_board_address << 2) | ((data[1] >> 1) & 0x03);
-
-        return (cv_output_address == _my_address);
+        return (packet_address == _my_address);
 
     }
 
-    return (cv_board_address == _my_address);
+    return ((packet_address >> 2) == _my_address);
 
 }
 
@@ -957,10 +979,11 @@ static bool _acc_cv_access_is_for_me(const uint8_t *data) {
      *
      * @details Packets under 3 bytes are ignored. A 6-byte packet whose third byte
      * starts with 1110 is ops-mode CV access and goes to _dispatch_acc_cv_access when
-     * _acc_cv_access_is_for_me. Otherwise the 9-bit board address is rebuilt from the
+     * _accessory_packet_is_for_me. Otherwise the 9-bit board address is rebuilt from the
      * inverted high bits and matched against _my_address: in output-address mode (CV541
-     * bit 6) DDD bits 0-1 are folded into an 11-bit output address and bit 2 is reported
-     * as output_pair; in decoder-address mode the 3-bit DDD field is reported as output_pair.
+     * bit 6) byte 1 bits 2-1 (A1 A0) are folded into an 11-bit output address and bit 0
+     * (R) is reported as output_pair (S-9.2.1 2.4.1); in decoder-address mode the 3-bit
+     * field in bits 2-0 is reported as output_pair.
      *
      * @param data Raw packet bytes.
      * @param byte_count Number of bytes.
@@ -982,7 +1005,7 @@ static void _dispatch_accessory_basic(const uint8_t *data, uint8_t byte_count) {
     /* CV access long form (ops-mode): 6-byte packet, byte 2 starts with 1110 */
     if (byte_count == 6 && (data[2] & 0xF0) == 0xE0) {
 
-        if (!_acc_cv_access_is_for_me(data)) {
+        if (!_accessory_packet_is_for_me(data)) {
 
             return;
 
@@ -1046,23 +1069,24 @@ static void _dispatch_accessory_basic(const uint8_t *data, uint8_t byte_count) {
     /**
      * @brief Dispatch an extended accessory instruction.
      *
-     * @details Packets under 4 bytes are ignored. A 6-byte packet whose third byte
-     * starts with 1110 is ops-mode CV access, matched on the 11-bit address and routed to
-     * _dispatch_acc_cv_access. Otherwise the 11-bit address (bits 1-2 of byte 1 supply
-     * the two most significant bits) is matched against _my_address and byte 2 is
-     * reported as the aspect.
+     * @details Packets under 4 bytes are ignored. The packet (S-9.2.1 2.4.2:
+     * 10 A7..A2, 0 ~A10~A9~A8 0 A1 A0 1) is matched by _accessory_packet_is_for_me.
+     * A 6-byte packet whose third byte starts with 1110 is ops-mode CV access
+     * (S-9.2.1 2.4.3.2) and goes to _dispatch_acc_cv_access. Otherwise byte 2 is
+     * reported as the aspect, with the full 11-bit packet address A10..A0.
      *
      * @param data Raw packet bytes.
      * @param byte_count Number of bytes.
      */
 static void _dispatch_accessory_extended(const uint8_t *data, uint8_t byte_count) {
 
-    uint16_t address;
-    uint8_t aspect;
-    uint8_t addr_low;
-    uint8_t addr_high_inv;
-
     if (byte_count < 4) {
+
+        return;
+
+    }
+
+    if (!_accessory_packet_is_for_me(data)) {
 
         return;
 
@@ -1071,43 +1095,14 @@ static void _dispatch_accessory_extended(const uint8_t *data, uint8_t byte_count
     /* CV access long form (ops-mode): 6-byte packet, byte 2 starts with 1110 */
     if (byte_count == 6 && (data[2] & 0xF0) == 0xE0) {
 
-        uint8_t cv_addr_low = data[0] & 0x3F;
-        uint8_t cv_addr_high_inv = ((data[1] >> 4) & 0x07);
-        uint16_t cv_address = (uint16_t)cv_addr_low | ((uint16_t)(~cv_addr_high_inv & 0x07) << 6);
-        cv_address |= (uint16_t)((data[1] >> 1) & 0x03) << 9;
-
-        if (cv_address != _my_address) {
-
-            return;
-
-        }
-
         _dispatch_acc_cv_access(&data[2], 3);
-        return;
-
-    }
-
-    /* Byte 0: 10AAAAAA — low 6 address bits */
-    addr_low = data[0] & 0x3F;
-
-    /* Byte 1: 0AAA0AA1 — high bits INVERTED */
-    addr_high_inv = ((data[1] >> 4) & 0x07);
-    address = (uint16_t)addr_low | ((uint16_t)(~addr_high_inv & 0x07) << 6);
-
-    /* Extended also uses bits 1-2 of byte 1 for more address bits */
-    address |= (uint16_t)((data[1] >> 1) & 0x03) << 9;
-
-    aspect = data[2];
-
-    if (address != _my_address) {
-
         return;
 
     }
 
     if (_interface->on_accessory_extended_command) {
 
-        _interface->on_accessory_extended_command(address, aspect);
+        _interface->on_accessory_extended_command(_accessory_packet_address(data), data[2]);
 
     }
 

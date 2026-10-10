@@ -179,12 +179,13 @@ address; reads or writes up to 4 contiguous CVs (S-9.2.1 §2.3.7.4).
 ```
 {preamble} 0 10AAAAAA 0 0AAA0AA1 0 DDDDDDDD 0 EEEEEEEE 1
 ```
-- 11-bit address for signal aspects (the high 3 address bits in byte 2 are **inverted**, as in the basic accessory packet)
+- 11-bit packet address A10..A0: `{preamble} 0 10A7A6A5A4A3A2 0 0Ā10Ā9Ā80A1A01 0 DDDDDDDD 0 EEEEEEEE 1` -- A7..A2 in byte 1, A10..A8 **inverted** in byte 2 bits 6-4, A1A0 in byte 2 bits 2-1 (as in the basic accessory packet)
+- User address N is packet address N + 3 (S-9.2.2 Table 9); the spec's "user address 1" is `10000001 01110001` (packet address 4)
 - DDDDDDDD = signal aspect data (0–255)
 
 #### Accessory Broadcast / NOP
 - The only broadcast address defined is `00000000`. (The `10111111`-prefixed accessory-broadcast forms previously listed here are **not defined in S-9.2.1** and have been removed.)
-- S-9.2.1 defines a **NOP** command (`10AAAAAA 0 0AAA1AAT`) that lets bi-directional accessory decoders raise an SRQ without changing output state (T selects basic/extended).
+- S-9.2.1 defines a **NOP** command (`10AAAAAA 0 0ĀĀĀ1AAT`, same A10..A0 layout as the extended packet) that lets bi-directional accessory decoders raise an SRQ without changing output state (T selects basic/extended).
 
 ---
 

@@ -546,6 +546,9 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
 <tr class="memitem:acdfe0f1d47f62f8f2b22785dd7ca10f2" id="r_acdfe0f1d47f62f8f2b22785dd7ca10f2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acdfe0f1d47f62f8f2b22785dd7ca10f2">DCC_RAILCOM_DECODE_NACK</a>&#160;&#160;&#160;0xFD</td></tr>
 <tr class="memdesc:acdfe0f1d47f62f8f2b22785dd7ca10f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">RailCom NACK codeword decode result.  <br /></td></tr>
 <tr class="separator:acdfe0f1d47f62f8f2b22785dd7ca10f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abd2b23761d394a072519e4685bddf9b8" id="r_abd2b23761d394a072519e4685bddf9b8"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abd2b23761d394a072519e4685bddf9b8">DCC_ISR_FUNC</a>(func_name)</td></tr>
+<tr class="memdesc:abd2b23761d394a072519e4685bddf9b8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Placement of every function the 58 us timer ISR and the RailCom one-shot timer ISR run: a definition is written <code>void <a class="el" href="#abd2b23761d394a072519e4685bddf9b8" title="Placement of every function the 58 us timer ISR and the RailCom one-shot timer ISR run: a definition ...">DCC_ISR_FUNC(name)</a>(args)</code>. By default it is just the name. A port whose code runs from flash through a cache (RP2040/RP2350 XIP, ESP32) can place them in RAM from dcc_user_config.h, so another core's flash traffic cannot stall the DCC bit timing, e.g. for the Pico SDK: <code>#define <a class="el" href="#abd2b23761d394a072519e4685bddf9b8" title="Placement of every function the 58 us timer ISR and the RailCom one-shot timer ISR run: a definition ...">DCC_ISR_FUNC(func_name)</a> __not_in_flash_func(func_name)</code>  <br /></td></tr>
+<tr class="separator:abd2b23761d394a072519e4685bddf9b8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0d21a7a37f877e892ec1850c84f5fba7" id="r_a0d21a7a37f877e892ec1850c84f5fba7"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0d21a7a37f877e892ec1850c84f5fba7">DCC_FAILSAFE_CV11_UNIT_US</a>&#160;&#160;&#160;100000u</td></tr>
 <tr class="memdesc:a0d21a7a37f877e892ec1850c84f5fba7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Real-time value of one CV11 (DCC_CV_PACKET_TIMEOUT) least- significant bit, in microseconds.  <br /></td></tr>
 <tr class="separator:a0d21a7a37f877e892ec1850c84f5fba7"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -3149,6 +3152,26 @@ decoder shall modify a configuration variable" &ndash; loco POM (S-9.2.1 sec 2.3
 </div><div class="memdoc">
 
 <p>RailCom NACK codeword decode result. </p>
+
+</div>
+</div>
+<a id="abd2b23761d394a072519e4685bddf9b8" name="abd2b23761d394a072519e4685bddf9b8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd2b23761d394a072519e4685bddf9b8">&#9670;&#160;</a></span>DCC_ISR_FUNC</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define DCC_ISR_FUNC</td>
+          <td>(</td>
+          <td class="paramtype"></td>          <td class="paramname"><span class="paramname"><em>func_name</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Value:</b><div class="fragment"><div class="line">func_name</div>
+</div><!-- fragment -->
+<p>Placement of every function the 58 us timer ISR and the RailCom one-shot timer ISR run: a definition is written <code>void <a class="el" href="#abd2b23761d394a072519e4685bddf9b8" title="Placement of every function the 58 us timer ISR and the RailCom one-shot timer ISR run: a definition ...">DCC_ISR_FUNC(name)</a>(args)</code>. By default it is just the name. A port whose code runs from flash through a cache (RP2040/RP2350 XIP, ESP32) can place them in RAM from dcc_user_config.h, so another core's flash traffic cannot stall the DCC bit timing, e.g. for the Pico SDK: <code>#define <a class="el" href="#abd2b23761d394a072519e4685bddf9b8" title="Placement of every function the 58 us timer ISR and the RailCom one-shot timer ISR run: a definition ...">DCC_ISR_FUNC(func_name)</a> __not_in_flash_func(func_name)</code> </p>
 
 </div>
 </div>

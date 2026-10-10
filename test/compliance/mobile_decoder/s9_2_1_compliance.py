@@ -228,23 +228,28 @@ def checks(rep, player, dec):
     # 019 accessory-type guard      @compliance DCC-S9.2.1-DEC-019
     # `ADDR 7 ACC` writes CV513 = 7 & 0x3F, CV521 = 7 >> 6 = 0, CV541 = 0x80 (accessory,
     # basic, decoder-address mode) -> the library's board address is 7; `ADDR 7 ACCE` adds
-    # CV541 bit 5 (extended). Basic packets carry the board in A10..A2 (accessory_basic);
-    # the extended 11-bit address for board 7, pair bits 00, is 7 << 2 (S-9.2.1 2.4.2).
+    # CV541 bit 5 (extended). Basic packets carry the board in A10..A2 (accessory_basic).
+    # Extended packets carry the 11-bit packet address A10..A0 (S-9.2.1 2.4.2); in
+    # decoder-address mode board 7 answers packet addresses 28-31 (7 << 2 | A1A0,
+    # S-9.2.2 Table 9) and the decoder reports the full packet address.
     _cmd(dec, "ADDR 7 ACC")
     acc7 = pick(_recv(player, dec, enc.accessory_basic(7, 0, True)), "ACC board=7 pair=0 activate=ON")
     q8, l8 = _no_recv(player, dec, enc.accessory_basic(8, 0, True))
     qs7, ls7 = _no_recv(player, dec, enc.speed_128(enc.short_addr(7), 64, True))   # same number, wrong type
     qbc, lbc = _no_recv(player, dec, enc.estop_128(enc.broadcast_addr()))         # multifunction broadcast
     _cmd(dec, "ADDR 7 ACCE")
-    ext7 = pick(_recv(player, dec, enc.accessory_extended(7 << 2, 5)), "ACCE addr=7 aspect=5")
-    q8e, l8e = _no_recv(player, dec, enc.accessory_extended(8 << 2, 5))
+    ext28 = pick(_recv(player, dec, enc.accessory_extended(7 << 2, 5)), "ACCE addr=28 aspect=5")
+    ext31 = pick(_recv(player, dec, enc.accessory_extended((7 << 2) | 3, 5)), "ACCE addr=31 aspect=5")
+    q27e, l27e = _no_recv(player, dec, enc.accessory_extended((6 << 2) | 3, 5))    # board 6, A1A0 = 11
+    q32e, l32e = _no_recv(player, dec, enc.accessory_extended(8 << 2, 5))          # board 8, A1A0 = 00
     _cmd(dec, "ADDR %d SHORT" % DEC_ADDR)                                          # restore
     back = pick(_recv(player, dec, enc.speed_128(A, 64, True)), "SPEED addr=3")
-    rep.check("S-9.2.1", "accessory addr filter: board 7 basic + ext 7 decode, board/ext 8 silent",
-              all([acc7, q8, ext7, q8e]),
-              "basic@7: %s ; basic@8 silent: %s%s ; ext@7: %s ; ext@8 silent: %s%s"
+    rep.check("S-9.2.1", "accessory addr filter: board 7 basic + ext 28/31 decode, board 8 basic and ext 27/32 silent",
+              all([acc7, q8, ext28, ext31, q27e, q32e]),
+              "basic@7: %s ; basic@8 silent: %s%s ; ext@28: %s ; ext@31: %s ; ext@27 silent: %s%s ; ext@32 silent: %s%s"
               % (acc7 or "none", q8, "" if q8 else " %s" % l8[:2],
-                 ext7 or "none", q8e, "" if q8e else " %s" % l8e[:2]))
+                 ext28 or "none", ext31 or "none",
+                 q27e, "" if q27e else " %s" % l27e[:2], q32e, "" if q32e else " %s" % l32e[:2]))
     rep.check("S-9.2.1", "accessory-configured decoder ignores speed@7 and broadcast e-stop; ADDR 3 SHORT restores",
               all([qs7, qbc, back]),
               "speed@7 silent: %s%s ; bcast estop silent: %s%s ; back@3: %s"

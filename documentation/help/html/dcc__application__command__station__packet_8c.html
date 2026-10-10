@@ -227,7 +227,7 @@ Functions</h2></td></tr>
 <p>THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 <p>Implements the packet-building functions declared in <a class="el" href="dcc__application__command__station__packet_8h.html" title="Application-layer API for building DCC command station packets.">dcc_application_command_station_packet.h</a>. Pure computational — no hardware dependencies, no state. Takes command parameters and fills a <a class="el" href="structdcc__packet__t.html" title="A single DCC packet ready for transmission.">dcc_packet_t</a> with the correct byte layout and XOR error detection byte per NMRA S-9.2.</p>
 <dl class="section author"><dt>Author</dt><dd>Jim Kueneman </dd></dl>
-<dl class="section date"><dt>Date</dt><dd>25 Sep 2026 </dd></dl>
+<dl class="section date"><dt>Date</dt><dd>06 Oct 2026 </dd></dl>
 </div><h2 class="groupheader">Function Documentation</h2>
 <a id="a2010b10e302fd85167a23972aff9592f" name="a2010b10e302fd85167a23972aff9592f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2010b10e302fd85167a23972aff9592f">&#9670;&#160;</a></span>DccApplicationCommandStationPacket_load_idle()</h2>
@@ -934,13 +934,13 @@ Functions</h2></td></tr>
 <p>Build an extended accessory decoder (signal aspect) packet. </p>
 <p>Algorithm:</p><ol type="1">
 <li>Return false unless address &lt;= 2047</li>
-<li>Byte 0 = 10AAAAAA: low 6 bits of the address</li>
-<li>Byte 1 = 0AAA0AA1: address bits 8-6 inverted in bits 6-4, bits 10-9 in bits 2-1</li>
+<li>Byte 0 = 10AAAAAA: address bits A7-A2</li>
+<li>Byte 1 = 0AAA0AA1: address bits A10-A8 inverted in bits 6-4, A1-A0 in bits 2-1 (S-9.2.1 2.4.2)</li>
 <li>Byte 2 = aspect</li>
 <li>Set byte_count, append the XOR error byte, set the ops preamble length and the default one-shot repeat count</li>
 </ol>
 <pre class="fragment">* @param packet Pointer to a dcc_packet_t struct to fill.
-* @param address 11-bit accessory address (0-2047).
+* @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.2.
 * @param aspect Signal aspect value (0-255).
 * </pre><dl class="section return"><dt>Returns</dt><dd>true if the packet was built; false if a parameter is out of range. </dd></dl>
 
@@ -973,12 +973,12 @@ Functions</h2></td></tr>
 <p>Build a NOP packet for basic or extended accessory decoders. </p>
 <p>Algorithm:</p><ol type="1">
 <li>Return false unless address &lt;= 2047</li>
-<li>Byte 0 = 10AAAAAA: low 6 bits of the address</li>
-<li>Byte 1 = 0AAA1AAT: address bits 8-6 inverted, bit 3 set (NOP marker), address bits 10-9, T = is_extended</li>
+<li>Byte 0 = 10AAAAAA: address bits A7-A2</li>
+<li>Byte 1 = 0AAA1AAT: A10-A8 inverted, bit 3 set (NOP marker), A1-A0, T = is_extended (S-9.2.1 2.4.6)</li>
 <li>Set byte_count, append the XOR error byte, set the ops preamble length and the accessory NOP repeat count (one send)</li>
 </ol>
 <pre class="fragment">* @param packet Pointer to a dcc_packet_t struct to fill.
-* @param address 11-bit accessory address (0-2047).
+* @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.6.
 * @param is_extended false = basic accessory decoder (T=0); true = extended (T=1).
 * </pre><dl class="section return"><dt>Returns</dt><dd>true if the packet was built; false if a parameter is out of range. </dd></dl>
 
@@ -1049,7 +1049,7 @@ Functions</h2></td></tr>
 <li>Set byte_count, append the XOR error byte, set the ops preamble length and the accessory STOP repeat count (one send)</li>
 </ol>
 <pre class="fragment">* @param packet Pointer to a dcc_packet_t struct to fill.
-* @param address 11-bit accessory address (0-2047).
+* @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.2.
 * </pre><dl class="section return"><dt>Returns</dt><dd>true if the packet was built; false if a parameter is out of range. </dd></dl>
 
 </div>
@@ -1237,7 +1237,7 @@ Functions</h2></td></tr>
 <p>Build an extended accessory ops-mode CV write packet. </p>
 <p>Range-checks the arguments, then delegates to _acc_extended_cv_common() with the WRITE BYTE prefix and the 0-based CV number; the packet is loaded with repeat_count 2 (S-9.2.1 requires two identical WRITE packets).</p>
 <pre class="fragment">* @param packet Pointer to a dcc_packet_t struct to fill.
-* @param address 11-bit accessory address (0-2047).
+* @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.3.2.
 * @param cv_number CV number (1-1024, 1-based).
 * @param value Byte value to write.
 * </pre><dl class="section return"><dt>Returns</dt><dd>true if the packet was built; false if a parameter is out of range. </dd></dl>
@@ -1276,7 +1276,7 @@ Functions</h2></td></tr>
 <p>Build an extended accessory ops-mode CV verify packet. </p>
 <p>Range-checks the arguments, then delegates to _acc_extended_cv_common() with the VERIFY BYTE prefix and the 0-based CV number; the packet is loaded with repeat_count 1.</p>
 <pre class="fragment">* @param packet Pointer to a dcc_packet_t struct to fill.
-* @param address 11-bit accessory address (0-2047).
+* @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.3.2.
 * @param cv_number CV number (1-1024, 1-based).
 * @param value Expected byte value to verify.
 * </pre><dl class="section return"><dt>Returns</dt><dd>true if the packet was built; false if a parameter is out of range. </dd></dl>
@@ -1329,7 +1329,7 @@ Functions</h2></td></tr>
 <li>Delegate to _acc_extended_cv_common() with the BIT MANIPULATION prefix; repeat_count is 2 for a write, 1 for a verify</li>
 </ol>
 <pre class="fragment">* @param packet Pointer to a dcc_packet_t struct to fill.
-* @param address 11-bit accessory address (0-2047).
+* @param address 11-bit packet address A10..A0 (0-2047), S-9.2.1 2.4.3.2.
 * @param cv_number CV number (1-1024, 1-based).
 * @param bit_position Bit position within the CV byte (0-7).
 * @param bit_value Desired bit value (true=1, false=0).
