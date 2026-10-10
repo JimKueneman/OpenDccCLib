@@ -34,7 +34,7 @@
  * appropriate application callbacks.
  *
  * @author Jim Kueneman
- * @date 06 Oct 2026
+ * @date 10 Oct 2026
  */
 
 #ifndef __DCC_PACKET_DECODER__
@@ -71,7 +71,8 @@ typedef struct {
          *  In decoder-address mode (CV541 bit 6 = 0): board_address is 9-bit
          *  board address, output_pair is the 3-bit DDD field.
          *  In output-address mode (CV541 bit 6 = 1): board_address is the
-         *  11-bit flat output address, output_pair is the R bit (0 or 1). */
+         *  11-bit packet address A10..A0 (S-9.2.1 2.4.1; the CV513/CV521
+         *  Output Address + 3), output_pair is the R bit (0 or 1). */
     void (*on_accessory_basic_command)(uint16_t board_address, uint8_t output_pair, bool activate);
 
         /** @brief Extended accessory command received. NULL = no notification.
