@@ -280,79 +280,79 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00377" name="l00377"></a><span class="lineno">  377</span> </div>
 <div class="line"><a id="l00379" name="l00379"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#a2ca0788b361eaa0b5b4d356a846ea57b">  379</a></span>    void (*on_function_command)(uint16_t address, uint8_t function_number, <span class="keywordtype">bool</span> state);</div>
 <div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span> </div>
-<div class="line"><a id="l00386" name="l00386"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#aae4018b83f2702680069412deefc8635">  386</a></span>    void (*on_accessory_basic_command)(uint16_t board_address, uint8_t output_pair, <span class="keywordtype">bool</span> activate);</div>
-<div class="line"><a id="l00387" name="l00387"></a><span class="lineno">  387</span> </div>
-<div class="line"><a id="l00392" name="l00392"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#adadfdeb49a5fbbb65d3070b66e78d497">  392</a></span>    void (*on_accessory_extended_command)(uint16_t address, uint8_t aspect);</div>
-<div class="line"><a id="l00393" name="l00393"></a><span class="lineno">  393</span> </div>
-<div class="line"><a id="l00395" name="l00395"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#a17ef2dbbd6cbbe99db8094c8011b8939">  395</a></span>    void (*on_cv_write_command)(uint16_t cv_number, uint8_t value, <span class="keywordtype">bool</span> service_mode);</div>
-<div class="line"><a id="l00396" name="l00396"></a><span class="lineno">  396</span> </div>
-<div class="line"><a id="l00398" name="l00398"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#a508d616d3e39568d395ff57660c77c53">  398</a></span>    void (*on_cv_verify_command)(uint16_t cv_number, uint8_t value, <span class="keywordtype">bool</span> service_mode);</div>
-<div class="line"><a id="l00399" name="l00399"></a><span class="lineno">  399</span> </div>
-<div class="line"><a id="l00401" name="l00401"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#ae71892931733c35f76d0ad8c4e8fe41e">  401</a></span>    void (*on_cv_bit_command)(uint16_t cv_number, uint8_t bit_position, <span class="keywordtype">bool</span> bit_value, <span class="keywordtype">bool</span> service_mode);</div>
-<div class="line"><a id="l00402" name="l00402"></a><span class="lineno">  402</span> </div>
-<div class="line"><a id="l00404" name="l00404"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#a65ae87e53393ad50050e32ff15b88c86">  404</a></span>    void (*on_consist_command)(uint16_t address, uint8_t consist_address, <span class="keywordtype">bool</span> direction_normal);</div>
-<div class="line"><a id="l00405" name="l00405"></a><span class="lineno">  405</span> </div>
-<div class="line"><a id="l00407" name="l00407"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#ab88ebd6f8ed51caf3be0775a7a83c80d">  407</a></span>    void (*on_binary_state_short_command)(uint16_t address, uint8_t state_number, <span class="keywordtype">bool</span> active);</div>
-<div class="line"><a id="l00408" name="l00408"></a><span class="lineno">  408</span> </div>
-<div class="line"><a id="l00410" name="l00410"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#a0faa2d7fc9040e74103508d0b9080fbf">  410</a></span>    void (*on_binary_state_long_command)(uint16_t address, uint16_t state_number, <span class="keywordtype">bool</span> active);</div>
-<div class="line"><a id="l00411" name="l00411"></a><span class="lineno">  411</span> </div>
-<div class="line"><a id="l00413" name="l00413"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#a1c1c368f8cda531b9195775bb2659dab">  413</a></span>    void (*on_analog_function_command)(uint16_t address, uint8_t output_number, uint8_t value);</div>
-<div class="line"><a id="l00414" name="l00414"></a><span class="lineno">  414</span> </div>
-<div class="line"><a id="l00416" name="l00416"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#acf01936b1afaf92f9b2064acbf2d2c8e">  416</a></span>    void (*on_failsafe_entered)(void);</div>
-<div class="line"><a id="l00417" name="l00417"></a><span class="lineno">  417</span> </div>
-<div class="line"><a id="l00419" name="l00419"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#a553e7da34ead464316f0182540d7328f">  419</a></span>    void (*on_failsafe_exited)(void);</div>
-<div class="line"><a id="l00420" name="l00420"></a><span class="lineno">  420</span> </div>
-<div class="line"><a id="l00421" name="l00421"></a><span class="lineno">  421</span><span class="preprocessor">#endif </span><span class="comment">/* DCC_COMPILE_DECODER */</span><span class="preprocessor"></span></div>
-<div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span> </div>
-<div class="line"><a id="l00423" name="l00423"></a><span class="lineno">  423</span>} <a class="code hl_struct" href="structdcc__config__t.html">dcc_config_t</a>;</div>
+<div class="line"><a id="l00387" name="l00387"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#aae4018b83f2702680069412deefc8635">  387</a></span>    void (*on_accessory_basic_command)(uint16_t board_address, uint8_t output_pair, <span class="keywordtype">bool</span> activate);</div>
+<div class="line"><a id="l00388" name="l00388"></a><span class="lineno">  388</span> </div>
+<div class="line"><a id="l00393" name="l00393"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#adadfdeb49a5fbbb65d3070b66e78d497">  393</a></span>    void (*on_accessory_extended_command)(uint16_t address, uint8_t aspect);</div>
+<div class="line"><a id="l00394" name="l00394"></a><span class="lineno">  394</span> </div>
+<div class="line"><a id="l00396" name="l00396"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#a17ef2dbbd6cbbe99db8094c8011b8939">  396</a></span>    void (*on_cv_write_command)(uint16_t cv_number, uint8_t value, <span class="keywordtype">bool</span> service_mode);</div>
+<div class="line"><a id="l00397" name="l00397"></a><span class="lineno">  397</span> </div>
+<div class="line"><a id="l00399" name="l00399"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#a508d616d3e39568d395ff57660c77c53">  399</a></span>    void (*on_cv_verify_command)(uint16_t cv_number, uint8_t value, <span class="keywordtype">bool</span> service_mode);</div>
+<div class="line"><a id="l00400" name="l00400"></a><span class="lineno">  400</span> </div>
+<div class="line"><a id="l00402" name="l00402"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#ae71892931733c35f76d0ad8c4e8fe41e">  402</a></span>    void (*on_cv_bit_command)(uint16_t cv_number, uint8_t bit_position, <span class="keywordtype">bool</span> bit_value, <span class="keywordtype">bool</span> service_mode);</div>
+<div class="line"><a id="l00403" name="l00403"></a><span class="lineno">  403</span> </div>
+<div class="line"><a id="l00405" name="l00405"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#a65ae87e53393ad50050e32ff15b88c86">  405</a></span>    void (*on_consist_command)(uint16_t address, uint8_t consist_address, <span class="keywordtype">bool</span> direction_normal);</div>
+<div class="line"><a id="l00406" name="l00406"></a><span class="lineno">  406</span> </div>
+<div class="line"><a id="l00408" name="l00408"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#ab88ebd6f8ed51caf3be0775a7a83c80d">  408</a></span>    void (*on_binary_state_short_command)(uint16_t address, uint8_t state_number, <span class="keywordtype">bool</span> active);</div>
+<div class="line"><a id="l00409" name="l00409"></a><span class="lineno">  409</span> </div>
+<div class="line"><a id="l00411" name="l00411"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#a0faa2d7fc9040e74103508d0b9080fbf">  411</a></span>    void (*on_binary_state_long_command)(uint16_t address, uint16_t state_number, <span class="keywordtype">bool</span> active);</div>
+<div class="line"><a id="l00412" name="l00412"></a><span class="lineno">  412</span> </div>
+<div class="line"><a id="l00414" name="l00414"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#a1c1c368f8cda531b9195775bb2659dab">  414</a></span>    void (*on_analog_function_command)(uint16_t address, uint8_t output_number, uint8_t value);</div>
+<div class="line"><a id="l00415" name="l00415"></a><span class="lineno">  415</span> </div>
+<div class="line"><a id="l00417" name="l00417"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#acf01936b1afaf92f9b2064acbf2d2c8e">  417</a></span>    void (*on_failsafe_entered)(void);</div>
+<div class="line"><a id="l00418" name="l00418"></a><span class="lineno">  418</span> </div>
+<div class="line"><a id="l00420" name="l00420"></a><span class="lineno"><a class="line" href="structdcc__config__t.html#a553e7da34ead464316f0182540d7328f">  420</a></span>    void (*on_failsafe_exited)(void);</div>
+<div class="line"><a id="l00421" name="l00421"></a><span class="lineno">  421</span> </div>
+<div class="line"><a id="l00422" name="l00422"></a><span class="lineno">  422</span><span class="preprocessor">#endif </span><span class="comment">/* DCC_COMPILE_DECODER */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00423" name="l00423"></a><span class="lineno">  423</span> </div>
+<div class="line"><a id="l00424" name="l00424"></a><span class="lineno">  424</span>} <a class="code hl_struct" href="structdcc__config__t.html">dcc_config_t</a>;</div>
 </div>
-<div class="line"><a id="l00424" name="l00424"></a><span class="lineno">  424</span> </div>
-<div class="line"><a id="l00425" name="l00425"></a><span class="lineno">  425</span><span class="comment">// =============================================================================</span></div>
-<div class="line"><a id="l00426" name="l00426"></a><span class="lineno">  426</span><span class="comment">// Lifecycle &amp; ISR Entry Points</span></div>
-<div class="line"><a id="l00427" name="l00427"></a><span class="lineno">  427</span><span class="comment">// =============================================================================</span></div>
-<div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span> </div>
-<div class="line"><a id="l00440" name="l00440"></a><span class="lineno">  440</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a4e86c59e8b73091bd49e69d4fd66672c">DccConfig_initialize</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structdcc__config__t.html">dcc_config_t</a> *config);</div>
-<div class="line"><a id="l00441" name="l00441"></a><span class="lineno">  441</span> </div>
-<div class="line"><a id="l00449" name="l00449"></a><span class="lineno">  449</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a6973e4dcdbdf005108c57fb42c9bfd5d">DccConfig_run</a>(<span class="keywordtype">void</span>);</div>
-<div class="line"><a id="l00450" name="l00450"></a><span class="lineno">  450</span> </div>
-<div class="line"><a id="l00451" name="l00451"></a><span class="lineno">  451</span><span class="preprocessor">#ifdef DCC_COMPILE_COMMAND_STATION</span></div>
-<div class="line"><a id="l00452" name="l00452"></a><span class="lineno">  452</span> </div>
-<div class="line"><a id="l00453" name="l00453"></a><span class="lineno">  453</span>    <span class="comment">// =========================================================================</span></div>
-<div class="line"><a id="l00454" name="l00454"></a><span class="lineno">  454</span>    <span class="comment">// Command Station ISR Entry Points</span></div>
-<div class="line"><a id="l00455" name="l00455"></a><span class="lineno">  455</span>    <span class="comment">// =========================================================================</span></div>
-<div class="line"><a id="l00456" name="l00456"></a><span class="lineno">  456</span> </div>
-<div class="line"><a id="l00463" name="l00463"></a><span class="lineno">  463</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a9a53e81fc6c50c782946afd138177a35">DccConfig_58us_timer_isr</a>(<span class="keywordtype">void</span>);</div>
-<div class="line"><a id="l00464" name="l00464"></a><span class="lineno">  464</span> </div>
-<div class="line"><a id="l00465" name="l00465"></a><span class="lineno">  465</span><span class="preprocessor">#if defined(DCC_COMPILE_RAILCOM)</span></div>
-<div class="line"><a id="l00471" name="l00471"></a><span class="lineno">  471</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#aa9cb7b423c45e249ae420e4931bece8f">DccConfig_railcom_oneshot_timer_isr</a>(<span class="keywordtype">void</span>);</div>
-<div class="line"><a id="l00472" name="l00472"></a><span class="lineno">  472</span> </div>
-<div class="line"><a id="l00487" name="l00487"></a><span class="lineno">  487</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a2570746b3c910410daf063d995b56bfa">DccConfig_set_railcom_cutout_timing</a>(uint16_t start_delay_us, uint16_t uart_rx_delay_us,</div>
-<div class="line"><a id="l00488" name="l00488"></a><span class="lineno">  488</span>                                                    uint16_t ch1_window_us, uint16_t ch1_ch2_gap_us,</div>
-<div class="line"><a id="l00489" name="l00489"></a><span class="lineno">  489</span>                                                    uint16_t ch2_window_us);</div>
-<div class="line"><a id="l00490" name="l00490"></a><span class="lineno">  490</span> </div>
-<div class="line"><a id="l00497" name="l00497"></a><span class="lineno">  497</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a0ebaead97a0f5299c5df37b5989e0a5d">DccConfig_cancel_railcom_cutout</a>(<span class="keywordtype">void</span>);</div>
-<div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span> </div>
-<div class="line"><a id="l00504" name="l00504"></a><span class="lineno">  504</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="dcc__config_8h.html#acdf270c278131d74c8ea3493df18ee3a">DccConfig_railcom_cutout_is_active</a>(<span class="keywordtype">void</span>);</div>
-<div class="line"><a id="l00505" name="l00505"></a><span class="lineno">  505</span> </div>
-<div class="line"><a id="l00506" name="l00506"></a><span class="lineno">  506</span><span class="preprocessor">#endif </span><span class="comment">/* DCC_COMPILE_RAILCOM */</span><span class="preprocessor"></span></div>
-<div class="line"><a id="l00507" name="l00507"></a><span class="lineno">  507</span> </div>
-<div class="line"><a id="l00514" name="l00514"></a><span class="lineno">  514</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a08729b8797b2d38b716a95c5f4e6ca23">DccConfig_100ms_timer_tick</a>(<span class="keywordtype">void</span>);</div>
-<div class="line"><a id="l00515" name="l00515"></a><span class="lineno">  515</span> </div>
-<div class="line"><a id="l00516" name="l00516"></a><span class="lineno">  516</span><span class="preprocessor">#endif </span><span class="comment">/* DCC_COMPILE_COMMAND_STATION */</span><span class="preprocessor"></span></div>
-<div class="line"><a id="l00517" name="l00517"></a><span class="lineno">  517</span> </div>
-<div class="line"><a id="l00518" name="l00518"></a><span class="lineno">  518</span><span class="preprocessor">#ifdef DCC_COMPILE_DECODER</span></div>
-<div class="line"><a id="l00519" name="l00519"></a><span class="lineno">  519</span> </div>
-<div class="line"><a id="l00527" name="l00527"></a><span class="lineno">  527</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a4321d3e6c87631634b6d7f765340101f">DccConfig_decoder_edge_isr</a>(uint32_t timestamp_usec);</div>
-<div class="line"><a id="l00528" name="l00528"></a><span class="lineno">  528</span> </div>
-<div class="line"><a id="l00537" name="l00537"></a><span class="lineno">  537</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a16af6b24620ee7b3794a64f3847310d4">DccConfig_reload_address_cvs</a>(<span class="keywordtype">void</span>);</div>
-<div class="line"><a id="l00538" name="l00538"></a><span class="lineno">  538</span> </div>
-<div class="line"><a id="l00539" name="l00539"></a><span class="lineno">  539</span><span class="preprocessor">#endif </span><span class="comment">/* DCC_COMPILE_DECODER */</span><span class="preprocessor"></span></div>
-<div class="line"><a id="l00540" name="l00540"></a><span class="lineno">  540</span> </div>
-<div class="line"><a id="l00541" name="l00541"></a><span class="lineno">  541</span><span class="preprocessor">#ifdef __cplusplus</span></div>
-<div class="line"><a id="l00542" name="l00542"></a><span class="lineno">  542</span>}</div>
-<div class="line"><a id="l00543" name="l00543"></a><span class="lineno">  543</span><span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span><span class="preprocessor"></span></div>
-<div class="line"><a id="l00544" name="l00544"></a><span class="lineno">  544</span> </div>
-<div class="line"><a id="l00545" name="l00545"></a><span class="lineno">  545</span><span class="preprocessor">#endif </span><span class="comment">/* __DCC_CONFIG__ */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00425" name="l00425"></a><span class="lineno">  425</span> </div>
+<div class="line"><a id="l00426" name="l00426"></a><span class="lineno">  426</span><span class="comment">// =============================================================================</span></div>
+<div class="line"><a id="l00427" name="l00427"></a><span class="lineno">  427</span><span class="comment">// Lifecycle &amp; ISR Entry Points</span></div>
+<div class="line"><a id="l00428" name="l00428"></a><span class="lineno">  428</span><span class="comment">// =============================================================================</span></div>
+<div class="line"><a id="l00429" name="l00429"></a><span class="lineno">  429</span> </div>
+<div class="line"><a id="l00441" name="l00441"></a><span class="lineno">  441</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a4e86c59e8b73091bd49e69d4fd66672c">DccConfig_initialize</a>(<span class="keyword">const</span> <a class="code hl_struct" href="structdcc__config__t.html">dcc_config_t</a> *config);</div>
+<div class="line"><a id="l00442" name="l00442"></a><span class="lineno">  442</span> </div>
+<div class="line"><a id="l00450" name="l00450"></a><span class="lineno">  450</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a6973e4dcdbdf005108c57fb42c9bfd5d">DccConfig_run</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a id="l00451" name="l00451"></a><span class="lineno">  451</span> </div>
+<div class="line"><a id="l00452" name="l00452"></a><span class="lineno">  452</span><span class="preprocessor">#ifdef DCC_COMPILE_COMMAND_STATION</span></div>
+<div class="line"><a id="l00453" name="l00453"></a><span class="lineno">  453</span> </div>
+<div class="line"><a id="l00454" name="l00454"></a><span class="lineno">  454</span>    <span class="comment">// =========================================================================</span></div>
+<div class="line"><a id="l00455" name="l00455"></a><span class="lineno">  455</span>    <span class="comment">// Command Station ISR Entry Points</span></div>
+<div class="line"><a id="l00456" name="l00456"></a><span class="lineno">  456</span>    <span class="comment">// =========================================================================</span></div>
+<div class="line"><a id="l00457" name="l00457"></a><span class="lineno">  457</span> </div>
+<div class="line"><a id="l00464" name="l00464"></a><span class="lineno">  464</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a9a53e81fc6c50c782946afd138177a35">DccConfig_58us_timer_isr</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a id="l00465" name="l00465"></a><span class="lineno">  465</span> </div>
+<div class="line"><a id="l00466" name="l00466"></a><span class="lineno">  466</span><span class="preprocessor">#if defined(DCC_COMPILE_RAILCOM)</span></div>
+<div class="line"><a id="l00472" name="l00472"></a><span class="lineno">  472</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#aa9cb7b423c45e249ae420e4931bece8f">DccConfig_railcom_oneshot_timer_isr</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a id="l00473" name="l00473"></a><span class="lineno">  473</span> </div>
+<div class="line"><a id="l00488" name="l00488"></a><span class="lineno">  488</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a2570746b3c910410daf063d995b56bfa">DccConfig_set_railcom_cutout_timing</a>(uint16_t start_delay_us, uint16_t uart_rx_delay_us,</div>
+<div class="line"><a id="l00489" name="l00489"></a><span class="lineno">  489</span>                                                    uint16_t ch1_window_us, uint16_t ch1_ch2_gap_us,</div>
+<div class="line"><a id="l00490" name="l00490"></a><span class="lineno">  490</span>                                                    uint16_t ch2_window_us);</div>
+<div class="line"><a id="l00491" name="l00491"></a><span class="lineno">  491</span> </div>
+<div class="line"><a id="l00498" name="l00498"></a><span class="lineno">  498</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a0ebaead97a0f5299c5df37b5989e0a5d">DccConfig_cancel_railcom_cutout</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a id="l00499" name="l00499"></a><span class="lineno">  499</span> </div>
+<div class="line"><a id="l00505" name="l00505"></a><span class="lineno">  505</span>    <span class="keyword">extern</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="dcc__config_8h.html#acdf270c278131d74c8ea3493df18ee3a">DccConfig_railcom_cutout_is_active</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a id="l00506" name="l00506"></a><span class="lineno">  506</span> </div>
+<div class="line"><a id="l00507" name="l00507"></a><span class="lineno">  507</span><span class="preprocessor">#endif </span><span class="comment">/* DCC_COMPILE_RAILCOM */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00508" name="l00508"></a><span class="lineno">  508</span> </div>
+<div class="line"><a id="l00515" name="l00515"></a><span class="lineno">  515</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a08729b8797b2d38b716a95c5f4e6ca23">DccConfig_100ms_timer_tick</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a id="l00516" name="l00516"></a><span class="lineno">  516</span> </div>
+<div class="line"><a id="l00517" name="l00517"></a><span class="lineno">  517</span><span class="preprocessor">#endif </span><span class="comment">/* DCC_COMPILE_COMMAND_STATION */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00518" name="l00518"></a><span class="lineno">  518</span> </div>
+<div class="line"><a id="l00519" name="l00519"></a><span class="lineno">  519</span><span class="preprocessor">#ifdef DCC_COMPILE_DECODER</span></div>
+<div class="line"><a id="l00520" name="l00520"></a><span class="lineno">  520</span> </div>
+<div class="line"><a id="l00528" name="l00528"></a><span class="lineno">  528</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a4321d3e6c87631634b6d7f765340101f">DccConfig_decoder_edge_isr</a>(uint32_t timestamp_usec);</div>
+<div class="line"><a id="l00529" name="l00529"></a><span class="lineno">  529</span> </div>
+<div class="line"><a id="l00538" name="l00538"></a><span class="lineno">  538</span>    <span class="keyword">extern</span> <span class="keywordtype">void</span> <a class="code hl_function" href="dcc__config_8h.html#a16af6b24620ee7b3794a64f3847310d4">DccConfig_reload_address_cvs</a>(<span class="keywordtype">void</span>);</div>
+<div class="line"><a id="l00539" name="l00539"></a><span class="lineno">  539</span> </div>
+<div class="line"><a id="l00540" name="l00540"></a><span class="lineno">  540</span><span class="preprocessor">#endif </span><span class="comment">/* DCC_COMPILE_DECODER */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00541" name="l00541"></a><span class="lineno">  541</span> </div>
+<div class="line"><a id="l00542" name="l00542"></a><span class="lineno">  542</span><span class="preprocessor">#ifdef __cplusplus</span></div>
+<div class="line"><a id="l00543" name="l00543"></a><span class="lineno">  543</span>}</div>
+<div class="line"><a id="l00544" name="l00544"></a><span class="lineno">  544</span><span class="preprocessor">#endif </span><span class="comment">/* __cplusplus */</span><span class="preprocessor"></span></div>
+<div class="line"><a id="l00545" name="l00545"></a><span class="lineno">  545</span> </div>
+<div class="line"><a id="l00546" name="l00546"></a><span class="lineno">  546</span><span class="preprocessor">#endif </span><span class="comment">/* __DCC_CONFIG__ */</span><span class="preprocessor"></span></div>
 <div class="ttc" id="adcc__config_8h_html_a08729b8797b2d38b716a95c5f4e6ca23"><div class="ttname"><a href="dcc__config_8h.html#a08729b8797b2d38b716a95c5f4e6ca23">DccConfig_100ms_timer_tick</a></div><div class="ttdeci">void DccConfig_100ms_timer_tick(void)</div><div class="ttdoc">100ms timer tick. Call from a 100ms periodic timer or main loop.</div><div class="ttdef"><b>Definition</b> dcc_config.c:1541</div></div>
 <div class="ttc" id="adcc__config_8h_html_a0ebaead97a0f5299c5df37b5989e0a5d"><div class="ttname"><a href="dcc__config_8h.html#a0ebaead97a0f5299c5df37b5989e0a5d">DccConfig_cancel_railcom_cutout</a></div><div class="ttdeci">void DccConfig_cancel_railcom_cutout(void)</div><div class="ttdoc">Cancel an in-progress RailCom cutout, restoring the H-bridge.</div><div class="ttdef"><b>Definition</b> dcc_config.c:1522</div></div>
 <div class="ttc" id="adcc__config_8h_html_a16af6b24620ee7b3794a64f3847310d4"><div class="ttname"><a href="dcc__config_8h.html#a16af6b24620ee7b3794a64f3847310d4">DccConfig_reload_address_cvs</a></div><div class="ttdeci">void DccConfig_reload_address_cvs(void)</div><div class="ttdoc">Re-read the address CVs into the packet decoder's match cache.</div><div class="ttdef"><b>Definition</b> dcc_config.c:1565</div></div>

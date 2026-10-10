@@ -113,7 +113,7 @@ Data Fields</h2></td></tr>
 <tr class="memdesc:a2ca0788b361eaa0b5b4d356a846ea57b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function command received. NULL = no notification.  <br /></td></tr>
 <tr class="separator:a2ca0788b361eaa0b5b4d356a846ea57b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aae4018b83f2702680069412deefc8635" id="r_aae4018b83f2702680069412deefc8635"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aae4018b83f2702680069412deefc8635">on_accessory_basic_command</a> )(uint16_t board_address, uint8_t output_pair, bool activate)</td></tr>
-<tr class="memdesc:aae4018b83f2702680069412deefc8635"><td class="mdescLeft">&#160;</td><td class="mdescRight">Basic accessory command received. NULL = no notification. In decoder-address mode (CV541 bit 6 = 0): board_address is 9-bit board address, output_pair is the 3-bit DDD field. In output-address mode (CV541 bit 6 = 1): board_address is the 11-bit flat output address, output_pair is the R bit (0 or 1).  <br /></td></tr>
+<tr class="memdesc:aae4018b83f2702680069412deefc8635"><td class="mdescLeft">&#160;</td><td class="mdescRight">Basic accessory command received. NULL = no notification. In decoder-address mode (CV541 bit 6 = 0): board_address is 9-bit board address, output_pair is the 3-bit DDD field. In output-address mode (CV541 bit 6 = 1): board_address is the 11-bit packet address A10..A0 (S-9.2.1 2.4.1; the CV513/CV521 Output Address + 3), output_pair is the R bit (0 or 1).  <br /></td></tr>
 <tr class="separator:aae4018b83f2702680069412deefc8635"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adadfdeb49a5fbbb65d3070b66e78d497" id="r_adadfdeb49a5fbbb65d3070b66e78d497"><td class="memItemLeft" align="right" valign="top">void(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#adadfdeb49a5fbbb65d3070b66e78d497">on_accessory_extended_command</a> )(uint16_t address, uint8_t aspect)</td></tr>
 <tr class="memdesc:adadfdeb49a5fbbb65d3070b66e78d497"><td class="mdescLeft">&#160;</td><td class="mdescRight">Extended accessory command received. NULL = no notification. address is the 11-bit packet address A10..A0 (S-9.2.1 2.4.2) in both addressing modes. In decoder-address mode (CV541 bit 6 = 0) all four A1 A0 values of the decoder's board address are delivered.  <br /></td></tr>
@@ -253,7 +253,7 @@ Data Fields</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Basic accessory command received. NULL = no notification. In decoder-address mode (CV541 bit 6 = 0): board_address is 9-bit board address, output_pair is the 3-bit DDD field. In output-address mode (CV541 bit 6 = 1): board_address is the 11-bit flat output address, output_pair is the R bit (0 or 1). </p>
+<p>Basic accessory command received. NULL = no notification. In decoder-address mode (CV541 bit 6 = 0): board_address is 9-bit board address, output_pair is the 3-bit DDD field. In output-address mode (CV541 bit 6 = 1): board_address is the 11-bit packet address A10..A0 (S-9.2.1 2.4.1; the CV513/CV521 Output Address + 3), output_pair is the R bit (0 or 1). </p>
 
 </div>
 </div>
